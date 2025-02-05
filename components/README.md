@@ -1,10 +1,12 @@
 # Components
 
-## Alarm-Icon
+## Alarm Icon
 
 TODO: Add image here
 
 ## Device Selector Modal
+
+<img src="device-selector-modal/example.png" width="800" />
 
 Within your module add the standalone component to the imports:
 
@@ -43,11 +45,9 @@ openAssignDevicesModal() {
     });
   }
 ```
-
-Sample
-![Device Selector Modal example](device-selector-modal/example.png)
-
 ## Image Upload
+
+<img src="image-upload/example.png" width="400" />
 
 Within your module add the standalone component to the imports:
 
@@ -66,6 +66,3 @@ In your components HTML, add the following:
 ```typescript
 <image-upload (imageUploaded)="onImageUploaded($event)"></image-upload>
 ```
-
-Sample
-![Image Upload example](image-upload/example.png)
