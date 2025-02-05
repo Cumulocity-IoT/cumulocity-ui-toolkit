@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { CoreModule } from '@c8y/ngx-components';
 
 @Component({
   selector: 'ps-action-bar-reload-button',
@@ -11,6 +12,7 @@ export class ActionBarReloadButton {
   @Input() refreshCallBack: () => Promise<any>;
 
   @Input() placement: 'left' | 'right' = 'left';
+
 
   protected async refresh() {
     this.requestInProgress = true;

@@ -1,8 +1,10 @@
 # Action Bar Components
 
-These components use content-projection to be used inside of the action bar of e.g. the Cockpit app.
+![Action Bar image](action-bar.png)
 
-All components are provided as standalone, which means you need to import them like modules, e.g.
+These components use [content-projection](https://styleguide.cumulocity.com/apps/codex/#/getting-started/guides/extension-points/overview#content-projection) to be used inside of the action bar of e.g. the Cockpit app.
+
+All components are provided as [standalone](https://v18.angular.dev/guide/components/importing#standalone-components), which means you need to import them like modules, e.g. 
 ```typescript
 import { ActionBarDatePicker } from './action-bar-datepicker.component';
 

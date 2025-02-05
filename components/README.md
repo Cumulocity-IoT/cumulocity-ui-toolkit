@@ -45,7 +45,7 @@ openAssignDevicesModal() {
 ```
 
 Sample
-![Alt text](device-selector-modal/example.png)
+![Device Selector Modal example](device-selector-modal/example.png)
 
 ## Image Upload
 
@@ -68,4 +68,4 @@ In your components HTML, add the following:
 ```
 
 Sample
-![Alt text](image-upload/example.png)
+![Image Upload example](image-upload/example.png)
