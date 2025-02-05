@@ -1,0 +1,10 @@
+<c8y-drop-area
+  #fileUpload
+  id="file-upload"
+  class="drop-area-lg"
+  [loading]="isLoading"
+  (dropped)="onFileDropped($event)"
+  [icon]="'upload'"
+  [maxAllowedFiles]="1"
+  [accept]="'.png,.jpg,.jpeg'"
+></c8y-drop-area>

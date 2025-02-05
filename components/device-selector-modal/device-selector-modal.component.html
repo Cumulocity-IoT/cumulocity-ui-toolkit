@@ -1,0 +1,5 @@
+<c8y-modal [title]="'Assign Devices' | translate" (onClose)="onSubmit()" (onDismiss)="onCancel()" [disabled]="selectedItems.length === 0">
+  <div class="p-16">
+    <c8y-asset-selector-miller [(ngModel)]="model" (onSelected)="selectionChanged($event)" [config]="config"></c8y-asset-selector-miller>
+  </div>
+</c8y-modal>

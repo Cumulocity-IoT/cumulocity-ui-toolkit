@@ -1,0 +1,32 @@
+<c8y-action-bar-item [placement]="placement" itemClass="navbar-form">
+    <div dropdown placement="bottom left" class="dropdown c8y-child-assets-selector">
+      <button
+        dropdownToggle
+        type="button"
+        class="btn dropdown-toggle d-flex a-i-center c8y-dropdown"
+        title="{{ title | translate }}"
+        aria-haspopup="true"
+      >
+        <span *ngFor="let item of items" class="d-contents">
+          <span class="text-truncate" *ngIf="item.selected">
+            <i [c8yIcon]="item.icon" [ngClass]="item.styleClass"></i>
+            <span class="m-l-4">{{ item.label | translate }}</span>
+          </span>
+        </span>
+      </button>
+      <ul
+        id="dropdown-item-filter"
+        *dropdownMenu
+        class="dropdown-menu"
+        role="menu"
+        aria-labelledby="item-filter"
+      >
+        <li *ngFor="let item of items" [ngClass]="{ active: item.selected }">
+          <button [title]="item.label | translate" (click)="changeSelection(item)" inherit>
+            <i [c8yIcon]="item.icon" [ngClass]="item.styleClass"></i>
+            <span class="m-l-4">{{ item.label | translate }}</span>
+          </button>
+        </li>
+      </ul>
+    </div>
+  </c8y-action-bar-item>

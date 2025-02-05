@@ -1,0 +1,13 @@
+<c8y-action-bar-item [placement]="placement" itemClass="navbar-form">
+    <div class="form-group datepicker">
+    <input
+        type="text"
+        class="form-control"
+        [(ngModel)]="date"
+        [bsConfig]="config"
+        (bsValueChange)="dateChanged($event)"
+        bsDatepicker
+        title="{{ title | translate }}"
+        />
+    </div>
+</c8y-action-bar-item>
