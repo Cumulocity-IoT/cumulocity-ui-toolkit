@@ -17,19 +17,19 @@ import { ActionBarDatePicker } from './action-bar-datepicker.component';
 });
 ```
 
-## Datepicker
+## Action Bar Datepicker Component
 
 ```typescript
 <ps-action-bar-datepicker [date]="date" (dateChange)="onDateChanged($event)"></ps-action-bar-datepicker>
 ```
 
-## Dropdown
+## Action Bar Dropdown Component
 
 ```typescript
 <ps-action-bar-dropdown [items]="dropdownItems" (selectionChange)="onDropdownSelectionChanged($event)"></ps-action-bar-dropdown>
 ```
 
-## Reload
+## Action Bar Reload Component
 
 HTML:
 ```typescript
@@ -47,4 +47,11 @@ constructor() {
 private reload(): Promise<void> {
     // do your async stuff here
 }
+```
+
+## Action Bar Search Component
+
+HTML:
+```typescript
+<ps-action-bar-search [filter]="{ query: 'has(c8y_Position)' }" (selectionChange)="onSearchChanged($event)" ></ps-action-bar-search>
 ```

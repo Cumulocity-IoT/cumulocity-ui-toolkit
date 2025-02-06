@@ -1,0 +1,18 @@
+<c8y-action-bar-item [placement]="placement" itemClass="navbar-form">
+  <c8y-typeahead [(ngModel)]="selected" placeholder="{{ 'Search…' | translate }}" (onSearch)="setPipe($event)" (onIconClick)="onIconClick($event)" style="min-width: 200px">
+    <c8y-li
+      *c8yFor="let device of devices; loadMore: 'auto'; pipe: filterPipe; notFound: notFoundTemplate"
+      class="p-l-8 p-r-8 c8y-list__item--link interact"
+      (click)="changeSelection(device)"
+      [active]="selected === device"
+    >
+      <c8y-highlight [text]="device.name" [pattern]="pattern"></c8y-highlight>
+      <c8y-li-icon icon="rocket"></c8y-li-icon>
+    </c8y-li>
+    <ng-template #notFoundTemplate>
+      <c8y-li class="bg-gray-lighter p-8" *ngIf="pattern.length > 0">
+        <span>No match found</span>
+      </c8y-li>
+    </ng-template>
+  </c8y-typeahead>
+</c8y-action-bar-item>
