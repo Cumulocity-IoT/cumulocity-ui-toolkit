@@ -4,6 +4,41 @@
 
 TODO: Add image here
 
+## Auto Refresh
+
+<img src="auto-refresh/example.png" width="630" />
+
+```HTML
+<-- HTML -->
+<div class="card-header separator-top separator-bottom sticky-top">
+  <div class="fit-w d-flex a-i-center fit-h-20 m-l-auto">
+    <ps-auto-refresh
+      [isLoading$]="isLoading$"
+      [isIntervalToggleEnabled]="true"
+      (onCountdownEnded)="refresh()">
+    </ps-auto-refresh>
+  </div>
+</div>
+```
+
+```typescript
+// Module
+@NgModule({
+  imports: [PSAutoRefreshComponent]
+})
+export class MyModule {}
+
+// Component
+isLoading$ = new BehaviorSubject<boolean>(false);
+
+refresh() {
+  this.isLoading$.next(true);
+  this.loadMyData().finally(() => {
+    this.isLoading$.next(false);
+  });
+}
+```
+
 ## Device Selector Modal
 
 <img src="device-selector-modal/example.png" width="800" />
@@ -45,6 +80,7 @@ openAssignDevicesModal() {
     });
   }
 ```
+
 ## Image Upload
 
 <img src="image-upload/example.png" width="400" />
