@@ -102,3 +102,39 @@ In your components HTML, add the following:
 ```typescript
 <image-upload (imageUploaded)="onImageUploaded($event)"></image-upload>
 ```
+
+## Image Gallery
+
+This component shows multiple images in a gallery carousel using the [Carousel component of ngx-bootstrap](https://valor-software.com/ngx-bootstrap/components/carousel). For the carousel to render correctly, make sure that [Bootstrap 5](https://getbootstrap.com/) is included in your dependencies.
+
+Within your module add the standalone component to the imports:
+
+```typescript
+@NgModule({
+  declarations: [...],
+  providers: [...],
+  imports: [
+    ImageGalleryComponent
+  ]
+});
+```
+
+In your components HTML, add the following:
+
+```typescript
+  <image-gallery [gallery]="gallery" 
+  [interval]="5000"
+  [noPause]="false"
+  [noWrap]="false"
+  [showIndicators]="true"
+  [pauseOnFocus]="false">
+```
+
+All attributes expect the gallery are optional.
+
+* **gallery** is a *GalleryImages* object containing an *images* property with the paths to the images.
+* **interval** is the interval in milliseconds for auto changing images. A negative or zero value disables auto changing.
+* **noPause** Boolean whether users can pause the carousel.
+* **noWrap** Boolean whether the carousel wraps around.
+* **showIndicators** Boolean whether indicators for manual navigation are shown.
+* **pauseOnFocus** Boolean whether the carousel can be paused on focus.
