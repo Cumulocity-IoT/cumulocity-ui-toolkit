@@ -130,7 +130,7 @@ In your components HTML, add the following:
   [pauseOnFocus]="false">
 ```
 
-All attributes expect the gallary are optional.
+All attributes expect the gallery are optional.
 
 * **gallery** is a *GalleryImages* object containing an *images* property with the paths to the images.
 * **interval** is the interval in milliseconds for auto changing images. A negative or zero value disables auto changing.
