@@ -1,0 +1,7 @@
+<ng-container>
+  <carousel>
+    <slide *ngFor="let image of gallery.images">
+      <img [src]="image" class="fit-h fit-w" style="object-fit: contain; object-position: center center;"/>
+    </slide>
+  </carousel>
+</ng-container>
