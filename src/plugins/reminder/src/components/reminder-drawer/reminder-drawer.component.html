@@ -1,0 +1,221 @@
+<aside [class.open]="open">
+  <header>
+    <h2 translate>Reminder</h2>
+    <small class="text-muted" title="{{ lastUpdate | c8yDate }}">
+      {{ 'Last updated' | translate }}: {{ lastUpdate | amTimeAgo }}
+    </small>
+  </header>
+
+  <ul class="drawer-actions">
+    <li>
+      <button type="button" class="btn btn-primary" (click)="createReminder()">
+        <i [c8yIcon]="'plus-circle'"></i>
+        {{ 'Create Reminder' | translate }}
+      </button>
+    </li>
+  </ul>
+
+  <div class="body">
+    <!-- filter: reminder type -->
+    <div *ngIf="types.length" class="filter">
+      <label for="reminder-type-filter" translate>Filter by Reminder Type</label>
+      <div class="c8y-select-wrapper">
+        <select
+          id="reminder-type-filter"
+          name="reminder-type"
+          class="form-control"
+          [(ngModel)]="reminderTypeFilter"
+          (change)="setFilter()"
+        >
+          <option value="">{{ 'Not filtered' | translate }}</option>
+          <option *ngFor="let type of types" [ngValue]="type.id">{{ type.name }}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- context filter -->
+    <div class="filter">
+      <label class="c8y-switch">
+        <input
+          type="checkbox"
+          name="context-filter-enabled"
+          [(ngModel)]="contextFilterEnabled"
+        />
+        <span></span>
+        {{ 'Filter by Current Context' | translate }}
+      </label>
+    </div>
+
+    <!-- list of reminders -->
+    <ul class="reminder-group-list">
+      <li *ngFor="let group of reminderGroups; let i = index" class="reminder-group-item">
+        <header>
+          <button type="button"
+            aria-controls="collapseBasic"
+            class="btn btn-clean"
+            [attr.aria-expanded]="groupIsExpanded[i]"
+            (click)="groupIsExpanded[i] = !groupIsExpanded[i]"
+          >
+            <span
+              class="count"
+              [class.text-danger]="group.status === reminderGroupStatus.due && group.count > 0"
+              >
+              {{ group.count || 0 }}
+              <small
+                *ngIf="group.total"
+                title="{{ 'Number of reminders if not filtered' | translate }}"
+                class="text-muted"
+              >
+                / {{ group.total }}
+              </small>
+            </span>
+            <em>{{ group.status | translate }}</em>
+            <i [c8yIcon]="'expand-arrow'" [class.expanded]="groupIsExpanded[i]"></i>
+          </button>
+        </header>
+
+        <ul
+          id="collapseBasic"
+          class="reminder-list"
+          [collapse]="!groupIsExpanded[i]"
+          [isAnimated]="true"
+        >
+          <!-- TODO add empty info -->
+          <ng-container *ngFor="let reminder of group.reminders">
+            <ng-template [ngTemplateOutlet]="reminderItem" [ngTemplateOutletContext]="{ reminder }">
+            </ng-template>
+          </ng-container>
+        </ul>
+      </li>
+    </ul>
+
+    <small class="text-muted" translate>
+      Cleared reminders are automatically deleted over time by the retention rules.
+    </small>
+  </div>
+
+  <footer>
+    <div>
+      <label class="c8y-switch">
+        <input
+          type="checkbox"
+          name="toast-notifications-enabled"
+          [(ngModel)]="toastNotificationsEnabled"
+          (change)="setConfig('toast')"
+        />
+        <span></span>
+        {{ 'Toast Notifications' | translate }}
+      </label>
+    </div>
+
+    <div>
+      <label class="c8y-switch">
+        <input
+          type="checkbox"
+          name="browser-notifications-enabled"
+          [(ngModel)]="browserNotificationsEnabled"
+          (change)="setConfig('browser')"
+        />
+        <span></span>
+        {{ 'Browser Notifications' | translate }}
+      </label>
+    </div>
+  </footer>
+</aside>
+
+<!-- single reminder item template -->
+<ng-template #reminderItem let-reminder="reminder">
+  <li class="reminder-item" [ngClass]="{
+    'text-muted': reminder.status !== reminderStatus.active,
+    'changed': reminder.changed
+  }">
+    <header>
+      <i
+        class="status-icon"
+        title="Status: {{ reminder.status }}"
+        [c8yIcon]="
+          reminder.status === reminderStatus.active
+            ? 'bell'
+            : reminder.status === reminderStatus.acknowledged
+            ? 'bell-slash'
+            : 'check-circle'
+        "
+      ></i>
+
+      <ng-container *ngIf="reminder.status !== reminderStatus.cleared; else clearedDate">
+        <small
+          title="{{ 'Due' | translate }}: {{ reminder.time | c8yDate }}"
+          class="date"
+          [class.text-danger]="reminder.status === reminderStatus.active && reminder.diff > 0"
+        >
+          {{ reminder.time | amTimeAgo }}
+        </small>
+      </ng-container>
+      <ng-template #clearedDate>
+        <small class="date">
+          <span title="{{ 'Due' | translate }}: {{ reminder.lastUpdated | c8yDate }}">
+            {{ reminder.time | amTimeAgo }}
+          </span>
+          <span title="{{ 'Last Updated' | translate }}: {{ reminder.lastUpdated | c8yDate }}">
+            {{ reminder.lastUpdated | amTimeAgo }}
+          </span>
+        </small>
+      </ng-template>
+
+      <ul class="actions">
+        <button
+          *ngIf="reminder.status === reminderStatus.active"
+          type="button"
+          title="{{ 'Acknowledge the reminder' | translate }}"
+          class="btn btn-xs btn-hollow btn-success"
+          (click)="updateReminder(reminder, reminderStatus.acknowledged)"
+        >
+          <i [c8yIcon]="'bell-slash'"></i>
+        </button>
+        <button
+          *ngIf="reminder.status !== reminderStatus.cleared"
+          type="button"
+          title="{{ 'Clear the reminder' | translate }}"
+          class="btn btn-xs btn-hollow btn-danger"
+          (click)="updateReminder(reminder, reminderStatus.cleared)"
+        >
+          <i [c8yIcon]="'check-circle'"></i>
+        </button>
+        <button
+          *ngIf="reminder.status === reminderStatus.cleared"
+          type="button"
+          title="{{ 'Reactivate the reminder' | translate }}"
+          class="btn btn-xs btn-hollow btn-primary"
+          (click)="updateReminder(reminder, reminderStatus.active)">
+          <i [c8yIcon]="'bell'"></i>
+        </button>
+      </ul>
+    </header>
+
+    <p>
+      {{ reminder.text }}
+    </p>
+
+    <footer>
+      <!-- type -->
+      <button *ngIf="types.length && reminder.reminderType" type="button" class="btn btn-clean" (click)="setFilter(reminder.reminderType)">
+        <i class="m-r-4" [c8yIcon]="'tag'"></i>
+        <c8y-reminder-type [id]="reminder.reminderType"></c8y-reminder-type>
+      </button>
+      <!-- asset reference -->
+      <ng-container *ngIf="reminder.isGroup; else isDevice">
+        <a [routerLink]="['/group', reminder.source.id]">
+          <i [c8yIcon]="'c8y-group-open'"></i>
+          {{ reminder.source.name }}
+        </a>
+      </ng-container>
+      <ng-template #isDevice>
+        <a [routerLink]="['/device', reminder.source.id]">
+          <!-- arrows-dotted-left-right -->
+          <i [c8yIcon]="'c8y-device'"></i>
+          {{ reminder.source.name }}
+        </a>
+      </ng-template>
+    </footer>
+  </li>
+</ng-template>

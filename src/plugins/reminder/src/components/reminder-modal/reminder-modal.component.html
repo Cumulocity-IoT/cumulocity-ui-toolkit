@@ -1,0 +1,18 @@
+<div class="modal-header separator">
+  <h3 translate>Create a Reminder</h3>
+</div>
+
+<form [formGroup]="form" (submit)="submit()">
+  <div class="modal-body">
+    <formly-form [form]="form" [fields]="fields" [model]="reminder"></formly-form>
+  </div>
+
+  <div class="modal-footer">
+    <button type="button" class="btn btn-default" (click)="close()" translate>Cancel</button>
+
+    <button type="submit" class="btn btn-primary" [disabled]="!form.valid || isLoading" [class.btn-pending]="isLoading"
+      translate>
+      Create
+    </button>
+  </div>
+</form>

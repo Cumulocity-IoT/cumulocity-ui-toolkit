@@ -2,6 +2,15 @@
   "name": "ps-ui-toolkit",
   "version": "0.0.0",
   "scripts": {},
+  "keywords": [
+    "cumulocity",
+    "cumulocity-package",
+    "cumulocity-iot",
+    "cumulocity-ui-plugin",
+    "cumulocity-ui-guild"
+  ],
+  "author": "Cumulocity UI Guild, @dirk-peter-c8y",
+  "license": "Apache-2.0",
   "dependencies": {
     "@angular/animations": "^18.2.0",
     "@angular/cdk": "^18.2.10",
@@ -16,12 +25,9 @@
     "@c8y/client": "1021.29.1",
     "@c8y/ngx-components": "1021.29.1",
     "@c8y/style": "1021.29.1",
-    "date-fns": "^4.1.0",
-    "file-saver": "2.0.5",
     "rxjs": "^7.8.1",
     "tslib": "^2.3.0",
-    "zone.js": "~0.14.10",
-    "bootstrap":"^5.3.3"
+    "zone.js": "~0.14.10"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^18.2.12",

@@ -1,0 +1,14 @@
+<c8y-asset-selector-miller
+  class="m-b-24"
+  [selectedDevice]="field.props.asset"
+  [config]="{
+    groupsSelectable: true,
+    singleColumn: true,
+    columnHeaders: true,
+    showFilter: true,
+    search: true,
+    label: field.props.label
+  }"
+  [formControl]="formControl"
+  [formlyAttributes]="field">
+</c8y-asset-selector-miller>
