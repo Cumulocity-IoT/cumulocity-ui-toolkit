@@ -1,4 +1,6 @@
-# cumulocity-ui-toolkit
+# Cumulocity UI Guild Toolkit
+
+![Logo of the Cumulocity UI Guild, showing an medival looking shield with the letters "U" and "I"](./public/ui-guild-logo.png)
 
 ---
 
