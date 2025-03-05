@@ -10,25 +10,25 @@
           "style": "less"
         }
       },
-      "root": "packages/plugins/reminder",
-      "sourceRoot": "packages/plugins/reminder/src",
+      "root": "packages/reminder",
+      "sourceRoot": "packages/reminder/src",
       "prefix": "app",
       "architect": {
         "build": {
           "builder": "@c8y/devkit:build",
           "options": {
             "outputPath": "dist/cumulocity-reminder-plugin",
-            "main": "packages/plugins/reminder/src/main.ts",
-            "tsConfig": "packages/plugins/reminder/tsconfig.app.json",
+            "main": "packages/reminder/src/main.ts",
+            "tsConfig": "packages/reminder/tsconfig.app.json",
             "polyfills": [
               "zone.js"
             ],
             "assets": [
               {
                 "glob": "**/*",
-                "input": "packages/plugins/reminder/public"
+                "input": "packages/reminder/public"
               },
-              "packages/plugins/reminder/src/assets"
+              "packages/reminder/src/assets"
             ],
             "inlineStyleLanguage": "less",
             "scripts": [],
@@ -104,29 +104,29 @@
           "style": "less"
         }
       },
-      "root": "packages/plugins/reminder",
-      "sourceRoot": "packages/plugins/kpi-widget/src",
+      "root": "packages/kpi-widget",
+      "sourceRoot": "packages/kpi-widget/src",
       "prefix": "app",
       "architect": {
         "build": {
           "builder": "@c8y/devkit:build",
           "options": {
             "outputPath": "dist/cumulocity-kpi-aggregator-widget-plugin",
-            "main": "packages/plugins/kpi-widget/src/main.ts",
-            "tsConfig": "packages/plugins/kpi-widget/tsconfig.app.json",
+            "main": "packages/kpi-widget/src/main.ts",
+            "tsConfig": "packages/kpi-widget/tsconfig.app.json",
             "polyfills": [
               "zone.js"
             ],
             "assets": [
               {
                 "glob": "**/*",
-                "input": "packages/plugins/kpi-plugin/public"
+                "input": "packages/kpi-widget/public"
               },
-              "packages/plugins/reminder/src/assets"
+              "packages/kpi-widget/src/assets"
             ],
             "inlineStyleLanguage": "less",
             "styles": [
-              "src/styles.less"
+              "packages/kpi-widget/src/styles.less"
             ],
             "scripts": [],
             "aot": false,

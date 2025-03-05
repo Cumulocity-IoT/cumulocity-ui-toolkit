@@ -1,15 +1,18 @@
 {
   "workbench.colorCustomizations": {
-    "titleBar.activeBackground": "#ffbe00",
-    "titleBar.activeForeground": "#212121",
     "titleBar.inactiveBackground": "#ffbe00",
     "titleBar.inactiveForeground": "#21212166",
-    "activityBar.activeBackground": "#ffbe00",
+    "titleBar.activeBackground": "#ffbe00",
+    "titleBar.activeForeground": "#212121",
     "activityBar.background": "#212121",
-    "activityBar.foreground": "#fff",
-    "activityBar.inactiveForeground": "#ffffff50",
-    "activityBarBadge.background": "#C40F51",
-    "activityBarBadge.foreground": "#fff"
+    "activityBar.foreground": "#212121",
+    "activityBar.activeBackground": "#ffbe00",
+    "activityBar.inactiveForeground": "#F9FAFB66",
+    "activityBarBadge.background": "#F9FAFB",
+    "activityBarBadge.foreground": "#212121",
+    "button.background": "#ffbe00",
+    "button.foreground": "#212121",
+    "toolbar.hoverOutline": "#212121"
   },
   "typescript.tsdk": "node_modules\\typescript\\lib"
 }

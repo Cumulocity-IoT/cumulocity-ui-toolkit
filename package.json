@@ -9,9 +9,10 @@
     "clean": "rimraf dist",
     "serve:reminder": "npm run serve plugin.reminder -- --shell %APP",
     "build:reminder": "ng build plugin.reminder",
-    "postbuild:reminder": "node tools/build-rename.js -p 'packages/plugins/reminder'",
-    "serve:kpi": "npm run serve plugin.kpi -- --shell %APP",
-    "build:kpi": "ng build plugin.kpi"
+    "postbuild:reminder": "node tools/build-rename.js -p 'packages/reminder'",
+    "serve:kpi": "npm run serve plugin.kpi-widget -- --shell %APP",
+    "build:kpi": "ng build plugin.kpi-widget",
+    "postbuild:kpi": "node tools/build-rename.js -p 'packages/kpi-widget'"
   },
   "keywords": [
     "cumulocity",
@@ -23,8 +24,7 @@
   "author": "Cumulocity UI Guild, @dirk-peter-c8y",
   "license": "Apache-2.0",
   "workspaces": [
-    "packages/components/*",
-    "packages/plugins/*"
+    "packages/*"
   ],
   "dependencies": {
     "@angular/animations": "^18.2.0",
