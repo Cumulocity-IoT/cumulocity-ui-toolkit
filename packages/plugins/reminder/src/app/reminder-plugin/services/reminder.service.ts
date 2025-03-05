@@ -31,7 +31,7 @@ import {
   REMINDER_TENENAT_OPTION_TYPE_KEY,
   REMINDER_TYPE,
   REMINDER_TYPE_FRAGMENT,
-} from '../reminder-plugin/reminder.model';
+} from '../reminder.model';
 import { ActiveTabService } from './active-tab.service';
 import { DomService } from './dom.service';
 import { LocalStorageService } from './local-storage.service';

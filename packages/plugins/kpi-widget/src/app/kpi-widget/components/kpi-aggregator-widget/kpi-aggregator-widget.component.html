@@ -1,0 +1,165 @@
+<div class="menu">
+  <span class="text-muted">{{ timestampEnd | c8yDate }}</span>
+
+  <span *ngIf="paging && config.showMeta">
+    {{ results }} Results
+    <ng-container *ngIf="paging.totalPages <= pageLimit; else lessThanTotalPages">
+      <span class="text-muted" [tooltip]="'Current Page: ' + paging.currentPage + '\nTotal Pages: ' + paging.totalPages"
+        [placement]="'bottom'">
+        ({{ paging.currentPage }}/{{ paging.totalPages }})
+      </span>
+    </ng-container>
+    <ng-template #lessThanTotalPages>
+      <span class="text-muted"
+        [tooltip]="'Current Page: ' + paging.currentPage + '\nPage Limit: ' + pageLimit + '\nTotal Pages: ' + paging.totalPages"
+        [placement]="'bottom'">
+        ({{ paging.currentPage }}/{{ pageLimit }}|{{paging.totalPages}})
+      </span>
+    </ng-template>
+  </span>
+
+  <span *ngIf="!loading && !assetGroups" class="text-muted">-</span>
+
+  <div dropdown class="dropdown">
+    <button dropdownToggle type="button" title="dropdown-toggle" class="dropdown-toggle c8y-dropdown">
+      <i [c8yIcon]="'ellipsis-v'"></i>
+    </button>
+
+    <ul *dropdownMenu class="dropdown-menu dropdown-menu-right">
+      <li>
+        <button type="button" [disabled]="!paging || paging?.totalPages <= paging?.currentPage"
+          (click)="loadNextBatch()">
+          <i [c8yIcon]="'chevron-double-right'"></i>
+          {{ 'Load next batch' | translate }}
+        </button>
+      </li>
+      <li>
+        <button type="button" (click)="loadData()">
+          <i [c8yIcon]="'refresh'"></i>
+          {{ 'Refresh' | translate }}
+        </button>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- manual load trigger -->
+<ng-container *ngIf="!config.runOnLoad && !timestampStart">
+  <div class="d-flex j-c-center p-16">
+    <button type="button" class="btn btn-primary" (click)="loadData()">
+      {{ 'Load data' | translate }}
+    </button>
+  </div>
+</ng-container>
+
+<!-- views -->
+<ng-container *ngIf="!loading; else loadingData">
+  <ng-container *ngIf="assetGroups?.length; else noData">
+    <ng-container [ngSwitch]="config.display">
+      <ng-container *ngSwitchCase="displayMode.list">
+        <ng-template [ngTemplateOutlet]="assetListTemplateDefault"
+          [ngTemplateOutletContext]="{ assets: assetGroups[0].objects }">
+        </ng-template>
+      </ng-container>
+      <ng-container *ngSwitchCase="displayMode.pieAggregate">
+        <ng-template [ngTemplateOutlet]="pieCHartTemplateDefault" [ngTemplateOutletContext]="{ assets: assetGroups }">
+        </ng-template>
+      </ng-container>
+      <ng-container *ngSwitchCase="displayMode.pieCount">
+        <ng-template [ngTemplateOutlet]="pieCHartTemplateDefault" [ngTemplateOutletContext]="{ assets: assetGroups }">
+        </ng-template>
+      </ng-container>
+      <ng-container *ngSwitchDefault>
+        <ng-template [ngTemplateOutlet]="barChartTemplateDefault" [ngTemplateOutletContext]="{ groups: assetGroups }">
+        </ng-template>
+      </ng-container>
+    </ng-container>
+  </ng-container>
+
+  <div *ngIf="config.showMeta && timestampEnd" class="d-flex j-c-center m-t-16 p-b-8">
+    <small class="text-muted">{{ 'Query duration' }}: {{ duration }}</small>
+  </div>
+</ng-container>
+
+<!-- bar chart basic -->
+<ng-template #barChartTemplateDefault let-groups="assetGroups">
+  <ul *ngIf="assetGroups" class="bar-chart">
+    <li *ngFor="let group of assetGroups">
+      <ng-template [ngTemplateOutlet]="barChartItemTemplateDefault" [ngTemplateOutletContext]="{ group: group }">
+      </ng-template>
+    </li>
+  </ul>
+</ng-template>
+
+<!-- bar chat item -->
+<ng-template #barChartItemTemplateDefault let-group="group">
+  <label class="text-truncate">{{ group.label }}</label>
+  <span>
+    {{ group.value }}
+    <span *ngIf="config.percent" class="percent text-muted">
+      {{ (group.value / total) * 100 | number : '1.1-1' }}%
+    </span>
+  </span>
+  <div [ngStyle]="{
+      width: (group.value / max) * 100 + '%',
+      backgroundColor: config.color,
+      opacity: (config.opacity / 100)
+    }">
+  </div>
+</ng-template>
+
+<!-- table -->
+<ng-template #assetListTemplateDefault let-assets="assets">
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th translate>Asset</th>
+        <th translate>System ID</th>
+        <th translate>Type</th>
+        <th translate>Model</th>
+        <th translate>Registration Date</th>
+        <th translate>Last Updated</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let asset of assets">
+        <td>
+          <ng-container *ngIf="asset.c8y_IsDeviceGroup; else deviceLink">
+            <a [routerLink]="[ '/group', asset.id ]">{{ asset.name }}</a>
+          </ng-container>
+          <ng-template #deviceLink>
+            <a [routerLink]="[ '/device', asset.id ]">{{ asset.name }}</a>
+          </ng-template>
+        </td>
+        <td class="text-right">{{ asset.id }}</td>
+        <td>{{ asset.type || '-' }}</td>
+        <td>{{ asset.c8y_Hardware?.model || '-' }}</td>
+        <td>{{ asset.creationTime | c8yDate }}</td>
+        <td>{{ asset.lastUpdated | c8yDate }}</td>
+      </tr>
+    </tbody>
+  </table>
+</ng-template>
+
+<!-- pie chart -->
+<ng-template #pieCHartTemplateDefault let-assets="assets">
+  <div class="chart-wrap">
+    <canvas baseChart [data]="pieChartData" [type]="'pie'" [options]="pieChartOptions">
+    </canvas>
+  </div>
+</ng-template>
+
+<!-- loading -->
+<ng-template #loadingData>
+  <div class="loading-data">
+    <c8y-loading></c8y-loading>
+  </div>
+</ng-template>
+
+<!-- empty -->
+<ng-template #noData>
+  <div class="p-16">
+    <h2 class="m-b-16">Empty AssetGroup Result</h2>
+    <pre>{{ config | json }}</pre>
+  </div>
+</ng-template>

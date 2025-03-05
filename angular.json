@@ -3,58 +3,43 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "controlcenter": {
+    "plugin.reminder": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
-          "style": "less",
-          "standalone": false
-        },
-        "@schematics/angular:directive": {
-          "standalone": false
-        },
-        "@schematics/angular:pipe": {
-          "standalone": false
+          "style": "less"
         }
       },
-      "root": "src/apps/controlcenter",
-      "sourceRoot": "src/apps/controlcenter/src",
+      "root": "packages/plugins/reminder",
+      "sourceRoot": "packages/plugins/reminder/src",
       "prefix": "app",
       "architect": {
         "build": {
           "builder": "@c8y/devkit:build",
           "options": {
-            "outputPath": "dist/controlcenter",
+            "outputPath": "dist/cumulocity-reminder-plugin",
+            "main": "packages/plugins/reminder/src/main.ts",
+            "tsConfig": "packages/plugins/reminder/tsconfig.app.json",
             "polyfills": [
               "zone.js"
             ],
-            "tsConfig": "src/apps/controlcenter/tsconfig.app.json",
-            "inlineStyleLanguage": "less",
             "assets": [
-              "src/apps/controlcenter/src/favicon.ico",
-              "src/apps/controlcenter/src/assets"
+              {
+                "glob": "**/*",
+                "input": "packages/plugins/reminder/public"
+              },
+              "packages/plugins/reminder/src/assets"
             ],
-            "stylePreprocessorOptions": {
-              "includePaths": [
-                "src/styles/"
-              ]
-            },
-            "styles": [
-              "src/apps/controlcenter/src/styles/style.less",
-              "node_modules/prunecluster/dist/LeafletStyleSheet.css"
-            ],
-            "scripts": [
-              "node_modules/leaflet/dist/leaflet.js",
-              "node_modules/prunecluster/dist/PruneCluster.js"
-            ],
+            "inlineStyleLanguage": "less",
+            "scripts": [],
             "aot": false,
-            "main": "src/apps/controlcenter/src/main.ts",
             "buildOptimizer": false,
             "allowedCommonJsDependencies": [
               "regenerator-runtime/runtime",
               "@cordobo/qrcode",
               "zone.js/dist/zone",
-              "chroma-js"
+              "chroma-js",
+              "lodash"
             ]
           },
           "configurations": {
@@ -86,60 +71,128 @@
           "builder": "@c8y/devkit:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "controlcenter:build:production"
+              "buildTarget": "plugin.reminder:build:production"
             },
             "development": {
-              "buildTarget": "controlcenter:build:development"
+              "buildTarget": "plugin.reminder:build:development"
             }
           },
-          "defaultConfiguration": "development"
-        },
-        "extract-i18n": {
-          "builder": "@c8y/devkit:extract-i18n"
-        },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
+          "defaultConfiguration": "development",
           "options": {
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ],
-            "tsConfig": "src/apps/controlcenter/tsconfig.spec.json",
-            "inlineStyleLanguage": "less",
-            "assets": [
-              "src/apps/controlcenter/src/favicon.ico",
-              "src/apps/controlcenter/src/assets"
-            ],
-            "stylePreprocessorOptions": {
-              "includePaths": [
-                "src/styles/"
-              ]
-            },
-            "styles": [
-              "src/apps/controlcenter/src/styles/style.less"
-            ],
-            "scripts": []
+            "port": 9001,
+            "publicHost": "localhost:9001"
           }
         },
         "deploy": {
           "builder": "@c8y/devkit:deploy",
           "configurations": {
             "production": {
-              "buildTarget": "controlcenter:build:production"
+              "buildTarget": "plugin.reminder:build:production"
             },
             "development": {
-              "buildTarget": "controlcenter:build:development"
+              "buildTarget": "plugin.reminder:build:development"
+            }
+          },
+          "defaultConfiguration": "production"
+        }
+      }
+    },
+    "plugin.kpi-widget": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "less"
+        }
+      },
+      "root": "packages/plugins/reminder",
+      "sourceRoot": "packages/plugins/kpi-widget/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@c8y/devkit:build",
+          "options": {
+            "outputPath": "dist/cumulocity-kpi-aggregator-widget-plugin",
+            "main": "packages/plugins/kpi-widget/src/main.ts",
+            "tsConfig": "packages/plugins/kpi-widget/tsconfig.app.json",
+            "polyfills": [
+              "zone.js"
+            ],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "packages/plugins/kpi-plugin/public"
+              },
+              "packages/plugins/reminder/src/assets"
+            ],
+            "inlineStyleLanguage": "less",
+            "styles": [
+              "src/styles.less"
+            ],
+            "scripts": [],
+            "aot": false,
+            "buildOptimizer": false,
+            "allowedCommonJsDependencies": [
+              "regenerator-runtime/runtime",
+              "@cordobo/qrcode",
+              "zone.js/dist/zone",
+              "chroma-js",
+              "lodash"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "all",
+              "buildOptimizer": false
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
             }
           },
           "defaultConfiguration": "production"
         },
-        "compile-i18n": {
-          "builder": "@c8y/devkit:compile-i18n"
+        "serve": {
+          "builder": "@c8y/devkit:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.kpi-widget:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.kpi-widget:build:development"
+            }
+          },
+          "defaultConfiguration": "development",
+          "options": {
+            "port": 9001,
+            "publicHost": "localhost:9001"
+          }
+        },
+        "deploy": {
+          "builder": "@c8y/devkit:deploy",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.kpi-widget:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.kpi-widget:build:development"
+            }
+          },
+          "defaultConfiguration": "production"
         }
       }
     }
-  },
-  "cli": {
-    "analytics": false
   }
 }

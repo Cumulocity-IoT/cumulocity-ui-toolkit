@@ -1,0 +1,10 @@
+{
+  "name": "cumulocity-kpi-aggregator-widget-plugin",
+  "version": "1.0.3",
+  "description": "",
+  "author": "Dirk Peter",
+  "homepage": "___TODO___",
+  "dependencies": {
+    "ng2-charts": "^4.1.1"
+  }
+}

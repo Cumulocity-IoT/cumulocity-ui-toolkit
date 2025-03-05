@@ -1,12 +1,12 @@
-# Cumulocity IoT UI Critical Alarm Reminder Plugin
+# Cumulocity UI Critical Alarm Reminder Plugin
 
-[![Node.js CI](https://github.com/SoftwareAG/cumulocity-reminder-plugin/actions/workflows/test.yml/badge.svg)](https://github.com/SoftwareAG/cumulocity-reminder-plugin/actions/workflows/test.yml)
+[![Node.js CI](https://github.com/cumulocity/cumulocity-reminder-plugin/actions/workflows/test.yml/badge.svg)](https://github.com/cumulocity/cumulocity-reminder-plugin/actions/workflows/test.yml)
 
 ---
 
 ## Features
 
-![A short recording of the basic functionalities of the reminder plugin featuring: creating a reminder, seeing it being updated from "upcoming" to "due" and how it is manually cleared.](./_media/reminder-feature.gif)
+![A short recording of the basic functionalities of the reminder plugin featuring: creating a reminder, seeing it being updated from "upcoming" to "due" and how it is manually cleared.](./public/reminder-feature.gif)
 
 The critical alarm reminder plugin provides an option to manually setup reminders. These [reminders](#reminders) – technically speaking cumulocity events – are attached to groups or devices. They also feature a configurable timestamp, to define when to be reminded.
 
@@ -16,7 +16,7 @@ All the reminders are neatly accessibly from with a new drawer, positioned on th
 
 As mentioned earlier, reminders are cumulocity events attached to assets (groups or devices). But they function similar to cumulocity alarms, as their status is either "**active**", "**acknowledged**" or "**cleared**". Providing the same clear state handling that should solve the basic question "do I need to do something?".
 
-![Screenshot of the reminder creation dialog, highlighting the selected asset](./_media/reminder-creation.png)  
+![Screenshot of the reminder creation dialog, highlighting the selected asset](./public/reminder-creation.png)  
 <small>The "create a reminder" dialog will have the current asset – the page you looking at – preselected.</small>
 
 So why do I need a reminder it is just like an alarm?  
@@ -34,7 +34,7 @@ That said, you will receive a notification once an upcoming reminder reaches its
 
 Please note that, as you can also re-active a cleared alarm, **a notification for this reminder will not be send**.
 
-![Screenshot of the reminder drawer, highlighting the notification options at the bottom](./media/../_media/reminder-notification-type.png)  
+![Screenshot of the reminder drawer, highlighting the notification options at the bottom](./media/../public/reminder-notification-type.png)  
 <small>At the bottom of the reminder drawer, you can choose want type of notification you want to receive: an in-cumulocity "toast" message, a browser notification, both or neither.</small>
 
 > For browser notifications to function, your browser needs to support notifications and you need to accept the permission request.
@@ -45,10 +45,10 @@ Please reference your browsers documentation, in case you experience issues gran
 
 Selectable reminder types can be configured using the tenant option – best using the [Tenant Option Manager Plugin](https://github.com/SoftwareAG/cumulocity-tenant-option-management-plugin) –, using the configuration as described below. Per default, no config is set and the type selection hidden.
 
-![](./_media/type-filter.png)  
+![](./public/type-filter.png)  
 <small>Reminder type filter – available to the user, accessible from within the reminder drawer –, and display of types on reminder items.</small>
 
-![](./media/../_media/type-create-reminder.png)  
+![](./media/../public/type-create-reminder.png)  
 <small>The reminder type field is shown, within the reminder creation dialog, when types are configured.</small>
 
 | Fragment |  Type  | Info                                                                                                                                 |
@@ -56,7 +56,7 @@ Selectable reminder types can be configured using the tenant option – best usi
 | `id`     | string | Any unique string value, used to reference the filter, when saved in local storage. Not displayed to the user. As short as possible. |
 | `name`   | string | Human-readable label for the reminder type, displayed to the user.                                                                   |
 
-![Screenshot of an example tenant option config, within the manager plugin UI](./_media/type-tenant-options.png)  
+![Screenshot of an example tenant option config, within the manager plugin UI](./public/type-tenant-options.png)  
 <small>Tenant option config: Category `c8y.reminder`, Key `types`.</small>
 
 ##### Example Config
@@ -123,32 +123,6 @@ Also deploying needs no special handling and can be simply done via `npm run dep
 
 ---
 
-## Useful links
-
-### 📘 Explore the Knowledge Base
-
-Dive into a wealth of Cumulocity IoT tutorials and articles in the [TECHcommunity Knowledge Base](https://tech.forums.softwareag.com/tags/c/knowledge-base/6/cumulocity-iot).
-
-### 💡 Get Expert Answers
-
-Stuck or just curious? Ask the Cumulocity IoT experts directly on our [Software AG TECHcommunity Forums](https://tech.forums.softwareag.com/tags/c/forum/1/Cumulocity-IoT).
-
-### 🚀 Try Cumulocity IoT
-
-See Cumulocity IoT in action with a [Free Trial](https://techcommunity.softwareag.com/en_en/downloads.html).
-
-### ✍️ Share Your Feedback
-
-Your input drives our innovation. If you find a bug, please create an [issue](./issues) in the repository. If you’d like to share your ideas or feedback, please post them in our [Tech Forums](https://tech.forums.softwareag.com/c/feedback/2).
-
-### More to discover
-
-- [Cumulocity IoT Web Development Tutorial - Part 1: Start your journey](https://tech.forums.softwareag.com/t/cumulocity-iot-web-development-tutorial-part-1-start-your-journey/259613)
-- [How to install a Microfrontend Plugin on a tenant and use it in an app?](https://tech.forums.softwareag.com/t/how-to-install-a-microfrontend-plugin-on-a-tenant-and-use-it-in-an-app/268981)
-- [The power of micro frontends – How to dynamically extend Cumulocity IoT Frontends](https://tech.forums.softwareag.com/t/the-power-of-micro-frontends-how-to-dynamically-extend-cumulocity-iot-frontends/266665)
-
----
-
-This widget is provided as-is and without warranty or support. They do not constitute part of the Software AG product suite. Users are free to use, fork and modify them, subject to the license agreement. While Software AG welcomes contributions, we cannot guarantee to include every contribution in the master project.
+This widget is provided as-is and without warranty or support. They do not constitute part of the Cumulocity product suite. Users are free to use, fork and modify them, subject to the license agreement. While Cumulocity welcomes contributions, we cannot guarantee to include every contribution in the master project.
 
 <!-- <:3  )~~ -->
