@@ -27,7 +27,14 @@
     "strict": true,
     "strictNullChecks": false,
     "target": "ES2022",
-    "useDefineForClassFields": false
+    "useDefineForClassFields": false,
+    "paths": {
+      "~components/*": ["./libs/components/*"],
+      "~helpers/*": ["./libs/helpers/*"],
+      "~models/*": ["./libs/models/*"],
+      "~pipes/*": ["./libs/pipes/*"],
+      "~services/*": ["./libs/services/*"]
+    }
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
