@@ -12,7 +12,10 @@
     "postbuild:reminder": "node tools/build-rename.js -p 'packages/reminder'",
     "serve:kpi": "npm run serve plugin.kpi-widget -- --shell %APP",
     "build:kpi": "ng build plugin.kpi-widget",
-    "postbuild:kpi": "node tools/build-rename.js -p 'packages/kpi-widget'"
+    "postbuild:kpi": "node tools/build-rename.js -p 'packages/kpi-widget'",
+    "serve:release": "npm run serve plugin.release-notes -- --shell %APP",
+    "build:release": "ng build plugin.release-notes",
+    "postbuild:release": "node tools/build-rename.js -p 'packages/release-notes'"
   },
   "keywords": [
     "cumulocity",

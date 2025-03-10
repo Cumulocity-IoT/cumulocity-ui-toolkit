@@ -20,9 +20,7 @@
             "outputPath": "dist/cumulocity-reminder-plugin",
             "main": "packages/reminder/src/main.ts",
             "tsConfig": "packages/reminder/tsconfig.app.json",
-            "polyfills": [
-              "zone.js"
-            ],
+            "polyfills": ["zone.js"],
             "assets": [
               {
                 "glob": "**/*",
@@ -114,9 +112,7 @@
             "outputPath": "dist/cumulocity-kpi-aggregator-widget-plugin",
             "main": "packages/kpi-widget/src/main.ts",
             "tsConfig": "packages/kpi-widget/tsconfig.app.json",
-            "polyfills": [
-              "zone.js"
-            ],
+            "polyfills": ["zone.js"],
             "assets": [
               {
                 "glob": "**/*",
@@ -125,9 +121,7 @@
               "packages/kpi-widget/src/assets"
             ],
             "inlineStyleLanguage": "less",
-            "styles": [
-              "packages/kpi-widget/src/styles.less"
-            ],
+            "styles": ["packages/kpi-widget/src/styles.less"],
             "scripts": [],
             "aot": false,
             "buildOptimizer": false,
@@ -188,6 +182,99 @@
             },
             "development": {
               "buildTarget": "plugin.kpi-widget:build:development"
+            }
+          },
+          "defaultConfiguration": "production"
+        }
+      }
+    },
+    "plugin.release-notes": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "less"
+        }
+      },
+      "root": "packages/release-notes",
+      "sourceRoot": "packages/release-notes/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@c8y/devkit:build",
+          "options": {
+            "outputPath": "dist/cumulocity-release-notes-plugin",
+            "main": "packages/release-notes/src/main.ts",
+            "tsConfig": "packages/release-notes/tsconfig.app.json",
+            "polyfills": ["zone.js"],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "packages/release-notes/public"
+              },
+              "packages/release-notes/src/assets"
+            ],
+            "inlineStyleLanguage": "less",
+            "styles": ["packages/release-notes/src/styles.less"],
+            "scripts": [],
+            "aot": false,
+            "buildOptimizer": false,
+            "allowedCommonJsDependencies": [
+              "regenerator-runtime/runtime",
+              "@cordobo/qrcode",
+              "zone.js/dist/zone",
+              "chroma-js",
+              "lodash"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "all",
+              "buildOptimizer": false
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@c8y/devkit:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.release-notes:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.release-notes:build:development"
+            }
+          },
+          "defaultConfiguration": "development",
+          "options": {
+            "port": 9001,
+            "publicHost": "localhost:9001"
+          }
+        },
+        "deploy": {
+          "builder": "@c8y/devkit:deploy",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.release-notes:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.release-notes:build:development"
             }
           },
           "defaultConfiguration": "production"
