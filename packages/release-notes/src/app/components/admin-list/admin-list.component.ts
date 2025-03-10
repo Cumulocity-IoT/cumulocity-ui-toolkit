@@ -2,7 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { AlertService } from '@c8y/ngx-components';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { ReleaseNote } from '../../release-notes.model';
-import { ReleaseNotesService } from '../../services';
+import { ReleaseNotesService } from '../../services/release-notes.service';
 import { ReminderNotesAdminModalComponent } from '../admin-modal/admin-modal.component';
 
 @Component({
@@ -34,10 +34,7 @@ export class ReminderNotesAdminListComponent implements OnInit {
       await this.releaseNoteServive.delete(release.id);
       this.alertService.success(`Release ${release.version} deleted`);
     } catch (error) {
-      this.alertService.danger(
-        'Could not update release note',
-        error as string
-      );
+      this.alertService.danger('Could not update release note', error as string);
     }
   }
 
@@ -60,9 +57,7 @@ export class ReminderNotesAdminListComponent implements OnInit {
     try {
       await this.releaseNoteServive.publish(release, isPublished);
       this.alertService.success(
-        `Release note ${release.version} ${
-          isPublished ? 'published' : 'unpublished'
-        }`
+        `Release note ${release.version} ${isPublished ? 'published' : 'unpublished'}`
       );
     } catch (error) {
       console.error(error);

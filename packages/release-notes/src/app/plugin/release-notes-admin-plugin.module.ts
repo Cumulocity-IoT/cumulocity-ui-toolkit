@@ -1,30 +1,19 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import {
-  AlertModule,
-  CoreModule,
-  gettext,
-  hookNavigator,
-  hookRoute,
-} from '@c8y/ngx-components';
+import { AlertModule, CoreModule, gettext, hookNavigator, hookRoute } from '@c8y/ngx-components';
 import { AssetSelectorModule } from '@c8y/ngx-components/assets-navigator';
 import { FormlyModule } from '@ngx-formly/core';
 import { CollapseModule } from 'ngx-bootstrap/collapse';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { MomentModule } from 'ngx-moment';
-import {
-  ReminderNotesAdminListComponent,
-  ReminderNotesAdminModalComponent,
-} from '../components';
+import { LocalStorageService } from '~services/local-storage.service';
+import { ReminderNotesAdminListComponent, ReminderNotesAdminModalComponent } from '../components';
 import { RELEASE_NOTES__ADMIN_PATH } from '../release-notes.model';
-import { LocalStorageService, ReleaseNotesService } from '../services';
+import { ReleaseNotesService } from '../services/release-notes.service';
 
 @NgModule({
-  declarations: [
-    ReminderNotesAdminModalComponent,
-    ReminderNotesAdminListComponent,
-  ],
+  declarations: [ReminderNotesAdminModalComponent, ReminderNotesAdminListComponent],
   imports: [
     AssetSelectorModule,
     AlertModule,

@@ -1,7 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { ReleaseNote } from '../../release-notes.model';
-import { ReleaseNotesService } from '../../services';
+import { ReleaseNotesService } from '../../services/release-notes.service';
 
 @Component({
   selector: 'c8y-release-notes-display-list-modal',

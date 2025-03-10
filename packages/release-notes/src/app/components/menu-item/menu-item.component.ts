@@ -1,6 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { ReleaseNotesService } from '../../services';
-
+import { ReleaseNotesService } from '../../services/release-notes.service';
 
 @Component({
   selector: 'c8y-release-notes-menu-item',

@@ -1,11 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import {
-  EventService,
-  IEvent,
-  IManagedObject,
-  InventoryService,
-  ISource,
-} from '@c8y/client';
+import { EventService, IEvent, IManagedObject, InventoryService, ISource } from '@c8y/client';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { ReleaseNotesDisplayListModalComponent } from '../components';
 import {
@@ -15,22 +9,18 @@ import {
   ReleaseNote,
   ReleaseNoteEvent,
 } from '../release-notes.model';
-import { LocalStorageService } from './local-storage.service';
+import { LocalStorageService } from '~services/local-storage.service';
 
 @Injectable()
 export class ReleaseNotesService {
   private eventService = inject(EventService);
   private inventoryService = inject(InventoryService);
-  private localStorageService = inject(LocalStorageService);
   private modalService = inject(BsModalService);
+  private localStorageService = inject(LocalStorageService);
 
   private source: ISource;
 
-  async list(
-    showNewOnly = false,
-    publishedOnly = true,
-    pageSize = 500
-  ): Promise<ReleaseNote[]> {
+  async list(showNewOnly = false, publishedOnly = true, pageSize = 500): Promise<ReleaseNote[]> {
     const requestFilter = {
       type: RELEASE_NOTES__EVENT_TYPE,
       pageSize,
@@ -45,10 +35,7 @@ export class ReleaseNotesService {
 
     const response = await this.eventService.list(requestFilter);
 
-    if (showNewOnly)
-      response.data = this.filterByPublishDate(
-        response.data as ReleaseNoteEvent[]
-      );
+    if (showNewOnly) response.data = this.filterByPublishDate(response.data as ReleaseNoteEvent[]);
 
     return this.convertEventListToReleaseList(response.data);
   }
@@ -64,10 +51,7 @@ export class ReleaseNotesService {
     await this.eventService.delete(releaseNoteID);
   }
 
-  async publish(
-    release: ReleaseNote,
-    isPublished: ReleaseNote['published']
-  ): Promise<ReleaseNote> {
+  async publish(release: ReleaseNote, isPublished: ReleaseNote['published']): Promise<ReleaseNote> {
     release.published = isPublished;
     release.publicationTime = isPublished ? new Date() : null;
 
@@ -82,20 +66,14 @@ export class ReleaseNotesService {
   }
 
   async checkForNewRelease(): Promise<void> {
-    const lastChecked = this.localStorageService.get(
-      RELEASE_NOTES__LAST_CHECKED_KEY
-    ) as string;
+    const lastChecked = this.localStorageService.get(RELEASE_NOTES__LAST_CHECKED_KEY) as string;
 
     if (!lastChecked) this.setLastChecked();
-    else if (await this.hasNewerReleases(lastChecked))
-      this.openReleaseNotesModal(true);
+    else if (await this.hasNewerReleases(lastChecked)) this.openReleaseNotesModal(true);
   }
 
   setLastChecked(): void {
-    this.localStorageService.set(
-      RELEASE_NOTES__LAST_CHECKED_KEY,
-      new Date().toISOString()
-    );
+    this.localStorageService.set(RELEASE_NOTES__LAST_CHECKED_KEY, new Date().toISOString());
   }
 
   openReleaseNotesModal(showOnlyNewReleases = false): BsModalRef {
@@ -105,33 +83,23 @@ export class ReleaseNotesService {
     });
   }
 
-  private convertEventListToReleaseList(
-    releaseEvents: IEvent[]
-  ): ReleaseNote[] {
-    return releaseEvents.map((release) =>
-      this.convertEventToRelease(release)
-    ) as ReleaseNote[];
+  private convertEventListToReleaseList(releaseEvents: IEvent[]): ReleaseNote[] {
+    return releaseEvents.map((release) => this.convertEventToRelease(release)) as ReleaseNote[];
   }
 
-  private convertEventToRelease(
-    releaseEvent: IEvent | ReleaseNoteEvent
-  ): ReleaseNote {
+  private convertEventToRelease(releaseEvent: IEvent | ReleaseNoteEvent): ReleaseNote {
     const eventData = releaseEvent[RELEASE_NOTES__EVENT_TYPE];
 
     return {
       id: releaseEvent.id,
       version: eventData.version,
       published: releaseEvent.published,
-      publicationTime: eventData.publicationTime
-        ? new Date(eventData.publicationTime)
-        : null,
+      publicationTime: eventData.publicationTime ? new Date(eventData.publicationTime) : null,
       body: eventData.body || null,
     };
   }
 
-  private async convertReleaseToEvent(
-    release: Partial<ReleaseNote>
-  ): Promise<ReleaseNoteEvent> {
+  private async convertReleaseToEvent(release: Partial<ReleaseNote>): Promise<ReleaseNoteEvent> {
     const source = await this.getSourceObjectID();
 
     const data = {
@@ -162,13 +130,9 @@ export class ReleaseNotesService {
   }
 
   private filterByPublishDate(events: ReleaseNoteEvent[]): ReleaseNoteEvent[] {
-    const lastChecked = this.localStorageService.get(
-      RELEASE_NOTES__LAST_CHECKED_KEY
-    ) as string;
+    const lastChecked = this.localStorageService.get(RELEASE_NOTES__LAST_CHECKED_KEY) as string;
 
-    return events.filter(
-      (event) => event[RELEASE_NOTES__EVENT_TYPE].publicationTime > lastChecked
-    );
+    return events.filter((event) => event[RELEASE_NOTES__EVENT_TYPE].publicationTime > lastChecked);
   }
 
   private getSourceFromManagedObject(id: IManagedObject['id']): ISource {

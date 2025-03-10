@@ -5,7 +5,7 @@ import { FormlyFieldConfig } from '@ngx-formly/core';
 import { TranslateService } from '@ngx-translate/core';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { ReleaseNote } from '../../release-notes.model';
-import { ReleaseNotesService } from '../../services';
+import { ReleaseNotesService } from '../../services/release-notes.service';
 
 @Component({
   selector: 'c8y-release-notes-admin-modal',

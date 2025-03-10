@@ -7,17 +7,15 @@ import { FormlyModule } from '@ngx-formly/core';
 import { CollapseModule } from 'ngx-bootstrap/collapse';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { MomentModule } from 'ngx-moment';
+import { LocalStorageService } from '~services/local-storage.service';
 import {
   ReleaseNotesDisplayListModalComponent,
   ReleaseNotesMenuItemComponent,
 } from '../components';
-import { LocalStorageService, ReleaseNotesService } from '../services';
+import { ReleaseNotesService } from '../services/release-notes.service';
 
 @NgModule({
-  declarations: [
-    ReleaseNotesMenuItemComponent,
-    ReleaseNotesDisplayListModalComponent,
-  ],
+  declarations: [ReleaseNotesMenuItemComponent, ReleaseNotesDisplayListModalComponent],
   imports: [
     AssetSelectorModule,
     AlertModule,
