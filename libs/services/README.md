@@ -8,6 +8,10 @@ Provides a service to track the currently active tab. **Depends on the `LocalSto
 
 If you dont want the c8y-data-grid to use its multi column sort standard, use this hack to force it to use single sort.
 
+## domService
+
+Provides a service to attach and maintain components that attach directly to the html body.
+
 ## HierarchyAggregateService
 
 Read custom fragment values and aggregate those over a given hierarchy starting at the parent Managed Object.
