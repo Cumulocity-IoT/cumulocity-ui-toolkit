@@ -1,13 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { ActivatedRoute, ActivatedRouteSnapshot } from '@angular/router';
-import {
-  EventService,
-  IEvent,
-  IManagedObject,
-  InventoryService,
-  IResult,
-} from '@c8y/client';
+import { EventService, IEvent, IManagedObject, InventoryService, IResult } from '@c8y/client';
 import { AlertService } from '@c8y/ngx-components';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,13 +10,13 @@ import moment from 'moment';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import {
   Reminder,
-  ReminderStatus,
-  ReminderType,
   REMINDER_TEXT_LENGTH,
   REMINDER_TYPE,
   REMINDER_TYPE_FRAGMENT,
-} from '../../reminder.model';
-import { ReminderService } from '../../services';
+  ReminderStatus,
+  ReminderType,
+} from '../../models/reminder.model';
+import { ReminderService } from '../../services/reminder.service';
 
 interface FormlySelectOptions {
   label: string;
@@ -35,6 +29,14 @@ interface FormlySelectOptions {
   templateUrl: './reminder-modal.component.html',
 })
 export class ReminderModalComponent implements OnInit {
+  private activatedRoute = inject(ActivatedRoute);
+  private alertService = inject(AlertService);
+  private bsModalRef = inject(BsModalRef);
+  private eventService = inject(EventService);
+  private inventoryService = inject(InventoryService);
+  private reminderService = inject(ReminderService);
+  private translateService = inject(TranslateService);
+
   asset!: Partial<IManagedObject>;
   typeOptions!: FormlySelectOptions[];
   isLoading = false;
@@ -83,15 +85,7 @@ export class ReminderModalComponent implements OnInit {
     },
   ];
 
-  constructor(
-    private activatedRoute: ActivatedRoute,
-    private alertService: AlertService,
-    private bsModalRef: BsModalRef,
-    private eventService: EventService,
-    private inventoryService: InventoryService,
-    private reminderService: ReminderService,
-    private translateService: TranslateService
-  ) {
+  constructor() {
     this.setTypeField();
   }
 
@@ -142,9 +136,7 @@ export class ReminderModalComponent implements OnInit {
     if (!request) return;
 
     if (request && request.res.status === 201) {
-      this.alertService.success(
-        this.translateService.instant('Reminder created')
-      );
+      this.alertService.success(this.translateService.instant('Reminder created'));
       this.close();
     } else {
       this.alertService.danger(
@@ -171,13 +163,11 @@ export class ReminderModalComponent implements OnInit {
     return context['contextData']
       ? cloneDeep(context['contextData'])
       : route.parent && numberOfCheckedParents < 3
-      ? this.recursiveContextSearch(route.parent, numberOfCheckedParents + 1)
-      : undefined;
+        ? this.recursiveContextSearch(route.parent, numberOfCheckedParents + 1)
+        : undefined;
   }
 
-  private getAssetFromRoute(
-    route: ActivatedRouteSnapshot
-  ): IManagedObject | undefined {
+  private getAssetFromRoute(route: ActivatedRouteSnapshot): IManagedObject | undefined {
     if (!route) console.error('No Route provided');
     else {
       const mo = this.recursiveContextSearch(route);

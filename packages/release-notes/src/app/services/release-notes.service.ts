@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { EventService, IEvent, IManagedObject, InventoryService, ISource } from '@c8y/client';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
+import { LocalStorageService } from '~services/local-storage.service';
 import { ReleaseNotesDisplayListModalComponent } from '../components';
 import {
   RELEASE_NOTES__EVENT_TYPE,
@@ -9,7 +10,6 @@ import {
   ReleaseNote,
   ReleaseNoteEvent,
 } from '../release-notes.model';
-import { LocalStorageService } from '~services/local-storage.service';
 
 @Injectable()
 export class ReleaseNotesService {

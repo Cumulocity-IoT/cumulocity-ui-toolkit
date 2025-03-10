@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { LocalStorageService } from '~services/local-storage.service';
+import { LocalStorageService } from './local-storage.service';
 
 export const ACTIVE_TAB_STORAGE_KEY = 'c8y_rpActiveTab';
 

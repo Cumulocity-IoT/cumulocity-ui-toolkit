@@ -1,7 +1,7 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
-import { REMINDER_MAX_COUNTER } from '../../reminder.model';
+import { REMINDER_MAX_COUNTER } from '../../models/reminder.model';
 import { ReminderService } from '../../services/reminder.service';
 
 const ReminderStatus = {
@@ -16,6 +16,9 @@ const ReminderStatus = {
   styleUrls: ['./reminder-indicator.component.less'],
 })
 export class ReminderIndicatorComponent implements OnInit, OnDestroy {
+  private reminderService = inject(ReminderService);
+  private translateService = inject(TranslateService);
+
   open = false;
   counter = 0;
   status = ReminderStatus.default;
@@ -23,11 +26,6 @@ export class ReminderIndicatorComponent implements OnInit, OnDestroy {
   tooltipText!: string;
 
   private subscription = new Subscription();
-
-  constructor(
-    private reminderService: ReminderService,
-    private translateService: TranslateService
-  ) {}
 
   ngOnInit(): void {
     // use open status from service

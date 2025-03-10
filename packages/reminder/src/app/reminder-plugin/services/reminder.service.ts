@@ -6,6 +6,8 @@ import { filter as _filter, cloneDeep, has, orderBy, sortBy } from 'lodash';
 import moment from 'moment';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
+import { ActiveTabService } from '~services/active-tab.service';
+import { DomService } from '~services/dom.service';
 import { LocalStorageService } from '~services/local-storage.service';
 import { ReminderDrawerComponent } from '../components/reminder-drawer/reminder-drawer.component';
 import {
@@ -23,9 +25,7 @@ import {
   ReminderGroupStatus,
   ReminderStatus,
   ReminderType,
-} from '../reminder.model';
-import { ActiveTabService } from './active-tab.service';
-import { DomService } from './dom.service';
+} from '../models/reminder.model';
 
 @Injectable()
 export class ReminderService {
