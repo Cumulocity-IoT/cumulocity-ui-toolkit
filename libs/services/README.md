@@ -12,9 +12,13 @@ Read custom fragment values and aggregate those over a given hierarchy starting 
 
 Fetch Managed Objects matching a certain query after a specified interval. Returns the delta containing MOs that matched later, and MOs which don't match anymore.
 
+## LocalStorageService
+
+A convienience wrapper to access local storage and provides a behavior to subscribe for changes.
+
 ## LocationGeocoderService
 
-Returns the latitdue and longitude for a city name using nominatims free service. 
+Returns the latitdue and longitude for a city name using nominatims free service.
 
 ## LocationRealtimeService
 
