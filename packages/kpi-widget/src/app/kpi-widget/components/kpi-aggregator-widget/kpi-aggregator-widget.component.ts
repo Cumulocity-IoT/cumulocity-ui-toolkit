@@ -1,17 +1,7 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, inject, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, ActivatedRouteSnapshot } from '@angular/router';
-import {
-  IManagedObject,
-  InventoryService,
-  IResultList,
-  Paging,
-} from '@c8y/client';
-import {
-  ChartConfiguration,
-  ChartData,
-  ChartTypeRegistry,
-  TooltipItem,
-} from 'chart.js';
+import { IManagedObject, InventoryService, IResultList, Paging } from '@c8y/client';
+import { ChartConfiguration, ChartData, ChartTypeRegistry, TooltipItem } from 'chart.js';
 import { cloneDeep, flatMap, has, orderBy } from 'lodash';
 import { KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG } from '../../models/kpi-aggregator-widget.const';
 import {
@@ -33,9 +23,10 @@ interface AssetGroup {
   styleUrls: ['./kpi-aggregator-widget.component.less'],
 })
 export class KpiAggregatorWidgetComponent implements OnInit {
-  @Input() config: KpiAggregatorWidgetConfig = cloneDeep(
-    KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG
-  );
+  private activatedRoute = inject(ActivatedRoute);
+  private inventoryService = inject(InventoryService);
+
+  @Input() config: KpiAggregatorWidgetConfig = cloneDeep(KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG);
 
   readonly displayMode = KpiAggregatorWidgetDisplay;
 
@@ -72,10 +63,7 @@ export class KpiAggregatorWidgetComponent implements OnInit {
   timestampStart!: Date;
   duration?: string;
 
-  constructor(
-    private activatedRoute: ActivatedRoute,
-    private inventoryService: InventoryService
-  ) {
+  constructor() {
     const asset = this.getAssetFromContext(this.activatedRoute.snapshot);
 
     if (asset) this.asset = asset;
@@ -86,8 +74,7 @@ export class KpiAggregatorWidgetComponent implements OnInit {
       typeof this.config.pageLimit !== 'number' || this.config.pageLimit <= 0
         ? 10000
         : this.config.pageLimit;
-    this.pieChartOptions.plugins.legend.position =
-      this.config.chartLegendPosition || 'top';
+    this.pieChartOptions.plugins.legend.position = this.config.chartLegendPosition || 'top';
 
     if (this.config.runOnLoad) {
       void this.loadData();
@@ -227,9 +214,7 @@ export class KpiAggregatorWidgetComponent implements OnInit {
     return { limit, assets };
   }
 
-  private async fetchAssets(
-    page = 1
-  ): Promise<IResultList<IManagedObject> | null> {
+  private async fetchAssets(page = 1): Promise<IResultList<IManagedObject> | null> {
     let response: IResultList<IManagedObject>;
 
     try {
@@ -422,14 +407,10 @@ export class KpiAggregatorWidgetComponent implements OnInit {
     this.total = total;
 
     // sort
-    const sorted = orderBy(groups[0].objects, (object) =>
-      object['name'].trim().toLowerCase()
-    );
+    const sorted = orderBy(groups[0].objects, (object) => object['name'].trim().toLowerCase());
 
     groups[0].objects =
-      this.config.order === KpiAggregatorWidgetOrder.desc
-        ? sorted.reverse()
-        : sorted;
+      this.config.order === KpiAggregatorWidgetOrder.desc ? sorted.reverse() : sorted;
 
     return groups;
   }
@@ -453,8 +434,7 @@ export class KpiAggregatorWidgetComponent implements OnInit {
   }
 
   private calcQueryDuration(): string {
-    let milliseconds =
-      this.timestampEnd.getTime() - this.timestampStart.getTime();
+    let milliseconds = this.timestampEnd.getTime() - this.timestampStart.getTime();
     let seconds = Math.floor(milliseconds / 1000);
     let minutes = Math.floor(seconds / 60);
 
@@ -518,8 +498,7 @@ export class KpiAggregatorWidgetComponent implements OnInit {
   }
 
   private getNextBatchLimit(): number {
-    if (this.paging.totalPages <= this.paging.currentPage)
-      throw 'No further pages available.';
+    if (this.paging.totalPages <= this.paging.currentPage) throw 'No further pages available.';
     if (this.config.parallelRequests === 1) return this.paging.currentPage + 1;
 
     const limit = this.paging.currentPage + this.config.parallelRequests;
@@ -527,14 +506,9 @@ export class KpiAggregatorWidgetComponent implements OnInit {
     return limit < this.paging.totalPages ? limit : this.paging.totalPages;
   }
 
-  private generatePieChartLabel(
-    context: TooltipItem<keyof ChartTypeRegistry>
-  ): string {
-    const percent =
-      Math.round((context.parsed / this.aggreagtedValue) * 1000) / 10;
+  private generatePieChartLabel(context: TooltipItem<keyof ChartTypeRegistry>): string {
+    const percent = Math.round((context.parsed / this.aggreagtedValue) * 1000) / 10;
 
-    return this.config.percent
-      ? `${percent}% (${context.formattedValue})`
-      : context.formattedValue;
+    return this.config.percent ? `${percent}% (${context.formattedValue})` : context.formattedValue;
   }
 }

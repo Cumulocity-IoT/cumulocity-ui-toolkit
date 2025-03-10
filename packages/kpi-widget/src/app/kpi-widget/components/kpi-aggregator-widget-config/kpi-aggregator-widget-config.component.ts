@@ -1,24 +1,25 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, inject, Input, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { OptionsService } from '@c8y/ngx-components';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { cloneDeep, has } from 'lodash';
 import {
-  KPI_AGGREGAOR_WIDGET_ORDER_OPTIONS,
   KPI_AGGREGAOR_WIDGET__CHART_LEGEND_POSITION_OPTIONS,
   KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG,
   KPI_AGGREGAOR_WIDGET__DISPLAY_OPTIONS,
   KPI_AGGREGAOR_WIDGET__SORT_OPTIONS,
+  KPI_AGGREGAOR_WIDGET_ORDER_OPTIONS,
 } from '../../models/kpi-aggregator-widget.const';
 import { KpiAggregatorWidgetConfig } from '../../models/kpi-aggregator-widget.model';
 
 @Component({
   selector: 'c8y-kpi-aggregator-widget-config',
-  template:
-    '<formly-form [form]="form" [fields]="fields" [model]="config"></formly-form>',
+  template: '<formly-form [form]="form" [fields]="fields" [model]="config"></formly-form>',
   styleUrl: 'kpi-aggregator-widget-config.component.less',
 })
 export class KpiAggregatorWidgetConfigComponent implements OnInit {
+  private optionsService = inject(OptionsService);
+
   @Input() config!: KpiAggregatorWidgetConfig;
 
   set opacity(opacity: number) {
@@ -252,8 +253,7 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
           type: 'checkbox',
           props: {
             label: 'Run on Load',
-            description:
-              'If active, starts to query on page load. Otherwise triggered manually.',
+            description: 'If active, starts to query on page load. Otherwise triggered manually.',
           },
         },
       ],
@@ -261,8 +261,6 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
   ];
 
   private defaultConfig = cloneDeep(KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG);
-
-  constructor(private optionsService: OptionsService) {}
 
   ngOnInit(): void {
     this.setTenantConfigs();
@@ -272,9 +270,7 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
   private setTenantConfigs() {
     // override default with branding
     if (has(this.optionsService.brandingCssVars, 'brand-primary')) {
-      this.defaultConfig.color = this.optionsService.brandingCssVars[
-        'brand-primary'
-      ] as string;
+      this.defaultConfig.color = this.optionsService.brandingCssVars['brand-primary'] as string;
     }
   }
 
@@ -283,11 +279,7 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
     const keys = Object.keys(this.defaultConfig);
 
     keys.forEach((key) => {
-      if (
-        !this.config[key] &&
-        typeof this.config[key] !== 'boolean' &&
-        this.config[key] !== 0
-      ) {
+      if (!this.config[key] && typeof this.config[key] !== 'boolean' && this.config[key] !== 0) {
         this.config[key] = this.defaultConfig[key];
       }
     });
