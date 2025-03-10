@@ -1,17 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import {
-  AlertModule,
-  CoreModule,
-  EventRealtimeService,
-  hookAction,
-} from '@c8y/ngx-components';
+import { AlertModule, CoreModule, EventRealtimeService, hookAction } from '@c8y/ngx-components';
 import { AssetSelectorModule } from '@c8y/ngx-components/assets-navigator';
 import { FormlyModule } from '@ngx-formly/core';
 import { CollapseModule } from 'ngx-bootstrap/collapse';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { MomentModule } from 'ngx-moment';
+import { LocalStorageService } from '~services/local-storage.service';
 import {
   AssetFieldType,
   ReminderDrawerComponent,
@@ -22,7 +18,6 @@ import {
 import { ReminderTypeComponent } from './components/reminder-type/reminder-type.component';
 import { DomService, ReminderService } from './services';
 import { ActiveTabService } from './services/active-tab.service';
-import { LocalStorageService } from './services/local-storage.service';
 
 @NgModule({
   declarations: [

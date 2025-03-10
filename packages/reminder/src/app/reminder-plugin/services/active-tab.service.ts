@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { LocalStorageService } from './local-storage.service';
+import { LocalStorageService } from '~services/local-storage.service';
 
 export const ACTIVE_TAB_STORAGE_KEY = 'c8y_rpActiveTab';
 
@@ -13,9 +13,7 @@ export class ActiveTabService {
 
   constructor(private localStorageService: LocalStorageService) {
     this.setActiveTabListener();
-    this.localStorageService.storage$.subscribe(() =>
-      this.handleStorageUpdate()
-    );
+    this.localStorageService.storage$.subscribe(() => this.handleStorageUpdate());
   }
 
   init(): void {
@@ -32,12 +30,10 @@ export class ActiveTabService {
   }
 
   private handleStorageUpdate(): void {
-    const isActive =
-      this.localStorageService.get(ACTIVE_TAB_STORAGE_KEY) === this.tabId;
+    const isActive = this.localStorageService.get(ACTIVE_TAB_STORAGE_KEY) === this.tabId;
 
     // update lastActive, if it has changed
-    if (isActive !== this.lastActive$.getValue())
-      this.lastActive$.next(isActive);
+    if (isActive !== this.lastActive$.getValue()) this.lastActive$.next(isActive);
   }
 
   private setActiveTabListener(): void {
