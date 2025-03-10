@@ -4,7 +4,7 @@ import { AlertService } from '@c8y/ngx-components';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { TranslateService } from '@ngx-translate/core';
 import { BsModalRef } from 'ngx-bootstrap/modal';
-import { ReleaseNote } from '../../release-notes.model';
+import { ReleaseNote } from '../../models/release-notes.model';
 import { ReleaseNotesService } from '../../services/release-notes.service';
 
 @Component({

@@ -50,7 +50,7 @@ export const ReminderGroupStatus = {
   due: 'DUE',
   upcoming: 'UPCOMING',
   cleared: 'CLEARED',
-};
+} as const;
 export type ReminderGroupStatus =
   (typeof ReminderGroupStatus)[keyof typeof ReminderGroupStatus];
 
@@ -58,7 +58,7 @@ export const ReminderStatus = {
   active: 'ACTIVE',
   acknowledged: 'ACKNOWLEDGED',
   cleared: 'CLEARED',
-};
+} as const;
 export type ReminderStatus =
   (typeof ReminderStatus)[keyof typeof ReminderStatus];
 

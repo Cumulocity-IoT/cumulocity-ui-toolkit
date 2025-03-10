@@ -1,7 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { AlertService } from '@c8y/ngx-components';
 import { BsModalService } from 'ngx-bootstrap/modal';
-import { ReleaseNote } from '../../release-notes.model';
+import { ReleaseNote } from '../../models/release-notes.model';
 import { ReleaseNotesService } from '../../services/release-notes.service';
 import { ReminderNotesAdminModalComponent } from '../admin-modal/admin-modal.component';
 

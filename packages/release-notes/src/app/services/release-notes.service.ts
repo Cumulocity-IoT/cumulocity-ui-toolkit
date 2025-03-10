@@ -9,7 +9,7 @@ import {
   RELEASE_NOTES__MO_TYPE,
   ReleaseNote,
   ReleaseNoteEvent,
-} from '../release-notes.model';
+} from '../models/release-notes.model';
 
 @Injectable()
 export class ReleaseNotesService {

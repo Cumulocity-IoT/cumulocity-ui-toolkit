@@ -9,7 +9,7 @@ import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { MomentModule } from 'ngx-moment';
 import { LocalStorageService } from '~services/local-storage.service';
 import { ReminderNotesAdminListComponent, ReminderNotesAdminModalComponent } from '../components';
-import { RELEASE_NOTES__ADMIN_PATH } from '../release-notes.model';
+import { RELEASE_NOTES__ADMIN_PATH } from '../models/release-notes.model';
 import { ReleaseNotesService } from '../services/release-notes.service';
 
 @NgModule({
