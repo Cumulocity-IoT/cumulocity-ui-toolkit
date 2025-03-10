@@ -1,5 +1,9 @@
 # Services
 
+## ActiveTabService
+
+Provides a service to track the currently active tab. **Depends on the `LocalStorageService`.**
+
 ## DataGridPatchService
 
 If you dont want the c8y-data-grid to use its multi column sort standard, use this hack to force it to use single sort.
