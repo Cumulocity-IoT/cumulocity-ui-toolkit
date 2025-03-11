@@ -7,6 +7,8 @@
     "build": "npm run build:reminder && npm run build:kpi",
     "prebuild": "npm run clean",
     "clean": "rimraf dist",
+    "lint": "eslint . --quiet",
+    "lint:fix": "eslint . --quiet --fix",
     "serve:reminder": "npm run serve plugin.reminder -- --shell %APP",
     "build:reminder": "ng build plugin.reminder",
     "postbuild:reminder": "node tools/build-rename.js -p 'packages/reminder'",
@@ -47,12 +49,19 @@
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^18.2.12",
+    "@angular-eslint/eslint-plugin-template": "^19.2.1",
+    "@angular-eslint/template-parser": "^19.2.1",
     "@angular/cli": "^18.2.12",
     "@angular/compiler-cli": "^18.2.0",
     "@c8y/devkit": "1021.6.0",
     "@c8y/options": "1021.6.0",
+    "@stylistic/eslint-plugin": "^4.2.0",
     "@types/jasmine": "~5.1.0",
     "@types/lodash": "^4.17.13",
+    "@typescript-eslint/eslint-plugin": "^8.26.1",
+    "@typescript-eslint/parser": "^8.26.1",
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-prettier": "^5.2.3",
     "from-env": "^1.1.4",
     "jasmine-core": "~5.2.0",
     "karma": "~6.4.0",
@@ -63,5 +72,8 @@
     "prettier-plugin-organize-attributes": "^1.0.0",
     "rimraf": "^5.0.10",
     "typescript": "~5.5.2"
+  },
+  "overrides": {
+    "globals": "14.0.0"
   }
 }
