@@ -8,7 +8,7 @@
     "prebuild": "npm run clean",
     "clean": "rimraf dist",
     "lint": "eslint . --quiet",
-    "format": "eslint . --quiet --fix",
+    "lint:fix": "eslint . --quiet --fix",
     "serve:reminder": "npm run serve plugin.reminder -- --shell %APP",
     "build:reminder": "ng build plugin.reminder",
     "postbuild:reminder": "node tools/build-rename.js -p 'packages/reminder'",
