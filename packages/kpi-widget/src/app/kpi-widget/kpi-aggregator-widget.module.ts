@@ -19,7 +19,7 @@ import { KpiAggregatorWidgetComponent } from './components/kpi-aggregator-widget
     TooltipModule,
     NgChartsModule,
     FormlyModule.forChild(),
-    BsDropdownModule
+    BsDropdownModule,
   ],
   declarations: [KpiAggregatorWidgetComponent, KpiAggregatorWidgetConfigComponent],
   providers: [
@@ -29,20 +29,19 @@ import { KpiAggregatorWidgetComponent } from './components/kpi-aggregator-widget
       description: '',
       component: KpiAggregatorWidgetComponent,
       configComponent: KpiAggregatorWidgetConfigComponent,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      previewImage: require('./assets/preview.png'),
+      previewImage: require('./assets/preview.png') as string,
       data: {
         settings: {
           noNewWidgets: false,
           ng1: {
             options: {
               noDeviceTarget: true,
-              groupsSelectable: true
-            }
-          }
-        }
-      }
-    })
-  ]
+              groupsSelectable: true,
+            },
+          },
+        },
+      },
+    }),
+  ],
 })
 export class KpiAggregatorWidgetPluginModule {}

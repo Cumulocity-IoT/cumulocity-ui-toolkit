@@ -14,8 +14,7 @@ import { KpiAggregatorWidgetConfig } from '../../models/kpi-aggregator-widget.mo
 
 @Component({
   selector: 'c8y-kpi-aggregator-widget-config',
-  template:
-    '<formly-form [form]="form" [fields]="fields" [model]="config"></formly-form>',
+  template: '<formly-form [form]="form" [fields]="fields" [model]="config"></formly-form>',
   styleUrl: 'kpi-aggregator-widget-config.component.less',
 })
 export class KpiAggregatorWidgetConfigComponent implements OnInit {
@@ -24,6 +23,7 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
   set opacity(opacity: number) {
     this.config.opacity = opacity / 100;
   }
+
   get opacity(): number {
     return this.config.opacity * 100;
   }
@@ -252,8 +252,7 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
           type: 'checkbox',
           props: {
             label: 'Run on Load',
-            description:
-              'If active, starts to query on page load. Otherwise triggered manually.',
+            description: 'If active, starts to query on page load. Otherwise triggered manually.',
           },
         },
       ],
@@ -272,24 +271,12 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
   private setTenantConfigs() {
     // override default with branding
     if (has(this.optionsService.brandingCssVars, 'brand-primary')) {
-      this.defaultConfig.color = this.optionsService.brandingCssVars[
-        'brand-primary'
-      ] as string;
+      this.defaultConfig.color = this.optionsService.brandingCssVars['brand-primary'];
     }
   }
 
   private setDefaultValues() {
     // make sure alle defaults are present, eg after updates
-    const keys = Object.keys(this.defaultConfig);
-
-    keys.forEach((key) => {
-      if (
-        !this.config[key] &&
-        typeof this.config[key] !== 'boolean' &&
-        this.config[key] !== 0
-      ) {
-        this.config[key] = this.defaultConfig[key];
-      }
-    });
+    return { ...this.defaultConfig, ...this.config };
   }
 }

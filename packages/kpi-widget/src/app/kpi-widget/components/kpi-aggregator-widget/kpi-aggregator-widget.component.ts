@@ -1,17 +1,7 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, inject, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, ActivatedRouteSnapshot } from '@angular/router';
-import {
-  IManagedObject,
-  InventoryService,
-  IResultList,
-  Paging,
-} from '@c8y/client';
-import {
-  ChartConfiguration,
-  ChartData,
-  ChartTypeRegistry,
-  TooltipItem,
-} from 'chart.js';
+import { IManagedObject, InventoryService, IResultList, Paging } from '@c8y/client';
+import { ChartConfiguration, ChartData, ChartTypeRegistry, TooltipItem } from 'chart.js';
 import { cloneDeep, flatMap, has, orderBy } from 'lodash';
 import { KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG } from '../../models/kpi-aggregator-widget.const';
 import {
@@ -33,9 +23,10 @@ interface AssetGroup {
   styleUrls: ['./kpi-aggregator-widget.component.less'],
 })
 export class KpiAggregatorWidgetComponent implements OnInit {
-  @Input() config: KpiAggregatorWidgetConfig = cloneDeep(
-    KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG
-  );
+  private activatedRoute = inject(ActivatedRoute);
+  private inventoryService = inject(InventoryService);
+
+  @Input() config: KpiAggregatorWidgetConfig = cloneDeep(KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG);
 
   readonly displayMode = KpiAggregatorWidgetDisplay;
 
@@ -48,8 +39,6 @@ export class KpiAggregatorWidgetComponent implements OnInit {
   paging!: Paging<IManagedObject>;
   pageLimit = 0;
   aggreagtedValue = 0;
-
-  private rawAssets!: IManagedObject[];
 
   // pie chart
   pieChartData?: ChartData<'pie', number[], string | string[]>;
@@ -72,22 +61,137 @@ export class KpiAggregatorWidgetComponent implements OnInit {
   timestampStart!: Date;
   duration?: string;
 
-  constructor(
-    private activatedRoute: ActivatedRoute,
-    private inventoryService: InventoryService
-  ) {
-    const asset = this.getAssetFromContext(this.activatedRoute.snapshot);
+  private rawAssets!: IManagedObject[];
 
-    if (asset) this.asset = asset;
+  // display: aggregated
+  protected digestAggregatedAssets(assets: IManagedObject[]): AssetGroup[] {
+    let groups: AssetGroup[] = [];
+    let key: string;
+    let group: AssetGroup;
+    let value: number | string;
+    let total = 0;
+
+    assets.forEach((asset) => {
+      key = this.getKeyFromAsset(asset);
+      group = groups.find((g) => g.key === key);
+
+      if (!key) return;
+
+      value = this.getPathData<number>(asset, this.config.kpiFragment);
+      total += value;
+
+      if (typeof value === 'number') {
+        if (group) {
+          group.objects.push(asset);
+
+          group.value = (group.value as number) + value;
+        } else {
+          groups.push({
+            key,
+            label: this.getPathData<string>(asset, this.config.label),
+            value,
+            objects: [asset],
+          });
+        }
+      }
+    });
+
+    this.total = total;
+
+    // sort
+    groups = orderBy(groups, this.config.sort);
+    if (this.config.order === KpiAggregatorWidgetOrder.desc) groups.reverse();
+
+    return groups;
+  }
+
+  // display: counted
+  protected digestCountedAssets(assets: IManagedObject[]): AssetGroup[] {
+    let groups: AssetGroup[] = [];
+    let key: string;
+    let group: AssetGroup;
+    let value: number | string;
+    let total = 0;
+
+    assets.forEach((asset) => {
+      key = this.getKeyFromAsset(asset);
+      group = groups.find((g) => g.key === key);
+
+      if (!key) return;
+
+      value = this.getPathData<string>(asset, this.config.kpiFragment);
+      total += 1;
+
+      if (group) {
+        group.objects.push(asset);
+        group.value = (group.value as number) + 1;
+      } else {
+        groups.push({
+          key,
+          label: value,
+          value: 1,
+          objects: [asset],
+        });
+      }
+    });
+
+    this.total = total;
+
+    // sort
+    groups = orderBy(groups, this.config.sort);
+    if (this.config.order === KpiAggregatorWidgetOrder.desc) groups.reverse();
+
+    return groups;
+  }
+
+  // display: listed
+  protected digestListedAssets(assets: IManagedObject[]): AssetGroup[] {
+    const groups: AssetGroup[] = [];
+    let key: string;
+    let group: AssetGroup;
+    let total = 0;
+
+    assets.forEach((asset) => {
+      key = this.getKeyFromAsset(asset);
+      group = groups.find((g) => g.key === key);
+      total += 1;
+
+      if (group) {
+        group.objects.push(asset);
+        group.value = (group.value as number) + 1;
+      } else {
+        groups.push({
+          key,
+          label: '',
+          value: 1,
+          objects: [asset],
+        });
+      }
+    });
+
+    this.total = total;
+
+    // sort
+    const sorted = orderBy(groups[0].objects, (object) =>
+      (object['name'] as string).trim().toLowerCase()
+    );
+
+    groups[0].objects =
+      this.config.order === KpiAggregatorWidgetOrder.desc ? sorted.reverse() : sorted;
+
+    return groups;
   }
 
   ngOnInit(): void {
+    const asset = this.getAssetFromContext(this.activatedRoute.snapshot);
+
+    if (asset) this.asset = asset;
+
     this.config.pageLimit =
       typeof this.config.pageLimit !== 'number' || this.config.pageLimit <= 0
         ? 10000
         : this.config.pageLimit;
-    this.pieChartOptions.plugins.legend.position =
-      this.config.chartLegendPosition || 'top';
+    this.pieChartOptions.plugins.legend.position = this.config.chartLegendPosition || 'top';
 
     if (this.config.runOnLoad) {
       void this.loadData();
@@ -104,6 +208,7 @@ export class KpiAggregatorWidgetComponent implements OnInit {
 
     if (!response) {
       this.loading = false;
+
       return;
     }
 
@@ -227,9 +332,7 @@ export class KpiAggregatorWidgetComponent implements OnInit {
     return { limit, assets };
   }
 
-  private async fetchAssets(
-    page = 1
-  ): Promise<IResultList<IManagedObject> | null> {
+  private async fetchAssets(page = 1): Promise<IResultList<IManagedObject> | null> {
     let response: IResultList<IManagedObject>;
 
     try {
@@ -241,7 +344,8 @@ export class KpiAggregatorWidgetComponent implements OnInit {
       });
     } catch (error) {
       console.error('fetchAssets', error);
-      throw `Could not complete query for page ${page}`;
+
+      throw new Error(`Could not complete query for page ${page}`);
     }
     if (!response || !response.data.length) return null;
 
@@ -269,6 +373,7 @@ export class KpiAggregatorWidgetComponent implements OnInit {
   private digestAssets(assets: IManagedObject[]): AssetGroup[] {
     if (!assets || !assets.length) {
       console.error('no assets provided');
+
       return [];
     }
 
@@ -283,6 +388,7 @@ export class KpiAggregatorWidgetComponent implements OnInit {
         return this.digestListedAssets(assets);
       default:
         console.error('Unsupported display option.');
+
         return [];
     }
   }
@@ -293,7 +399,6 @@ export class KpiAggregatorWidgetComponent implements OnInit {
 
     pathPartials.forEach((p) => {
       if (has(data, p)) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         data = data[p];
       } else {
         return;
@@ -311,127 +416,6 @@ export class KpiAggregatorWidgetComponent implements OnInit {
     return !!this.config.groupBy && this.config.groupBy !== ''
       ? this.getPathData<string>(asset, this.config.groupBy)?.toString()
       : 'undefined';
-  }
-
-  // display: aggregated
-  protected digestAggregatedAssets(assets: IManagedObject[]): AssetGroup[] {
-    let groups: AssetGroup[] = [];
-    let key: string;
-    let group: AssetGroup;
-    let value: number | string;
-    let total = 0;
-
-    assets.forEach((asset) => {
-      key = this.getKeyFromAsset(asset);
-      group = groups.find((g) => g.key === key);
-
-      if (!key) return;
-
-      value = this.getPathData<number>(asset, this.config.kpiFragment);
-      total += value;
-
-      if (typeof value === 'number') {
-        if (group) {
-          group.objects.push(asset);
-
-          group.value = (group.value as number) + value;
-        } else {
-          groups.push({
-            key,
-            label: this.getPathData<string>(asset, this.config.label),
-            value,
-            objects: [asset],
-          });
-        }
-      }
-    });
-
-    this.total = total;
-
-    // sort
-    groups = orderBy(groups, this.config.sort);
-    if (this.config.order === KpiAggregatorWidgetOrder.desc) groups.reverse();
-
-    return groups;
-  }
-
-  // display: counted
-  protected digestCountedAssets(assets: IManagedObject[]): AssetGroup[] {
-    let groups: AssetGroup[] = [];
-    let key: string;
-    let group: AssetGroup;
-    let value: number | string;
-    let total = 0;
-
-    assets.forEach((asset) => {
-      key = this.getKeyFromAsset(asset);
-      group = groups.find((g) => g.key === key);
-
-      if (!key) return;
-
-      value = this.getPathData<string>(asset, this.config.kpiFragment);
-      total += 1;
-
-      if (group) {
-        group.objects.push(asset);
-        group.value = (group.value as number) + 1;
-      } else {
-        groups.push({
-          key,
-          label: value as string,
-          value: 1,
-          objects: [asset],
-        });
-      }
-    });
-
-    this.total = total;
-
-    // sort
-    groups = orderBy(groups, this.config.sort);
-    if (this.config.order === KpiAggregatorWidgetOrder.desc) groups.reverse();
-
-    return groups;
-  }
-
-  // display: listed
-  protected digestListedAssets(assets: IManagedObject[]): AssetGroup[] {
-    const groups: AssetGroup[] = [];
-    let key: string;
-    let group: AssetGroup;
-    let total = 0;
-
-    assets.forEach((asset) => {
-      key = this.getKeyFromAsset(asset);
-      group = groups.find((g) => g.key === key);
-      total += 1;
-
-      if (group) {
-        group.objects.push(asset);
-        group.value = (group.value as number) + 1;
-      } else {
-        groups.push({
-          key,
-          label: '',
-          value: 1,
-          objects: [asset],
-        });
-      }
-    });
-
-    this.total = total;
-
-    // sort
-    const sorted = orderBy(groups[0].objects, (object) =>
-      object['name'].trim().toLowerCase()
-    );
-
-    groups[0].objects =
-      this.config.order === KpiAggregatorWidgetOrder.desc
-        ? sorted.reverse()
-        : sorted;
-
-    return groups;
   }
 
   private setMinMax(groups: AssetGroup[]) {
@@ -453,8 +437,7 @@ export class KpiAggregatorWidgetComponent implements OnInit {
   }
 
   private calcQueryDuration(): string {
-    let milliseconds =
-      this.timestampEnd.getTime() - this.timestampStart.getTime();
+    let milliseconds = this.timestampEnd.getTime() - this.timestampStart.getTime();
     let seconds = Math.floor(milliseconds / 1000);
     let minutes = Math.floor(seconds / 60);
 
@@ -500,7 +483,7 @@ export class KpiAggregatorWidgetComponent implements OnInit {
     assetGroups: AssetGroup[]
   ): ChartData<'pie', number[], string | string[]> {
     const labels: string | string[] = [];
-    let data: number[] = [];
+    const data: number[] = [];
 
     assetGroups.forEach((ag) => {
       labels.push(ag.key);
@@ -519,7 +502,7 @@ export class KpiAggregatorWidgetComponent implements OnInit {
 
   private getNextBatchLimit(): number {
     if (this.paging.totalPages <= this.paging.currentPage)
-      throw 'No further pages available.';
+      throw new Error('No further pages available.');
     if (this.config.parallelRequests === 1) return this.paging.currentPage + 1;
 
     const limit = this.paging.currentPage + this.config.parallelRequests;
@@ -527,14 +510,9 @@ export class KpiAggregatorWidgetComponent implements OnInit {
     return limit < this.paging.totalPages ? limit : this.paging.totalPages;
   }
 
-  private generatePieChartLabel(
-    context: TooltipItem<keyof ChartTypeRegistry>
-  ): string {
-    const percent =
-      Math.round((context.parsed / this.aggreagtedValue) * 1000) / 10;
+  private generatePieChartLabel(context: TooltipItem<keyof ChartTypeRegistry>): string {
+    const percent = Math.round((context.parsed / this.aggreagtedValue) * 1000) / 10;
 
-    return this.config.percent
-      ? `${percent}% (${context.formattedValue})`
-      : context.formattedValue;
+    return this.config.percent ? `${percent}% (${context.formattedValue})` : context.formattedValue;
   }
 }
