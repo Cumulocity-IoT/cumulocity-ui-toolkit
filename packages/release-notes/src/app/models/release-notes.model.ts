@@ -1,4 +1,4 @@
-import { IEvent } from "@c8y/client";
+import { IEvent } from '@c8y/client';
 
 export const RELEASE_NOTES__ADMIN_PATH = 'release-notes';
 export const RELEASE_NOTES__EVENT_TYPE = 'c8y_ReleaseNotes';
@@ -14,10 +14,12 @@ export interface ReleaseNote {
 }
 
 export interface ReleaseNoteEvent extends IEvent {
-  [RELEASE_NOTES__EVENT_TYPE]: {
-    version: ReleaseNote['version'];
-    published: ReleaseNote['published'];
-    publicationTime?: string;
-    body?: ReleaseNote['body'];
-  };
+  [RELEASE_NOTES__EVENT_TYPE]: ReleaseNoteEventPayload;
+}
+
+export interface ReleaseNoteEventPayload {
+  version: ReleaseNote['version'];
+  published: ReleaseNote['published'];
+  publicationTime?: string;
+  body?: ReleaseNote['body'];
 }

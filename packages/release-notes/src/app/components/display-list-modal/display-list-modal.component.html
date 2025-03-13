@@ -1,6 +1,6 @@
 <div class="modal-header separator">
   <h3>
-    <i [c8yIcon]="'price-tag'" class="m-r-8"></i>
+    <i class="m-r-8" [c8yIcon]="'price-tag'"></i>
     <span translate>Release Notes</span>
   </h3>
 </div>
@@ -11,13 +11,10 @@
       <c8y-li>
         <header>
           <span>{{ release.version }}</span>
-          <time>{{ release.publicationTime | c8yDate : "shortDate" }}</time>
+          <time>{{ release.publicationTime | c8yDate: 'shortDate' }}</time>
         </header>
 
-        <div
-          class="release-body"
-          [innerHtml]="release.body | markdownToHtml | async"
-        ></div>
+        <div class="release-body" [innerHtml]="release.body | markdownToHtml | async"></div>
       </c8y-li>
     } @empty {
       <c8y-li>
@@ -33,7 +30,5 @@
 </div>
 
 <div class="modal-footer">
-  <button type="button" class="btn btn-default" (click)="close()" translate>
-    Close
-  </button>
+  <button class="btn btn-default" (click)="close()" type="button" translate>Close</button>
 </div>

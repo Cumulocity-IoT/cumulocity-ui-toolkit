@@ -1,23 +1,26 @@
-import { Injectable } from "@angular/core";
-import { debounce, DebouncedFuncLeading } from "lodash";
-import { Subject } from "rxjs";
+import { Injectable } from '@angular/core';
+import { debounce, DebouncedFuncLeading } from 'lodash';
+import { Subject } from 'rxjs';
 
 @Injectable()
 export class LocalStorageService {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   storage$: Subject<any> = new Subject();
 
   get debounceTime(): number {
     return this._debounceTime;
   }
+
   set debounceTime(delayInMS) {
     this._debounceTime = delayInMS;
     this.setStorageDebounce(delayInMS);
   }
 
   private _debounceTime = 100;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private storageUpdateDebounce!: DebouncedFuncLeading<(value: any) => void>;
 
-  constructor() {
+  init() {
     this.setStorageDebounce();
     this.listenToStorageChanges();
   }
@@ -48,17 +51,10 @@ export class LocalStorageService {
   }
 
   private listenToStorageChanges(): void {
-    window.addEventListener(
-      'storage',
-      () => this.storageUpdateDebounce(localStorage),
-      false
-    );
+    window.addEventListener('storage', () => this.storageUpdateDebounce(localStorage), false);
   }
 
   private setStorageDebounce(debounceTime = this.debounceTime): void {
-    this.storageUpdateDebounce = debounce(
-      (ls) => this.storage$.next(ls),
-      debounceTime
-    );
+    this.storageUpdateDebounce = debounce((ls) => this.storage$.next(ls), debounceTime);
   }
 }

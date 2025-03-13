@@ -44,6 +44,6 @@ import { ReleaseNotesService } from '../services/release-notes.service';
 })
 export class ReleaseNotesAdminPluginModule {
   constructor(private releaseNoteService: ReleaseNotesService) {
-    this.releaseNoteService.checkForNewRelease();
+    void this.releaseNoteService.checkForNewRelease();
   }
 }

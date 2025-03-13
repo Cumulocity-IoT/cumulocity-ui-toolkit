@@ -1,9 +1,9 @@
 <button
-  type="button"
   class="c8y-right-drawer__link separator-top"
+  (click)="open()"
+  type="button"
   tabindex="0"
   data-cy="release-notes-menu-item"
-  (click)="open()"
 >
   <i [c8yIcon]="'price-tag'"></i>
   <span class="text-medium" translate> Release Notes </span>

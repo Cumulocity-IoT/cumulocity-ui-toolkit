@@ -26,7 +26,10 @@ export class ReminderNotesAdminListComponent implements OnInit {
     const ref = this.modalService.show(ReminderNotesAdminModalComponent, {
       class: 'modal-md',
     });
-    ref.onHidden.subscribe(() => this.reload());
+
+    ref.onHidden.subscribe(() => {
+      void this.reload();
+    });
   }
 
   async delete(release: ReleaseNote): Promise<void> {
@@ -43,7 +46,10 @@ export class ReminderNotesAdminListComponent implements OnInit {
       class: 'modal-md',
       initialState: { release },
     });
-    ref.onHidden.subscribe(() => this.reload());
+
+    ref.onHidden.subscribe(() => {
+      void this.reload();
+    });
   }
 
   async reload(): Promise<void> {

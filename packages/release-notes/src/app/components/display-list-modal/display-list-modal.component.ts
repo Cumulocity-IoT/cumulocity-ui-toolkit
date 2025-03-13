@@ -10,14 +10,16 @@ import { ReleaseNotesService } from '../../services/release-notes.service';
 })
 export class ReleaseNotesDisplayListModalComponent implements OnInit {
   private bsModalRef = inject(BsModalRef);
-  private releaseNoteServive = inject(ReleaseNotesService);
+  private releaseNoteService = inject(ReleaseNotesService);
 
   releaseNotes: ReleaseNote[];
   showOnlyNewReleases = false;
 
-  async ngOnInit(): Promise<void> {
-    this.releaseNotes = await this.releaseNoteServive.list(this.showOnlyNewReleases);
-    this.releaseNoteServive.setLastChecked();
+  ngOnInit(): void {
+    void (async () => {
+      this.releaseNotes = await this.releaseNoteService.list(this.showOnlyNewReleases);
+      this.releaseNoteService.setLastChecked();
+    });
   }
 
   close(): void {

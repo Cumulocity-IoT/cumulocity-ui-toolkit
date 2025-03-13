@@ -20,6 +20,7 @@ export class ReminderNotesAdminModalComponent {
   @Input() get release(): ReleaseNote {
     return this._release;
   }
+
   set release(release: ReleaseNote) {
     this._release = {
       id: release.id,
@@ -39,7 +40,7 @@ export class ReminderNotesAdminModalComponent {
           key: 'version',
           type: 'input',
           props: {
-            label: this.translateService.instant('Version'),
+            label: this.translateService.instant('Version') as string,
             required: true,
           },
         },
@@ -48,14 +49,14 @@ export class ReminderNotesAdminModalComponent {
           type: 'checkbox',
           defaultValue: false,
           props: {
-            label: this.translateService.instant('Published'),
+            label: this.translateService.instant('Published') as string,
           },
         },
         {
           key: 'body',
           type: 'textarea',
           props: {
-            label: this.translateService.instant('Body'),
+            label: this.translateService.instant('Body') as string,
           },
         },
       ],
@@ -65,7 +66,7 @@ export class ReminderNotesAdminModalComponent {
   isLoading = false;
 
   get body(): string {
-    return this.form.value['body'] || '';
+    return (this.form.value['body'] as string) || '';
   }
 
   private _release: ReleaseNote;
@@ -84,7 +85,7 @@ export class ReminderNotesAdminModalComponent {
         release.id = this.release.id;
         release.publicationTime = this.release.publicationTime;
 
-        await this.releaseNoteServive.update(release as ReleaseNote);
+        await this.releaseNoteServive.update(release);
 
         this.alertService.success(`Release ${release.version} updated`);
         this.close();

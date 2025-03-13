@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { EventService, IEvent, IManagedObject, InventoryService, ISource } from '@c8y/client';
+import { has } from 'lodash';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { LocalStorageService } from '~services/local-storage.service';
 import { ReleaseNotesDisplayListModalComponent } from '../components';
@@ -9,6 +10,7 @@ import {
   RELEASE_NOTES__MO_TYPE,
   ReleaseNote,
   ReleaseNoteEvent,
+  ReleaseNoteEventPayload,
 } from '../models/release-notes.model';
 
 @Injectable()
@@ -66,7 +68,7 @@ export class ReleaseNotesService {
   }
 
   async checkForNewRelease(): Promise<void> {
-    const lastChecked = this.localStorageService.get(RELEASE_NOTES__LAST_CHECKED_KEY) as string;
+    const lastChecked = this.localStorageService.get<string>(RELEASE_NOTES__LAST_CHECKED_KEY);
 
     if (!lastChecked) this.setLastChecked();
     else if (await this.hasNewerReleases(lastChecked)) this.openReleaseNotesModal(true);
@@ -84,16 +86,16 @@ export class ReleaseNotesService {
   }
 
   private convertEventListToReleaseList(releaseEvents: IEvent[]): ReleaseNote[] {
-    return releaseEvents.map((release) => this.convertEventToRelease(release)) as ReleaseNote[];
+    return releaseEvents.map((release) => this.convertEventToRelease(release));
   }
 
   private convertEventToRelease(releaseEvent: IEvent | ReleaseNoteEvent): ReleaseNote {
-    const eventData = releaseEvent[RELEASE_NOTES__EVENT_TYPE];
+    const eventData = releaseEvent[RELEASE_NOTES__EVENT_TYPE] as ReleaseNoteEventPayload;
 
     return {
       id: releaseEvent.id,
       version: eventData.version,
-      published: releaseEvent.published,
+      published: (releaseEvent.published as boolean) || false,
       publicationTime: eventData.publicationTime ? new Date(eventData.publicationTime) : null,
       body: eventData.body || null,
     };
@@ -130,7 +132,7 @@ export class ReleaseNotesService {
   }
 
   private filterByPublishDate(events: ReleaseNoteEvent[]): ReleaseNoteEvent[] {
-    const lastChecked = this.localStorageService.get(RELEASE_NOTES__LAST_CHECKED_KEY) as string;
+    const lastChecked = this.localStorageService.get<string>(RELEASE_NOTES__LAST_CHECKED_KEY);
 
     return events.filter((event) => event[RELEASE_NOTES__EVENT_TYPE].publicationTime > lastChecked);
   }
@@ -171,8 +173,12 @@ export class ReleaseNotesService {
       fragmentType: 'published',
     });
 
+    const eventList = response.data as ReleaseNoteEvent[];
+
     return (
-      response.data.length && response.data[0][RELEASE_NOTES__EVENT_TYPE].publicationTime > date
+      eventList.length &&
+      has(eventList[0][RELEASE_NOTES__EVENT_TYPE], 'publicationTime') &&
+      eventList[0][RELEASE_NOTES__EVENT_TYPE].publicationTime > date
     );
   }
 }

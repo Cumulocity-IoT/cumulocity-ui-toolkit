@@ -1,14 +1,14 @@
-<c8y-title>{{ "Release Notes" | translate }}</c8y-title>
+<c8y-title>{{ 'Release Notes' | translate }}</c8y-title>
 
 <c8y-action-bar-item [placement]="'right'">
-  <button type="button" class="btn btn-link" (click)="add()">
+  <button class="btn btn-link" (click)="add()" type="button">
     <i [c8yIcon]="'add'"></i>
     <span class="m-l-4" translate>Create Release Note</span>
   </button>
 </c8y-action-bar-item>
 
 <c8y-action-bar-item [placement]="'right'">
-  <button type="button" class="btn btn-link" (click)="reload()">
+  <button class="btn btn-link" (click)="reload()" type="button">
     <i [c8yIcon]="'refresh'"></i>
     <span class="m-l-4" translate>Reload</span>
   </button>
@@ -27,7 +27,7 @@
         <strong>{{ release.version }}</strong>
         <span class="text-muted m-l-16">
           @if (release.published) {
-            {{ release.publicationTime | c8yDate : "shortDate" }}
+            {{ release.publicationTime | c8yDate: 'shortDate' }}
           } @else {
             {{ 'Not published' | translate }}
           }
@@ -42,7 +42,11 @@
         <c8y-li-action (click)="publish(release, !release.published)">
           <i [c8yIcon]="release.published ? 'times' : 'check'"></i>
           <span translate>
-            @if (release.published) { Unpublish } @else { Publish }
+            @if (release.published) {
+              Unpublish
+            } @else {
+              Publish
+            }
           </span>
         </c8y-li-action>
         <!-- actions: delete -->
