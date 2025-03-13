@@ -74,6 +74,6 @@ export class ReminderIndicatorComponent implements OnInit, OnDestroy {
         txt = '{{ counter }} reminders are due';
     }
 
-    this.tooltipText = this.translateService.instant(txt, { counter });
+    this.tooltipText = this.translateService.instant(txt, { counter }) as string;
   }
 }

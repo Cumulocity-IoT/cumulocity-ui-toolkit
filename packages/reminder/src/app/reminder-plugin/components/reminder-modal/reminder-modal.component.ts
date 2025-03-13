@@ -56,7 +56,7 @@ export class ReminderModalComponent implements OnInit {
           key: 'source',
           type: 'asset',
           props: {
-            label: this.translateService.instant('Attach to'),
+            label: this.translateService.instant('Attach to') as string,
             required: true,
             asset: this.asset,
           },
@@ -65,7 +65,7 @@ export class ReminderModalComponent implements OnInit {
           key: 'text',
           type: 'input',
           props: {
-            label: this.translateService.instant('Message'),
+            label: this.translateService.instant('Message') as string,
             required: true,
             maxLength: REMINDER_TEXT_LENGTH,
             // TODO show max length & used chars
@@ -76,7 +76,7 @@ export class ReminderModalComponent implements OnInit {
           type: 'time',
           defaultValue: moment().add(1, 'minute').toISOString(),
           props: {
-            label: this.translateService.instant('Remind me on'),
+            label: this.translateService.instant('Remind me on') as string,
             required: true,
             minDate: moment(),
           },
@@ -94,7 +94,7 @@ export class ReminderModalComponent implements OnInit {
 
     if (asset && asset.id) {
       this.asset = asset;
-      this.reminder.source = { id: asset.id, name: this.asset['name'] };
+      this.reminder.source = { id: asset.id, name: this.asset['name'] as string };
     }
   }
 
@@ -121,6 +121,7 @@ export class ReminderModalComponent implements OnInit {
       this.reminder.source.id === this.asset?.id
         ? this.asset
         : (await this.inventoryService.detail(this.reminder.source.id)).data;
+
     if (has(source, 'c8y_IsDeviceGroup')) reminder['isGroup'] = {};
 
     let request: IResult<IEvent> | undefined;
@@ -136,11 +137,11 @@ export class ReminderModalComponent implements OnInit {
     if (!request) return;
 
     if (request && request.res.status === 201) {
-      this.alertService.success(this.translateService.instant('Reminder created'));
+      this.alertService.success(this.translateService.instant('Reminder created') as string);
       this.close();
     } else {
       this.alertService.danger(
-        this.translateService.instant('Could not create reminder'),
+        this.translateService.instant('Could not create reminder') as string,
         await request.res.text()
       );
     }
@@ -190,7 +191,7 @@ export class ReminderModalComponent implements OnInit {
       key: REMINDER_TYPE_FRAGMENT,
       type: 'select',
       props: {
-        label: this.translateService.instant('Reminder type (optional)'),
+        label: this.translateService.instant('Reminder type (optional)') as string,
         hidden: this.typeOptions?.length > 0,
         options: this.typeOptions,
       },

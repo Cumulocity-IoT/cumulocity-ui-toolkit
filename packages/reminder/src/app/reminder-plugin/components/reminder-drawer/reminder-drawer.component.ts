@@ -43,6 +43,7 @@ export class ReminderDrawerComponent implements OnDestroy {
   toastNotificationsEnabled: ReminderConfig['toast'] = REMINDER_LOCAL_STORAGE_DEFAULT_CONFIG.toast;
   browserNotificationsEnabled: ReminderConfig['browser'] =
     REMINDER_LOCAL_STORAGE_DEFAULT_CONFIG.browser;
+
   reminderStatus = ReminderStatus;
   reminderGroupStatus = ReminderGroupStatus;
   groupIsExpanded: boolean[] = [true, true, false];
@@ -50,6 +51,7 @@ export class ReminderDrawerComponent implements OnDestroy {
   get contextFilterEnabled(): boolean {
     return this._contextFilterEnabled;
   }
+
   set contextFilterEnabled(enabled: boolean) {
     this._contextFilterEnabled = enabled;
     this.setConfig('useContext');
@@ -137,6 +139,18 @@ export class ReminderDrawerComponent implements OnDestroy {
     return this.open;
   }
 
+  async updateReminder(reminder: Reminder, status: Reminder['status']): Promise<void> {
+    reminder.status = status;
+
+    const { res } = await this.reminderService.update(reminder);
+
+    if (res.status === 200) {
+      this.alertService.success(`Reminder ${String(status).toLowerCase()}`);
+    } else {
+      this.alertService.danger('Could not update reminder', res.statusText);
+    }
+  }
+
   private digestReminders(reminders: Reminder[]): void {
     this.reminders = reminders;
     this.lastUpdate = new Date();
@@ -166,12 +180,12 @@ export class ReminderDrawerComponent implements OnDestroy {
     this.browserNotificationsEnabled = config.browser;
   }
 
-  private handleRouteChange(url): void {
+  private handleRouteChange(url: string): void {
     if (isEmpty(url)) {
       return undefined;
     }
 
-    const pathElements = url.split('/').filter((element) => !isEmpty(element));
+    const pathElements: string[] = url.split('/').filter((element) => !isEmpty(element));
 
     if (pathElements === null || pathElements.length === 0) {
       return undefined;
@@ -251,18 +265,6 @@ export class ReminderDrawerComponent implements OnDestroy {
         // minimal delay needed to override closing animation and keep drawer open
         if (open) drawer.classList.add(REMINDER_DRAWER_OPEN_CLASS);
       }, 1);
-    }
-  }
-
-  async updateReminder(reminder: Reminder, status: Reminder['status']): Promise<void> {
-    reminder.status = status;
-
-    const { res } = await this.reminderService.update(reminder);
-
-    if (res.status === 200) {
-      this.alertService.success(`Reminder ${String(status).toLowerCase()}`);
-    } else {
-      this.alertService.danger('Could not update reminder', res.statusText);
     }
   }
 

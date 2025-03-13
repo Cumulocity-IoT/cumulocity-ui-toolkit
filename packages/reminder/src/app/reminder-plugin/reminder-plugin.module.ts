@@ -56,6 +56,6 @@ import { ReminderService } from './services/reminder.service';
 })
 export class ReminderPluginModule {
   constructor(private reminderService: ReminderService) {
-    this.reminderService.init();
+    void this.reminderService.init();
   }
 }
