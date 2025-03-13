@@ -30,6 +30,7 @@ export default [
       '**/bootstrap.ts',
       '**/polyfills.ts',
       '**/i18n.ts',
+      '**/src/index.html',
     ],
   },
   {
