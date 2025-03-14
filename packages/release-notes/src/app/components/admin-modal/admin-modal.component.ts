@@ -17,6 +17,7 @@ export class ReminderNotesAdminModalComponent {
   private translateService = inject(TranslateService);
   private alertService = inject(AlertService);
 
+  // TODO use signal/model
   @Input() get release(): ReleaseNote {
     return this._release;
   }
