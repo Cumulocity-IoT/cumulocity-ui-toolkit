@@ -1,0 +1,80 @@
+<div>
+  <div
+    class="col-sm-12 empty-command-queue"
+    *ngIf="!indexedCommandQueue.length"
+    style="text-align: center"
+  >
+    <div class="c8y-empty-state text-left">
+      <h1 class="c8y-icon c8y-icon-data-points c8y-icon-duocolor"></h1>
+      <p>
+        <strong>{{ 'No Instruction Found' | translate }}</strong>
+        {{ 'Create your first Instruction or Series.' | translate }}
+      </p>
+    </div>
+  </div>
+
+  <canvas
+    [datasets]="lineChartData"
+    [options]="lineChartOptions"
+    [colors]="lineChartColors"
+    [chartType]="lineChartType"
+    baseChart
+    height="120"
+  ></canvas>
+  <button
+    class="btn-icon btn btn-primary"
+    *ngIf="!showAlarms && alarmLines.length"
+    (click)="toggleAlarms()"
+    type="button"
+  >
+    <i class="fa fw fa-bell"></i>
+    {{ 'Show Alarms' | translate }}
+  </button>
+  <button
+    class="btn-icon btn btn-default"
+    *ngIf="showAlarms && alarmLines.length"
+    (click)="toggleAlarms()"
+    type="button"
+  >
+    <i class="fa fw fa-bell"></i>
+    {{ 'Hide Alarms' | translate }}
+  </button>
+
+  <button
+    class="btn-icon btn btn-primary"
+    *ngIf="!showEvents && eventLines.length"
+    (click)="toggleEvents()"
+    type="button"
+  >
+    <i class="fa fw fa-tasks"></i>
+    {{ 'Show Events' | translate }}
+  </button>
+  <button
+    class="btn-icon btn btn-default"
+    *ngIf="showEvents && eventLines.length"
+    (click)="toggleEvents()"
+    type="button"
+  >
+    <i class="fa fw fa-tasks"></i>
+    {{ 'Hide Events' | translate }}
+  </button>
+
+  <button
+    class="btn-icon btn btn-primary"
+    *ngIf="!showSleeps && sleepLines.length"
+    (click)="toggleSleeps()"
+    type="button"
+  >
+    <i class="fa fw fa-clock-o"></i>
+    {{ 'Show Sleep' | translate }}
+  </button>
+  <button
+    class="btn-icon btn btn-default"
+    *ngIf="showSleeps && sleepLines.length"
+    (click)="toggleSleeps()"
+    type="button"
+  >
+    <i class="fa fw fa-clock-o"></i>
+    {{ 'Hide Sleep' | translate }}
+  </button>
+</div>

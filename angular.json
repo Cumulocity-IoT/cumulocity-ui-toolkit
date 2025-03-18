@@ -193,6 +193,103 @@
           "defaultConfiguration": "production"
         }
       }
+    },
+    "plugin.advanced-simulator": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "less"
+        }
+      },
+      "root": "packages/advanced-simulator",
+      "sourceRoot": "packages/advanced-simulator/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@c8y/devkit:build",
+          "options": {
+            "outputPath": "dist/cumulocity-advanced-simulator-plugin",
+            "main": "packages/advanced-simulator/src/main.ts",
+            "tsConfig": "packages/advanced-simulator/tsconfig.app.json",
+            "polyfills": [
+              "zone.js"
+            ],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "packages/advanced-simulator/public"
+              },
+              "packages/advanced-simulator/src/assets"
+            ],
+            "inlineStyleLanguage": "less",
+            "styles": [
+              "packages/advanced-simulator/src/styles.less"
+            ],
+            "scripts": [],
+            "aot": false,
+            "buildOptimizer": false,
+            "allowedCommonJsDependencies": [
+              "regenerator-runtime/runtime",
+              "@cordobo/qrcode",
+              "zone.js/dist/zone",
+              "chroma-js",
+              "lodash"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "all",
+              "buildOptimizer": false
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@c8y/devkit:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.advanced-simulator:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.advanced-simulator:build:development"
+            }
+          },
+          "defaultConfiguration": "development",
+          "options": {
+            "port": 9001,
+            "publicHost": "localhost:9001"
+          }
+        },
+        "deploy": {
+          "builder": "@c8y/devkit:deploy",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.advanced-simulator:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.advanced-simulator:build:development"
+            }
+          },
+          "defaultConfiguration": "production"
+        }
+      }
     }
   }
 }

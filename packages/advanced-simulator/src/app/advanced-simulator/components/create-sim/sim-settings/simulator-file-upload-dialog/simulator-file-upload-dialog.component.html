@@ -1,0 +1,21 @@
+<c8y-modal
+  [labels]="labels"
+  (onClose)="uploadFile($event)"
+  (onDismiss)="onDismiss($event)"
+  title="{{ modalTitle }}"
+>
+  <ng-form>
+    <div class="form-group">
+      <br />
+      <div class="input-group">
+        <label translate>{{ 'File to upload' | translate }}</label>
+        <input
+          class="form-control"
+          (change)="selectFile($event.target.files)"
+          type="file"
+          accept=".txt,.json"
+        />
+      </div>
+    </div>
+  </ng-form>
+</c8y-modal>

@@ -1,0 +1,18 @@
+<c8y-modal
+  [labels]="labels"
+  (onClose)="createSimulatorTemplateWithName($event)"
+  (onDismiss)="onDismiss($event)"
+  title="'Upload Simulator' | translate"
+>
+  <ng-form>
+    <div class="form-group">
+      <br />
+      <label translate>{{ 'Simulator Template Name' | translate }}</label>
+      <input
+        class="form-control"
+        [(ngModel)]="templateName"
+        [ngModelOptions]="{ standalone: true }"
+      />
+    </div>
+  </ng-form>
+</c8y-modal>
