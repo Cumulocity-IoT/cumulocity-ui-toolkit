@@ -25,13 +25,17 @@ export class OperationsWidgetComponent {
       );
     }
 
-    const operation = JSON.parse(button.operationValue);
+    if (!this.config.device) {
+      return;
+    }
+
+    const operation = JSON.parse(button.operationValue) as Partial<IOperation>;
     let request: IResult<IOperation> | null = null;
 
     operation.deviceId = this.config.device.id;
 
     try {
-      request = await this.operationsService.create(operation);
+      request = await this.operationsService.create(operation as IOperation);
     } catch (error) {
       this.alertService.danger(`Failed to create '${button.label}' operation.`);
     }

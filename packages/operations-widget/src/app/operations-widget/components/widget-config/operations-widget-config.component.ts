@@ -8,6 +8,7 @@ import { ICONS } from '../../models/icons.const';
 })
 export class OperationsWidgetConfigComponent {
   @Input() config: OperationWidgetConfig = {};
+
   buttonClasses = [
     'btn-default',
     'btn-primary',
@@ -41,11 +42,11 @@ export class OperationsWidgetConfigComponent {
     });
 
     if (this.config.device && this.config.device['c8y_SupportedOperations']) {
-      this.supportedOperations = this.config.device['c8y_SupportedOperations'];
+      this.supportedOperations = this.config.device['c8y_SupportedOperations'] as string[];
     }
   }
 
   removeButton(index: number): void {
-    this.config.buttons.splice(index, 1);
+    this.config.buttons?.splice(index, 1);
   }
 }

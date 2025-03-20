@@ -12,7 +12,7 @@ export default {
     dynamicOptionsUrl: true,
     remotes: {
       // 'plugin name from package.json': [ PluginModule ]
-      [name]: ['OperationWidgetModule'],
+      [name]: ['OperationsWidgetModule'],
     },
     package: 'plugin',
     isPackage: true,
@@ -20,7 +20,7 @@ export default {
     exports: [
       {
         name: 'Operations Widget',
-        module: 'OperationWidgetModule',
+        module: 'OperationsWidgetModule',
         path: './src/app/operations-widget/operations-widget.module.ts',
         description: '',
       },

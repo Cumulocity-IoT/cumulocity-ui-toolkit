@@ -10,7 +10,7 @@ export class OperationsValueComponent implements OnInit {
 
   isValidJson: boolean;
 
-  onUpdate(event: Event) {
+  onUpdate() {
     this.isValidJson = this.validJson(this.value);
     this.valueChange.emit(this.value);
   }
@@ -21,7 +21,7 @@ export class OperationsValueComponent implements OnInit {
 
   private validJson(value: string): boolean {
     try {
-      JSON.parse(this.value);
+      JSON.parse(value);
 
       return true;
     } catch (e) {

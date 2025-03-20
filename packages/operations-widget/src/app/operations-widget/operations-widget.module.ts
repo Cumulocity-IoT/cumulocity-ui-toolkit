@@ -28,7 +28,7 @@ import { OperationsWidgetConfigComponent } from './components/widget-config/oper
           noNewWidgets: false,
           ng1: {
             options: {
-              noDeviceTarget: true,
+              noDeviceTarget: false,
               groupsSelectable: false,
             },
           },

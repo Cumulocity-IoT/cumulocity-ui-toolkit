@@ -1,4 +1,6 @@
-@for (let item of config?.buttons) {
-  <app-button-instance [config]="item" (clickedOperation)="onButtonClick(item)">
-  </app-button-instance>
+@if (config?.buttons) {
+  @for (button of config.buttons; track button.id) {
+    <app-button-instance [config]="button" (clickedOperation)="onButtonClick(button)">
+    </app-button-instance>
+  }
 }
