@@ -1,0 +1,4 @@
+@for (let item of config?.buttons) {
+  <app-button-instance [config]="item" (clickedOperation)="onButtonClick(item)">
+  </app-button-instance>
+}

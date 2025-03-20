@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { IOperation, OperationStatus } from '@c8y/client';
+import { Operation, OperationStatus } from '@c8y/client';
 import { Alert, AlertService, OperationRealtimeService } from '@c8y/ngx-components';
 import { Subscription, filter } from 'rxjs';
 
@@ -41,7 +41,7 @@ export class OperationToastService {
     }
   }
 
-  private handleRealtimeElement(operation: IOperation) {
+  private handleRealtimeElement(operation: Operation) {
     const uuid = operation['uuid'];
     const alert = this.alertsCache.get(uuid);
 
