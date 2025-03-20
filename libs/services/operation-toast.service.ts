@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Operation, OperationStatus } from '@c8y/client';
+import { IOperation, OperationStatus } from '@c8y/client';
 import { Alert, AlertService, OperationRealtimeService } from '@c8y/ngx-components';
 import { Subscription, filter } from 'rxjs';
 
@@ -14,10 +14,14 @@ export class OperationToastService {
   private realtimeSubscriptions = new Map<string, Subscription>();
   private alertsCache = new Map<string, OperationAlert>();
 
-  constructor(private alertService: AlertService, private operationRealtime: OperationRealtimeService) {}
+  constructor(
+    private alertService: AlertService,
+    private operationRealtime: OperationRealtimeService
+  ) {}
 
   add(alert: OperationAlert) {
     const { deviceId, uuid } = alert.operationDetails;
+
     this.alertsCache.set(uuid, alert);
     // @ts-ignore
     delete alert.operationDetails;
@@ -27,21 +31,26 @@ export class OperationToastService {
 
     return this.operationRealtime.onUpdate$(deviceId).pipe(
       filter((o) => {
-        return (o.status === OperationStatus.SUCCESSFUL || o.status === OperationStatus.FAILED) && o['uuid'] === uuid;
+        return (
+          (o.status === OperationStatus.SUCCESSFUL || o.status === OperationStatus.FAILED) &&
+          o['uuid'] === uuid
+        );
       })
     );
   }
 
   remove(alert: OperationAlert) {
     this.alertService.remove(alert);
+
     if (alert.operationDetails) {
       const uuid = alert.operationDetails?.uuid;
+
       this.alertsCache.delete(uuid);
       this.unsubscribe(uuid);
     }
   }
 
-  private handleRealtimeElement(operation: Operation) {
+  private handleRealtimeElement(operation: IOperation) {
     const uuid = operation['uuid'];
     const alert = this.alertsCache.get(uuid);
 
@@ -49,7 +58,7 @@ export class OperationToastService {
       this.alertService.remove(alert);
     }
 
-    let text = operation['description'] as string;
+    const text = operation['description'] as string;
 
     let detailedData = '';
 
@@ -88,7 +97,10 @@ export class OperationToastService {
       .onUpdate$(deviceId)
       .pipe(
         filter((o) => {
-          return (o.status === OperationStatus.SUCCESSFUL || o.status === OperationStatus.FAILED) && o['uuid'] === uuid;
+          return (
+            (o.status === OperationStatus.SUCCESSFUL || o.status === OperationStatus.FAILED) &&
+            o['uuid'] === uuid
+          );
         })
       )
       .subscribe((o) => this.handleRealtimeElement(o));
