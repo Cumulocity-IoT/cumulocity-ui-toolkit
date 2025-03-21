@@ -22,6 +22,7 @@ export class ButtonInstanceComponent {
     if (!this.preview) this.clickedOperation.emit(this.config);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   openModal(template: TemplateRef<any>, size: 'modal-lg'): void {
     if (!this.config.showModal) {
       this.clickedOperation.emit(this.config);
