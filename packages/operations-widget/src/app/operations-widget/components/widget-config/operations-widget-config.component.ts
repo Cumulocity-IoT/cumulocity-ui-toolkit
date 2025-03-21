@@ -1,6 +1,9 @@
 import { Component, Input } from '@angular/core';
-import { OperationWidgetConfig } from '../../models/operations-widget-config.model';
 import { ICONS } from '../../models/icons.const';
+import {
+  OperationButtonConfig,
+  OperationWidgetConfig,
+} from '../../models/operations-widget-config.model';
 
 @Component({
   selector: 'app-operations-widget-config',
@@ -8,7 +11,14 @@ import { ICONS } from '../../models/icons.const';
   styleUrl: './operations-widget-config.component.scss',
 })
 export class OperationsWidgetConfigComponent {
-  @Input() config: OperationWidgetConfig = {};
+  @Input() get config(): OperationWidgetConfig {
+    return this._config;
+  }
+
+  set config(config: OperationWidgetConfig) {
+    this._config = config;
+    this.setSupportedOperations();
+  }
 
   buttonClasses = [
     'btn-default',
@@ -25,12 +35,14 @@ export class OperationsWidgetConfigComponent {
   availableIcons: string[] = [...ICONS];
   supportedOperations: string[] = [];
 
+  private _config: OperationWidgetConfig;
+
   addNewButton(): void {
     if (!this.config.buttons) {
       this.config.buttons = [];
     }
 
-    this.config.buttons.push({
+    const button: OperationButtonConfig = {
       icon: undefined,
       label: 'Your Button Label',
       description: '',
@@ -40,14 +52,24 @@ export class OperationsWidgetConfigComponent {
       showModal: false,
       modalText: 'please confirm device operation',
       customOperation: false,
-    });
+    };
 
-    if (this.config.device && this.config.device['c8y_SupportedOperations']) {
-      this.supportedOperations = this.config.device['c8y_SupportedOperations'] as string[];
+    if (this.supportedOperations.length) {
+      button.operationFragment = this.supportedOperations[0];
     }
+
+    this.config.buttons.push(button);
   }
 
   removeButton(index: number): void {
     this.config.buttons?.splice(index, 1);
+  }
+
+  private setSupportedOperations(): void {
+    if (!this.supportedOperations.length) {
+      if (this.config.device && this.config.device['c8y_SupportedOperations']) {
+        this.supportedOperations = this.config.device['c8y_SupportedOperations'].sort();
+      }
+    }
   }
 }

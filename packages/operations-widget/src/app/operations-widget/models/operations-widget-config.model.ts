@@ -2,6 +2,7 @@ export interface OperationWidgetConfig {
   device?: {
     id: string;
     name?: string;
+    c8y_SupportedOperations?: string[];
   };
   buttons?: OperationButtonConfig[];
 }

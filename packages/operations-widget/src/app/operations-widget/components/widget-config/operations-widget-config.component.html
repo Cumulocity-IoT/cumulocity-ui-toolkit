@@ -11,16 +11,16 @@
       @if (supportedOperations) {
         <div class="col-sm-6">
           <div class="form-group">
-            <label translate for="operation">Supported Operations</label>
+            <label translate for="operation_{{ index }}">Supported Operations</label>
             <div class="c8y-select-wrapper">
               <select
                 class="form-control"
-                id="operation"
+                id="operation_{{ index }}"
                 [(ngModel)]="item.operationFragment"
                 name="operation"
               >
                 @for (op of supportedOperations; track op) {
-                  <option>{{ op }}</option>
+                  <option [attr.selected]="op === item.operationFragment || null">{{ op }}</option>
                 }
               </select>
             </div>
@@ -31,10 +31,10 @@
       <!-- label -->
       <div class="col-sm-6">
         <c8y-form-group [hasWarning]="!item.label || item.label.length === 0">
-          <label translate for="label">Label</label>
+          <label translate for="label_{{ index }}">Label</label>
           <input
             class="form-control"
-            id="label"
+            id="label_{{ index }}"
             [(ngModel)]="item.label"
             [maxlength]="254"
             type="text"
@@ -53,7 +53,7 @@
       <!-- icon -->
       <div class="col-sm-6">
         <c8y-form-group>
-          <label translate for="buttonClasses">Button Icon</label>
+          <label translate for="buttonClasses_{{ index }}">Button Icon</label>
           <div class="dropdown" style="width: 100%" dropdown>
             <button
               class="btn btn-default dropdown-toggle c8y-dropdown"
@@ -80,7 +80,7 @@
       <!-- color -->
       <div class="col-sm-6">
         <c8y-form-group>
-          <label translate for="buttonClasses">Button Color</label>
+          <label translate for="buttonColors">Button Color</label>
           <div class="dropdown" style="width: 100%" dropdown>
             <button
               [ngClass]="
@@ -116,10 +116,10 @@
       <!-- description -->
       <div class="col-sm-12">
         <c8y-form-group [hasWarning]="!item.description || item.description.length === 0">
-          <label translate for="description">Description</label>
+          <label translate for="description_{{ index }}">Description</label>
           <input
             class="form-control"
-            id="description"
+            id="description_{{ index }}"
             [(ngModel)]="item.description"
             [maxlength]="254"
             type="text"
@@ -134,7 +134,7 @@
       <!-- confirmation -->
       <div class="col-sm-12">
         <c8y-form-group>
-          <label translate for="icon">Requires confirmation</label>
+          <label translate for="confirmation_{{ index }}">Requires confirmation</label>
           <label class="c8y-switch" title="{{ 'Active' | translate }}">
             <input [(ngModel)]="item.showModal" type="checkbox" />
             <span></span>
@@ -144,7 +144,7 @@
           </label>
           <input
             class="form-control"
-            id="modalText"
+            id="confirmation_{{ index }}"
             *ngIf="item.showModal"
             [(ngModel)]="item.modalText"
             [maxlength]="254"
@@ -161,6 +161,7 @@
         <button class="btn btn-danger" (click)="removeButton(buttonIndex)">
           <i c8yIcon="delete"></i>Delete this Operation
         </button>
+        <hr />
       </div>
     </div>
   } @else {
@@ -179,13 +180,13 @@
 }
 
 @if (config?.buttons?.length > 0) {
-  <button class="m-t-24 m-b-8 btn btn-primary" (click)="addNewButton()">
+  <button class="m-t-8 m-b-8 btn btn-primary" (click)="addNewButton()">
     <i c8yIcon="plus"></i>
     {{ 'Add Button' | translate }}
   </button>
 }
+
 <!-- preview -->
-<hr />
 <h2 translate>Preview</h2>
 <div class="col-sm-12 preview">
   @if (config?.buttons?.length) {
