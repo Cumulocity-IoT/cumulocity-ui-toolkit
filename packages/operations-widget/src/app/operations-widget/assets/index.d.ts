@@ -1,9 +1,0 @@
-declare module '*.jpg';
-declare module '*.jepg';
-declare module '*.png';
-declare module '*.gif';
-declare module '*.svg';
-declare module '*.woff';
-declare module '*.woff2';
-declare module '*.eot';
-declare module '*.ttf';
