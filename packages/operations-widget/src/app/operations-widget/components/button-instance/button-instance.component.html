@@ -1,4 +1,6 @@
-<textarea [(ngModel)]="config.operationValue" name="operationValue"></textarea>
+@if (config.customOperation) {
+  <textarea [(ngModel)]="config.operationValue" name="operationValue"></textarea>
+}
 
 <button
   class="btn"

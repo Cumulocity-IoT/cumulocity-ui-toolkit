@@ -1,0 +1,32 @@
+::host {
+  display: block;
+}
+
+.preview {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  background-color: #efefef;
+  padding: 16px;
+
+  button-instance:nth-child(n + 2) {
+    margin-left: 8px;
+  }
+}
+
+h2 {
+  margin: 1.25em 0 0.5em;
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
+h3 {
+  margin: 0 0.25em;
+}
+
+.button-config:nth-child(n + 2) {
+  margin-top: 2rem;
+}

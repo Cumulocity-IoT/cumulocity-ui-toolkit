@@ -3,7 +3,7 @@ import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { OperationButtonConfig } from '../../models/operations-widget-config.model';
 
 @Component({
-  selector: 'app-button-instance',
+  selector: 'button-instance',
   templateUrl: './button-instance.component.html',
   styleUrls: ['./button-instance.component.scss'],
 })
@@ -11,13 +11,15 @@ export class ButtonInstanceComponent {
   private modalService = inject(BsModalService);
 
   @Input() config: OperationButtonConfig;
+  @Input() preview: boolean = false;
   @Output() clickedOperation = new EventEmitter<OperationButtonConfig>();
 
   modalRef?: BsModalRef;
 
   createOperation(event: Event): void {
     event.stopPropagation();
-    this.clickedOperation.emit(this.config);
+
+    if (!this.preview) this.clickedOperation.emit(this.config);
   }
 
   openModal(template: TemplateRef<any>, size: 'modal-lg'): void {

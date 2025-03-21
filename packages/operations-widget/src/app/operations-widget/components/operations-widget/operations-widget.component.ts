@@ -23,19 +23,23 @@ export class OperationsWidgetComponent {
       this.alertService.danger(
         `No target device configured for this widget. Unable to create operation.`
       );
-    }
 
-    if (!this.config.device) {
       return;
     }
 
-    const operation = JSON.parse(button.operationValue) as Partial<IOperation>;
+    const operationValue = JSON.parse(button.operationValue) as Partial<IOperation>;
     let request: IResult<IOperation> | null = null;
+
+    const operation: IOperation = {
+      deviceId: this.config.device.id,
+      [button.operationFragment]: operationValue || {},
+      description: button.description,
+    };
 
     operation.deviceId = this.config.device.id;
 
     try {
-      request = await this.operationsService.create(operation as IOperation);
+      request = await this.operationsService.create(operation);
     } catch (error) {
       this.alertService.danger(`Failed to create '${button.label}' operation.`);
     }

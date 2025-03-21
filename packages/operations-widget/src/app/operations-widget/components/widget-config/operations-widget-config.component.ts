@@ -5,6 +5,7 @@ import { ICONS } from '../../models/icons.const';
 @Component({
   selector: 'app-operations-widget-config',
   templateUrl: './operations-widget-config.component.html',
+  styleUrl: './operations-widget-config.component.scss',
 })
 export class OperationsWidgetConfigComponent {
   @Input() config: OperationWidgetConfig = {};
@@ -31,13 +32,13 @@ export class OperationsWidgetConfigComponent {
 
     this.config.buttons.push({
       icon: undefined,
-      label: 'Restart',
-      description: 'Restart device',
-      operationFragment: 'c8y_Restart',
+      label: 'Your Button Label',
+      description: '',
+      operationFragment: '',
       buttonClasses: 'btn-default',
-      operationValue: '{\n  "operation_name": {},\n  "description": "This is my operation!"\n}',
+      operationValue: '{}',
       showModal: false,
-      modalText: 'Confirm device restart',
+      modalText: 'please confirm device operation',
       customOperation: false,
     });
 
