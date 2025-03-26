@@ -1,4 +1,10 @@
-import { KpiAggregatorWidgetConfig, KpiAggregatorWidgetDisplay, KpiAggregatorWidgetOptions, KpiAggregatorWidgetOrder, KpiAggregatorWidgetSort } from './kpi-aggregator-widget.model';
+import {
+  KpiAggregatorWidgetConfig,
+  KpiAggregatorWidgetDisplay,
+  KpiAggregatorWidgetOptions,
+  KpiAggregatorWidgetOrder,
+  KpiAggregatorWidgetSort,
+} from './kpi-aggregator-widget.model';
 
 // select options
 export const KPI_AGGREGAOR_WIDGET__DISPLAY_OPTIONS: KpiAggregatorWidgetOptions[] = [

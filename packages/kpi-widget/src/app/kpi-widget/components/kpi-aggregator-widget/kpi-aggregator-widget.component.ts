@@ -40,8 +40,6 @@ export class KpiAggregatorWidgetComponent implements OnInit {
   pageLimit = 0;
   aggreagtedValue = 0;
 
-  private rawAssets!: IManagedObject[];
-
   // pie chart
   pieChartData?: ChartData<'pie', number[], string | string[]>;
   pieChartOptions: ChartConfiguration['options'] = {
@@ -63,13 +61,132 @@ export class KpiAggregatorWidgetComponent implements OnInit {
   timestampStart!: Date;
   duration?: string;
 
-  constructor() {
-    const asset = this.getAssetFromContext(this.activatedRoute.snapshot);
+  private rawAssets!: IManagedObject[];
 
-    if (asset) this.asset = asset;
+  // display: aggregated
+  protected digestAggregatedAssets(assets: IManagedObject[]): AssetGroup[] {
+    let groups: AssetGroup[] = [];
+    let key: string;
+    let group: AssetGroup;
+    let value: number | string;
+    let total = 0;
+
+    assets.forEach((asset) => {
+      key = this.getKeyFromAsset(asset);
+      group = groups.find((g) => g.key === key);
+
+      if (!key) return;
+
+      value = this.getPathData<number>(asset, this.config.kpiFragment);
+      total += value;
+
+      if (typeof value === 'number') {
+        if (group) {
+          group.objects.push(asset);
+
+          group.value = (group.value as number) + value;
+        } else {
+          groups.push({
+            key,
+            label: this.getPathData<string>(asset, this.config.label),
+            value,
+            objects: [asset],
+          });
+        }
+      }
+    });
+
+    this.total = total;
+
+    // sort
+    groups = orderBy(groups, this.config.sort);
+    if (this.config.order === KpiAggregatorWidgetOrder.desc) groups.reverse();
+
+    return groups;
+  }
+
+  // display: counted
+  protected digestCountedAssets(assets: IManagedObject[]): AssetGroup[] {
+    let groups: AssetGroup[] = [];
+    let key: string;
+    let group: AssetGroup;
+    let value: number | string;
+    let total = 0;
+
+    assets.forEach((asset) => {
+      key = this.getKeyFromAsset(asset);
+      group = groups.find((g) => g.key === key);
+
+      if (!key) return;
+
+      value = this.getPathData<string>(asset, this.config.kpiFragment);
+      total += 1;
+
+      if (group) {
+        group.objects.push(asset);
+        group.value = (group.value as number) + 1;
+      } else {
+        groups.push({
+          key,
+          label: value,
+          value: 1,
+          objects: [asset],
+        });
+      }
+    });
+
+    this.total = total;
+
+    // sort
+    groups = orderBy(groups, this.config.sort);
+    if (this.config.order === KpiAggregatorWidgetOrder.desc) groups.reverse();
+
+    return groups;
+  }
+
+  // display: listed
+  protected digestListedAssets(assets: IManagedObject[]): AssetGroup[] {
+    const groups: AssetGroup[] = [];
+    let key: string;
+    let group: AssetGroup;
+    let total = 0;
+
+    assets.forEach((asset) => {
+      key = this.getKeyFromAsset(asset);
+      group = groups.find((g) => g.key === key);
+      total += 1;
+
+      if (group) {
+        group.objects.push(asset);
+        group.value = (group.value as number) + 1;
+      } else {
+        groups.push({
+          key,
+          label: '',
+          value: 1,
+          objects: [asset],
+        });
+      }
+    });
+
+    this.total = total;
+
+    // sort
+    const sorted = orderBy(groups[0].objects, (object) =>
+      (object['name'] as string).trim().toLowerCase()
+    );
+
+    groups[0].objects =
+      this.config.order === KpiAggregatorWidgetOrder.desc ? sorted.reverse() : sorted;
+
+    return groups;
   }
 
   ngOnInit(): void {
+    const asset = this.getAssetFromContext(this.activatedRoute.snapshot);
+
+    if (asset) this.asset = asset;
+
     this.config.pageLimit =
       typeof this.config.pageLimit !== 'number' || this.config.pageLimit <= 0
         ? 10000
@@ -91,6 +208,7 @@ export class KpiAggregatorWidgetComponent implements OnInit {
 
     if (!response) {
       this.loading = false;
+
       return;
     }
 
@@ -226,7 +344,8 @@ export class KpiAggregatorWidgetComponent implements OnInit {
       });
     } catch (error) {
       console.error('fetchAssets', error);
-      throw `Could not complete query for page ${page}`;
+
+      throw new Error(`Could not complete query for page ${page}`);
     }
     if (!response || !response.data.length) return null;
 
@@ -254,6 +373,7 @@ export class KpiAggregatorWidgetComponent implements OnInit {
   private digestAssets(assets: IManagedObject[]): AssetGroup[] {
     if (!assets || !assets.length) {
       console.error('no assets provided');
+
       return [];
     }
 
@@ -268,6 +388,7 @@ export class KpiAggregatorWidgetComponent implements OnInit {
         return this.digestListedAssets(assets);
       default:
         console.error('Unsupported display option.');
+
         return [];
     }
   }
@@ -278,7 +399,6 @@ export class KpiAggregatorWidgetComponent implements OnInit {
 
     pathPartials.forEach((p) => {
       if (has(data, p)) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         data = data[p];
       } else {
         return;
@@ -296,123 +416,6 @@ export class KpiAggregatorWidgetComponent implements OnInit {
     return !!this.config.groupBy && this.config.groupBy !== ''
       ? this.getPathData<string>(asset, this.config.groupBy)?.toString()
       : 'undefined';
-  }
-
-  // display: aggregated
-  protected digestAggregatedAssets(assets: IManagedObject[]): AssetGroup[] {
-    let groups: AssetGroup[] = [];
-    let key: string;
-    let group: AssetGroup;
-    let value: number | string;
-    let total = 0;
-
-    assets.forEach((asset) => {
-      key = this.getKeyFromAsset(asset);
-      group = groups.find((g) => g.key === key);
-
-      if (!key) return;
-
-      value = this.getPathData<number>(asset, this.config.kpiFragment);
-      total += value;
-
-      if (typeof value === 'number') {
-        if (group) {
-          group.objects.push(asset);
-
-          group.value = (group.value as number) + value;
-        } else {
-          groups.push({
-            key,
-            label: this.getPathData<string>(asset, this.config.label),
-            value,
-            objects: [asset],
-          });
-        }
-      }
-    });
-
-    this.total = total;
-
-    // sort
-    groups = orderBy(groups, this.config.sort);
-    if (this.config.order === KpiAggregatorWidgetOrder.desc) groups.reverse();
-
-    return groups;
-  }
-
-  // display: counted
-  protected digestCountedAssets(assets: IManagedObject[]): AssetGroup[] {
-    let groups: AssetGroup[] = [];
-    let key: string;
-    let group: AssetGroup;
-    let value: number | string;
-    let total = 0;
-
-    assets.forEach((asset) => {
-      key = this.getKeyFromAsset(asset);
-      group = groups.find((g) => g.key === key);
-
-      if (!key) return;
-
-      value = this.getPathData<string>(asset, this.config.kpiFragment);
-      total += 1;
-
-      if (group) {
-        group.objects.push(asset);
-        group.value = (group.value as number) + 1;
-      } else {
-        groups.push({
-          key,
-          label: value as string,
-          value: 1,
-          objects: [asset],
-        });
-      }
-    });
-
-    this.total = total;
-
-    // sort
-    groups = orderBy(groups, this.config.sort);
-    if (this.config.order === KpiAggregatorWidgetOrder.desc) groups.reverse();
-
-    return groups;
-  }
-
-  // display: listed
-  protected digestListedAssets(assets: IManagedObject[]): AssetGroup[] {
-    const groups: AssetGroup[] = [];
-    let key: string;
-    let group: AssetGroup;
-    let total = 0;
-
-    assets.forEach((asset) => {
-      key = this.getKeyFromAsset(asset);
-      group = groups.find((g) => g.key === key);
-      total += 1;
-
-      if (group) {
-        group.objects.push(asset);
-        group.value = (group.value as number) + 1;
-      } else {
-        groups.push({
-          key,
-          label: '',
-          value: 1,
-          objects: [asset],
-        });
-      }
-    });
-
-    this.total = total;
-
-    // sort
-    const sorted = orderBy(groups[0].objects, (object) => object['name'].trim().toLowerCase());
-
-    groups[0].objects =
-      this.config.order === KpiAggregatorWidgetOrder.desc ? sorted.reverse() : sorted;
-
-    return groups;
   }
 
   private setMinMax(groups: AssetGroup[]) {
@@ -480,7 +483,7 @@ export class KpiAggregatorWidgetComponent implements OnInit {
     assetGroups: AssetGroup[]
   ): ChartData<'pie', number[], string | string[]> {
     const labels: string | string[] = [];
-    let data: number[] = [];
+    const data: number[] = [];
 
     assetGroups.forEach((ag) => {
       labels.push(ag.key);
@@ -498,7 +501,8 @@ export class KpiAggregatorWidgetComponent implements OnInit {
   }
 
   private getNextBatchLimit(): number {
-    if (this.paging.totalPages <= this.paging.currentPage) throw 'No further pages available.';
+    if (this.paging.totalPages <= this.paging.currentPage)
+      throw new Error('No further pages available.');
     if (this.config.parallelRequests === 1) return this.paging.currentPage + 1;
 
     const limit = this.paging.currentPage + this.config.parallelRequests;

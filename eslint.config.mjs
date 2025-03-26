@@ -17,7 +17,6 @@ const compat = new FlatCompat({
 export default [
   {
     files: ['**/*.ts', '**/*.js', '**/*.html'],
-
     // any additional configuration for these file types here
   },
   {
@@ -158,6 +157,13 @@ export default [
       ],
 
       curly: 'error',
+
+      '@typescript-eslint/no-require-imports': [
+        'error',
+        {
+          allow: ['.png$'],
+        },
+      ],
     },
   },
   ...compat.extends('plugin:@angular-eslint/template/recommended').map((config) => ({

@@ -25,6 +25,7 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
   set opacity(opacity: number) {
     this.config.opacity = opacity / 100;
   }
+
   get opacity(): number {
     return this.config.opacity * 100;
   }
@@ -276,12 +277,6 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
 
   private setDefaultValues() {
     // make sure alle defaults are present, eg after updates
-    const keys = Object.keys(this.defaultConfig);
-
-    keys.forEach((key) => {
-      if (!this.config[key] && typeof this.config[key] !== 'boolean' && this.config[key] !== 0) {
-        this.config[key] = this.defaultConfig[key];
-      }
-    });
+    return { ...this.defaultConfig, ...this.config };
   }
 }
