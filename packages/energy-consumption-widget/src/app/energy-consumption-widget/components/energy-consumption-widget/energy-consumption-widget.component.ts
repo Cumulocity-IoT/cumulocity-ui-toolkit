@@ -38,7 +38,7 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
     scales: {
       x: {},
       y: {
-        beginAtZero: this.config?.beginAtZero || false,
+        beginAtZero: true,
       },
     },
     plugins: {
@@ -63,6 +63,7 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
 
   ngOnInit(): void {
     this.dateRange = this.config.defaultRange;
+    // this.barChartOptions.scales.y.beginAtZero = this.config.beginAtZero || false;
     void this.fetchData();
   }
 
