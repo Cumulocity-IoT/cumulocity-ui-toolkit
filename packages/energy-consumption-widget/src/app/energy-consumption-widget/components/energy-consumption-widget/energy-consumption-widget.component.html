@@ -3,7 +3,14 @@
     <c8y-loading></c8y-loading>
   </div>
 } @else {
-  <button (click)="reload()" type="button">Reload</button>
+  <button
+    class="btn btn-default btn-icon"
+    (click)="reload()"
+    title="{{ 'Reload' | translate }}"
+    type="button"
+  >
+    <i c8yIcon="refresh"></i>
+  </button>
   <div class="chart-wrap">
     <canvas [data]="barChartData" [options]="barChartOptions" [type]="'bar'" baseChart> </canvas>
   </div>

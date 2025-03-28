@@ -12,7 +12,7 @@ type FormlySelectOptions = {
 
 export const ENERGY_CONSUMPTION_WIDGET__RANGE_TYPE_OPTIONS: FormlySelectOptions[] = [
   { value: EnergyWidgetRangeType.DATE, label: '🗓️ By Date Range' },
-  { value: EnergyWidgetRangeType.EVENT, label: '📌 By Event' },
+  // { value: EnergyWidgetRangeType.EVENT, label: '📌 By Event' }, // currently not supported
 ] as const;
 
 export const ENERGY_CONSUMPTION_WIDGET__DISPLAY_CONFIG_OPTIONS: FormlySelectOptions[] = [

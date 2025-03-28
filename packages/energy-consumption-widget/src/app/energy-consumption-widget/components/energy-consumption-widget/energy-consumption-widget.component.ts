@@ -38,7 +38,7 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
     scales: {
       x: {},
       y: {
-        beginAtZero: false,
+        beginAtZero: this.config?.beginAtZero || false,
       },
     },
     plugins: {
@@ -76,7 +76,6 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
     // TODO fetch data point
     // TODO if events: fetch events
     this.measurements = await this.loadMeasurements();
-    console.table(this.measurements);
     this.barChartData = this.setChartConfig(this.digestMeasurements());
     this.loading = false;
   }
