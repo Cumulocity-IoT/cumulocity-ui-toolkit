@@ -1,0 +1,10 @@
+@if (loading) {
+  <div class="loading-data">
+    <c8y-loading></c8y-loading>
+  </div>
+} @else {
+  <button (click)="reload()" type="button">Reload</button>
+  <div class="chart-wrap">
+    <canvas [data]="barChartData" [options]="barChartOptions" [type]="'bar'" baseChart> </canvas>
+  </div>
+}
