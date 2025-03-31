@@ -1,8 +1,9 @@
 import { Component, inject, Input, OnInit } from '@angular/core';
 import { IMeasurement, IMeasurementValue, MeasurementService } from '@c8y/client';
 import { ChartConfiguration, ChartData } from 'chart.js';
-import { sortBy } from 'lodash';
+import { cloneDeep, sortBy } from 'lodash';
 import moment from 'moment';
+import { ENERGY_CONSUMPTION_WIDGET__DEFAULT_CHART_CONFIG } from '../../models/energy-consumption-widget.const';
 import {
   EnergyConsumptionWidgetConfig,
   EnergyWidgetDateDisplayMode,
@@ -34,25 +35,7 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
 
   @Input() config!: EnergyConsumptionWidgetConfig;
 
-  barChartOptions: ChartConfiguration<'bar'>['options'] = {
-    scales: {
-      x: {},
-      y: {
-        beginAtZero: true,
-      },
-    },
-    plugins: {
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        callbacks: {
-          label: (context) => `${context.formattedValue} ${this.unit}`,
-        },
-      },
-    },
-  };
-
+  barChartOptions!: ChartConfiguration<'bar'>['options'];
   barChartData?: ChartData<'bar'>;
   loading: boolean = true;
   dateRange!: string;
@@ -63,7 +46,7 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
 
   ngOnInit(): void {
     this.dateRange = this.config.defaultRange;
-    // this.barChartOptions.scales.y.beginAtZero = this.config.beginAtZero || false;
+    this.barChartOptions = this.setChartOptions();
     void this.fetchData();
   }
 
@@ -74,7 +57,7 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
   private async fetchData(dateRange = this.dateRange): Promise<void> {
     this.loading = true;
     this.milestones = this.generateMilestones(dateRange);
-    // TODO fetch data point
+    // TODO fetch data point - needed?
     // TODO if events: fetch events
     this.measurements = await this.loadMeasurements();
     this.barChartData = this.setChartConfig(this.digestMeasurements());
@@ -94,7 +77,7 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
     // Remove empty and sort by date
     return sortBy(
       measurements.filter((m) => m !== undefined),
-      (m) => new Date(m.milestone)
+      (m) => new Date(m.milestone as string)
     );
   }
 
@@ -121,7 +104,6 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
   private digestMeasurements(measurements = this.measurements): RawChartData[] {
     const rawData: RawChartData[] = [];
 
-    // TODO set unit (to tooltip?)
     measurements.forEach((measurement, index) => {
       if (index > 0) {
         rawData.push({
@@ -242,5 +224,29 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
 
         return date.format('DD. MMM');
     }
+  }
+
+  private setChartOptions(): ChartConfiguration<'bar'>['options'] {
+    const options = cloneDeep(ENERGY_CONSUMPTION_WIDGET__DEFAULT_CHART_CONFIG);
+
+    const tooltip = {
+      tooltip: {
+        callbacks: {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          label: (context) => `${context.formattedValue} ${this.unit}`,
+        },
+      },
+    };
+
+    options.plugins = {
+      ...options.plugins,
+      ...tooltip,
+    };
+
+    options.scales.y = {
+      beginAtZero: this.config.beginAtZero || false,
+    };
+
+    return options as ChartConfiguration<'bar'>['options'];
   }
 }

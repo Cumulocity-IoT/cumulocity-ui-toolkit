@@ -25,3 +25,17 @@ export const ENERGY_CONSUMPTION_WIDGET__DATE_RANGE: FormlySelectOptions[] = [
   { value: EnergyWidgetDateRange.MONTH, label: 'Last 4 Weeks' },
   { value: EnergyWidgetDateRange.YEAR, label: 'Last 12 Months' },
 ] as const;
+
+export const ENERGY_CONSUMPTION_WIDGET__DEFAULT_CHART_CONFIG = {
+  scales: {
+    x: {},
+    y: {
+      beginAtZero: false,
+    },
+  },
+  plugins: {
+    legend: {
+      display: false,
+    },
+  },
+};
