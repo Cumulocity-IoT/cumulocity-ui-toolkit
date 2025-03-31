@@ -31,6 +31,7 @@ export interface EnergyConsumptionWidgetBaseConfig {
   fragment: string;
   series: string;
   defaultRange: EnergyWidgetDateRange;
+  exposeRangeSelect: boolean;
   barColor?: string;
   beginAtZero?: boolean;
 }

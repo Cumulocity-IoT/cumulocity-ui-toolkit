@@ -3,14 +3,16 @@
     <c8y-loading></c8y-loading>
   </div>
 } @else {
-  <button
-    class="btn btn-default btn-icon"
-    (click)="reload()"
-    title="{{ 'Reload' | translate }}"
-    type="button"
-  >
-    <i c8yIcon="refresh"></i>
-  </button>
+  @if (config.exposeRangeSelect) {
+    <header>
+      <select [(ngModel)]="dateRange" (change)="reload()">
+        @for (range of dateRangeSelect; track range) {
+          <option [ngValue]="range.value">{{ range.label }}</option>
+        }
+      </select>
+    </header>
+  }
+
   <div class="chart-wrap">
     <canvas [data]="barChartData" [options]="barChartOptions" [type]="'bar'" baseChart> </canvas>
   </div>

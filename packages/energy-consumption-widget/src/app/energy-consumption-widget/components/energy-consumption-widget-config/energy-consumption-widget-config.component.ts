@@ -38,6 +38,22 @@ export class EnergyConsumptionWidgetConfigComponent {
             options: ENERGY_CONSUMPTION_WIDGET__RANGE_TYPE_OPTIONS,
           },
         },
+        // event
+        {
+          fieldGroupClassName: 'row',
+          fieldGroup: [
+            {
+              key: 'eventType',
+              type: 'input',
+              className: 'col-sm-12',
+              hideExpression: (model) => model.rangeType !== 'event',
+              props: {
+                label: 'Event Type',
+                required: true,
+              },
+            },
+          ],
+        },
         // date
         {
           fieldGroupClassName: 'row',
@@ -45,7 +61,7 @@ export class EnergyConsumptionWidgetConfigComponent {
             {
               key: 'displayMode',
               type: 'select',
-              className: 'col-sm-6',
+              className: 'col-sm-4',
               defaultValue: EnergyWidgetDateDisplayMode.TOTAL,
               props: {
                 label: 'Display Mode',
@@ -56,12 +72,21 @@ export class EnergyConsumptionWidgetConfigComponent {
             {
               key: 'defaultRange',
               type: 'select',
-              className: 'col-sm-6',
+              className: 'col-sm-4',
               defaultValue: EnergyWidgetDateRange.YEAR,
               props: {
                 label: 'Default Range',
                 required: true,
                 options: ENERGY_CONSUMPTION_WIDGET__DATE_RANGE,
+              },
+            },
+            {
+              key: 'exposeRangeSelect',
+              type: 'checkbox',
+              className: 'col-sm-4 checkbox-field',
+              defaultValue: false,
+              props: {
+                label: 'Expose Range Select',
               },
             },
           ],
@@ -105,26 +130,11 @@ export class EnergyConsumptionWidgetConfigComponent {
             {
               key: 'beginAtZero',
               type: 'checkbox',
-              className: 'col-cm-6 checkbox-field',
+              className: 'col-sm-6 checkbox-field',
               hideExpression: (model) => model.displayMode !== 'total',
               defaultValue: true,
               props: {
                 label: 'Begin Scale at Zero',
-              },
-            },
-          ],
-        },
-        {
-          fieldGroupClassName: 'row',
-          fieldGroup: [
-            {
-              key: 'eventType',
-              type: 'input',
-              className: 'col-sm-6',
-              hideExpression: (model) => model.rangeType !== 'event',
-              props: {
-                label: 'Event Type',
-                required: true,
               },
             },
           ],

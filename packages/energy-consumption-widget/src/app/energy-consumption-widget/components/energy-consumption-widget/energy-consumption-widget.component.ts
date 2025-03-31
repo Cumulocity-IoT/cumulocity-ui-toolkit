@@ -3,7 +3,10 @@ import { IMeasurement, IMeasurementValue, MeasurementService } from '@c8y/client
 import { ChartConfiguration, ChartData } from 'chart.js';
 import { cloneDeep, sortBy } from 'lodash';
 import moment from 'moment';
-import { ENERGY_CONSUMPTION_WIDGET__DEFAULT_CHART_CONFIG } from '../../models/energy-consumption-widget.const';
+import {
+  ENERGY_CONSUMPTION_WIDGET__DATE_RANGE,
+  ENERGY_CONSUMPTION_WIDGET__DEFAULT_CHART_CONFIG,
+} from '../../models/energy-consumption-widget.const';
 import {
   EnergyConsumptionWidgetConfig,
   EnergyWidgetDateDisplayMode,
@@ -34,6 +37,8 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
   private measurementService = inject(MeasurementService);
 
   @Input() config!: EnergyConsumptionWidgetConfig;
+
+  readonly dateRangeSelect = ENERGY_CONSUMPTION_WIDGET__DATE_RANGE;
 
   barChartOptions!: ChartConfiguration<'bar'>['options'];
   barChartData?: ChartData<'bar'>;
