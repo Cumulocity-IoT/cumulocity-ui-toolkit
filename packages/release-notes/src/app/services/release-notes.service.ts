@@ -8,6 +8,7 @@ import {
   RELEASE_NOTES__EVENT_TYPE,
   RELEASE_NOTES__LAST_CHECKED_KEY,
   RELEASE_NOTES__MO_TYPE,
+  RELEASE_NOTES__PUBLISHED_FRAGMENT,
   ReleaseNote,
   ReleaseNoteEvent,
   ReleaseNoteEventPayload,
@@ -28,11 +29,11 @@ export class ReleaseNotesService {
       pageSize,
       dateFrom: new Date(0).toISOString(),
       revert: false,
-      withTotalPages: true,
+      withTotalPages: false,
     };
 
     if (publishedOnly) {
-      requestFilter['fragmentType'] = 'published';
+      requestFilter['fragmentType'] = RELEASE_NOTES__PUBLISHED_FRAGMENT;
     }
 
     const response = await this.eventService.list(requestFilter);
@@ -169,8 +170,8 @@ export class ReleaseNotesService {
     const response = await this.eventService.list({
       type: RELEASE_NOTES__EVENT_TYPE,
       pageSize: 1,
-      withTotalPages: true,
-      fragmentType: 'published',
+      withTotalPages: false,
+      fragmentType: RELEASE_NOTES__PUBLISHED_FRAGMENT,
     });
 
     const eventList = response.data as ReleaseNoteEvent[];

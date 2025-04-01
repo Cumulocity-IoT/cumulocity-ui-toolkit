@@ -8,7 +8,7 @@ import { ReleaseNotesService } from '../../services/release-notes.service';
 export class ReleaseNotesMenuItemComponent {
   private releaseNotesService = inject(ReleaseNotesService);
 
-  open(): void {
+  openModal(): void {
     this.releaseNotesService.openReleaseNotesModal();
   }
 }

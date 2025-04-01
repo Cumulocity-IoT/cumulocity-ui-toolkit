@@ -88,10 +88,17 @@ export class ReminderNotesAdminModalComponent {
 
         await this.releaseNoteServive.update(release);
 
-        this.alertService.success(`Release ${release.version} updated`);
+        this.alertService.success(
+          this.translateService.instant('Release {{version}} updated', {
+            version: release.version,
+          }) as string
+        );
         this.close();
       } catch (error) {
-        this.alertService.danger('Could not update release', error as string);
+        this.alertService.danger(
+          this.translateService.instant('Could not update release') as string,
+          error as string
+        );
       }
     } else {
       // create
@@ -100,10 +107,17 @@ export class ReminderNotesAdminModalComponent {
 
         await this.releaseNoteServive.create(release);
 
-        this.alertService.success(`Release ${release.version} created`);
+        this.alertService.success(
+          this.translateService.instant('Release {{version}} created', {
+            version: release.version,
+          }) as string
+        );
         this.close();
       } catch (error) {
-        this.alertService.danger('Could not create release', error as string);
+        this.alertService.danger(
+          this.translateService.instant('Could not create release') as string,
+          error as string
+        );
       }
     }
     this.isLoading = false;

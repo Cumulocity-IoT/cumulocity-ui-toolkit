@@ -1,19 +1,26 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { Injectable, OnDestroy } from '@angular/core';
+import { BehaviorSubject, Subscription } from 'rxjs';
 import { LocalStorageService } from './local-storage.service';
 
 export const ACTIVE_TAB_STORAGE_KEY = 'c8y_rpActiveTab';
 
 @Injectable()
-export class ActiveTabService {
-  active$!: BehaviorSubject<any>;
-  lastActive$!: BehaviorSubject<any>;
+export class ActiveTabService implements OnDestroy {
+  active$!: BehaviorSubject<boolean>;
+  lastActive$!: BehaviorSubject<boolean>;
 
   private tabId!: string;
+  private subscriptions = new Subscription();
 
   constructor(private localStorageService: LocalStorageService) {
     this.setActiveTabListener();
-    this.localStorageService.storage$.subscribe(() => this.handleStorageUpdate());
+    this.subscriptions.add(
+      this.localStorageService.storage$.subscribe(() => this.handleStorageUpdate())
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
   init(): void {
@@ -37,7 +44,7 @@ export class ActiveTabService {
   }
 
   private setActiveTabListener(): void {
-    // focus » active, lastActive via localStorage (via setCurrentTabActive)
+    // focus » active, lastActive via localStorage (via setCurrentTabActive)
     window.onfocus = () => {
       this.setCurrentTabActive();
       if (!this.active$.getValue()) this.active$.next(true);

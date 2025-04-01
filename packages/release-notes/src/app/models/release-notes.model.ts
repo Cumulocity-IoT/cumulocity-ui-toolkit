@@ -4,11 +4,12 @@ export const RELEASE_NOTES__ADMIN_PATH = 'release-notes';
 export const RELEASE_NOTES__EVENT_TYPE = 'c8y_ReleaseNotes';
 export const RELEASE_NOTES__MO_TYPE = 'c8y_ReleaseNotes';
 export const RELEASE_NOTES__LAST_CHECKED_KEY = 'c8y_release_notes';
+export const RELEASE_NOTES__PUBLISHED_FRAGMENT = 'published';
 
 export interface ReleaseNote {
   id: IEvent['id'];
   version: string;
-  published: boolean;
+  [RELEASE_NOTES__PUBLISHED_FRAGMENT]: boolean;
   publicationTime?: Date;
   body?: string;
 }

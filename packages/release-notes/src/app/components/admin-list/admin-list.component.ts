@@ -4,6 +4,7 @@ import { BsModalService } from 'ngx-bootstrap/modal';
 import { ReleaseNote } from '../../models/release-notes.model';
 import { ReleaseNotesService } from '../../services/release-notes.service';
 import { ReminderNotesAdminModalComponent } from '../admin-modal/admin-modal.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'c8y-release-notes-admin-list',
@@ -14,6 +15,7 @@ export class ReminderNotesAdminListComponent implements OnInit {
   private releaseNoteServive = inject(ReleaseNotesService);
   private alertService = inject(AlertService);
   private modalService = inject(BsModalService);
+  private translateService = inject(TranslateService);
 
   releaseNotes: ReleaseNote[];
   isLoading = false;
@@ -35,9 +37,16 @@ export class ReminderNotesAdminListComponent implements OnInit {
   async delete(release: ReleaseNote): Promise<void> {
     try {
       await this.releaseNoteServive.delete(release.id);
-      this.alertService.success(`Release ${release.version} deleted`);
+      this.alertService.success(
+        this.translateService.instant('Release {{version}} deleted', {
+          version: release.version,
+        }) as string
+      );
     } catch (error) {
-      this.alertService.danger('Could not update release note', error as string);
+      this.alertService.danger(
+        this.translateService.instant('Could not update release note') as string,
+        error as string
+      );
     }
   }
 
@@ -63,7 +72,13 @@ export class ReminderNotesAdminListComponent implements OnInit {
     try {
       await this.releaseNoteServive.publish(release, isPublished);
       this.alertService.success(
-        `Release note ${release.version} ${isPublished ? 'published' : 'unpublished'}`
+        isPublished
+          ? (this.translateService.instant('Release note {{version}} published', {
+              version: release.version,
+            }) as string)
+          : (this.translateService.instant('Release note {{version}} unpublished', {
+              version: release.version,
+            }) as string)
       );
     } catch (error) {
       console.error(error);
