@@ -3,13 +3,13 @@ import { FormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import {
   ENERGY_CONSUMPTION_WIDGET__DATE_RANGE,
+  ENERGY_CONSUMPTION_WIDGET__DEFAULT_DATE_RANGE,
   ENERGY_CONSUMPTION_WIDGET__DISPLAY_CONFIG_OPTIONS,
   ENERGY_CONSUMPTION_WIDGET__RANGE_TYPE_OPTIONS,
 } from '../../models/energy-consumption-widget.const';
 import {
   EnergyConsumptionWidgetConfig,
   EnergyWidgetDateDisplayMode,
-  EnergyWidgetDateRange,
   EnergyWidgetRangeType,
 } from '../../models/energy-consumption-widget.model';
 
@@ -73,7 +73,7 @@ export class EnergyConsumptionWidgetConfigComponent {
               key: 'defaultRange',
               type: 'select',
               className: 'col-sm-4',
-              defaultValue: EnergyWidgetDateRange.YEAR,
+              defaultValue: ENERGY_CONSUMPTION_WIDGET__DEFAULT_DATE_RANGE,
               props: {
                 label: 'Default Range',
                 required: true,
@@ -95,9 +95,18 @@ export class EnergyConsumptionWidgetConfigComponent {
           fieldGroupClassName: 'row',
           fieldGroup: [
             {
+              key: 'type',
+              type: 'input',
+              className: 'col-sm-4',
+              props: {
+                label: 'Measurement Type',
+                required: true,
+              },
+            },
+            {
               key: 'fragment',
               type: 'input',
-              className: 'col-sm-6',
+              className: 'col-sm-4',
               props: {
                 label: 'Fragment',
                 required: true,
@@ -106,10 +115,10 @@ export class EnergyConsumptionWidgetConfigComponent {
             {
               key: 'series',
               type: 'input',
-              className: 'col-sm-6',
+              className: 'col-sm-4',
               props: {
                 label: 'Series',
-                required: true,
+                required: false,
               },
             },
           ],

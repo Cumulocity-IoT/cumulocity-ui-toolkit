@@ -28,6 +28,10 @@ interface StrippedResultPaging {
   };
 }
 
+interface MeasurementSeries {
+  [series: string]: IMeasurementValue;
+}
+
 @Component({
   selector: 'c8y-energy-consumption-widget',
   templateUrl: './energy-consumption-widget.component.html',
@@ -90,7 +94,7 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
     const response = await this.measurementService.list({
       source: this.config.device.id,
       pageSize: 1,
-      type: this.config.fragment,
+      type: this.config.type,
       withTotalPages: false,
       dateFrom: new Date(0).toISOString(),
       dateTo: date,
@@ -139,12 +143,18 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
     };
   }
 
-  private getValueFromMeasurement(m: IMeasurement): number {
-    return (m[this.config.series] as IMeasurementValue).value;
+  private getValueFromMeasurement(measurement: IMeasurement): number {
+    return this.getMeasurementValue(measurement)?.value;
   }
 
-  private getUnitFromMeasurement(m: IMeasurement): string | undefined {
-    return (m[this.config.series] as IMeasurementValue).unit;
+  private getUnitFromMeasurement(measurement: IMeasurement): string | undefined {
+    return this.getMeasurementValue(measurement)?.unit;
+  }
+
+  private getMeasurementValue(measurement: IMeasurement): IMeasurementValue {
+    const series = measurement[this.config.fragment] as MeasurementSeries;
+
+    return this.config.series ? series[this.config.series] : (series as IMeasurementValue);
   }
 
   private roundValue(value: number, digits = this.config.digits): number {
@@ -169,18 +179,25 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
       const d = new Date();
 
       switch (range.unit) {
+        case 'minutes':
+        case 'hours':
+          d.setHours(d.getHours() - i, 1);
+          d.setMinutes(0, 0, 0); // normalize time
+          break;
         case 'months':
           d.setMonth(d.getMonth() - i, 1); // set to the 1st of the month
+          d.setHours(0, 0, 0, 0); // normalize
           break;
         case 'weeks':
           d.setDate(d.getDate() - i * 7 - d.getDay() + startOfWeek);
+          d.setHours(0, 0, 0, 0);
           break;
         case 'days':
           d.setDate(d.getDate() - i);
+          d.setHours(0, 0, 0, 0);
           break;
       }
 
-      d.setHours(0, 0, 0, 0); // normalize time
       milestones.push(d.toISOString());
       milestones.reverse();
     }
@@ -213,6 +230,7 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
         if (date.get('h') === 0) date.subtract(1, 'month');
 
         return date.format('MMM YY');
+
       case 'weeks':
         if (date.get('day') === startOfWeek) {
           start = date.clone().subtract(7, 'days');
@@ -223,6 +241,12 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
         }
 
         return `${start.format('DD.')} - ${end.format('DD. MMM')}`;
+
+      case 'hours':
+        if (date.get('m') === 0) date.subtract(1, 'hour');
+
+        return date.format('HH:mm');
+
       case 'days':
       default:
         if (date.get('h') === 0) date.subtract(1, 'day');

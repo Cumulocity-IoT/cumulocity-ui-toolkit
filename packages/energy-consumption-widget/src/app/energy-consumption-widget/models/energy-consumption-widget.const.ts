@@ -1,6 +1,6 @@
 import {
-  EnergyWidgetDateRange,
   EnergyWidgetDateDisplayMode,
+  EnergyWidgetDateRange,
   EnergyWidgetRangeType,
 } from './energy-consumption-widget.model';
 
@@ -21,10 +21,13 @@ export const ENERGY_CONSUMPTION_WIDGET__DISPLAY_CONFIG_OPTIONS: FormlySelectOpti
 ] as const;
 
 export const ENERGY_CONSUMPTION_WIDGET__DATE_RANGE: FormlySelectOptions[] = [
-  { value: EnergyWidgetDateRange.WEEK, label: 'Last 7 Days' },
-  { value: EnergyWidgetDateRange.MONTH, label: 'Last 4 Weeks' },
-  { value: EnergyWidgetDateRange.YEAR, label: 'Last 12 Months' },
+  { value: EnergyWidgetDateRange.HOUR_12, label: 'Last 12 Hours' },
+  { value: EnergyWidgetDateRange.DAY_7, label: 'Last 7 Days' },
+  { value: EnergyWidgetDateRange.WEEK_4, label: 'Last 4 Weeks' },
+  { value: EnergyWidgetDateRange.MONTH_12, label: 'Last 12 Months' },
 ] as const;
+
+export const ENERGY_CONSUMPTION_WIDGET__DEFAULT_DATE_RANGE = EnergyWidgetDateRange.DAY_7;
 
 export const ENERGY_CONSUMPTION_WIDGET__DEFAULT_CHART_CONFIG = {
   scales: {

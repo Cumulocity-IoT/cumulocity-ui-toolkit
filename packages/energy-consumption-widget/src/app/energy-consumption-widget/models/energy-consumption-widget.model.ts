@@ -9,9 +9,10 @@ export type EnergyWidgetDateDisplayMode =
   (typeof EnergyWidgetDateDisplayMode)[keyof typeof EnergyWidgetDateDisplayMode];
 
 export const EnergyWidgetDateRange = {
-  WEEK: '7 days',
-  MONTH: '4 weeks',
-  YEAR: '12 months',
+  HOUR_12: '12 hours',
+  DAY_7: '7 days',
+  WEEK_4: '4 weeks',
+  MONTH_12: '12 months',
 } as const;
 
 export type EnergyWidgetDateRange =
@@ -28,8 +29,9 @@ export interface EnergyConsumptionWidgetBaseConfig {
   displayMode: EnergyWidgetDateDisplayMode;
   device: ISource;
   digits: number;
+  type: string;
   fragment: string;
-  series: string;
+  series?: string;
   defaultRange: EnergyWidgetDateRange;
   exposeRangeSelect: boolean;
   barColor?: string;
