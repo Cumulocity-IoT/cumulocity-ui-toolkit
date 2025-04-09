@@ -1,0 +1,8 @@
+<c8y-action-bar-item *ngIf="isFavoriteStateInitialized" [placement]="'left'" [priority]="1000">
+  <button class="btn btn-link" (click)="toggleFavorite()" data-cy="favorites-action-button">
+    <i [class.dlt-c8y-icon-star]="isFavorite" [class.dlt-c8y-icon-star-outline]="!isFavorite"></i
+    ><span
+      >{{ (isFavorite ? 'favorites.action.remove' : 'favorites.action.add') | translate }}
+    </span>
+  </button>
+</c8y-action-bar-item>
