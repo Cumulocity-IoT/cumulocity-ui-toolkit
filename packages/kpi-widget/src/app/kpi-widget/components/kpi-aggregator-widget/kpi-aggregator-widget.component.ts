@@ -71,6 +71,7 @@ export class KpiAggregatorWidgetComponent implements OnInit {
     let value: number | string;
     let total = 0;
 
+    // just a comment for testing github actions
     assets.forEach((asset) => {
       key = this.getKeyFromAsset(asset);
       group = groups.find((g) => g.key === key);
