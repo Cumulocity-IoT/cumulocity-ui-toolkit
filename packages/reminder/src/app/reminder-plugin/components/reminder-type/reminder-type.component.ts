@@ -1,6 +1,6 @@
-import { Component, Input } from '@angular/core';
-import { Reminder, ReminderType } from '../../reminder.model';
-import { ReminderService } from '../../services';
+import { Component, inject, Input } from '@angular/core';
+import { Reminder, ReminderType } from '../../models/reminder.model';
+import { ReminderService } from '../../services/reminder.service';
 
 @Component({
   selector: 'c8y-reminder-type',
@@ -8,6 +8,8 @@ import { ReminderService } from '../../services';
   styleUrl: './reminder-type.component.less',
 })
 export class ReminderTypeComponent {
+  private reminderService = inject(ReminderService);
+
   @Input() set reminder(reminder: Reminder) {
     this.setType(reminder.reminderType);
   }
@@ -17,8 +19,6 @@ export class ReminderTypeComponent {
   }
 
   type: ReminderType;
-
-  constructor(private reminderService: ReminderService) {}
 
   private setType(id: ReminderType['id']) {
     this.type = {

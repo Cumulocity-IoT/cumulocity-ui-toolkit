@@ -1,8 +1,16 @@
 # Services
 
+## ActiveTabService
+
+Provides a service to track the currently active tab. **Depends on the `LocalStorageService`.**
+
 ## DataGridPatchService
 
 If you dont want the c8y-data-grid to use its multi column sort standard, use this hack to force it to use single sort.
+
+## domService
+
+Provides a service to attach and maintain components that attach directly to the html body.
 
 ## HierarchyAggregateService
 
@@ -12,9 +20,13 @@ Read custom fragment values and aggregate those over a given hierarchy starting 
 
 Fetch Managed Objects matching a certain query after a specified interval. Returns the delta containing MOs that matched later, and MOs which don't match anymore.
 
+## LocalStorageService
+
+A convienience wrapper to access local storage and provides a behavior to subscribe for changes.
+
 ## LocationGeocoderService
 
-Returns the latitdue and longitude for a city name using nominatims free service. 
+Returns the latitdue and longitude for a city name using nominatims free service.
 
 ## LocationRealtimeService
 
