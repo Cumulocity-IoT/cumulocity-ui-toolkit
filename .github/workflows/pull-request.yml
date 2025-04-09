@@ -1,0 +1,64 @@
+name: PR Component CI
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for git diff
+
+      - name: Detect changed packages
+        id: set-matrix
+        run: |
+          git fetch origin main
+          components=$(git diff --name-only origin/main...HEAD | grep '^packages/' | cut -d '/' -f2 | sort -u | jq -R . | jq -s .)
+          echo "matrix={\"component\": $components}" >> $GITHUB_OUTPUT
+        shell: bash
+
+  test-components:
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    if: fromJson(needs.detect-changes.outputs.matrix).component != []
+    strategy:
+      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
+    name: Test ${{ matrix.component }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Lint ${{ matrix.component }}
+        run: npm run lint packages/${{ matrix.component }}
+
+      - name: Test ${{ matrix.component }}
+        run: npm run test packages/${{ matrix.component }}
+
+      - name: Build ${{ matrix.component }}
+        run: npm run build packages/${{ matrix.component }}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.component }}-build
+          path: packages/${{ matrix.component }}/dist
+          if-no-files-found: warn
+          retention-days: 5
