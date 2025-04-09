@@ -2,7 +2,7 @@
   "name": "cumulocity-kpi-aggregator-widget-plugin",
   "version": "1.0.3",
   "description": "",
-  "author": "Dirk Peter",
+  "author": "@dirk-peter-c8y",
   "homepage": "___TODO___",
   "dependencies": {
     "ng2-charts": "^4.1.1"

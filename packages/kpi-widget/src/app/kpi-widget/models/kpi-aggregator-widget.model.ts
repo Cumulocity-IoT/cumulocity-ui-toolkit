@@ -4,7 +4,7 @@ import { LayoutPosition } from 'chart.js';
 export const KpiAggregatorWidgetSort = {
   label: 'label',
   value: 'value',
-};
+} as const;
 export type KpiAggregatorWidgetSort =
   (typeof KpiAggregatorWidgetSort)[keyof typeof KpiAggregatorWidgetSort];
 
@@ -12,7 +12,7 @@ export type KpiAggregatorWidgetSort =
 export const KpiAggregatorWidgetOrder = {
   asc: 'asc',
   desc: 'desc',
-};
+} as const;
 export type KpiAggregatorWidgetOrder =
   (typeof KpiAggregatorWidgetOrder)[keyof typeof KpiAggregatorWidgetOrder];
 
@@ -23,7 +23,7 @@ export const KpiAggregatorWidgetDisplay = {
   list: 'list',
   pieAggregate: 'pieAggregate',
   pieCount: 'pieCount',
-};
+} as const;
 export type KpiAggregatorWidgetDisplay =
   (typeof KpiAggregatorWidgetDisplay)[keyof typeof KpiAggregatorWidgetDisplay];
 
@@ -53,7 +53,7 @@ export const KpiAggregatorWidgetChartLegendPosition = {
   right: 'right',
   bottom: 'bottom',
   left: 'left',
-};
+} as const;
 export type KpiAggregatorWidgetChartLegendPosition =
   (typeof KpiAggregatorWidgetChartLegendPosition)[keyof typeof KpiAggregatorWidgetChartLegendPosition];
 

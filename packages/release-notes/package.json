@@ -1,0 +1,10 @@
+{
+  "name": "cumulocity-release-notes-plugin",
+  "version": "0.1.2",
+  "description": "",
+  "author": "@dirk-peter-c8y",
+  "homepage": "___TODO___",
+  "dependencies": {
+    "ngx-moment": "^6.0.2"
+  }
+}

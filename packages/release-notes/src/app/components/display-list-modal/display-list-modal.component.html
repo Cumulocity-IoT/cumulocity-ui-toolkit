@@ -1,0 +1,34 @@
+<div class="modal-header separator">
+  <h3>
+    <i class="m-r-8" [c8yIcon]="'price-tag'"></i>
+    <span translate>Release Notes</span>
+  </h3>
+</div>
+
+<div class="modal-body">
+  <c8y-list-group>
+    @for (release of releaseNotes; track release.id) {
+      <c8y-li>
+        <header>
+          <span>{{ release.version }}</span>
+          <time>{{ release.publicationTime | c8yDate: 'shortDate' }}</time>
+        </header>
+
+        <div class="release-body" [innerHtml]="release.body | markdownToHtml | async"></div>
+      </c8y-li>
+    } @empty {
+      <c8y-li>
+        <c8y-ui-empty-state
+          [icon]="'search'"
+          [title]="'No release notes available' | translate"
+          [subtitle]="'Well… maybe later'"
+          [horizontal]="true"
+        ></c8y-ui-empty-state>
+      </c8y-li>
+    }
+  </c8y-list-group>
+</div>
+
+<div class="modal-footer">
+  <button class="btn btn-default" (click)="close()" type="button" translate>Close</button>
+</div>

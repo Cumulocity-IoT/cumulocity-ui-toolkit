@@ -8,10 +8,15 @@
   </div>
 
   <div class="modal-footer">
-    <button type="button" class="btn btn-default" (click)="close()" translate>Cancel</button>
+    <button class="btn btn-default" (click)="close()" type="button" translate>Cancel</button>
 
-    <button type="submit" class="btn btn-primary" [disabled]="!form.valid || isLoading" [class.btn-pending]="isLoading"
-      translate>
+    <button
+      class="btn btn-primary"
+      [disabled]="!form.valid || isLoading"
+      [class.btn-pending]="isLoading"
+      type="submit"
+      translate
+    >
       Create
     </button>
   </div>

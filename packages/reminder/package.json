@@ -2,7 +2,7 @@
   "name": "cumulocity-reminder-plugin",
   "version": "1.4.1",
   "description": "",
-  "author": "Dirk Peter",
+  "author": "@dirk-peter-c8y",
   "homepage": "___TODO___",
   "dependencies": {
     "ngx-moment": "^6.0.2"
