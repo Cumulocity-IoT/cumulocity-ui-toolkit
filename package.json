@@ -4,7 +4,7 @@
   "config": {},
   "scripts": {
     "serve": "from-env ng serve -u %TENANT",
-    "build": "npm run build:reminder && npm run build:kpi",
+    "build": "npm run build:reminder && npm run build:kpi && npm run build:release",
     "prebuild": "npm run clean",
     "clean": "rimraf dist",
     "lint": "eslint . --quiet",
@@ -17,7 +17,10 @@
     "postbuild:kpi": "node tools/build-rename.js -p 'packages/kpi-widget'",
     "serve:energy": "npm run serve plugin.energy-consumption-widget -- --shell %APP",
     "build:energy": "ng build plugin.energy-consumption-widget",
-    "postbuild:energy": "node tools/build-rename.js -p 'packages/energy-consumption-widget'"
+    "postbuild:energy": "node tools/build-rename.js -p 'packages/energy-consumption-widget'",
+    "serve:release": "npm run serve plugin.release-notes -- --shell %APP",
+    "build:release": "ng build plugin.release-notes",
+    "postbuild:release": "node tools/build-rename.js -p 'packages/release-notes'"
   },
   "keywords": [
     "cumulocity",

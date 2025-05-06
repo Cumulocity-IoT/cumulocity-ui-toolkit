@@ -4,14 +4,19 @@
     "titleBar.inactiveForeground": "#21212166",
     "titleBar.activeBackground": "#ffbe00",
     "titleBar.activeForeground": "#212121",
-    "activityBar.background": "#212121",
-    "activityBar.foreground": "#212121",
-    "activityBar.activeBackground": "#ffbe00",
+
+    "activityBar.background": "#21212150",
+    "activityBar.foreground": "#F9FAFB",
+    "activityBar.activeBackground": "#ffbe0033",
     "activityBar.inactiveForeground": "#F9FAFB66",
-    "activityBarBadge.background": "#F9FAFB",
+    "activityBar.activeBorder": "#ffbe00",
+
+    "activityBarBadge.background": "#ffbe00",
     "activityBarBadge.foreground": "#212121",
+
     "button.background": "#ffbe00",
     "button.foreground": "#212121",
+
     "toolbar.hoverOutline": "#212121"
   },
   "typescript.tsdk": "node_modules\\typescript\\lib"

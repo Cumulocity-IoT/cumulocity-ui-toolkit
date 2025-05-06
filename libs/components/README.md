@@ -81,6 +81,28 @@ openAssignDevicesModal() {
   }
 ```
 
+## Heatmap (intensity based)
+
+A heatmap which can be used to display heat based on the value given for every coordinate. The threshold will always be between 0 (green) and 100 (red). The heatmap will then divide every map-tile into 4x4 squares and calculate the average value over the values placed in this area. 
+
+Within your module add the standalone component to the imports:
+
+```typescript
+@NgModule({
+  declarations: [...],
+  providers: [...],
+  imports: [
+    HeatmapComponent
+  ]
+});
+```
+
+You need to have leaflet and lodash installed in order to use this plugin.
+
+```HTML
+<ps-heatmap [options]="{ zoom: 13, maxZoom: 22 }" [data]="data" blurRadius=18></ps-heatmap>
+```
+
 ## Image Upload
 
 <img src="image-upload/example.png" width="400" />

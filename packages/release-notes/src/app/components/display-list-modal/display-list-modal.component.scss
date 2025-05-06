@@ -1,0 +1,22 @@
+.c8y-list__item:last-child {
+  box-shadow: none;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.25em;
+}
+
+.release-body ::ng-deep {
+  h1,
+  h2,
+  h3,
+  h4 {
+    margin: 1rem 0 0.5em;
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+}
