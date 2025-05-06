@@ -271,7 +271,7 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
   private setTenantConfigs() {
     // override default with branding
     if (has(this.optionsService.brandingCssVars, 'brand-primary')) {
-      this.defaultConfig.color = this.optionsService.brandingCssVars['brand-primary'] as string;
+      this.defaultConfig.color = this.optionsService.brandingCssVars['brand-primary'];
     }
   }
 
