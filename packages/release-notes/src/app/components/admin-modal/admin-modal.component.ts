@@ -1,0 +1,125 @@
+import { Component, inject, Input } from '@angular/core';
+import { FormGroup } from '@angular/forms';
+import { AlertService } from '@c8y/ngx-components';
+import { FormlyFieldConfig } from '@ngx-formly/core';
+import { TranslateService } from '@ngx-translate/core';
+import { BsModalRef } from 'ngx-bootstrap/modal';
+import { ReleaseNote } from '../../models/release-notes.model';
+import { ReleaseNotesService } from '../../services/release-notes.service';
+
+@Component({
+  selector: 'c8y-release-notes-admin-modal',
+  templateUrl: './admin-modal.component.html',
+})
+export class ReminderNotesAdminModalComponent {
+  private releaseNoteServive = inject(ReleaseNotesService);
+  private bsModalRef = inject(BsModalRef);
+  private translateService = inject(TranslateService);
+  private alertService = inject(AlertService);
+
+  // TODO use signal/model
+  @Input() get release(): ReleaseNote {
+    return this._release;
+  }
+
+  set release(release: ReleaseNote) {
+    this._release = {
+      id: release.id,
+      version: release.version,
+      published: release.published || false,
+      publicationTime: release.publicationTime,
+      body: release.body || '',
+    };
+  }
+
+  preview = false;
+  form = new FormGroup({});
+  fields: FormlyFieldConfig[] = [
+    {
+      fieldGroup: [
+        {
+          key: 'version',
+          type: 'input',
+          props: {
+            label: this.translateService.instant('Version') as string,
+            required: true,
+          },
+        },
+        {
+          key: 'published',
+          type: 'checkbox',
+          defaultValue: false,
+          props: {
+            label: this.translateService.instant('Published') as string,
+          },
+        },
+        {
+          key: 'body',
+          type: 'textarea',
+          props: {
+            label: this.translateService.instant('Body') as string,
+          },
+        },
+      ],
+    },
+  ];
+
+  isLoading = false;
+
+  get body(): string {
+    return (this.form.value['body'] as string) || '';
+  }
+
+  private _release: ReleaseNote;
+
+  close(): void {
+    this.bsModalRef.hide();
+  }
+
+  async submit(): Promise<void> {
+    this.isLoading = true;
+    const release = this.form.value as ReleaseNote;
+
+    if (this.release?.id) {
+      // update
+      try {
+        release.id = this.release.id;
+        release.publicationTime = this.release.publicationTime;
+
+        await this.releaseNoteServive.update(release);
+
+        this.alertService.success(
+          this.translateService.instant('Release {{version}} updated', {
+            version: release.version,
+          }) as string
+        );
+        this.close();
+      } catch (error) {
+        this.alertService.danger(
+          this.translateService.instant('Could not update release') as string,
+          error as string
+        );
+      }
+    } else {
+      // create
+      try {
+        if (this.form.value['published']) release.publicationTime = new Date();
+
+        await this.releaseNoteServive.create(release);
+
+        this.alertService.success(
+          this.translateService.instant('Release {{version}} created', {
+            version: release.version,
+          }) as string
+        );
+        this.close();
+      } catch (error) {
+        this.alertService.danger(
+          this.translateService.instant('Could not create release') as string,
+          error as string
+        );
+      }
+    }
+    this.isLoading = false;
+  }
+}

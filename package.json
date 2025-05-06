@@ -4,7 +4,7 @@
   "config": {},
   "scripts": {
     "serve": "from-env ng serve -u %TENANT",
-    "build": "npm run build:reminder && npm run build:kpi",
+    "build": "npm run build:reminder && npm run build:kpi && npm run build:release",
     "prebuild": "npm run clean",
     "clean": "rimraf dist",
     "lint": "eslint . --quiet",
@@ -15,6 +15,9 @@
     "serve:kpi": "npm run serve plugin.kpi-widget -- --shell %APP",
     "build:kpi": "ng build plugin.kpi-widget",
     "postbuild:kpi": "node tools/build-rename.js -p 'packages/kpi-widget'",
+    "serve:release": "npm run serve plugin.release-notes -- --shell %APP",
+    "build:release": "ng build plugin.release-notes",
+    "postbuild:release": "node tools/build-rename.js -p 'packages/release-notes'",
     "serve:operations": "npm run serve plugin.operations-widget -- --shell %APP",
     "build:operations": "ng build plugin.operations-widget",
     "postbuild:operations": "node tools/build-rename.js -p 'packages/operations-widget'"

@@ -1,0 +1,39 @@
+<div class="modal-header separator">
+  <h3 translate>
+    {{ release?.id ? 'Edit Release Note' : 'Create Release Note' }}
+  </h3>
+</div>
+
+<form [formGroup]="form" (submit)="submit()">
+  <div class="modal-body">
+    <formly-form [form]="form" [fields]="fields" [model]="release"></formly-form>
+
+    <div class="card">
+      <div class="card-header separator d-flex pointer" (click)="preview = !preview">
+        <span translate>Preview</span>
+
+        <i class="m-l-auto" [c8yIcon]="preview ? 'chevron-up' : 'chevron-down'"></i>
+      </div>
+
+      <div
+        class="card-block markdown-content"
+        [collapse]="!preview"
+        [innerHtml]="body | markdownToHtml | async"
+      ></div>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button class="btn btn-default" (click)="close()" type="button" translate>Cancel</button>
+
+    <button
+      class="btn btn-primary"
+      [disabled]="!form.valid || isLoading"
+      [class.btn-pending]="isLoading"
+      type="submit"
+      translate
+    >
+      {{ release?.id ? 'Update' : 'Create' }}
+    </button>
+  </div>
+</form>

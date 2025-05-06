@@ -1,0 +1,69 @@
+<c8y-title>{{ 'Release Notes' | translate }}</c8y-title>
+
+<c8y-action-bar-item [placement]="'right'">
+  <button class="btn btn-link" (click)="add()" type="button">
+    <i [c8yIcon]="'add'"></i>
+    <span class="m-l-4" translate>Create Release Note</span>
+  </button>
+</c8y-action-bar-item>
+
+<c8y-action-bar-item [placement]="'right'">
+  <button class="btn btn-link" (click)="reload()" type="button">
+    <i [c8yIcon]="'refresh'"></i>
+    <span class="m-l-4" translate>Reload</span>
+  </button>
+</c8y-action-bar-item>
+
+@if (isLoading) {
+  <c8y-loading></c8y-loading>
+} @else {
+  <c8y-list-group>
+    @for (release of releaseNotes; track release.id) {
+      <c8y-li>
+        <c8y-li-icon
+          [icon]="release.published ? 'check' : 'cross-circle'"
+          [class.text-danger]="!release.published"
+        ></c8y-li-icon>
+        <strong>{{ release.version }}</strong>
+        <span class="text-muted m-l-16">
+          @if (release.published) {
+            {{ release.publicationTime | c8yDate: 'shortDate' }}
+          } @else {
+            {{ 'Not published' | translate }}
+          }
+        </span>
+
+        <!-- actions: edit -->
+        <c8y-li-action (click)="edit(release)">
+          <i [c8yIcon]="'pencil'"></i>
+          <span translate>Edit</span>
+        </c8y-li-action>
+        <!-- actions: (un-)publish -->
+        <c8y-li-action (click)="publish(release, !release.published)">
+          <i [c8yIcon]="release.published ? 'times' : 'check'"></i>
+          <span translate>
+            @if (release.published) {
+              Unpublish
+            } @else {
+              Publish
+            }
+          </span>
+        </c8y-li-action>
+        <!-- actions: delete -->
+        <c8y-li-action (click)="delete(release)">
+          <i [c8yIcon]="'trash'"></i>
+          <span translate>Delete</span>
+        </c8y-li-action>
+      </c8y-li>
+    } @empty {
+      <c8y-li>
+        <c8y-ui-empty-state
+          [icon]="'search'"
+          [title]="'No release notes available' | translate"
+          [subtitle]="'Well… maybe later'"
+          [horizontal]="true"
+        ></c8y-ui-empty-state>
+      </c8y-li>
+    }
+  </c8y-list-group>
+}

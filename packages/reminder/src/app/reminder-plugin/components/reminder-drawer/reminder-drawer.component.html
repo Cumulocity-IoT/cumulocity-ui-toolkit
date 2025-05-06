@@ -8,7 +8,7 @@
 
   <ul class="drawer-actions">
     <li>
-      <button type="button" class="btn btn-primary" (click)="createReminder()">
+      <button class="btn btn-primary" (click)="createReminder()" type="button">
         <i [c8yIcon]="'plus-circle'"></i>
         {{ 'Create Reminder' | translate }}
       </button>
@@ -17,30 +17,28 @@
 
   <div class="body">
     <!-- filter: reminder type -->
-    <div *ngIf="types.length" class="filter">
-      <label for="reminder-type-filter" translate>Filter by Reminder Type</label>
-      <div class="c8y-select-wrapper">
-        <select
-          id="reminder-type-filter"
-          name="reminder-type"
-          class="form-control"
-          [(ngModel)]="reminderTypeFilter"
-          (change)="setFilter()"
-        >
-          <option value="">{{ 'Not filtered' | translate }}</option>
-          <option *ngFor="let type of types" [ngValue]="type.id">{{ type.name }}</option>
-        </select>
+    @if (types.length) {
+      <div class="filter">
+        <label for="reminder-type-filter" translate>Filter by Reminder Type</label>
+        <div class="c8y-select-wrapper">
+          <select
+            class="form-control"
+            id="reminder-type-filter"
+            [(ngModel)]="reminderTypeFilter"
+            (change)="setFilter()"
+            name="reminder-type"
+          >
+            <option value="">{{ 'Not filtered' | translate }}</option>
+            <option *ngFor="let type of types" [ngValue]="type.id">{{ type.name }}</option>
+          </select>
+        </div>
       </div>
-    </div>
+    }
 
     <!-- context filter -->
     <div class="filter">
       <label class="c8y-switch">
-        <input
-          type="checkbox"
-          name="context-filter-enabled"
-          [(ngModel)]="contextFilterEnabled"
-        />
+        <input [(ngModel)]="contextFilterEnabled" type="checkbox" name="context-filter-enabled" />
         <span></span>
         {{ 'Filter by Current Context' | translate }}
       </label>
@@ -48,23 +46,24 @@
 
     <!-- list of reminders -->
     <ul class="reminder-group-list">
-      <li *ngFor="let group of reminderGroups; let i = index" class="reminder-group-item">
+      <li class="reminder-group-item" *ngFor="let group of reminderGroups; let i = index">
         <header>
-          <button type="button"
-            aria-controls="collapseBasic"
+          <button
             class="btn btn-clean"
             [attr.aria-expanded]="groupIsExpanded[i]"
             (click)="groupIsExpanded[i] = !groupIsExpanded[i]"
+            type="button"
+            aria-controls="collapseBasic"
           >
             <span
               class="count"
               [class.text-danger]="group.status === reminderGroupStatus.due && group.count > 0"
-              >
+            >
               {{ group.count || 0 }}
               <small
+                class="text-muted"
                 *ngIf="group.total"
                 title="{{ 'Number of reminders if not filtered' | translate }}"
-                class="text-muted"
               >
                 / {{ group.total }}
               </small>
@@ -75,8 +74,8 @@
         </header>
 
         <ul
-          id="collapseBasic"
           class="reminder-list"
+          id="collapseBasic"
           [collapse]="!groupIsExpanded[i]"
           [isAnimated]="true"
         >
@@ -98,10 +97,10 @@
     <div>
       <label class="c8y-switch">
         <input
-          type="checkbox"
-          name="toast-notifications-enabled"
           [(ngModel)]="toastNotificationsEnabled"
           (change)="setConfig('toast')"
+          type="checkbox"
+          name="toast-notifications-enabled"
         />
         <span></span>
         {{ 'Toast Notifications' | translate }}
@@ -111,10 +110,10 @@
     <div>
       <label class="c8y-switch">
         <input
-          type="checkbox"
-          name="browser-notifications-enabled"
           [(ngModel)]="browserNotificationsEnabled"
           (change)="setConfig('browser')"
+          type="checkbox"
+          name="browser-notifications-enabled"
         />
         <span></span>
         {{ 'Browser Notifications' | translate }}
@@ -125,28 +124,31 @@
 
 <!-- single reminder item template -->
 <ng-template #reminderItem let-reminder="reminder">
-  <li class="reminder-item" [ngClass]="{
-    'text-muted': reminder.status !== reminderStatus.active,
-    'changed': reminder.changed
-  }">
+  <li
+    class="reminder-item"
+    [ngClass]="{
+      'text-muted': reminder.status !== reminderStatus.active,
+      changed: reminder.changed,
+    }"
+  >
     <header>
       <i
         class="status-icon"
-        title="Status: {{ reminder.status }}"
         [c8yIcon]="
           reminder.status === reminderStatus.active
             ? 'bell'
             : reminder.status === reminderStatus.acknowledged
-            ? 'bell-slash'
-            : 'check-circle'
+              ? 'bell-slash'
+              : 'check-circle'
         "
+        title="Status: {{ reminder.status }}"
       ></i>
 
       <ng-container *ngIf="reminder.status !== reminderStatus.cleared; else clearedDate">
         <small
-          title="{{ 'Due' | translate }}: {{ reminder.time | c8yDate }}"
           class="date"
           [class.text-danger]="reminder.status === reminderStatus.active && reminder.diff > 0"
+          title="{{ 'Due' | translate }}: {{ reminder.time | c8yDate }}"
         >
           {{ reminder.time | amTimeAgo }}
         </small>
@@ -164,29 +166,30 @@
 
       <ul class="actions">
         <button
+          class="btn btn-xs btn-hollow btn-success"
           *ngIf="reminder.status === reminderStatus.active"
+          (click)="updateReminder(reminder, reminderStatus.acknowledged)"
           type="button"
           title="{{ 'Acknowledge the reminder' | translate }}"
-          class="btn btn-xs btn-hollow btn-success"
-          (click)="updateReminder(reminder, reminderStatus.acknowledged)"
         >
           <i [c8yIcon]="'bell-slash'"></i>
         </button>
         <button
+          class="btn btn-xs btn-hollow btn-danger"
           *ngIf="reminder.status !== reminderStatus.cleared"
+          (click)="updateReminder(reminder, reminderStatus.cleared)"
           type="button"
           title="{{ 'Clear the reminder' | translate }}"
-          class="btn btn-xs btn-hollow btn-danger"
-          (click)="updateReminder(reminder, reminderStatus.cleared)"
         >
           <i [c8yIcon]="'check-circle'"></i>
         </button>
         <button
+          class="btn btn-xs btn-hollow btn-primary"
           *ngIf="reminder.status === reminderStatus.cleared"
+          (click)="updateReminder(reminder, reminderStatus.active)"
           type="button"
           title="{{ 'Reactivate the reminder' | translate }}"
-          class="btn btn-xs btn-hollow btn-primary"
-          (click)="updateReminder(reminder, reminderStatus.active)">
+        >
           <i [c8yIcon]="'bell'"></i>
         </button>
       </ul>
@@ -198,7 +201,12 @@
 
     <footer>
       <!-- type -->
-      <button *ngIf="types.length && reminder.reminderType" type="button" class="btn btn-clean" (click)="setFilter(reminder.reminderType)">
+      <button
+        class="btn btn-clean"
+        *ngIf="types.length && reminder.reminderType"
+        (click)="setFilter(reminder.reminderType)"
+        type="button"
+      >
         <i class="m-r-4" [c8yIcon]="'tag'"></i>
         <c8y-reminder-type [id]="reminder.reminderType"></c8y-reminder-type>
       </button>
