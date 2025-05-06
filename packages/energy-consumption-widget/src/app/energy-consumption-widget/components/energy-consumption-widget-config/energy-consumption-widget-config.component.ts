@@ -46,7 +46,7 @@ export class EnergyConsumptionWidgetConfigComponent {
               key: 'eventType',
               type: 'input',
               className: 'col-sm-12',
-              hideExpression: (model) => model.rangeType !== 'event',
+              hideExpression: (model: EnergyConsumptionWidgetConfig) => model.rangeType !== 'event',
               props: {
                 label: 'Event Type',
                 required: true,
@@ -140,7 +140,8 @@ export class EnergyConsumptionWidgetConfigComponent {
               key: 'beginAtZero',
               type: 'checkbox',
               className: 'col-sm-6 checkbox-field',
-              hideExpression: (model) => model.displayMode !== 'total',
+              hideExpression: (model: EnergyConsumptionWidgetConfig) =>
+                model.displayMode !== 'total',
               defaultValue: true,
               props: {
                 label: 'Begin Scale at Zero',
