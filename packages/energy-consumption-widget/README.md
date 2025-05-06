@@ -10,6 +10,8 @@
 - next feature
   - use event instead of timeframe
   - support decreasing measurements?
+  - selectable daterange
+  - unit on axis (not possible?)
 
 ---
 
