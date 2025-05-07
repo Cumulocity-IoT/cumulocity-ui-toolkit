@@ -52,6 +52,7 @@ export class ReminderService {
   private get reminderCounter(): number {
     return this._reminderCounter;
   }
+
   private set reminderCounter(count: number) {
     this._reminderCounter = count;
     this.reminderCounter$.next(this._reminderCounter);
@@ -60,6 +61,7 @@ export class ReminderService {
   private get reminders(): Reminder[] {
     return this._reminders;
   }
+
   private set reminders(reminders: Reminder[]) {
     this._reminders = reminders;
     this.reminders$.next(this._reminders);
@@ -93,7 +95,7 @@ export class ReminderService {
     if (this.drawer) return;
 
     this.loadConfig();
-    this.requestNotificationPermission();
+    void this.requestNotificationPermission();
     this._types = await this.fetchReminderTypes();
     void this.fetchActiveReminderCounter();
     this.createDrawer();
@@ -150,12 +152,14 @@ export class ReminderService {
 
   resetFilterConfig(): void {
     const config = this.config$.getValue();
+
     delete config.filter;
     this.config$.next(config);
   }
 
   setConfig(key: string, value: any): void {
     const config = this.config$.getValue();
+
     config[key] = value;
     this.localStorageService.set(REMINDER_LOCAL_STORAGE_CONFIG, config);
     this.config$.next(config);
@@ -195,14 +199,17 @@ export class ReminderService {
 
   private applyReminderFilter(reminder: Reminder, filters: ReminderGroupFilter): Reminder {
     const keys = Object.keys(filters);
+
     if (!keys.length) return reminder;
 
     let check = true;
+
     keys.forEach((key) => {
       if (reminder[key] !== filters[key]) check = false;
     });
 
     if (!check) return;
+
     return reminder;
   }
 
@@ -231,7 +238,7 @@ export class ReminderService {
 
     reminders = reminders.filter((r) => {
       if (r.id === message.data) {
-        deleted = r as Reminder;
+        deleted = r;
 
         return false;
       } else {
@@ -268,10 +275,10 @@ export class ReminderService {
       if (response.data)
         types = (JSON.parse(response.data.value) as ReminderType[]).map((type) => ({
           id: type.id,
-          name: this.translateService.instant(type.name),
+          name: this.translateService.instant(type.name) as string,
         }));
     } catch (error) {
-      console.log('[R.S:1] No reminder type config found.', error);
+      console.error('[R.S:1] No reminder type config found.', error);
     }
 
     return orderBy(types, 'name');
@@ -285,6 +292,7 @@ export class ReminderService {
     }
 
     const assetType = reminder.isGroup ? 'group' : 'device';
+
     url += `/${assetType}/${reminder.source.id}`;
 
     return url;
@@ -292,7 +300,7 @@ export class ReminderService {
 
   private handleReminderUpdate(message: Partial<RealtimeMessage<Reminder>>): Reminder | undefined {
     let reminders = cloneDeep(this.reminders);
-    let now = moment();
+    const now = moment();
 
     if (message.realtimeAction === 'DELETE') return this.deleteRminderFromList(message, reminders);
 
@@ -302,6 +310,7 @@ export class ReminderService {
       case 'UPDATE':
         reminders = this._reminders.map((r) => {
           if (r.id === reminder.id) r = reminder;
+
           return r;
         });
         void this.fetchActiveReminderCounter();
@@ -366,6 +375,7 @@ export class ReminderService {
   private filterReminder(groups: ReminderGroup[], context?: string): ReminderGroup[] {
     // store filter setting to local storage
     const filter = this.buildTypeFilter();
+
     this.setConfig('filter', filter);
 
     const config = this.config$.getValue();
@@ -376,6 +386,7 @@ export class ReminderService {
     if (!has(config.filter, 'reminderType') || filter[REMINDER_TYPE_FRAGMENT] === '') return groups;
 
     const keys = Object.keys(filter);
+
     if (!keys.length) return groups;
 
     groups.map((group) => {
@@ -384,6 +395,7 @@ export class ReminderService {
       );
       if (!has(group, 'total') || group.total > group.count) group.total = group.count;
       group.count = group.reminders.length;
+
       return group;
     });
 
@@ -401,7 +413,8 @@ export class ReminderService {
 
   private async requestNotificationPermission(): Promise<boolean> {
     if (!('Notification' in window)) {
-      console.log('[R.S:3] This browser does not support notifications.');
+      console.error('[R.S:3] This browser does not support notifications.');
+
       return false;
     }
 
@@ -414,6 +427,7 @@ export class ReminderService {
     if (!this.activeTabService.isActive()) return;
 
     const config = this.config$.getValue();
+
     if (config.browser) this.sendBrowserNotification(reminder);
     if (config.toast) this.sendToast(reminder);
   }
@@ -421,6 +435,7 @@ export class ReminderService {
   private sendBrowserNotification(reminder: Reminder): void {
     if (!this.hasNotificationPermission) {
       console.error('[R.S:2] Could not send browser notification, missing permission.');
+
       return;
     }
 

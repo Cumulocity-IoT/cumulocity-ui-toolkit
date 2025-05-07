@@ -1,6 +1,6 @@
 import { Observable, Subscription, Subject } from 'rxjs';
 import { IManagedObject, InventoryService } from '@c8y/client';
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { subMinutes } from 'date-fns';
 
 const FETCH_INTERVAL = 5;
@@ -17,13 +17,13 @@ export class ManagedObjectUpdatePollingService {
   private failureCount = 0;
   private interval = FETCH_INTERVAL;
 
-  constructor(private inventory: InventoryService) {}
+  private inventory = inject(InventoryService);
 
   /**
-   * 
+   *
    * @param queryExtension for instructions how queries are built - check https://cumulocity.com/api/core/2024/#tag/Query-language
-   * @param interval 
-   * @returns 
+   * @param interval
+   * @returns
    */
   startListening(queryExtension: string, interval = FETCH_INTERVAL): Observable<IManagedObject[]> {
     if (this.running) {
@@ -41,22 +41,23 @@ export class ManagedObjectUpdatePollingService {
     return this.update$;
   }
 
-  private iterateAfter() {
-    setTimeout(() => {
-      this.loop.next();
-    }, this.interval);
-  }
-
   stopListening(): void {
     if (this.loop) {
       this.loop.complete();
       this.loop = null;
     }
+
     if (this.counter) {
       this.counter.unsubscribe();
       this.counter = null;
     }
     this.running = false;
+  }
+
+  private iterateAfter() {
+    setTimeout(() => {
+      this.loop.next();
+    }, this.interval);
   }
 
   private checkForUpdates(queryExtension: string) {
@@ -72,14 +73,19 @@ export class ManagedObjectUpdatePollingService {
       .then(
         (result) => {
           this.failureCount = 0;
+
           if (result.data.length) {
             this.subject.next(result.data);
-            const moWithLatestDate = result.data.reduce((a, b) => (a.lastUpdated > b.lastUpdated ? a : b));
+            const moWithLatestDate = result.data.reduce((a, b) =>
+              a.lastUpdated > b.lastUpdated ? a : b
+            );
+
             this.currentDate = moWithLatestDate.lastUpdated;
           }
         },
         (error) => {
           this.failureCount++;
+
           if (this.failureCount >= FAILURE_LIMIT) {
             this.failureCount = 0;
             console.error(`Unable to detect updates for query ${query}`, error);

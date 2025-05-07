@@ -5,7 +5,10 @@ import { DynamicQueryFormComponent } from './dynamic-query-form.component';
 
 @Component({
   selector: 'ps-alarm-query-form',
-  template: `<ps-dynamic-query-form [filter]="filter" [params]="queryParams"></ps-dynamic-query-form>`,
+  template: `<ps-dynamic-query-form
+    [filter]="filter"
+    [params]="queryParams"
+  ></ps-dynamic-query-form>`,
   standalone: true,
   imports: [CoreModule, DynamicQueryFormComponent],
 })
@@ -35,7 +38,8 @@ export class AlarmQueryFormComponent {
     {
       title: 'resolved',
       type: 'boolean',
-      description: 'When set to true only alarms with status CLEARED will be fetched, whereas false will fetch all alarms with status ACTIVE or ACKNOWLEDGED.',
+      description:
+        'When set to true only alarms with status CLEARED will be fetched, whereas false will fetch all alarms with status ACTIVE or ACKNOWLEDGED.',
     },
     {
       title: 'type',

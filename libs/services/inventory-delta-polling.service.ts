@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { IManagedObject, InventoryService } from '@c8y/client';
 import { Observable, Subscriber } from 'rxjs';
 
@@ -10,15 +10,43 @@ export type InventoryDelta = {
 };
 @Injectable()
 export class InventoryDeltaPollingService {
-  constructor(private inventory: InventoryService) {}
+  private inventory = inject(InventoryService);
 
-  createPolling$(filter: object, interval = FETCH_INTERVAL, mos: string[] = []): Observable<InventoryDelta> {
+  createPolling$(
+    filter: object,
+    interval = FETCH_INTERVAL,
+    mos: string[] = []
+  ): Observable<InventoryDelta> {
     return new Observable<InventoryDelta>((observer) => {
       this.iterateAfter(observer, filter, interval, mos);
     });
   }
 
-  private iterateAfter(observer: Subscriber<InventoryDelta>, filter: object, interval: number, mos: string[]) {
+  toDelta(matches: Array<IManagedObject>, old: Array<string>) {
+    const delta = {
+      add: new Array<IManagedObject>(),
+      remove: new Array<string>(),
+    };
+
+    for (const mo of matches) {
+      if (!old.includes(mo.id)) {
+        delta.add.push(mo);
+      }
+    }
+
+    const toRemoveIds = old.filter((id) => matches.find((m) => m.id === id) === undefined);
+
+    toRemoveIds.forEach((id) => delta.remove.push(id));
+
+    return delta;
+  }
+
+  private iterateAfter(
+    observer: Subscriber<InventoryDelta>,
+    filter: object,
+    interval: number,
+    mos: string[]
+  ) {
     if (observer.closed) {
       return;
     }
@@ -41,23 +69,6 @@ export class InventoryDeltaPollingService {
     return this.fetchMatchingManagedObjects(filter).then((sources) => this.toDelta(sources, mos));
   }
 
-  async toDelta(matches: Array<IManagedObject>, old: Array<string>) {
-    const delta = {
-      add: new Array<IManagedObject>(),
-      remove: new Array<string>(),
-    };
-    for (const mo of matches) {
-      if (!old.includes(mo.id)) {
-        delta.add.push(mo);
-      }
-    }
-
-    const toRemoveIds = old.filter((id) => matches.find((m) => m.id === id) === undefined);
-    toRemoveIds.forEach((id) => delta.remove.push(id));
-
-    return delta;
-  }
-
   private async fetchMatchingManagedObjects(filter: object) {
     const result = new Array<IManagedObject>();
     const queryParams = {
@@ -67,6 +78,7 @@ export class InventoryDeltaPollingService {
     };
 
     let res = await this.inventory.list(queryParams);
+
     while (res.data.length) {
       res.data.forEach((mo) => result.push(mo));
 
@@ -75,6 +87,7 @@ export class InventoryDeltaPollingService {
       }
       res = await res.paging.next();
     }
+
     return result;
   }
 }

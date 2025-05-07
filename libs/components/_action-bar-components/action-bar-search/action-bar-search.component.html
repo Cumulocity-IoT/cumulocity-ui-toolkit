@@ -1,10 +1,21 @@
 <c8y-action-bar-item [placement]="placement" itemClass="navbar-form">
-  <c8y-typeahead [(ngModel)]="selected" placeholder="{{ 'Search…' | translate }}" (onSearch)="setPipe($event)" (onIconClick)="onIconClick($event)" style="min-width: 200px">
+  <c8y-typeahead
+    [(ngModel)]="selected"
+    (onSearch)="setPipe($event)"
+    (onIconClick)="onIconClick($event)"
+    placeholder="{{ 'Search…' | translate }}"
+    style="min-width: 200px"
+  >
     <c8y-li
-      *c8yFor="let device of devices; loadMore: 'auto'; pipe: filterPipe; notFound: notFoundTemplate"
       class="p-l-8 p-r-8 c8y-list__item--link interact"
-      (click)="changeSelection(device)"
+      *c8yFor="
+        let device of devices;
+        loadMore: 'auto';
+        pipe: filterPipe;
+        notFound: notFoundTemplate
+      "
       [active]="selected === device"
+      (click)="changeSelection(device)"
     >
       <c8y-highlight [text]="device.name" [pattern]="pattern"></c8y-highlight>
       <c8y-li-icon icon="rocket"></c8y-li-icon>

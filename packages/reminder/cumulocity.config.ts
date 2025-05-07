@@ -22,8 +22,7 @@ export default {
         name: 'Reminder Plugin',
         module: 'ReminderPluginModule',
         path: './src/app/reminder-plugin/reminder-plugin.module.ts',
-        description:
-          'Adds a simple manual reminder functionality to Cumulocity',
+        description: 'Adds a simple manual reminder functionality to Cumulocity',
       },
     ],
   },

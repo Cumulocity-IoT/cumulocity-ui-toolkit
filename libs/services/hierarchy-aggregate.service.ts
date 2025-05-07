@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { IManagedObject, InventoryService } from '@c8y/client';
 import { Observable, combineLatest, from } from 'rxjs';
 import { switchMap, map, startWith, shareReplay } from 'rxjs/operators';
@@ -7,7 +7,8 @@ import { uniq, uniqBy } from 'lodash';
 @Injectable({ providedIn: 'root' })
 export class HierarchyAggregationService {
   private cache = new Map<string, Observable<IManagedObject[]>>();
-  constructor(private inventoryService: InventoryService) {}
+
+  private inventoryService = inject(InventoryService);
 
   getAllChildrenOfManagedObject$(moId: string, cache = true): Observable<IManagedObject[]> {
     const directChildren$ = this.getDirectChildrenOfManagedObject$(moId, cache);
@@ -69,7 +70,9 @@ export class HierarchyAggregationService {
       startWith([]),
       shareReplay(1)
     );
+
     this.cache.set(moId, observable);
+
     return observable;
   }
 
