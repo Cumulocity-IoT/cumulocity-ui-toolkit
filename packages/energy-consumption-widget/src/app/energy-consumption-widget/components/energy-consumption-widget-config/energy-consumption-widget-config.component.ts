@@ -129,7 +129,7 @@ export class EnergyConsumptionWidgetConfigComponent {
             {
               key: 'digits',
               type: 'number',
-              className: 'col-sm-6',
+              className: 'col-sm-4',
               defaultValue: 2,
               props: {
                 label: 'Rounding Digits',
@@ -137,9 +137,20 @@ export class EnergyConsumptionWidgetConfigComponent {
               },
             },
             {
+              key: 'barColor',
+              type: 'input',
+              className: 'col-sm-4',
+              props: {
+                label: 'Bar Color',
+                required: false,
+                placeholder: '#000000',
+                description: 'If empty "brand light" is used as a fallback"',
+              },
+            },
+            {
               key: 'beginAtZero',
               type: 'checkbox',
-              className: 'col-sm-6 checkbox-field',
+              className: 'col-sm-4 checkbox-field',
               hideExpression: (model: EnergyConsumptionWidgetConfig) =>
                 model.displayMode !== 'total',
               defaultValue: true,
