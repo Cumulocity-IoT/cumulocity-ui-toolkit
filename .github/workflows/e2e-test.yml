@@ -40,7 +40,7 @@ jobs:
       - name: Install Dependencies (Root)
         run: npm install
 
-      - name: Start Angular Server (mode: ${{ github.event.inputs.mode }})
+      - name: Start Angular Server (package ${{ github.event.inputs.mode }})
         run: |
           echo "Starting Angular server using serve:$MODE"
           npm run serve:$MODE &
@@ -55,12 +55,12 @@ jobs:
         working-directory: ./test
         run: npm install
 
-      - name: Run Cypress Tests (test:$MODE)
+      - name: Run Cypress Tests (testing package $MODE)
         working-directory: ./test
         env:
           CYPRESS_C8Y_PASSWORD: ${{ secrets.C8Y_PASSWORD }}
         run: |
-          echo "Running tests with test:$MODE"
+          echo "Running tests with test $MODE"
           npx run test:$MODE
 
       - name: Stop Angular Server
