@@ -30,6 +30,7 @@ export default [
       '**/polyfills.ts',
       '**/i18n.ts',
       '**/src/index.html',
+      '**/test/cypress'
     ],
   },
   {

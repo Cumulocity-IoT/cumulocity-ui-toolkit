@@ -1,0 +1,78 @@
+name: Manual E2E Test Runner
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to run the test on'
+        required: true
+        default: 'main'
+      mode:
+        description: 'Select mode (affects serve and test scripts)'
+        required: true
+        type: choice
+        options:
+          - release
+          - kpi
+          - reminder
+
+jobs:
+  manual-e2e:
+    name: Run E2E Tests Manually
+    runs-on: ubuntu-latest
+
+    env:
+      APP: ${{ env.APP }}
+      TENANT: ${{ env.TENANT }}
+      MODE: ${{ github.event.inputs.mode }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies (Root)
+        run: npm install
+
+      - name: Start Angular Server (mode: ${{ github.event.inputs.mode }})
+        run: |
+          echo "Starting Angular server using serve:$MODE"
+          npm run serve:$MODE &
+          npx wait-on http://localhost:9001
+          echo "Angular server is up!"
+        env:
+          NODE_OPTIONS: --max_old_space_size=4096
+          APP: ${{ env.APP }}
+          TENANT: ${{ env.TENANT }}
+
+      - name: Install Test Dependencies
+        working-directory: ./test
+        run: npm install
+
+      - name: Run Cypress Tests (test:$MODE)
+        working-directory: ./test
+        env:
+          CYPRESS_C8Y_PASSWORD: ${{ secrets.C8Y_PASSWORD }}
+        run: |
+          echo "Running tests with test:$MODE"
+          npx run test:$MODE
+
+      - name: Stop Angular Server
+        if: always()
+        run: |
+          echo "Stopping Angular server..."
+          pkill -f "ng serve" || echo "Server was not running."
+          echo "Angular server stopped."
+
+      - name: Upload Cypress Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: test/cypress/screenshots
