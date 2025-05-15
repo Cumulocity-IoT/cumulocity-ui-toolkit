@@ -42,7 +42,7 @@ jobs:
 
       - name: Start Angular Server (package ${{ github.event.inputs.mode }})
         run: |
-          echo "Starting Angular server using serve:$MODE"
+          echo "Starting Angular server for package $MODE"
           npm run serve:$MODE &
           npx wait-on http://localhost:9001
           echo "Angular server is up!"
