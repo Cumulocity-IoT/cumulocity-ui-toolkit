@@ -3,3 +3,4 @@
 .husky
 dist
 thunder-tests
+.package-lock.json

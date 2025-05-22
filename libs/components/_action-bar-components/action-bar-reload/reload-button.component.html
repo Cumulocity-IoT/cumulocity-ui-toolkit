@@ -1,10 +1,7 @@
 <c8y-action-bar-item [placement]="placement">
-  <button
-    class="btn btn-link"
-    title="{{ 'Reload' | translate }}"
-    (click)="refresh()"
-  >
-    <i c8yIcon="refresh" [ngClass]="{ 'icon-spin': requestInProgress }"></i
-    >&nbsp;<span translate>Reload</span>
+  <button class="btn btn-link" (click)="refresh()" title="{{ 'Reload' | translate }}">
+    <i [ngClass]="{ 'icon-spin': requestInProgress }" c8yIcon="refresh"></i>&nbsp;<span translate
+      >Reload</span
+    >
   </button>
 </c8y-action-bar-item>

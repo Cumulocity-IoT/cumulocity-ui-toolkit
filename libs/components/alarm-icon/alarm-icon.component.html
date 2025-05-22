@@ -1,16 +1,40 @@
 <ng-container *ngIf="severity && display === 'severity'">
   <ng-container [ngSwitch]="severity">
     <ng-container *ngSwitchCase="'CRITICAL'">
-      <i c8yIcon="warning" class="status critical" container="body" [tooltip]="'CRITICAL' | translate" [placement]="placement"></i>
+      <i
+        class="status critical"
+        [tooltip]="'CRITICAL' | translate"
+        [placement]="placement"
+        c8yIcon="warning"
+        container="body"
+      ></i>
     </ng-container>
     <ng-container *ngSwitchCase="'MAJOR'">
-      <i c8yIcon="exclamation-circle" class="status major" container="body" [tooltip]="'MAJOR' | translate" [placement]="placement"></i>
+      <i
+        class="status major"
+        [tooltip]="'MAJOR' | translate"
+        [placement]="placement"
+        c8yIcon="exclamation-circle"
+        container="body"
+      ></i>
     </ng-container>
     <ng-container *ngSwitchCase="'MINOR'">
-      <i c8yIcon="exclamation-circle" class="status minor" container="body" [tooltip]="'MINOR' | translate" [placement]="placement"></i>
+      <i
+        class="status minor"
+        [tooltip]="'MINOR' | translate"
+        [placement]="placement"
+        c8yIcon="exclamation-circle"
+        container="body"
+      ></i>
     </ng-container>
     <ng-container *ngSwitchCase="'WARNING'">
-      <i c8yIcon="circle" class="status warning" container="body" [tooltip]="'WARNING' | translate" [placement]="placement"></i>
+      <i
+        class="status warning"
+        [tooltip]="'WARNING' | translate"
+        [placement]="placement"
+        c8yIcon="circle"
+        container="body"
+      ></i>
     </ng-container>
   </ng-container>
 </ng-container>
@@ -18,13 +42,34 @@
 <ng-container *ngIf="status && display === 'status'">
   <ng-container [ngSwitch]="status">
     <ng-container *ngSwitchCase="'ACTIVE'">
-      <i c8yIcon="bell" class="status active" container="body" [tooltip]="'ACTIVE' | translate" [placement]="placement"> </i>
+      <i
+        class="status active"
+        [tooltip]="'ACTIVE' | translate"
+        [placement]="placement"
+        c8yIcon="bell"
+        container="body"
+      >
+      </i>
     </ng-container>
     <ng-container *ngSwitchCase="'ACKNOWLEDGED'">
-      <i c8yIcon="bell-slash" class="status acknowledged" container="body" [tooltip]="'ACKNOWLEDGED' | translate" [placement]="placement"> </i>
+      <i
+        class="status acknowledged"
+        [tooltip]="'ACKNOWLEDGED' | translate"
+        [placement]="placement"
+        c8yIcon="bell-slash"
+        container="body"
+      >
+      </i>
     </ng-container>
     <ng-container *ngSwitchCase="'CLEARED'">
-      <i c8yIcon="check-circle" class="text-muted" container="body" [tooltip]="'CLEARED' | translate" [placement]="placement"> </i>
+      <i
+        class="text-muted"
+        [tooltip]="'CLEARED' | translate"
+        [placement]="placement"
+        c8yIcon="check-circle"
+        container="body"
+      >
+      </i>
     </ng-container>
   </ng-container>
 </ng-container>

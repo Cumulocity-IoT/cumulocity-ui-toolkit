@@ -13,9 +13,9 @@ export class ActionBarReloadButton {
 
   @Input() placement: 'left' | 'right' = 'left';
 
-
   protected async refresh() {
     this.requestInProgress = true;
+
     try {
       await this.refreshCallBack();
       this.requestInProgress = false;

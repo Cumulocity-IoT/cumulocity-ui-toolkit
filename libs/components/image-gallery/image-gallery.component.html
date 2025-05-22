@@ -1,13 +1,17 @@
 <ng-container>
-  <carousel 
-  [interval]="interval"
-  [noPause]="noPause"
-  [noWrap]="noWrap"
-  [showIndicators]="showIndicators"
-  [pauseOnFocus]="pauseOnFocus"
+  <carousel
+    [interval]="interval"
+    [noPause]="noPause"
+    [noWrap]="noWrap"
+    [showIndicators]="showIndicators"
+    [pauseOnFocus]="pauseOnFocus"
   >
     <slide *ngFor="let image of gallery.images">
-      <img [src]="image" class="fit-h fit-w" style="object-fit: contain; object-position: center center;"/>
+      <img
+        class="fit-h fit-w"
+        [src]="image"
+        style="object-fit: contain; object-position: center center"
+      />
     </slide>
   </carousel>
 </ng-container>

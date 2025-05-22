@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { IOperation, OperationStatus } from '@c8y/client';
 import { Alert, AlertService, OperationRealtimeService } from '@c8y/ngx-components';
 import { Subscription, filter } from 'rxjs';
@@ -14,10 +14,13 @@ export class OperationToastService {
   private realtimeSubscriptions = new Map<string, Subscription>();
   private alertsCache = new Map<string, OperationAlert>();
 
-  constructor(private alertService: AlertService, private operationRealtime: OperationRealtimeService) {}
+  private alertService = inject(AlertService);
+
+  private operationRealtime = inject(OperationRealtimeService);
 
   add(alert: OperationAlert) {
     const { deviceId, uuid } = alert.operationDetails;
+
     this.alertsCache.set(uuid, alert);
     // @ts-ignore
     delete alert.operationDetails;
@@ -27,29 +30,34 @@ export class OperationToastService {
 
     return this.operationRealtime.onUpdate$(deviceId).pipe(
       filter((o) => {
-        return (o.status === OperationStatus.SUCCESSFUL || o.status === OperationStatus.FAILED) && o['uuid'] === uuid;
+        return (
+          (o.status === OperationStatus.SUCCESSFUL || o.status === OperationStatus.FAILED) &&
+          o['uuid'] === uuid
+        );
       })
     );
   }
 
   remove(alert: OperationAlert) {
     this.alertService.remove(alert);
+
     if (alert.operationDetails) {
       const uuid = alert.operationDetails?.uuid;
+
       this.alertsCache.delete(uuid);
       this.unsubscribe(uuid);
     }
   }
 
   private handleRealtimeElement(operation: IOperation) {
-    const uuid = operation['uuid'];
+    const uuid = operation['uuid'] as string;
     const alert = this.alertsCache.get(uuid);
 
     if (alert) {
       this.alertService.remove(alert);
     }
 
-    let text = operation['description'] as string;
+    const text = operation['description'] as string;
 
     let detailedData = '';
 
@@ -57,7 +65,7 @@ export class OperationToastService {
       // text += `<br /><a href="/apps/devicemanagement/index.html#/device/${operation.deviceId}/operations" target="_blank">Go to operation details</a>`;
       detailedData = operation['failureReason'] as string;
     } else {
-      detailedData = operation['param'];
+      detailedData = operation['param'] as string;
     }
 
     this.alertService.add({
@@ -88,7 +96,10 @@ export class OperationToastService {
       .onUpdate$(deviceId)
       .pipe(
         filter((o) => {
-          return (o.status === OperationStatus.SUCCESSFUL || o.status === OperationStatus.FAILED) && o['uuid'] === uuid;
+          return (
+            (o.status === OperationStatus.SUCCESSFUL || o.status === OperationStatus.FAILED) &&
+            o['uuid'] === uuid
+          );
         })
       )
       .subscribe((o) => this.handleRealtimeElement(o));

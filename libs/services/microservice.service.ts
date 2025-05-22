@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { FetchClient, IFetchOptions, IFetchResponse } from '@c8y/client';
 import { cloneDeep } from 'lodash';
 
@@ -6,6 +6,7 @@ import { cloneDeep } from 'lodash';
   providedIn: 'root',
 })
 export class MicroserviceService {
+  private fetch = inject(FetchClient);
   GET_OPTIONS: IFetchOptions = {
     method: 'GET',
     headers: {
@@ -39,6 +40,7 @@ export class MicroserviceService {
       try {
         const errorMessage = await response.text();
         const parsed = JSON.parse(errorMessage);
+
         throw new Error(parsed.message);
       } catch (e) {
         return Promise.reject(response);
@@ -46,11 +48,9 @@ export class MicroserviceService {
     }
 
     if (response.status !== 204) {
-      return response.json();
+      return response.json() as object;
     }
   };
-
-  constructor(private fetch: FetchClient) {}
 
   async get(
     url: string,
@@ -66,6 +66,7 @@ export class MicroserviceService {
     responseHandler: (response: IFetchResponse) => Promise<any> = this.defaultResponseHandler
   ) {
     const options = cloneDeep(this.POST_OPTIONS);
+
     options.body = JSON.stringify(data);
 
     const response = await this.fetch.fetch(url, options);
@@ -78,6 +79,7 @@ export class MicroserviceService {
     responseHandler: (response: IFetchResponse) => Promise<any> = this.defaultResponseHandler
   ) {
     const options = cloneDeep(this.PUT_OPTIONS);
+
     options.body = JSON.stringify(data);
 
     const response = await this.fetch.fetch(url, options);
@@ -86,9 +88,11 @@ export class MicroserviceService {
 
   async delete(url: string) {
     const response = await this.fetch.fetch(url, this.DELETE_OPTIONS);
+
     if (!response.ok) {
       return Promise.reject(response);
     }
+
     return response;
   }
 }

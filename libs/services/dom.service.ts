@@ -3,6 +3,7 @@ import {
   ComponentFactoryResolver,
   ComponentRef,
   EmbeddedViewRef,
+  inject,
   Injectable,
   Injector,
   Type,
@@ -10,11 +11,9 @@ import {
 
 @Injectable()
 export class DomService {
-  constructor(
-    private componentFactoryResolver: ComponentFactoryResolver,
-    private appRef: ApplicationRef,
-    private injector: Injector
-  ) {}
+  private componentFactoryResolver = inject(ComponentFactoryResolver);
+  private appRef = inject(ApplicationRef);
+  private injector = inject(Injector);
 
   appendComponentToBody(component: Type<unknown>): ComponentRef<unknown> {
     const componentRef = this.componentFactoryResolver
@@ -23,8 +22,7 @@ export class DomService {
 
     this.appRef.attachView(componentRef.hostView);
 
-    const domElem = (componentRef.hostView as EmbeddedViewRef<any>)
-      .rootNodes[0] as HTMLElement;
+    const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
 
     document.body.appendChild(domElem);
 
