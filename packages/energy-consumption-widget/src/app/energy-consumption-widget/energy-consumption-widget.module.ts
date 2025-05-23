@@ -18,7 +18,19 @@ import { EnergyConsumptionWidgetComponent } from './components/energy-consumptio
     FormsModule,
     TooltipModule,
     NgChartsModule,
-    FormlyModule.forChild(),
+    FormlyModule.forChild({
+      types: [
+        {
+          name: 'color',
+          extends: 'input',
+          defaultOptions: {
+            props: {
+              type: 'color',
+            },
+          },
+        },
+      ],
+    }),
     BsDropdownModule,
   ],
   declarations: [EnergyConsumptionWidgetComponent, EnergyConsumptionWidgetConfigComponent],
