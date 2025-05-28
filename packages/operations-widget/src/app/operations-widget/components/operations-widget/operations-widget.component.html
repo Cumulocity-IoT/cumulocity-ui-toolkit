@@ -1,0 +1,6 @@
+@if (config?.buttons) {
+  @for (button of config.buttons; track button.id) {
+    <button-instance [config]="button" (clickedOperation)="onButtonClick(button)">
+    </button-instance>
+  }
+}

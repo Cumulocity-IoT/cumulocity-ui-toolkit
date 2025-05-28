@@ -20,7 +20,10 @@
     "postbuild:energy": "node tools/build-rename.js -p 'packages/energy-consumption-widget'",
     "serve:release": "npm run serve plugin.release-notes -- --shell %APP",
     "build:release": "ng build plugin.release-notes",
-    "postbuild:release": "node tools/build-rename.js -p 'packages/release-notes'"
+    "postbuild:release": "node tools/build-rename.js -p 'packages/release-notes'",
+    "serve:operations": "npm run serve plugin.operations-widget -- --shell %APP",
+    "build:operations": "ng build plugin.operations-widget",
+    "postbuild:operations": "node tools/build-rename.js -p 'packages/operations-widget'"
   },
   "keywords": [
     "cumulocity",
