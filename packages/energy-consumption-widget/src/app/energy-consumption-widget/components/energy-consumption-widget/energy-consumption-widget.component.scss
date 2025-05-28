@@ -1,0 +1,39 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  &:hover button {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateY(2px);
+    transition-delay: 1s;
+  }
+}
+
+.loading-data {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+}
+
+.chart-wrap {
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-height: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 16px 8px;
+
+  select {
+    width: auto;
+  }
+}

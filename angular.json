@@ -21,6 +21,7 @@
             "main": "packages/reminder/src/main.ts",
             "tsConfig": "packages/reminder/tsconfig.app.json",
             "polyfills": ["zone.js"],
+            "polyfills": ["zone.js"],
             "assets": [
               {
                 "glob": "**/*",
@@ -112,6 +113,7 @@
             "outputPath": "dist/cumulocity-kpi-aggregator-widget-plugin",
             "main": "packages/kpi-widget/src/main.ts",
             "tsConfig": "packages/kpi-widget/tsconfig.app.json",
+            "polyfills": ["zone.js"],
             "polyfills": ["zone.js"],
             "assets": [
               {
@@ -275,6 +277,99 @@
             },
             "development": {
               "buildTarget": "plugin.release-notes:build:development"
+            }
+          },
+          "defaultConfiguration": "production"
+        }
+      }
+    },
+    "plugin.energy-consumption-widget": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "less"
+        }
+      },
+      "root": "packages/energy-consumption-widget",
+      "sourceRoot": "packages/energy-consumption-widget/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@c8y/devkit:build",
+          "options": {
+            "outputPath": "dist/cumulocity-energy-consumption-widget-plugin",
+            "main": "packages/energy-consumption-widget/src/main.ts",
+            "tsConfig": "packages/energy-consumption-widget/tsconfig.app.json",
+            "polyfills": ["zone.js"],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "packages/energy-consumption-widget/public"
+              },
+              "packages/energy-consumption-widget/src/assets"
+            ],
+            "inlineStyleLanguage": "less",
+            "styles": ["packages/energy-consumption-widget/src/styles.less"],
+            "scripts": [],
+            "aot": false,
+            "buildOptimizer": false,
+            "allowedCommonJsDependencies": [
+              "regenerator-runtime/runtime",
+              "@cordobo/qrcode",
+              "zone.js/dist/zone",
+              "chroma-js",
+              "lodash"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "all",
+              "buildOptimizer": false
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@c8y/devkit:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.energy-consumption-widget:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.energy-consumption-widget:build:development"
+            }
+          },
+          "defaultConfiguration": "development",
+          "options": {
+            "port": 9001,
+            "publicHost": "localhost:9001"
+          }
+        },
+        "deploy": {
+          "builder": "@c8y/devkit:deploy",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.energy-consumption-widget:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.energy-consumption-widget:build:development"
             }
           },
           "defaultConfiguration": "production"
