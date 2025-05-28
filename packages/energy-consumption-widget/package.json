@@ -1,0 +1,11 @@
+{
+  "name": "cumulocity-energy-consumption-widget-plugin",
+  "version": "0.0.4",
+  "description": "",
+  "author": "@dirk-peter-c8y",
+  "homepage": "___TODO___",
+  "dependencies": {
+    "ng2-charts": "^4.1.1",
+    "ngx-moment": "^6.0.2"
+  }
+}

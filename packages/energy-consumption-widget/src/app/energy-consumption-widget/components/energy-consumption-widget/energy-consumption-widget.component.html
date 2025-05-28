@@ -1,0 +1,19 @@
+@if (loading) {
+  <div class="loading-data">
+    <c8y-loading></c8y-loading>
+  </div>
+} @else {
+  @if (config.exposeRangeSelect) {
+    <header>
+      <select [(ngModel)]="dateRange" (change)="reload()">
+        @for (range of dateRangeSelect; track range) {
+          <option [ngValue]="range.value">{{ range.label }}</option>
+        }
+      </select>
+    </header>
+  }
+
+  <div class="chart-wrap">
+    <canvas [data]="barChartData" [options]="barChartOptions" [type]="'bar'" baseChart> </canvas>
+  </div>
+}
