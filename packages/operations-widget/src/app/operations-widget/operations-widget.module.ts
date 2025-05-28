@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { CoreModule, hookComponent } from '@c8y/ngx-components';
 import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
+import { assets } from './assets/assets';
 import { ButtonInstanceComponent } from './components/button-instance/button-instance.component';
 import { OperationsValueComponent } from './components/operations-value/operations-value.component';
 import { OperationsWidgetComponent } from './components/operations-widget/operations-widget.component';
@@ -22,7 +23,7 @@ import { OperationsWidgetConfigComponent } from './components/widget-config/oper
       description: '',
       component: OperationsWidgetComponent,
       configComponent: OperationsWidgetConfigComponent,
-      previewImage: require('./assets/preview.png') as string,
+      previewImage: assets.previewImage,
       data: {
         settings: {
           noNewWidgets: false,
