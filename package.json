@@ -17,7 +17,10 @@
     "postbuild:kpi": "node tools/build-rename.js -p 'packages/kpi-widget'",
     "serve:release": "npm run serve plugin.release-notes -- --shell %APP",
     "build:release": "ng build plugin.release-notes",
-    "postbuild:release": "node tools/build-rename.js -p 'packages/release-notes'"
+    "postbuild:release": "node tools/build-rename.js -p 'packages/release-notes'",
+    "serve:layeredmap": "npm run serve plugin.layered-map -- --shell %APP",
+    "build:layeredmap": "ng build plugin.layered-map",
+    "postbuild:layeredmap": "node tools/build-rename.js -p 'packages/layered-map'"
   },
   "keywords": [
     "cumulocity",

@@ -95,6 +95,98 @@
         }
       }
     },
+    "plugin.layered-map": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "less"
+        }
+      },
+      "root": "packages/layered-map",
+      "sourceRoot": "packages/layered-map/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@c8y/devkit:build",
+          "options": {
+            "outputPath": "dist/cumulocity-layered-map-widget",
+            "main": "packages/layered-map/src/main.ts",
+            "tsConfig": "packages/layered-map/tsconfig.app.json",
+            "polyfills": ["zone.js"],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "packages/layered-map/public"
+              },
+              "packages/layered-map/src/assets"
+            ],
+            "inlineStyleLanguage": "less",
+            "scripts": [],
+            "aot": false,
+            "buildOptimizer": false,
+            "allowedCommonJsDependencies": [
+              "regenerator-runtime/runtime",
+              "@cordobo/qrcode",
+              "zone.js/dist/zone",
+              "chroma-js",
+              "lodash"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "all",
+              "buildOptimizer": false
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@c8y/devkit:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.layered-map:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.layered-map:build:development"
+            }
+          },
+          "defaultConfiguration": "development",
+          "options": {
+            "port": 9001,
+            "publicHost": "localhost:9001"
+          }
+        },
+        "deploy": {
+          "builder": "@c8y/devkit:deploy",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.layered-map:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.layered-map:build:development"
+            }
+          },
+          "defaultConfiguration": "production"
+        }
+      }
+    },
     "plugin.kpi-widget": {
       "projectType": "application",
       "schematics": {

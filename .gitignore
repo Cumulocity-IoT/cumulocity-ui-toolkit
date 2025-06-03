@@ -63,7 +63,9 @@ testem.log
 Thumbs.db
 
 # Cypress
-test/node_modules
+test/config/base.config.ts
 test/cypress/videos
 test/cypress/screenshots
 test/cypress/downloads
+test/cypress.config.ts
+test/node_modules

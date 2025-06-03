@@ -17,7 +17,7 @@ export default defineConfig({
     env: {
       C8Y_TENANT: 't2086305002',
       C8Y_BASEURL: 'http://localhost:9001/',
-      C8Y_SHELL_EXTENSION: `{your-package":["YourModule",...]}`,
+      C8Y_SHELL_EXTENSION: `{"cumulocity-layered-map-widget":["LayeredMapWidgetModule"]}`,
       C8Y_SHELL_TARGET: 'cockpit-test',
       C8Y_USERNAME: 'cypress',
       C8Y_PASSWORD: '************',
