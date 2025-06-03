@@ -6,6 +6,7 @@
         "test:kpi": "TZ=Etc/UTC npx cypress run --browser chrome --config-file config/kpi-widget.config.ts",
         "test:release": "TZ=Etc/UTC npx cypress run --browser chrome --config-file config/release-notes.config.ts",
         "test:reminder": "TZ=Etc/UTC npx cypress run --browser chrome --config-file config/reminder.config.ts",
+        "test:layeredmap": "TZ=Etc/UTC npx cypress run --browser chrome --config-file config/layered-map.config.ts",
         "cy:open": "TZ=Etc/UTC npx cypress open"
     },
     "keywords": [],
@@ -13,7 +14,7 @@
     "license": "Apache-2.0",
     "dependencies": {
         "@angular/common": "^18.2.0",
-        "@c8y/client": "^1021.22.37",
+        "@c8y/client": "^1021.22.81",
         "bignumber.js": "^9.3.0",
         "cumulocity-cypress": "^0.8.14",
         "cypress-terminal-report": "^7.2.0"

@@ -15,6 +15,7 @@ on:
           - release
           - kpi
           - reminder
+          - layeredmap
 
 jobs:
   manual-e2e:
