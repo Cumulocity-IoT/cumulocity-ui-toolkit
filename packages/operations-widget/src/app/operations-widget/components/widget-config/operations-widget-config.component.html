@@ -1,0 +1,197 @@
+@if (config.device) {
+  <h2 translate>Define Operation Buttons</h2>
+
+  @if (config?.buttons?.length) {
+    <div class="row button-config" *ngFor="let item of config.buttons; let buttonIndex = index">
+      @if (config.buttons.length >= 2) {
+        <h3 class="col-sm-12 m-b-4">{{ buttonIndex + 1 }}. Button</h3>
+      }
+
+      <!-- supported ops -->
+      @if (supportedOperations) {
+        <div class="col-sm-6">
+          <div class="form-group">
+            <label translate for="operation_{{ index }}">Supported Operations</label>
+            <div class="c8y-select-wrapper">
+              <select
+                class="form-control"
+                id="operation_{{ index }}"
+                [(ngModel)]="item.operationFragment"
+                name="operation"
+              >
+                @for (op of supportedOperations; track op) {
+                  <option [attr.selected]="op === item.operationFragment || null">{{ op }}</option>
+                }
+              </select>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- label -->
+      <div class="col-sm-6">
+        <c8y-form-group [hasWarning]="!item.label || item.label.length === 0">
+          <label translate for="label_{{ index }}">Label</label>
+          <input
+            class="form-control"
+            id="label_{{ index }}"
+            [(ngModel)]="item.label"
+            [maxlength]="254"
+            type="text"
+            name="label"
+            autocomplete="off"
+            placeholder="e.g. Restart"
+            required
+          />
+          <c8y-messages>
+            <c8y-message *ngIf="!item.label || item.label.length === 0" translate></c8y-message>
+            <c8y-message name="required" text="'The label is required'"></c8y-message>
+          </c8y-messages>
+        </c8y-form-group>
+      </div>
+
+      <!-- icon -->
+      <div class="col-sm-6">
+        <c8y-form-group>
+          <label translate for="buttonClasses_{{ index }}">Button Icon</label>
+          <div class="dropdown" style="width: 100%" dropdown>
+            <button
+              class="btn btn-default dropdown-toggle c8y-dropdown"
+              type="button"
+              title="Icon for button"
+              style="width: 100%"
+              dropdownToggle
+            >
+              <span
+                ><i [c8yIcon]="item.icon || 'refresh'"></i>
+                {{ item.icon ? item.icon : 'Choose Icon' }}</span
+              >
+              <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu" *dropdownMenu>
+              <li *ngFor="let iconClass of availableIcons" (click)="item.icon = iconClass">
+                <button type="button"><i [c8yIcon]="iconClass"></i> {{ iconClass }}</button>
+              </li>
+            </ul>
+          </div>
+        </c8y-form-group>
+      </div>
+
+      <!-- color -->
+      <div class="col-sm-6">
+        <c8y-form-group>
+          <label translate for="buttonColors">Button Color</label>
+          <div class="dropdown" style="width: 100%" dropdown>
+            <button
+              [ngClass]="
+                'btn btn-default dropdown-toggle c8y-dropdown ' +
+                (item.buttonClasses || 'btn-warning')
+              "
+              type="button"
+              title="Color of the button"
+              style="width: 100%"
+              dropdownToggle
+            >
+              <span>{{ item.buttonClasses ? item.buttonClasses : 'Choose Color' }}</span>
+              <span class="caret"></span>
+            </button>
+
+            <ul class="dropdown-menu" *dropdownMenu>
+              <li *ngFor="let class of buttonClasses" (click)="item.buttonClasses = class">
+                <button [ngClass]="'btn ' + class" type="button" style="width: 100%">
+                  <i [c8yButton]="item.button" [c8yIcon]="item.icon"></i>
+                  {{ class }}
+                </button>
+              </li>
+            </ul>
+          </div>
+        </c8y-form-group>
+      </div>
+
+      <!-- operation value -->
+      <div class="col-sm-12">
+        <operations-value [(value)]="item.operationValue"></operations-value>
+      </div>
+
+      <!-- description -->
+      <div class="col-sm-12">
+        <c8y-form-group [hasWarning]="!item.description || item.description.length === 0">
+          <label translate for="description_{{ index }}">Description</label>
+          <input
+            class="form-control"
+            id="description_{{ index }}"
+            [(ngModel)]="item.description"
+            [maxlength]="254"
+            type="text"
+            name="description"
+            autocomplete="off"
+            placeholder="e.g. Manually triggered device restart"
+            required
+          />
+        </c8y-form-group>
+      </div>
+
+      <!-- confirmation -->
+      <div class="col-sm-12">
+        <c8y-form-group>
+          <label translate for="confirmation_{{ index }}">Requires confirmation</label>
+          <label class="c8y-switch" title="{{ 'Active' | translate }}">
+            <input [(ngModel)]="item.showModal" type="checkbox" />
+            <span></span>
+            <span>
+              {{ 'Confirm operation' }}
+            </span>
+          </label>
+          <input
+            class="form-control"
+            id="confirmation_{{ index }}"
+            *ngIf="item.showModal"
+            [(ngModel)]="item.modalText"
+            [maxlength]="254"
+            type="text"
+            name="description"
+            autocomplete="off"
+            placeholder="e.g. Restart device"
+          />
+        </c8y-form-group>
+      </div>
+
+      <!-- admin -->
+      <div class="col-sm-12">
+        <button class="btn btn-danger" (click)="removeButton(buttonIndex)">
+          <i c8yIcon="delete"></i>Delete this Operation
+        </button>
+        <hr />
+      </div>
+    </div>
+  } @else {
+    <div>
+      <h4 translate>No Buttons configured yet.</h4>
+
+      <button class="m-t-16 btn btn-primary" (click)="addNewButton()">
+        <i c8yIcon="plus"></i>
+        {{ 'Add First Button' | translate }}
+      </button>
+    </div>
+  }
+} @else {
+  <h3 class="m-b-16" translate>Define Operation Buttons</h3>
+  <h4 translate>Before we can start you have to pick a device</h4>
+}
+
+@if (config?.buttons?.length > 0) {
+  <button class="m-t-8 m-b-8 btn btn-primary" (click)="addNewButton()">
+    <i c8yIcon="plus"></i>
+    {{ 'Add Button' | translate }}
+  </button>
+}
+
+<!-- preview -->
+<h2 translate>Preview</h2>
+<div class="col-sm-12 preview">
+  @if (config?.buttons?.length) {
+    @for (button of config.buttons; track button) {
+      <button-instance [config]="button" [preview]="true"></button-instance>
+    }
+  }
+</div>

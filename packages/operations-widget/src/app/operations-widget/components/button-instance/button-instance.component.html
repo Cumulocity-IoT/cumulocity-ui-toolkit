@@ -1,0 +1,35 @@
+@if (config.customOperation) {
+  <textarea [(ngModel)]="config.operationValue" name="operationValue"></textarea>
+}
+
+<button
+  class="btn"
+  [ngClass]="config?.buttonClasses"
+  [title]="config?.description"
+  (click)="openModal(confirm, 'modal-sm')"
+>
+  @if (config?.icon) {
+    <i [c8yIcon]="config.icon"></i>
+  }
+  {{ config?.label }}
+</button>
+
+<!-- conform dialog -->
+<ng-template #confirm>
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="c8y-prompt alert alert-warning">
+        <h3 class="m-b-16">
+          <i class="dlt-c8y-icon-exclamation-triangle" c8y-icon="exclamation-triangle"></i>
+          <span ng-show="title">{{ config?.modalText }}</span>
+        </h3>
+        <div class="alert-footer">
+          <button class="btn btn-default" (click)="modalRef.hide()" title="Cancel">Cancel</button>
+          <button class="btn btn-primary" (click)="createOperation($event)" title="Confirm">
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-template>
