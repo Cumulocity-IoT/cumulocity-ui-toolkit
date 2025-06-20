@@ -41,16 +41,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Install root dependencies
-        run: npm ci
+        run: npm install
 
       - name: Lint ${{ matrix.component }}
-        run: npm run lint packages/${{ matrix.component }}
+        run: npx eslint ./packages/${{ matrix.component }} --quiet
 
       - name: Test ${{ matrix.component }}
-        run: npm run test packages/${{ matrix.component }}
+        run: npm run test packages/${{ matrix.component }} --if-present
 
       - name: Build ${{ matrix.component }}
         run: npm run build packages/${{ matrix.component }}

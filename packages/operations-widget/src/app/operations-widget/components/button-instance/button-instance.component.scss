@@ -1,0 +1,13 @@
+:host {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+textarea {
+  flex: 1;
+  min-height: 4em * 1.5;
+  font-family: monospace;
+}
