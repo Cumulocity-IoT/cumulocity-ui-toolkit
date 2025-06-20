@@ -2,18 +2,22 @@ import { Injectable } from '@angular/core';
 import { InventoryService, IResultList, IManagedObject, QueriesUtil } from '@c8y/client';
 import { Column, Pagination } from '@c8y/ngx-components';
 import { cloneDeep } from 'lodash';
+import { QueryFilter } from '../models/query-utils.model';
 
 export interface QueryJSON {
-  __filter: any;
+  __filter: QueryFilter;
+
   __orderby: { [key: string]: 1 | -1 }[];
 }
 
-export class QueryJSON {
+export class QueryJSONRepresenation {
   private readonly queriesUtil = new QueriesUtil();
-  __filter: any = {};
+
+  __filter: QueryFilter = {};
+
   __orderby: { [key: string]: 1 | -1 }[] = [];
 
-  constructor(baseQuery?: any) {
+  constructor(baseQuery?: QueryFilter) {
     if (baseQuery) {
       this.__filter = cloneDeep(baseQuery);
     }
@@ -25,11 +29,13 @@ export class QueryJSON {
 
   addFilterAttribute(attribute: object) {
     this.__filter = { ...this.__filter, ...attribute };
+
     return this;
   }
 
   addOrderBys(orderBys: { [key: string]: 1 | -1 }[]) {
     this.__orderby.push(...orderBys);
+
     return this;
   }
 }
@@ -61,8 +67,8 @@ export class BaseInventoryDatasourceService {
     return this.inventoryService.list(filter).then((result) => result.paging.totalPages);
   }
 
-  createQueryJSON(columns: Column[], baseQuery: object = {}): QueryJSON {
-    const json = new QueryJSON(baseQuery);
+  createQueryJSON(columns: Column[], baseQuery: object = {}): QueryJSONRepresenation {
+    const json = new QueryJSONRepresenation(baseQuery);
 
     for (const column of columns) {
       this.extendQueryByColumn(json, column);
@@ -78,7 +84,9 @@ export class BaseInventoryDatasourceService {
       }
 
       if (column.externalFilterQuery && column.filteringConfig) {
-        json.__filter.__and.push(column.filteringConfig.getFilter(column.externalFilterQuery));
+        json.__filter.__and.push(
+          column.filteringConfig.getFilter(column.externalFilterQuery) as object
+        );
       }
     }
 
