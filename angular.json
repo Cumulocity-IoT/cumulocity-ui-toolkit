@@ -463,6 +463,15 @@
             }
           },
           "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "packages/favorites-manager/src/test.ts",
+            "polyfills": "packages/favorites-manager/src/polyfills.ts",
+            "tsConfig": "packages/favorites-manager/tsconfig.app.json",
+            "karmaConfig": "packages/favorites-manager/karma.conf.js"
+          }
         }
       }
     },

@@ -26,7 +26,8 @@
     "postbuild:operations-widget": "node tools/build-rename.js -p 'packages/operations-widget'",
     "serve:favorites-manager": "npm run serve plugin.favorites -- --shell %APP",
     "build:favorites-manager": "ng build plugin.favorites",
-    "postbuild:favorites-manager": "node tools/build-rename.js -p 'packages/favorites-manager'"
+    "postbuild:favorites-manager": "node tools/build-rename.js -p 'packages/favorites-manager'",
+    "test:favorites-manager": "ng test plugin.favorites --watch=false --browsers=ChromeHeadless --code-coverage"
   },
   "keywords": [
     "cumulocity",
