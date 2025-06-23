@@ -49,7 +49,7 @@ jobs:
         run: npx eslint ./packages/${{ matrix.component }} --quiet
 
       - name: Test ${{ matrix.component }}
-        run: npm run test packages/${{ matrix.component }} --if-present
+        run: npm run test:${{ matrix.component }} --if-present
 
       - name: Build ${{ matrix.component }}
         run: npm run build:${{ matrix.component }}
