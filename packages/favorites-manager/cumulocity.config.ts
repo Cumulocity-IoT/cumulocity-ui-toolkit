@@ -17,14 +17,14 @@ export default {
     exports: [
       {
         name: 'Favorites Manager',
-        module: 'FavoritesManagerModule',
-        path: './src/app/modules/favorites-manager/favorites-manager.module.ts',
+        module: 'pluginViewProviders',
+        path: './src/app/modules/favorites-manager/index.ts',
         description:
           'Mark any asset or device as a favorite to quickly access these in your personal favorites list',
       },
     ],
     remotes: {
-      'favorites-manager-plugin': ['FavoritesManagerModule'],
+      'favorites-manager-plugin': ['pluginViewProviders'],
     },
     package: 'plugin',
     isPackage: true,
@@ -47,6 +47,12 @@ export default {
       'ngx-bootstrap',
       '@ngx-translate/core',
       '@ngx-formly/core',
+    ],
+    copy: [
+      {
+        from: 'packages/favorites-manager/assets',
+        to: 'assets',
+      },
     ],
   },
 } as const satisfies ConfigurationOptions;

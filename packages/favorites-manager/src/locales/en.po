@@ -5,29 +5,29 @@ msgstr ""
 "POT-Creation-Date: \n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
-"Language: de\n"
+"Language: en\n"
 "Language-Team: \n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgid "favorites.title"
-msgstr "Favoriten"
+msgstr "Favorites"
 
 msgid "favorites.grid.title"
-msgstr "Favoriten"
+msgstr "Favorites"
 
 msgid "favorites.grid.empty-state"
-msgstr "Keine Favoriten zum Anzeigen."
+msgstr "No favorites to display."
 
 msgid "favorites.action.remove"
-msgstr "Von Favoriten entfernen"
+msgstr "Remove from favorites"
 
 msgid "favorites.action.add"
-msgstr "Als Favorit hinzufügen"
+msgstr "Add to favorites"
 
 msgid "filter.object-type.title"
-msgstr "Objekttyp"
+msgstr "Object Type"
 
 msgid "filter.object-type.hint"
-msgstr "Zeige Objekte vom Typen:"
+msgstr "Show objects with type:"

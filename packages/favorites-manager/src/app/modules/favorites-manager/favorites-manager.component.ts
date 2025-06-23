@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FavoritesManagerService } from './favorites-manager.service';
 import { IManagedObject } from '@c8y/client';
-import { Column, Pagination } from '@c8y/ngx-components';
+import { Column, CoreModule, Pagination } from '@c8y/ngx-components';
 import {
   AlarmsDeviceGridColumn,
   NameDeviceGridColumn,
@@ -14,6 +14,8 @@ import { TypeColumn } from './columns/type.grid-column';
 @Component({
   selector: 'c8y-favorites-manager',
   templateUrl: 'favorites-manager.component.html',
+  standalone: true,
+  imports: [CoreModule],
   providers: [FavoritesManagerService],
 })
 export class FavoritesManagerComponent implements OnInit {

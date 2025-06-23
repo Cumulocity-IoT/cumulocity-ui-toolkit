@@ -1,13 +1,15 @@
 import { Component, OnInit } from '@angular/core';
-import { CellRendererContext } from '@c8y/ngx-components';
+import { CellRendererContext, CoreModule } from '@c8y/ngx-components';
 import { IManagedObjectExtended } from '../favorites-manager.model';
 
 @Component({
+  standalone: true,
   template: `
     @if (objectType) {
       <span class="label label-info" [title]="objectType">{{ objectType | translate }}</span>
     }
   `,
+  imports: [CoreModule],
 })
 export class ObjectTypeCellRendererComponent implements OnInit {
   objectType: string;

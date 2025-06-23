@@ -1,10 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { FavoritesManagerService } from './favorites-manager.service';
 import { ActivatedRoute } from '@angular/router';
+import { CoreModule } from '@c8y/ngx-components';
 
 @Component({
   selector: 'c8y-favorites-action-component',
   templateUrl: 'favorites-action.component.html',
+  standalone: true,
+  imports: [CoreModule],
   providers: [FavoritesManagerService],
 })
 export class FavoritesActionComponent implements OnInit {
