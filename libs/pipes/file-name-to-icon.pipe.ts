@@ -28,11 +28,13 @@ export class FileNameToIconPipe implements PipeTransform {
     }
 
     const [, suffix] = this.fileNameRegexp.exec(name);
+
     for (const icon of Object.keys(this.fileTypeIconsMap)) {
       if (get(this.fileTypeIconsMap, icon).includes(suffix)) {
         return icon;
       }
     }
+
     return 'file';
   }
 }

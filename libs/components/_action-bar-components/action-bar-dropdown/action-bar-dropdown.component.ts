@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CoreModule } from '@c8y/ngx-components';
-import { BsDropdownModule } from "ngx-bootstrap/dropdown";
+import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
 
 @Component({
   selector: 'ps-action-bar-dropdown',

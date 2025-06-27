@@ -4,7 +4,10 @@ import { DynamicQueryFormComponent } from './dynamic-query-form.component';
 
 @Component({
   selector: 'ps-event-query-form',
-  template: `<ps-dynamic-query-form [filter]="filter" [params]="queryParams"></ps-dynamic-query-form>`,
+  template: `<ps-dynamic-query-form
+    [filter]="filter"
+    [params]="queryParams"
+  ></ps-dynamic-query-form>`,
   standalone: true,
   imports: [CoreModule, DynamicQueryFormComponent],
 })
@@ -14,12 +17,14 @@ export class EventQueryFormComponent {
     {
       title: 'createdFrom',
       type: 'date',
-      description: "Start date or date and time of the event's creation (set by the platform during creation).",
+      description:
+        "Start date or date and time of the event's creation (set by the platform during creation).",
     },
     {
       title: 'createdTo',
       type: 'date',
-      description: "End date or date and time of the event's creation (set by the platform during creation).",
+      description:
+        "End date or date and time of the event's creation (set by the platform during creation).",
     },
     {
       title: 'dateFrom',
@@ -34,12 +39,14 @@ export class EventQueryFormComponent {
     {
       title: 'fragmentType',
       type: 'string',
-      description: 'A characteristic which identifies a managed object or event, for example, geolocation, electricity sensor, relay state.',
+      description:
+        'A characteristic which identifies a managed object or event, for example, geolocation, electricity sensor, relay state.',
     },
     {
       title: 'fragmentValue',
       type: 'string',
-      description: "Allows filtering events by the fragment's value, but only when provided together with fragmentType (only string values)",
+      description:
+        "Allows filtering events by the fragment's value, but only when provided together with fragmentType (only string values)",
     },
     {
       title: 'lastUpdatedFrom',
