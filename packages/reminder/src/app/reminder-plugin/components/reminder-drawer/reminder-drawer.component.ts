@@ -127,7 +127,8 @@ export class ReminderDrawerComponent implements OnDestroy {
         value = this.browserNotificationsEnabled;
         break;
     }
-    this.reminderService.setConfig(configOption, value);
+
+    this.reminderService.setConfig(configOption, value as object);
   }
 
   toggleDrawer(open?: boolean): boolean {
