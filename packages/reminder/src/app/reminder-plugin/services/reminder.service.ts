@@ -55,6 +55,7 @@ export class ReminderService {
 
   private set reminderCounter(count: number) {
     this._reminderCounter = count;
+
     this.reminderCounter$.next(this._reminderCounter);
   }
 
@@ -95,7 +96,7 @@ export class ReminderService {
     if (this.drawer) return;
 
     this.loadConfig();
-    this.requestNotificationPermission();
+    void this.requestNotificationPermission();
     this._types = await this.fetchReminderTypes();
     void this.fetchActiveReminderCounter();
     this.createDrawer();
@@ -157,10 +158,11 @@ export class ReminderService {
     this.config$.next(config);
   }
 
-  setConfig(key: string, value: any): void {
+  setConfig(key: string, value: object): void {
     const config = this.config$.getValue();
 
     config[key] = value;
+
     this.localStorageService.set(REMINDER_LOCAL_STORAGE_CONFIG, config);
     this.config$.next(config);
   }
@@ -275,10 +277,10 @@ export class ReminderService {
       if (response.data)
         types = (JSON.parse(response.data.value) as ReminderType[]).map((type) => ({
           id: type.id,
-          name: this.translateService.instant(type.name),
+          name: this.translateService.instant(type.name) as string,
         }));
     } catch (error) {
-      console.log('[R.S:1] No reminder type config found.', error);
+      console.error('[R.S:1] No reminder type config found.', error);
     }
 
     return orderBy(types, 'name');
@@ -413,7 +415,7 @@ export class ReminderService {
 
   private async requestNotificationPermission(): Promise<boolean> {
     if (!('Notification' in window)) {
-      console.log('[R.S:3] This browser does not support notifications.');
+      console.error('[R.S:3] This browser does not support notifications.');
 
       return false;
     }
@@ -491,7 +493,8 @@ export class ReminderService {
       .pipe(
         map((config) => {
           if (has(config, REMINDER_LOCAL_STORAGE_CONFIG))
-            return JSON.parse(config[REMINDER_LOCAL_STORAGE_CONFIG]) as ReminderConfig;
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            return JSON.parse(config[REMINDER_LOCAL_STORAGE_CONFIG] as string) as ReminderConfig;
         })
       )
       .subscribe((config) => this.config$.next(config));
