@@ -32,13 +32,16 @@ export class MeasurementDownloadService {
     return totalPages;
   }
 
-  getMeasurementsWithProgress(source: string): Observable<{ progress: number; measurements: IMeasurement[] }> {
+  getMeasurementsWithProgress(
+    source: string
+  ): Observable<{ progress: number; measurements: IMeasurement[] }> {
     return new Observable((subscriber) => {
       const filter = this.createBaseFilter(source);
 
       from(this.getTotalPages(filter)).subscribe({
         next: async (totalPagesArray) => {
           const totalPages = totalPagesArray.length;
+
           for (const currentPage of totalPagesArray) {
             try {
               const { data: measurements } = await this.measurementService.list({
@@ -53,6 +56,7 @@ export class MeasurementDownloadService {
               });
             } catch (error) {
               subscriber.error(error);
+
               return;
             }
           }
@@ -68,8 +72,9 @@ export class MeasurementDownloadService {
 
   prepare(measurements: IMeasurement[]): string {
     const jsonRows = measurements.map((m) => {
-      let json = {};
+      const json = {};
       const paths = this.detectMeasurementPaths(m);
+
       for (const path of paths) {
         json[path] = get(m, path).value;
       }
@@ -82,15 +87,18 @@ export class MeasurementDownloadService {
     const nope = ['id', 'type', 'time', 'self', 'source'];
     const result: string[] = [];
     const fragmentCandidates = Object.keys(m).filter((key) => !nope.includes(key));
+
     for (const key of fragmentCandidates) {
       const fragment = get(m, key);
       const nestedKeys = Object.keys(fragment);
+
       for (const nestedKey of nestedKeys) {
         if (has(fragment, `${nestedKey}.value`)) {
           result.push(`${key}.${nestedKey}`);
         }
       }
     }
+
     return result;
   }
 
@@ -101,6 +109,7 @@ export class MeasurementDownloadService {
 
     const headers = Object.keys(jsonData[0]);
     const csvRows = [];
+
     csvRows.push(headers.join(','));
     jsonData.forEach((item) => {
       const row = headers
@@ -109,6 +118,7 @@ export class MeasurementDownloadService {
           return !isNil(value) ? `"${value}"` : '';
         })
         .join(',');
+
       csvRows.push(row);
     });
 
@@ -116,7 +126,8 @@ export class MeasurementDownloadService {
   }
 
   download(text: string) {
-    let blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+
     saveAs(blob, `measurements-${new Date().toISOString()}.csv`);
   }
 }
