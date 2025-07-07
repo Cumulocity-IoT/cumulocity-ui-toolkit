@@ -11,11 +11,11 @@ import { CoreModule } from '@c8y/ngx-components';
   providers: [FavoritesManagerService],
 })
 export class FavoritesActionComponent implements OnInit {
-  private contextId: string;
+  private contextId!: string;
 
-  isFavorite: boolean;
+  isFavorite = false;
 
-  isFavoriteStateInitialized: boolean;
+  isFavoriteStateInitialized = false;
 
   constructor(
     private favoritesManagerService: FavoritesManagerService,
