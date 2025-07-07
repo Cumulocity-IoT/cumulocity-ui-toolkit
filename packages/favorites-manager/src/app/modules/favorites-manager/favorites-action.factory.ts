@@ -12,8 +12,6 @@ export class FavoritesActionFactory implements ActionBarFactory {
     template: FavoritesActionComponent,
   };
 
-  constructor() {}
-
   get(activatedRoute?: ActivatedRoute) {
     if (!activatedRoute) {
       return undefined;
