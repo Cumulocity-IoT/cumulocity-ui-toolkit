@@ -16,7 +16,7 @@ const compat = new FlatCompat({
 
 export default [
   {
-    files: ['**/*.ts', '**/*.js', '**/*.html'],
+    files: ['**/*.ts', '**/*.js'],
     // any additional configuration for these file types here
   },
   {
@@ -29,7 +29,7 @@ export default [
       '**/bootstrap.ts',
       '**/polyfills.ts',
       '**/i18n.ts',
-      '**/src/index.html',
+      '**/*.html'
     ],
   },
   {

@@ -69,7 +69,9 @@ export class HierarchyAggregationService {
       startWith([]),
       shareReplay(1)
     );
+
     this.cache.set(moId, observable);
+
     return observable;
   }
 

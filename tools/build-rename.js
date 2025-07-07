@@ -14,7 +14,8 @@ program
 
 const options = program.opts();
 
-const package = JSON.parse(fs.readFileSync('./' + options.path + '/package.json'));
+const packageJsonPath = path.join(options.path, 'package.json');
+const package = JSON.parse(fs.readFileSync(packageJsonPath));
 
 const fileOld = path.join('./dist', package.name + ".zip");
 const fileNew = path.join('./dist', package.name + '_' + package.version + ".zip");

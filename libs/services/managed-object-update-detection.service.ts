@@ -20,10 +20,10 @@ export class ManagedObjectUpdatePollingService {
   constructor(private inventory: InventoryService) {}
 
   /**
-   * 
+   *
    * @param queryExtension for instructions how queries are built - check https://cumulocity.com/api/core/2024/#tag/Query-language
-   * @param interval 
-   * @returns 
+   * @param interval
+   * @returns
    */
   startListening(queryExtension: string, interval = FETCH_INTERVAL): Observable<IManagedObject[]> {
     if (this.running) {
@@ -52,6 +52,7 @@ export class ManagedObjectUpdatePollingService {
       this.loop.complete();
       this.loop = null;
     }
+
     if (this.counter) {
       this.counter.unsubscribe();
       this.counter = null;
@@ -72,14 +73,19 @@ export class ManagedObjectUpdatePollingService {
       .then(
         (result) => {
           this.failureCount = 0;
+
           if (result.data.length) {
             this.subject.next(result.data);
-            const moWithLatestDate = result.data.reduce((a, b) => (a.lastUpdated > b.lastUpdated ? a : b));
+            const moWithLatestDate = result.data.reduce((a, b) =>
+              a.lastUpdated > b.lastUpdated ? a : b
+            );
+
             this.currentDate = moWithLatestDate.lastUpdated;
           }
         },
         (error) => {
           this.failureCount++;
+
           if (this.failureCount >= FAILURE_LIMIT) {
             this.failureCount = 0;
             console.error(`Unable to detect updates for query ${query}`, error);

@@ -39,6 +39,7 @@ export class MicroserviceService {
       try {
         const errorMessage = await response.text();
         const parsed = JSON.parse(errorMessage);
+
         throw new Error(parsed.message);
       } catch (e) {
         return Promise.reject(response);
@@ -66,6 +67,7 @@ export class MicroserviceService {
     responseHandler: (response: IFetchResponse) => Promise<any> = this.defaultResponseHandler
   ) {
     const options = cloneDeep(this.POST_OPTIONS);
+
     options.body = JSON.stringify(data);
 
     const response = await this.fetch.fetch(url, options);
@@ -78,6 +80,7 @@ export class MicroserviceService {
     responseHandler: (response: IFetchResponse) => Promise<any> = this.defaultResponseHandler
   ) {
     const options = cloneDeep(this.PUT_OPTIONS);
+
     options.body = JSON.stringify(data);
 
     const response = await this.fetch.fetch(url, options);
@@ -86,9 +89,11 @@ export class MicroserviceService {
 
   async delete(url: string) {
     const response = await this.fetch.fetch(url, this.DELETE_OPTIONS);
+
     if (!response.ok) {
       return Promise.reject(response);
     }
+
     return response;
   }
 }
