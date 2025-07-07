@@ -41,10 +41,6 @@ export class LocationRealtimeService extends RealtimeService<IEvent> {
     return '/events/*';
   }
 
-  private isLocationUpdateEvent(event: IEvent): event is ILocationUpdateEvent {
-    return event.type === 'c8y_LocationUpdate' && has(event, 'c8y_Position');
-  }
-
   startListening(devices: IManagedObject[]): Map<string, Observable<ILocationUpdateEvent>> {
     const cache = new Map<string, Observable<ILocationUpdateEvent>>();
 
@@ -74,8 +70,7 @@ export class LocationRealtimeService extends RealtimeService<IEvent> {
     );
 
     const realtime$ = this.onCreate$(source).pipe(
-      filter((event) => this.isLocationUpdateEvent(event)),
-      map((event) => event)
+      filter((event) => this.isLocationUpdateEvent(event))
     );
 
     return merge(latestValue$, realtime$).pipe(
@@ -84,5 +79,9 @@ export class LocationRealtimeService extends RealtimeService<IEvent> {
       filter(([prev, curr]) => (prev === EMPTY_EVENT ? true : curr.time >= prev.time)),
       map(([, curr]) => curr)
     );
+  }
+
+  private isLocationUpdateEvent(event: IEvent): event is ILocationUpdateEvent {
+    return event.type === 'c8y_LocationUpdate' && has(event, 'c8y_Position');
   }
 }
