@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { IMeasurement, MeasurementService } from '@c8y/client';
+import { IMeasurement, IMeasurementValue, MeasurementService } from '@c8y/client';
 import { saveAs } from 'file-saver';
 import { from, Observable } from 'rxjs';
 import { get, has, isNil } from 'lodash';
@@ -52,7 +52,7 @@ export class MeasurementDownloadService {
       const paths = this.detectMeasurementPaths(m);
 
       for (const path of paths) {
-        json[path] = get(m, path).value;
+        json[path] = (get(m, path) as IMeasurementValue).value;
       }
     });
     const csv = this.jsonToCsv(jsonRows);
@@ -95,7 +95,7 @@ export class MeasurementDownloadService {
     const fragmentCandidates = Object.keys(m).filter((key) => !nope.includes(key));
 
     for (const key of fragmentCandidates) {
-      const fragment = get(m, key);
+      const fragment = get(m, key) as IMeasurementValue;
       const nestedKeys = Object.keys(fragment);
 
       for (const nestedKey of nestedKeys) {
@@ -119,7 +119,7 @@ export class MeasurementDownloadService {
     csvRows.push(headers.join(','));
     jsonData.forEach((item) => {
       const row = headers
-        .map((header) => {
+        .map((header: string) => {
           const value = item[header];
           return !isNil(value) ? `"${value}"` : '';
         })
