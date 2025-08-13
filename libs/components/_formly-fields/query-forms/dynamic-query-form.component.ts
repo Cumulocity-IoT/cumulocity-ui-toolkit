@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input } from '@angular/core';
+import { AfterViewInit, Component, inject, Input } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { C8yJSONSchema, CoreModule } from '@c8y/ngx-components';
 import { FormlyFieldConfig } from '@ngx-formly/core';
@@ -31,7 +31,10 @@ import { set } from 'lodash';
   </form>`,
 })
 export class DynamicQueryFormComponent implements AfterViewInit {
-  selectedFilters: { title: string }[] = [];
+  private jsonschema = inject(C8yJSONSchema);
+
+  @Input() filter: any = {};
+  @Input() params: any[] = [];
 
   queryFormJSON: JSONSchema7 = {
     $schema: 'https://json-schema.org/draft/2019-09/schema',
@@ -41,12 +44,9 @@ export class DynamicQueryFormComponent implements AfterViewInit {
     additionalProperties: false,
   };
 
+  selectedFilters: { title: string }[] = [];
   form = new FormGroup({});
   fields: FormlyFieldConfig[] = [];
-  @Input() filter: any = {};
-  @Input() params: any[] = [];
-
-  constructor(private jsonschema: C8yJSONSchema) {}
 
   ngAfterViewInit(): void {
     for (const title of Object.keys(this.filter)) {
