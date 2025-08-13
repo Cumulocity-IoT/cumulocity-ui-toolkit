@@ -1,7 +1,7 @@
-import { Observable, Subscription, Subject } from 'rxjs';
-import { IManagedObject, InventoryService } from '@c8y/client';
 import { inject, Injectable } from '@angular/core';
-import { subMinutes } from 'date-fns';
+import { IManagedObject, InventoryService } from '@c8y/client';
+import moment from 'moment';
+import { Observable, Subject, Subscription } from 'rxjs';
 
 const FETCH_INTERVAL = 5;
 const FAILURE_LIMIT = 10;
@@ -31,7 +31,7 @@ export class ManagedObjectUpdatePollingService {
     }
     this.loop = new Subject();
 
-    this.currentDate = subMinutes(new Date(), 5).toISOString();
+    this.currentDate = moment().subtract(5, 'minutes').toISOString();
 
     this.counter = this.loop.subscribe(() => this.checkForUpdates(queryExtension));
     this.running = true;
