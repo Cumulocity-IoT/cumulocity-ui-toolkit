@@ -157,7 +157,7 @@ export class ReminderService {
     this.config$.next(config);
   }
 
-  setConfig(key: string, value: any): void {
+  setConfig<T>(key: string, value: T): void {
     const config = this.config$.getValue();
 
     config[key] = value;
@@ -489,7 +489,7 @@ export class ReminderService {
   private setupConfigSubscription(): void {
     this.localStorageService.storage$
       .pipe(
-        map((config) => {
+        map((config: { [key: string]: string }) => {
           if (has(config, REMINDER_LOCAL_STORAGE_CONFIG))
             return JSON.parse(config[REMINDER_LOCAL_STORAGE_CONFIG]) as ReminderConfig;
         })
