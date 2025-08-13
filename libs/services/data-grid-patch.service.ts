@@ -28,7 +28,7 @@ export class DataGridPatchService {
     if (!has(grid, 'changeSortOrder')) {
       throw new Error('Patching of c8y-data-grid failed. Method changeSortOrder not found.');
     }
-    set(grid, this.ORIGINAL_METHOD_BACKUP_ATTRIBUTE_NAME, grid.changeSortOrder);
+    set(grid, this.ORIGINAL_METHOD_BACKUP_ATTRIBUTE_NAME, grid.changeSortOrder.bind(grid));
 
     grid.changeSortOrder = (columnName) => {
       const oldSortedColumns = grid.columns.filter(
