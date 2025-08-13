@@ -8,12 +8,13 @@ import { CoreModule } from '@c8y/ngx-components';
   imports: [CoreModule],
 })
 export class ActionBarReloadButton {
-  requestInProgress = false;
+  // eslint-disable-next-line
   @Input() refreshCallBack: () => Promise<any>;
-
   @Input() placement: 'left' | 'right' = 'left';
 
-  protected async refresh() {
+  requestInProgress = false;
+
+  protected async refresh(): Promise<void> {
     this.requestInProgress = true;
 
     try {
