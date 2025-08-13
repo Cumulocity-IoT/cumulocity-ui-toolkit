@@ -77,7 +77,11 @@ export class HierarchyAggregationService {
   }
 
   private hasChildren(mo: IManagedObject): boolean {
-    const { childAdditions, childAssets, childDevices } = mo as any;
-    return childAdditions.count > 0 || childAssets.count > 0 || childDevices.count > 0;
+    const { childAdditions, childAssets, childDevices } = mo;
+    return (
+      childAdditions?.references?.length > 0 ||
+      childAssets?.references?.length > 0 ||
+      childDevices?.references?.length > 0
+    );
   }
 }
