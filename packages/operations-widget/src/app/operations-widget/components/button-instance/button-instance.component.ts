@@ -6,6 +6,7 @@ import { OperationButtonConfig } from '../../models/operations-widget-config.mod
   selector: 'button-instance',
   templateUrl: './button-instance.component.html',
   styleUrls: ['./button-instance.component.scss'],
+  standalone: false,
 })
 export class ButtonInstanceComponent {
   private modalService = inject(BsModalService);

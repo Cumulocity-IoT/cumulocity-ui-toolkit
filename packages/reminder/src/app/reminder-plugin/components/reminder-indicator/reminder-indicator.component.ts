@@ -14,6 +14,7 @@ const ReminderStatus = {
   selector: 'c8y-reminder-indicator',
   templateUrl: './reminder-indicator.component.html',
   styleUrls: ['./reminder-indicator.component.less'],
+  standalone: false,
 })
 export class ReminderIndicatorComponent implements OnInit, OnDestroy {
   private reminderService = inject(ReminderService);
