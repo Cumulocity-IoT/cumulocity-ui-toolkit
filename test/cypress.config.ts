@@ -1,3 +1,7 @@
+import dotenv from 'dotenv';
+
+dotenv.config({ path: '../.env' }); // adjust path as needed
+
 import { defineConfig } from 'cypress';
 import installLogsPrinter from 'cypress-terminal-report/src/installLogsPrinter';
 
@@ -15,12 +19,12 @@ export default defineConfig({
     },
     specPattern: ['cypress/e2e/**/*.cy.ts'],
     env: {
-      C8Y_TENANT: 't2086305002',
-      C8Y_BASEURL: 'http://localhost:9001/',
-      C8Y_SHELL_EXTENSION: `{your-package":["YourModule",...]}`,
-      C8Y_SHELL_TARGET: 'cockpit-test',
-      C8Y_USERNAME: 'cypress',
-      C8Y_PASSWORD: '************',
+      C8Y_TENANT: process.env.C8Y_TENANT,
+      C8Y_BASEURL: 'http://localhost:9001',
+      C8Y_SHELL_EXTENSION: `{'sag-ps-iot-pkg-favorites-manager-plugin': ['favoritesManagerViewProviders']}`,
+      C8Y_SHELL_TARGET: process.env.C8Y_SHELL_TARGET,
+      C8Y_USERNAME: process.env.C8Y_USERNAME,
+      C8Y_PASSWORD: process.env.C8Y_PASSWORD,
     },
   },
 });

@@ -6,6 +6,6 @@ describe('Reminder', () => {
   });
 
   it('Verify proper setup', () => {
-   cy.visitShellAndWaitForSelector(``, 'en', 'c8y-reminder-indicator');
+    cy.visitShellAndWaitForSelector(``, 'en', 'c8y-reminder-indicator');
   });
 });
