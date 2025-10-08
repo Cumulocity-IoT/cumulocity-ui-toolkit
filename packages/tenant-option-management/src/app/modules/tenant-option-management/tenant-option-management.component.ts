@@ -108,7 +108,9 @@ export class TenantOptionManagementComponent {
 
   openAddModal(row?: TenantOptionRow) {
     const modalRef = this.bsModalService.show(AddOptionModalComponent, { class: 'modal-lg' });
+
     modalRef.content.ids = this.rows.map((r) => r.id);
+
     if (row) {
       modalRef.content.setOption(row);
     }
@@ -128,6 +130,7 @@ export class TenantOptionManagementComponent {
 
   openImportFromFileModal() {
     const modalRef = this.bsModalService.show(FileImportModalComponent, { class: 'modal-lg' });
+
     modalRef.content.closeSubject.pipe(take(1)).subscribe(() => {
       this.reload();
     });
@@ -135,6 +138,7 @@ export class TenantOptionManagementComponent {
 
   openImportModal() {
     const modalRef = this.bsModalService.show(ImportOptionModalComponent, { class: 'modal-lg' });
+
     modalRef.content.closeSubject.pipe(take(1)).subscribe((o) => {
       if (o) {
         this.rows.push({ id: `${o.category}-${o.key}`, ...o });
@@ -145,6 +149,7 @@ export class TenantOptionManagementComponent {
 
   openExportModal() {
     const modalRef = this.bsModalService.show(ExportModalComponent, { class: 'modal-lg' });
+
     modalRef.content.closeSubject.pipe(take(1)).subscribe();
   }
 

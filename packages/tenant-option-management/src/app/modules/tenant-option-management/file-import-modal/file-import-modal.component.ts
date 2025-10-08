@@ -34,7 +34,7 @@ export class FileImportModalComponent {
     gridHeader: true,
     striped: false,
     filter: false,
-    hover: false
+    hover: false,
   };
 
   pagination: Pagination = {
@@ -86,16 +86,17 @@ export class FileImportModalComponent {
     ];
   }
 
-  onFileSelected(event) {
+  onFileSelected(event: Event & { target: HTMLInputElement }) {
     const file: File = event.target.files[0];
 
     if (file && file.type === 'application/json') {
       const reader = new FileReader();
 
-      reader.onload = (e: any) => {
+      reader.onload = (e: ProgressEvent<FileReader>) => {
         try {
-          const fileContent = e.target.result;
-          this.rows = JSON.parse(fileContent);
+          const fileContent = e.target.result as string;
+
+          this.rows = JSON.parse(fileContent) as TenantOptionRow[];
           this.rows.forEach((row) => {
             this.tenantOptionService
               .detail({ category: row.category, key: row.key })
@@ -121,7 +122,8 @@ export class FileImportModalComponent {
 
   async onItemsSelect(selectedItemIds: string[]) {
     if (
-      this.rows.filter((r) => r.status === 'CONFLICT' && selectedItemIds.includes(r.id)).length > 0
+      this.rows.filter((r) => r.status === ImportStatus.CONFLICT && selectedItemIds.includes(r.id))
+        .length > 0
     ) {
       await this.confirmationModal
         .confirm(
@@ -149,11 +151,12 @@ export class FileImportModalComponent {
     }
   }
 
-  reload() { }
+  reload() {}
 
   async import() {
     if (this.selectedItems.length > 0) {
       this.isLoading = true;
+
       for (const item of this.selectedItems) {
         await this.importOrUpdateItem(item);
       }
@@ -167,6 +170,7 @@ export class FileImportModalComponent {
 
   async importOrUpdateItem(item: TenantOptionRow) {
     const row = this.rows.find((r) => r.id == item.id);
+
     if (!isEmpty(row)) {
       if (row.status === ImportStatus.OVERWRITE) {
         row.status = ImportStatus.LOADING;
@@ -176,11 +180,14 @@ export class FileImportModalComponent {
           value: item.value,
           encrypted: '',
         };
+
         await this.optionsManagement.updateOption(option);
+
         try {
           await this.optionsManagement.addOptionToConfiguration(option);
         } catch (error) {
           // Ignore the rejection
+          console.warn(error);
         }
         row.status = ImportStatus.UPDATED;
       } else {
@@ -191,6 +198,7 @@ export class FileImportModalComponent {
           value: item.value,
           encrypted: '',
         };
+
         await this.optionsManagement.addOption(option);
         row.status = ImportStatus.ADDED;
       }

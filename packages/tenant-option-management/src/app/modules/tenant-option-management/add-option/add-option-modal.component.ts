@@ -103,6 +103,7 @@ export class AddOptionModalComponent {
   validateExistence() {
     if (!this.isEditing && this.option.category && this.option.key) {
       const id = `${this.option.category}-${this.option.key}`;
+
       this.showConflictError = this.ids.includes(id);
     }
   }

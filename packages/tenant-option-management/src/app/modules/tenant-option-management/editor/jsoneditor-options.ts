@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-empty-object-type */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /*
  * Copyright (c) 2022 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA,
  * and/or its subsidiaries and/or its affiliates and/or their licensors.
@@ -22,9 +24,9 @@
 export type JsonEditorMode = 'tree' | 'view' | 'form' | 'code' | 'text';
 
 export interface JsonEditorTreeNode {
-  field: String;
-  value: String;
-  path: String[];
+  field: string;
+  value: string;
+  path: string[];
 }
 
 export interface IError {
@@ -34,7 +36,7 @@ export interface IError {
 
 export class JsonEditorOptions {
   public ace: any;
-  public ajv: Object;
+  public ajv: object;
 
   /**
    *   {function} onChange  Callback method, triggered
@@ -126,7 +128,7 @@ export class JsonEditorOptions {
    */
   public onError: (error: any) => void;
   public onModeChange: (newMode: JsonEditorMode, oldMode: JsonEditorMode) => void;
-  public onValidate: (json: Object) => IError[];
+  public onValidate: (json: object) => IError[];
   public onValidationError: (errors: object[]) => void;
 
   public enableSort: boolean;
@@ -137,14 +139,14 @@ export class JsonEditorOptions {
   public history: boolean;
   public mode: JsonEditorMode;
   public modes: JsonEditorMode[];
-  public name: String;
-  public schema: Object;
+  public name: string;
+  public schema: object;
   public search: boolean;
-  public indentation: Number;
-  public template: Object;
-  public theme: Number;
-  public language: String;
-  public languages: Object;
+  public indentation: number;
+  public template: object;
+  public theme: number;
+  public language: string;
+  public languages: object;
 
   /**
    * Adds main menu bar - Contains format, sort, transform, search etc. functionality. True

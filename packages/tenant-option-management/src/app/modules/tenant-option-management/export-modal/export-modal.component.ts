@@ -22,7 +22,7 @@ export class ExportModalComponent {
     gridHeader: true,
     striped: false,
     filter: false,
-    hover: false
+    hover: false,
   };
 
   pagination: Pagination = {
@@ -36,7 +36,10 @@ export class ExportModalComponent {
 
   title = 'Tenant Options Export';
 
-  constructor(private optionsManagement: TenantOptionManagementService, private modal: BsModalRef) {
+  constructor(
+    private optionsManagement: TenantOptionManagementService,
+    private modal: BsModalRef
+  ) {
     this.columns = this.getDefaultColumns();
     this.reload();
   }
@@ -84,6 +87,7 @@ export class ExportModalComponent {
     const blob = new Blob([selectedItemsJson], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
+
     link.href = url;
     link.download = 'export_tenant_options.json';
     link.click();

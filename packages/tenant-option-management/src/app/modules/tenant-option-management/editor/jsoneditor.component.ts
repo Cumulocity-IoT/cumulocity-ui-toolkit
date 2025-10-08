@@ -1,5 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-empty-function */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /*
  * Copyright (c) 2022 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA,
  * and/or its subsidiaries and/or its affiliates and/or their licensors.
@@ -34,7 +40,6 @@ import {
   ChangeDetectionStrategy,
   ViewEncapsulation,
 } from '@angular/core';
-// @ts-ignore
 import JSONEditor from 'jsoneditor';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import {
@@ -76,12 +81,13 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
   @ViewChild('jsonEditorContainer', { static: true })
   jsonEditorContainer: ElementRef;
 
-  private _data: Object = {};
+  private _data: object = {};
 
   @Input() options: JsonEditorOptions = new JsonEditorOptions();
   @Input('data')
-  set data(value: Object) {
+  set data(value: object) {
     this._data = value;
+
     if (this.editor) {
       this.editor.destroy();
       this.ngOnInit();
@@ -109,6 +115,7 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
 
   ngOnInit() {
     let optionsBefore = this.options;
+
     if (!this.optionsChanged && this.editor) {
       optionsBefore = this.editor.options;
     }
@@ -133,9 +140,7 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
 
     // expandAll is an option only supported by ang-jsoneditor and not by the the original jsoneditor.
     delete optionsCopy.expandAll;
-    if (this.debug) {
-      console.log(optionsCopy, this._data);
-    }
+
     if (!this.jsonEditorContainer.nativeElement) {
       console.error(`Can't find the ElementRef reference for jsoneditor)`);
     }
@@ -183,22 +188,16 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
     this.disabled = isDisabled;
   }
 
-  // Implemented as part of ControlValueAccessor.
-  // @ts-ignore
-  private onTouched = () => {};
-
-  // Implemented as part of ControlValueAccessor.
-  private onChangeModel = () => {};
-
   public onChange() {
     if (this.editor) {
       try {
         const json = this.editor.get();
+
         this.onChangeModel();
         this.change.emit(json);
       } catch (e) {
         if (this.debug) {
-          console.log(e);
+          console.error(e);
         }
       }
     }
@@ -206,7 +205,7 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
 
   public onFocus() {
     if (this.editor) {
-      console.log('Was focused');
+      console.warn('Was focused');
     }
   }
 
@@ -216,7 +215,7 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
         this.jsonChange.emit(this.editor.get());
       } catch (e) {
         if (this.debug) {
-          console.log(e);
+          console.error(e);
         }
       }
     }
@@ -228,7 +227,7 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
         this.textChange.emit(text);
       } catch (e) {
         if (this.debug) {
-          console.log(e);
+          console.error(e);
         }
       }
     }
@@ -322,10 +321,27 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
   public isValidJson() {
     try {
       const text = this.getText();
+
       JSON.parse(text);
+
       return true;
     } catch (e) {
       return false;
+    }
+  }
+
+  public setSelectionToPath(path: string) {
+    const levels = this.jsonPath2EditorPath(path);
+    const selection = { path: levels };
+
+    try {
+      this.editor.setSelection(selection, selection);
+    } catch (error) {
+      console.warn('Set selection to path not possible:', levels, error);
+    }
+
+    if (this.hasObservers(this.onPathChanged)) {
+      this.onPathChanged.emit(path);
     }
   }
 
@@ -337,47 +353,45 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
       }
       // set style on currently selected items
       this.selectionList = this.elementRef.nativeElement.querySelectorAll('.jsoneditor-selected');
+
       for (const item of this.selectionList) {
         item.setAttribute('style', `background: lightgrey;`);
       }
       const selection = { path: node.path };
+
       try {
         this.editor.setSelection(selection, selection);
       } catch (error) {
         console.warn('Set selection to path not possible:', node.path, error);
       }
+
       if (this.hasObservers(this.onPathChanged)) {
         this.onPathChanged.emit(this.editorPath2jsonPath(node.path));
       }
     }
   }
 
-  public setSelectionToPath(path: string) {
-    console.log('Set selection to path:', path);
-    const levels = this.jsonPath2EditorPath(path);
-    const selection = { path: levels };
-    try {
-      this.editor.setSelection(selection, selection);
-    } catch (error) {
-      console.warn('Set selection to path not possible:', levels, error);
-    }
-    if (this.hasObservers(this.onPathChanged)) {
-      this.onPathChanged.emit(path);
-    }
-  }
+  // Implemented as part of ControlValueAccessor.
+  // @ts-ignore
+  private onTouched = () => {};
+
+  // Implemented as part of ControlValueAccessor.
+  private onChangeModel = () => {};
 
   private editorPath2jsonPath(levels: string[]): string {
     let path = '';
+
     levels.forEach((n) => {
       if (typeof n === 'number') {
         path = path.substring(0, path.length - 1);
-        path += '[' + n + ']';
+        path += `[${String(n)}]`;
       } else {
         path += n;
       }
       path += '.';
     });
     path = path.replace(/\.$/g, '');
+
     if (path.startsWith('[')) {
       path = '$' + path;
     }
@@ -387,31 +401,34 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
 
   private jsonPath2EditorPath(path: string): string[] {
     const ns = path.split('.');
+
     // if payload is an json array then we have to transform the path
     if (ns[0].startsWith('$')) {
       const patternIndex = /\[(-?\d*)\]/;
       const result = ns[0].match(patternIndex);
+
       if (result && result.length >= 2) {
         ns[0] = result[1];
       }
-      console.log('Changed level 0:', ns[0]);
     }
     const levels: string[] = [];
     //const patternArray = /.*(?=\[*)/
-    const patternArray = /^[^\[]+/;
+    const patternArray = /^[^[]+/;
     const patternIndex = /(?<=\[)(-?\d*)(?=\])/;
+
     ns.forEach((l) => {
       const ar = l.match(patternArray);
+
       if (!isEmpty(ar)) {
-        // @ts-ignore
         levels.push(ar[0]);
       }
       const ind = l.match(patternIndex);
+
       if (!isEmpty(ind)) {
-        // @ts-ignore
         levels.push(ind[0]);
       }
     });
+
     return levels;
   }
 }

@@ -11,5 +11,5 @@ import { FormlyFieldConfig } from '@ngx-formly/core';
 export class TemplateComponent {
   form = new FormGroup({});
   fields: FormlyFieldConfig[] = analyticsBuilderJson;
-  model: any = {};
+  model: object = {};
 }

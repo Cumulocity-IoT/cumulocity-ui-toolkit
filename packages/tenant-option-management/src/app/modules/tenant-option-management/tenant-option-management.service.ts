@@ -44,24 +44,30 @@ export class TenantOptionManagementService {
     await this.tenantOption.create(option);
 
     await this.addOptionToConfiguration(option);
+
     return option;
   }
 
   async addOptionToConfiguration(option: ITenantOption & { encrypted: string }) {
     const config = await this.getConfiguration();
+
     if (config.options.find((o) => o.category === option.category && o.key === option.key)) {
-      return Promise.reject('Tenant option already exists!');
+      return Promise.reject(new Error('Tenant option already exists!'));
     }
     const toSend = cloneDeep(option);
+
     delete toSend.value;
     config.options.push(toSend);
+
     return this.inventory.update({ id: config.id, options: config.options });
   }
 
   async importOption(keyCategory: ITenantOption): Promise<ITenantOption & { encrypted: string }> {
     const { data: option } = await this.tenantOption.detail(keyCategory);
     const combined = { ...option, encrypted: option.key.startsWith('credentials') ? '1' : '0' };
+
     await this.addOptionToConfiguration(combined);
+
     return combined;
   }
 
@@ -113,6 +119,7 @@ export class TenantOptionManagementService {
       id: config.id,
       options: config.options.filter((o) => o.category !== row.category || o.key !== row.key),
     };
+
     await this.inventory.update(delta);
   }
 }
