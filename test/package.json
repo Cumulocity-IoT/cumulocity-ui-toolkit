@@ -2,13 +2,6 @@
   "name": "cypress-tests",
   "version": "0.0.0",
   "description": "Contains end-to-end tests for the packages.",
-  "scripts": {
-    "test:kpi": "TZ=Etc/UTC npx cypress run --browser chrome --config-file config/kpi-widget.config.ts",
-    "test:release": "TZ=Etc/UTC npx cypress run --browser chrome --config-file config/release-notes.config.ts",
-    "test:reminder": "TZ=Etc/UTC npx cypress run --browser chrome --config-file config/reminder.config.ts",
-    "cy:open": "TZ=Etc/UTC npx cypress open",
-    "e2e:open": "cypress open"
-  },
   "keywords": [],
   "author": "UI Guild, @hnaether-c8y",
   "license": "Apache-2.0",

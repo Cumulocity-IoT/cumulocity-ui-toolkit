@@ -29,7 +29,8 @@
     "build:favorites-manager": "ng build plugin.favorites",
     "postbuild:favorites-manager": "node tools/build-rename.js -p ./packages/favorites-manager",
     "test:favorites-manager": "ng test plugin.favorites --watch=false --browsers=ChromeHeadless --code-coverage",
-    "e2e:favorites-manager": "cypress run --spec 'test/cypress/e2e/favorites-manager.cy.ts'"
+    "e2e:run:favorites-manager": "npx --workspace=test -- cypress run --config-file config/favorites-manager.config.ts",
+    "e2e:open:favorites-manager": "npx --workspace=test -- cypress open --config-file config/favorites-manager.config.ts"
   },
   "keywords": [
     "cumulocity",

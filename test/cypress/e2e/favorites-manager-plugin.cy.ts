@@ -25,7 +25,7 @@ describe('Favorites Manager', () => {
 
   // login with the new user before each test
   beforeEach(() => {
-    cy.getAuth(testUser.userName, testUser.password).login();
+    cy.getAuth(testUser.userName, testUser.password).login().disableGainsight();
   });
 
   // delete the user after the test suite runs
@@ -49,7 +49,7 @@ describe('Favorites Manager', () => {
     cy.get('c8y-favorites-manager').should('exist').should('be.visible');
   });
 
-  it.only('should add a new favorite to the list and remove it again', () => {
+  it('should add a new favorite to the list and remove it again', () => {
     // open the Cockpit application extended with the Favorites Manager module and wait for the navigator menu to be visible
     cy.visitShellAndWaitForSelector('', 'en', '#navigator');
 
@@ -71,6 +71,7 @@ describe('Favorites Manager', () => {
 
     // listen for the request to update the favorite list in the user object
     cy.intercept('PUT', '/user/currentUser').as('addFavoriteForUser');
+    cy.intercept('GET', '/user/currentUser').as('getFavoritesForUser');
 
     // check for the favorites action button its state and click on it
     // asset isn't a favorite yet and the button should contain the text "Add to favorites"
@@ -95,6 +96,8 @@ describe('Favorites Manager', () => {
       .should('be.visible')
       .contains('Favorites')
       .click();
+
+    cy.wait('@getFavoritesForUser').its('response.statusCode').should('eq', 200);
 
     cy.get('c8y-favorites-manager').should('exist').should('be.visible');
 
