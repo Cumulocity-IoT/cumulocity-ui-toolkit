@@ -21,7 +21,7 @@ export default defineConfig({
     env: {
       C8Y_TENANT: process.env.C8Y_TENANT,
       C8Y_BASEURL: 'http://localhost:9001',
-      C8Y_SHELL_EXTENSION: `{'sag-ps-iot-pkg-favorites-manager-plugin': ['favoritesManagerViewProviders']}`,
+      C8Y_SHELL_EXTENSION: `{"sag-ps-iot-pkg-favorites-manager-plugin": ["favoritesManagerViewProviders"]}`,
       C8Y_SHELL_TARGET: process.env.C8Y_SHELL_TARGET,
       C8Y_USERNAME: process.env.C8Y_USERNAME,
       C8Y_PASSWORD: process.env.C8Y_PASSWORD,

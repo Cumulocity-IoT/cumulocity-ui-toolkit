@@ -33,13 +33,13 @@ describe('Favorites Manager', () => {
     cy.getAuth().login().deleteUser(testUser);
   });
 
-  it.only('should load favorites list when clicking on favorites menu item', () => {
+  it('should load favorites list when clicking on favorites menu item', () => {
     // open the Cockpit application extended with the Favorites Manager module locally
     // and wait for the navigator menu to be visible
     cy.visitShellAndWaitForSelector('', 'en', '#navigator');
 
     // check for the favorites menu item and click on it
-    cy.get('#navigator [data-cy="Favorites"]')
+    cy.get('#navigator [data-cy="favorites.title"]', { timeout: 60000 })
       .should('exist')
       .should('be.visible')
       .contains('Favorites')
@@ -49,16 +49,12 @@ describe('Favorites Manager', () => {
     cy.get('c8y-favorites-manager').should('exist').should('be.visible');
   });
 
-  it('should add a new favorite to the list and remove it again', () => {
+  it.only('should add a new favorite to the list and remove it again', () => {
     // open the Cockpit application extended with the Favorites Manager module and wait for the navigator menu to be visible
-    cy.visit(`/apps/cockpit/index.html#`, {
-      qs: {
-        remotes: '{"sag-ps-iot-pkg-favorites-manager-plugin":["favoritesManagerViewProviders"]}',
-      },
-    });
+    cy.visitShellAndWaitForSelector('', 'en', '#navigator');
 
     // check for the favorites menu item and click on it to navigate to the favorites list
-    cy.get('#navigator [data-cy="Favorites"]', { timeout: 60000 })
+    cy.get('#navigator [data-cy="favorites.title"]', { timeout: 60000 })
       .should('exist')
       .should('be.visible')
       .contains('Favorites')
@@ -71,11 +67,7 @@ describe('Favorites Manager', () => {
       .should('exist')
       .should('be.visible');
 
-    cy.visit(`/apps/cockpit/index.html#/group/${assetId}`, {
-      qs: {
-        remotes: '{"sag-ps-iot-pkg-favorites-manager-plugin":["favoritesManagerViewProviders"]}',
-      },
-    });
+    cy.visitShellAndWaitForSelector(`group/${assetId}`, 'en', '#navigator');
 
     // listen for the request to update the favorite list in the user object
     cy.intercept('PUT', '/user/currentUser').as('addFavoriteForUser');
@@ -98,7 +90,7 @@ describe('Favorites Manager', () => {
       .contains('Remove from favorites');
 
     // navigate back to the favorites list and expect the list to contain the favorite
-    cy.get('#navigator [data-cy="Favorites"]')
+    cy.get('#navigator [data-cy="favorites.title"]')
       .should('exist')
       .should('be.visible')
       .contains('Favorites')
@@ -139,7 +131,7 @@ describe('Favorites Manager', () => {
       .contains('Add to favorites');
 
     // navigate back to the favorites list and expect the list to be empty
-    cy.get('#navigator [data-cy="Favorites"]')
+    cy.get('#navigator [data-cy="favorites.title"]')
       .should('exist')
       .should('be.visible')
       .contains('Favorites')
