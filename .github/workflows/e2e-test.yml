@@ -1,4 +1,4 @@
-name: Manual E2E Test Runner
+name: E2E Test Runner
 
 on:
   pull_request:
@@ -53,7 +53,7 @@ jobs:
       - name: Start Angular Server (package ${{ matrix.component }})
         run: |
           echo "Starting Angular server for package ${{ matrix.component }}"
-          npm run build:${{ matrix.component }} &
+          npm run serve:${{ matrix.component }} &
           npx wait-on http://localhost:9001
           echo "Angular server is up!"
         env:
