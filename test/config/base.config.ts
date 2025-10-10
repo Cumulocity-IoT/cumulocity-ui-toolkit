@@ -22,12 +22,16 @@ export function baseConfig(remote?: string, pattern?: string[], packageName?: st
       },
       specPattern: pattern || (packageName ? `cypress/e2e/${packageName}*.cy.ts` : undefined),
       env: {
-        C8Y_TENANT: process.env.C8Y_TENANT,
-        C8Y_BASEURL: process.env.C8Y_CYPRESS_URL || 'http://localhost:9001',
-        C8Y_SHELL_EXTENSION: remote ?? '',
-        C8Y_SHELL_TARGET: process.env.C8Y_SHELL_TARGET,
-        C8Y_USERNAME: process.env.C8Y_USERNAME,
-        C8Y_PASSWORD: process.env.C8Y_PASSWORD,
+        C8Y_TENANT: process.env.CYPRESS_C8Y_TENANT || process.env.C8Y_TENANT,
+        C8Y_BASEURL:
+          process.env.CYPRESS_C8Y_CYPRESS_URL ||
+          process.env.C8Y_CYPRESS_URL ||
+          'http://localhost:9001',
+        C8Y_SHELL_EXTENSION: remote || '',
+        C8Y_SHELL_TARGET:
+          process.env.CYPRESS_C8Y_SHELL_TARGET || process.env.C8Y_SHELL_TARGET || 'cockpit',
+        C8Y_USERNAME: process.env.CYPRESS_C8Y_USERNAME || process.env.C8Y_USERNAME,
+        C8Y_PASSWORD: process.env.CYPRESS_C8Y_PASSWORD || process.env.C8Y_PASSWORD,
       },
     },
   });

@@ -4,6 +4,7 @@ on:
   pull_request:
 
 env:
+  C8Y_TENANT: ${{ vars.C8Y_TENANT }}
   C8Y_USERNAME: ${{ vars.C8Y_USERNAME }}
   C8Y_PASSWORD: ${{ secrets.C8Y_PASSWORD }}
   C8Y_BASEURL: ${{ vars.C8Y_BASEURL }}
@@ -70,7 +71,11 @@ jobs:
 
       - name: Run Cypress Tests (testing package ${{ matrix.component }})
         env:
+          CYPRESS_C8Y_TENANT: ${{ env.C8Y_TENANT }}
+          CYPRESS_C8Y_USERNAME: ${{ env.C8Y_USERNAME }}
           CYPRESS_C8Y_PASSWORD: ${{ secrets.C8Y_PASSWORD }}
+          CYPRESS_C8Y_CYPRESS_URL: ${{ env.C8Y_CYPRESS_URL }}
+          CYPRESS_C8Y_SHELL_TARGET: ${{ env.C8Y_SHELL_TARGET }}
         run: |
           echo "Running tests with test ${{ matrix.component }}"
           npm run e2e:run:${{ matrix.component }}
