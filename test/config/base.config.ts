@@ -1,7 +1,7 @@
 // in test/config/base.config.ts
-import dotenv from 'dotenv';
+// import dotenv from 'dotenv';
 
-dotenv.config({ path: '../../.env' });
+// dotenv.config({ path: '../../.env' });
 
 import { defineConfig } from 'cypress';
 import installLogsPrinter from 'cypress-terminal-report/src/installLogsPrinter';
