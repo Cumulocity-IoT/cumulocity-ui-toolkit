@@ -79,6 +79,7 @@ jobs:
         run: |
           echo "Running tests with test ${{ matrix.component }}"
           npm run e2e:run:${{ matrix.component }}
+        timeout-minutes: 10
 
       - name: Stop Angular Server
         if: always()
