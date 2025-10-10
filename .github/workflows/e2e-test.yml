@@ -1,67 +1,70 @@
 name: Manual E2E Test Runner
 
 on:
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch to run the test on'
-        required: true
-        default: 'main'
-      mode:
-        description: 'Select mode (affects serve and test scripts)'
-        required: true
-        type: choice
-        options:
-          - release
-          - kpi
-          - reminder
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
-  manual-e2e:
-    name: Run E2E Tests Manually
+  detect-changes:
     runs-on: ubuntu-latest
-
-    env:
-      APP: ${{ env.APP }}
-      TENANT: ${{ env.TENANT }}
-      MODE: ${{ github.event.inputs.mode }}
-
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.branch }}
+          fetch-depth: 0  # Needed for git diff
 
-      - name: Setup Node.js 20
+      - name: Detect changed packages
+        id: set-matrix
+        run: |
+          git fetch origin main
+          components=$(git diff --name-only origin/main...HEAD | grep '^packages/' | cut -d '/' -f2 | sort -u | jq -R -s -c 'split("\n") | map(select(. != ""))')
+          echo "matrix={\"component\": $components}" >> $GITHUB_OUTPUT
+        shell: bash
+  
+  test-components:
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    env:
+      C8Y_USERNAME: ${{ vars.C8Y_USERNAME }}
+      C8Y_PASSWORD: ${{ secrets.C8Y_PASSWORD }}
+      C8Y_SHELL_TARGET: 'cockpit'
+      C8Y_CYPRESS_URL: 'http://localhost:9001'
+    if: fromJson(needs.detect-changes.outputs.matrix).component != '[]'
+    strategy:
+      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
+    name: E2E Test ${{ matrix.component }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Install Dependencies (Root)
-        run: npm install
+      - name: Install root dependencies
+        run: npm ci
 
-      - name: Start Angular Server (package ${{ github.event.inputs.mode }})
+      - name: Start Angular Server (package ${{ matrix.component }})
         run: |
-          echo "Starting Angular server for package $MODE"
-          npm run serve:$MODE &
+          echo "Starting Angular server for package ${{ matrix.component }}"
+          npm run build:${{ matrix.component }} &
           npx wait-on http://localhost:9001
           echo "Angular server is up!"
         env:
           NODE_OPTIONS: --max_old_space_size=4096
-          APP: ${{ env.APP }}
-          TENANT: ${{ env.TENANT }}
 
-      - name: Install Test Dependencies
-        working-directory: ./test
-        run: npm install
-
-      - name: Run Cypress Tests (testing package $MODE)
-        working-directory: ./test
+      - name: Run Cypress Tests (testing package ${{ matrix.component }})
         env:
           CYPRESS_C8Y_PASSWORD: ${{ secrets.C8Y_PASSWORD }}
         run: |
-          echo "Running tests with test $MODE"
-          npx run test:$MODE
+          echo "Running tests with test ${{ matrix.component }}"
+          npm run e2e:run:${{ matrix.component }}
 
       - name: Stop Angular Server
         if: always()

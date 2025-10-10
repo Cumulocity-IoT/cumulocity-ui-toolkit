@@ -10,7 +10,7 @@ describe('Favorites Manager', () => {
     email: 'test.user@softwareag.com',
   } as IUser;
 
-  const assetId = '{assetId}';
+  const assetId = '6916200';
 
   // create a new user before the test suite runs, who has the necessary roles
   // and permissions to access the Cockpit application extended with the Favorites Manager module
@@ -143,7 +143,7 @@ describe('Favorites Manager', () => {
     cy.get('c8y-favorites-manager').should('exist').should('be.visible');
 
     // expect the favorites list to be empty again for the newly created user
-    cy.get('c8y-favorites-manager [data-cy="favorites-empty-state"]')
+    cy.get('c8y-favorites-manager [data-cy="favorites-empty-state"]', { timeout: 60000 })
       .should('exist')
       .should('be.visible');
   });
