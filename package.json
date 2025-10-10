@@ -30,7 +30,11 @@
     "postbuild:favorites-manager": "node tools/build-rename.js -p ./packages/favorites-manager",
     "test:favorites-manager": "ng test plugin.favorites --watch=false --browsers=ChromeHeadless --code-coverage",
     "e2e:run:favorites-manager": "npx --workspace=test -- cypress run --config-file config/favorites-manager.config.ts",
-    "e2e:open:favorites-manager": "npx --workspace=test -- cypress open --config-file config/favorites-manager.config.ts"
+    "e2e:open:favorites-manager": "npx --workspace=test -- cypress open --config-file config/favorites-manager.config.ts",
+    "serve:tenant-option-management": "npm run serve plugin.tenant-option-management -- --shell %APP",
+    "build:tenant-option-management": "ng build plugin.tenant-option-management",
+    "postbuild:tenant-option-management": "node tools/build-rename.js -p ./packages/tenant-option-management",
+    "test:tenant-option-management": "ng test plugin.tenant-option-management --watch=false --browsers=ChromeHeadless --code-coverage"
   },
   "keywords": [
     "cumulocity",
