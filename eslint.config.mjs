@@ -31,7 +31,7 @@ export default [
       '**/i18n.ts',
       '**/src/index.html',
       '**/test/cypress',
-      '**/*.html'
+      '**/*.html',
     ],
   },
   {
@@ -76,7 +76,7 @@ export default [
 
       'no-unused-vars': 'off',
       'no-prototype-builtins': 'off',
-
+      '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unused-vars': [
         'warn',
         {
