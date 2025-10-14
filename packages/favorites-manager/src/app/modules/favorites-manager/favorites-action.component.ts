@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FavoritesManagerService } from './favorites-manager.service';
 import { ActivatedRoute } from '@angular/router';
 import { CoreModule } from '@c8y/ngx-components';
@@ -11,16 +11,15 @@ import { CoreModule } from '@c8y/ngx-components';
   providers: [FavoritesManagerService],
 })
 export class FavoritesActionComponent implements OnInit {
-  private contextId!: string;
-
   isFavorite = false;
 
   isFavoriteStateInitialized = false;
 
-  constructor(
-    private favoritesManagerService: FavoritesManagerService,
-    private activatedRoute: ActivatedRoute
-  ) {}
+  private contextId!: string;
+
+  private favoritesManagerService = inject(FavoritesManagerService);
+
+  private activatedRoute = inject(ActivatedRoute);
 
   ngOnInit() {
     this.initContext();

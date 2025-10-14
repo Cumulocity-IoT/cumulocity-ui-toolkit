@@ -61,3 +61,9 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
+
+# Cypress
+test/node_modules
+test/cypress/videos
+test/cypress/screenshots
+test/cypress/downloads

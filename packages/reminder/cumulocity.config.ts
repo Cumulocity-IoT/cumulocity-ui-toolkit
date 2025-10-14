@@ -1,5 +1,5 @@
 import type { ConfigurationOptions } from '@c8y/devkit';
-import { author, description, version } from './package.json';
+import { author, name, description, version } from './package.json';
 
 export default {
   runTime: {
@@ -12,7 +12,7 @@ export default {
     dynamicOptionsUrl: true,
     remotes: {
       // 'plugin name from package.json': [ PluginModule ]
-      'cumulocity-reminder-plugin': ['ReminderPluginModule'],
+      [name]: ['ReminderPluginModule'],
     },
     package: 'plugin',
     isPackage: true,

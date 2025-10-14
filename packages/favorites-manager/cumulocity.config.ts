@@ -17,14 +17,14 @@ export default {
     exports: [
       {
         name: 'Favorites Manager',
-        module: 'pluginViewProviders',
+        module: 'favoritesManagerViewProviders',
         path: './src/app/modules/favorites-manager/index.ts',
         description:
           'Mark any asset or device as a favorite to quickly access these in your personal favorites list',
       },
     ],
     remotes: {
-      'favorites-manager-plugin': ['pluginViewProviders'],
+      'sag-ps-iot-pkg-favorites-manager-plugin': ['favoritesManagerViewProviders'],
     },
     package: 'plugin',
     isPackage: true,
