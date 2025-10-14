@@ -38,6 +38,7 @@
     "e2e:run:operations-widget": "npm run e2e:run -- --config-file config/operations-widget.config.ts",
     "e2e:run:tenant-option-management": "npm run e2e:run -- --config-file config/tenant-option-management.config.ts",
     "e2e:open:favorites-manager": "npx --workspace=test -- cypress open --config-file config/favorites-manager.config.ts",
+    "e2e:open:release-notes": "npx --workspace=test -- cypress open --config-file config/release-notes.config.ts",
     "serve:tenant-option-management": "npm run serve plugin.tenant-option-management -- --shell %APP",
     "build:tenant-option-management": "ng build plugin.tenant-option-management",
     "postbuild:tenant-option-management": "node tools/build-rename.js -p ./packages/tenant-option-management",

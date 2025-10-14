@@ -43,11 +43,6 @@ jobs:
       matrix: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
     name: E2E Test ${{ matrix.component }}
     steps:
-      - name: Debug environment variables
-        run: |
-          echo "C8Y_USERNAME is set: ${{ env.C8Y_USERNAME != '' }}"
-          echo "C8Y_BASEURL is set: ${{ env.C8Y_BASEURL != '' }}"  
-
       - name: Checkout code
         uses: actions/checkout@v4
 

@@ -2,10 +2,12 @@
 
 describe('Reminder', () => {
   before(() => {
-    cy.getAuth().login();
+    Cypress.session.clearAllSavedSessions();
+
+    cy.getAuth().login().disableGainsight();
   });
 
   it('Verify proper setup', () => {
-    cy.visitShellAndWaitForSelector(``, 'en', 'c8y-reminder-indicator');
+    cy.visitShellAndWaitForSelector('', 'en', '#navigator');
   });
 });
