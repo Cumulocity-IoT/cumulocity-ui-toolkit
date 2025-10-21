@@ -15,6 +15,7 @@
     "serve:kpi-widget": "npm run serve plugin.kpi-widget -- --shell %APP",
     "build:kpi-widget": "ng build plugin.kpi-widget",
     "postbuild:kpi-widget": "node tools/build-rename.js -p 'packages/kpi-widget'",
+    "test:kpi-widget": "ng test plugin.kpi-widget --watch=false --browsers=ChromeHeadless --code-coverage",
     "serve:energy-consumption-widget": "npm run serve plugin.energy-consumption-widget -- --shell %APP",
     "build:energy-consumption-widget": "ng build plugin.energy-consumption-widget",
     "postbuild:energy-consumption-widget": "node tools/build-rename.js -p 'packages/energy-consumption-widget'",

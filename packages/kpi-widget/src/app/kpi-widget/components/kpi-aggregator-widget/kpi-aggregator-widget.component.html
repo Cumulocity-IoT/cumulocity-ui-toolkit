@@ -1,36 +1,39 @@
 <div class="menu">
   <span class="text-muted">{{ timestampEnd | c8yDate }}</span>
 
-  <span *ngIf="paging && config.showMeta">
-    {{ results }} Results
-    <ng-container *ngIf="paging.totalPages <= pageLimit; else lessThanTotalPages">
-      <span
-        class="text-muted"
-        [tooltip]="'Current Page: ' + paging.currentPage + '\nTotal Pages: ' + paging.totalPages"
-        [placement]="'bottom'"
-      >
-        ({{ paging.currentPage }}/{{ paging.totalPages }})
-      </span>
-    </ng-container>
-    <ng-template #lessThanTotalPages>
-      <span
-        class="text-muted"
-        [tooltip]="
-          'Current Page: ' +
-          paging.currentPage +
-          '\nPage Limit: ' +
-          pageLimit +
-          '\nTotal Pages: ' +
-          paging.totalPages
-        "
-        [placement]="'bottom'"
-      >
-        ({{ paging.currentPage }}/{{ pageLimit }}|{{ paging.totalPages }})
-      </span>
-    </ng-template>
-  </span>
+  @if (paging && config.showMeta) {
+    <span>
+      {{ results }} Results
+      @if (paging.totalPages <= pageLimit) {
+        <span
+          class="text-muted"
+          [tooltip]="'Current Page: ' + paging.currentPage + '\nTotal Pages: ' + paging.totalPages"
+          [placement]="'bottom'"
+        >
+          ({{ paging.currentPage }}/{{ paging.totalPages }})
+        </span>
+      } @else {
+        <span
+          class="text-muted"
+          [tooltip]="
+            'Current Page: ' +
+            paging.currentPage +
+            '\nPage Limit: ' +
+            pageLimit +
+            '\nTotal Pages: ' +
+            paging.totalPages
+          "
+          [placement]="'bottom'"
+        >
+          ({{ paging.currentPage }}/{{ pageLimit }}|{{ paging.totalPages }})
+        </span>
+      }
+    </span>
+  }
 
-  <span class="text-muted" *ngIf="!loading && !assetGroups">-</span>
+  @if (!loading && !assetGroups) {
+    <span class="text-muted">-</span>
+  }
 
   <div class="dropdown" dropdown>
     <button
@@ -64,13 +67,13 @@
 </div>
 
 <!-- manual load trigger -->
-<ng-container *ngIf="!config.runOnLoad && !timestampStart">
+@if (!config.runOnLoad && !timestampStart) {
   <div class="d-flex j-c-center p-16">
     <button class="btn btn-primary" (click)="loadData()" type="button">
       {{ 'Load data' | translate }}
     </button>
   </div>
-</ng-container>
+}
 
 <!-- views -->
 <ng-container *ngIf="!loading; else loadingData">

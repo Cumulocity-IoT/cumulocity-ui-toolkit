@@ -185,6 +185,15 @@
             }
           },
           "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "packages/kpi-widget/src/test.ts",
+            "polyfills": "packages/kpi-widget/src/polyfills.ts",
+            "tsConfig": "packages/kpi-widget/tsconfig.app.json",
+            "karmaConfig": "packages/kpi-widget/karma.conf.js"
+          }
         }
       }
     },
