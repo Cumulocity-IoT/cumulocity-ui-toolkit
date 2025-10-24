@@ -39,7 +39,7 @@ jobs:
             if [ -f "$pkg/package.json" ]; then
               name=$(jq -r '.name' "$pkg/package.json" | sed 's/@//; s/\//-/g')
               version=$(jq -r '.version' "$pkg/package.json")
-              dist_dir="dist/${pkg##*/}"
+              dist_dir="dist/${name##*/}"
               if [ -d "$dist_dir" ]; then
                 zip_name="${name}-${version}.zip"
                 zip -r "release/${zip_name}" "$dist_dir"
@@ -57,7 +57,7 @@ jobs:
           name: Release ${{ github.ref_name }}
           draft: false
           prerelease: false
-          files: dist/*.zip
+          files: release/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
