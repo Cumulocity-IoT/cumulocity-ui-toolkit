@@ -4,7 +4,7 @@
   "config": {},
   "scripts": {
     "serve": "from-env ng serve -u %C8Y_BASEURL",
-    "build": "npm-run-all --parallel build:reminder build:kpi-widget build:energy-consumption-widget build:release-notes build:operations-widget build:favorites-manager build:tenant-option-management",
+    "build": "npm-run-all build:reminder build:kpi-widget build:energy-consumption-widget build:release-notes build:operations-widget build:favorites-manager build:tenant-option-management",
     "prebuild": "npm run clean",
     "clean": "rimraf dist",
     "e2e:open": "cypress open",
