@@ -19,7 +19,7 @@ jobs:
       - name: Get projects from angular.json
         id: get-projects
         run: |
-          echo "projects=$(jq -r '.projects | keys' angular.json)" >> $GITHUB_OUTPUT
+          echo "projects=$(jq -c -r '.projects | keys' angular.json)" >> $GITHUB_OUTPUT
 
   build:
     name: Build ${{ matrix.project }}
