@@ -1,0 +1,63 @@
+name: Create Release on Tag
+run-name: ${{ github.actor }} set a tag
+
+on:
+  push:
+    tags:
+      - 'v*'
+      # - 'v[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build all plugins via Nx
+        run: npx nx run-many --target=build --all --parallel
+        # run: npx nx affected --target=build --base=origin/main --head=HEAD # build only what has changed in main
+
+      - name: Prepare release artifacts
+        id: prepare
+        run: |
+          mkdir -p release
+          for pkg in packages/*; do
+            if [ -f "$pkg/package.json" ]; then
+              name=$(jq -r '.name' "$pkg/package.json" | sed 's/@//; s/\//-/g')
+              version=$(jq -r '.version' "$pkg/package.json")
+              dist_dir="dist/${pkg##*/}"
+              if [ -d "$dist_dir" ]; then
+                zip_name="${name}-${version}.zip"
+                zip -r "release/${zip_name}" "$dist_dir"
+                echo "✅ Created release/${zip_name}"
+              else
+                echo "⚠️  No dist found for ${pkg##*/}, skipping."
+              fi
+            fi
+          done
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          files: release/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # publish to npm
