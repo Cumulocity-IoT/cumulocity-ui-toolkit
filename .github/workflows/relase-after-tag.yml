@@ -44,6 +44,38 @@ jobs:
       - name: Build project ${{ matrix.project }}
         run: npx ng build ${{ matrix.project }}
 
+      - name: Prepare ZIP with version
+        id: prepare-zip
+        run: |
+          mkdir -p dist-zips
+
+          # Get the path for this project (handle both Nx and Angular structures)
+          pkg_json="packages/${{ matrix.project }}/package.json"
+          if [ ! -f "$pkg_json" ]; then
+            pkg_json="projects/${{ matrix.project }}/package.json"
+          fi
+
+          if [ ! -f "$pkg_json" ]; then
+            echo "❌ package.json not found for project ${{ matrix.project }}"
+            exit 1
+          fi
+
+          # Extract version and name
+          version=$(jq -r '.version' "$pkg_json")
+          name=$(jq -r '.name' "$pkg_json" | sed 's/@//; s/\//-/g')
+
+          # Path to built project
+          dist_path="dist/${{ matrix.project }}"
+          if [ ! -d "$dist_path" ]; then
+            echo "❌ Build output not found: $dist_path"
+            exit 1
+          fi
+
+          zip_name="${name}-${version}.zip"
+          (cd dist && zip -r "../dist-zips/${zip_name}" "${{ matrix.project }}")
+
+          echo "✅ Created dist-zips/${zip_name}"
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
