@@ -32,8 +32,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: setup-matrix
     strategy:
-      matrix:
-        project: ${{ fromJson(needs.setup-matrix.outputs.projects) }}
+      matrix: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -48,7 +48,7 @@ jobs:
         run: npm ci
 
       - name: Build project ${{ matrix.project }}
-        run: npx ng build ${{ matrix.project }}
+        run: npx nx build ${{ matrix.project }}
 
       - name: Prepare ZIP with version
         id: prepare-zip
