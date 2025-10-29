@@ -16,10 +16,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Get projects from angular.json
+      - name: Get projects and their paths from angular.json
         id: get-projects
         run: |
-          echo "projects=$(jq -c -r '.projects | keys' angular.json)" >> $GITHUB_OUTPUT
+          echo "Extracting projects from angular.json..."
+          MATRIX=$(jq -c '{
+            include: [
+              (.projects | to_entries[] | { project: .key, path: .value.root })
+            ]
+          }' angular.json)
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
   build:
     name: Build ${{ matrix.project }}
@@ -49,38 +55,39 @@ jobs:
         run: |
           mkdir -p dist-zips
 
-          # Get the path for this project (handle both Nx and Angular structures)
-          pkg_json="packages/${{ matrix.project }}/package.json"
-          if [ ! -f "$pkg_json" ]; then
-            pkg_json="projects/${{ matrix.project }}/package.json"
-          fi
+          project="${{ matrix.project }}"
+          pkg_path="${{ matrix.path }}/package.json"
 
-          if [ ! -f "$pkg_json" ]; then
-            echo "❌ package.json not found for project ${{ matrix.project }}"
+          if [ ! -f "$pkg_path" ]; then
+            echo "❌ package.json not found for $project at $pkg_path"
             exit 1
           fi
 
-          # Extract version and name
-          version=$(jq -r '.version' "$pkg_json")
-          name=$(jq -r '.name' "$pkg_json" | sed 's/@//; s/\//-/g')
+          # Extract name + version from package.json
+          name=$(jq -r '.name' "$pkg_path" | sed 's/@//; s/\//-/g')
+          version=$(jq -r '.version' "$pkg_path")
 
-          # Path to built project
-          dist_path="dist/${{ matrix.project }}"
+          # Build output location (works for both Angular CLI & Nx)
+          dist_path="dist/${project}"
           if [ ! -d "$dist_path" ]; then
-            echo "❌ Build output not found: $dist_path"
+            # fallback to use directory name from root
+            dist_path="dist/$(basename "${{ matrix.path }}")"
+          fi
+
+          if [ ! -d "$dist_path" ]; then
+            echo "❌ dist folder not found for $project"
             exit 1
           fi
 
           zip_name="${name}-${version}.zip"
-          (cd dist && zip -r "../dist-zips/${zip_name}" "${{ matrix.project }}")
-
+          (cd dist && zip -r "../dist-zips/${zip_name}" "$(basename "$dist_path")")
           echo "✅ Created dist-zips/${zip_name}"
 
-      - name: Upload build artifacts
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.project }}
-          path: dist/*.zip
+          path: dist-zips/*.zip
           if-no-files-found: error
           retention-days: 5
 
