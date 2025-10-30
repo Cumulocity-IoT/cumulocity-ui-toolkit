@@ -48,7 +48,7 @@ jobs:
         run: npm ci
 
       - name: Build project ${{ matrix.project }}
-        run: npx nx build ${{ matrix.project }}
+        run: npx ng build ${{ matrix.project }}
 
       - name: Prepare ZIP with version
         shell: bash
