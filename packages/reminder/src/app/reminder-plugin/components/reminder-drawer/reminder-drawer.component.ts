@@ -24,6 +24,7 @@ import { ReminderModalComponent } from '../reminder-modal/reminder-modal.compone
   selector: 'c8y-reminder-drawer',
   templateUrl: './reminder-drawer.component.html',
   styleUrl: './reminder-drawer.component.less',
+  standalone: false,
 })
 export class ReminderDrawerComponent implements OnDestroy {
   private alertService = inject(AlertService);
