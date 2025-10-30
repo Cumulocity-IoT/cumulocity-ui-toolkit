@@ -65,14 +65,16 @@ jobs:
 
           name=$(jq -r '.name' "$pkg_path" | sed 's/@//; s/\//-/g')
           version=$(jq -r '.version' "$pkg_path")
+          echo "name: ${name}"
+          echo "version: ${version}"
 
           # Determine correct dist folder
           dist_path="dist/${project}"
           if [ ! -d "$dist_path" ]; then
-            dist_path="dist/$(basename "${{ matrix.path }}")"
+            dist_path="dist/$(basename "${name}")"
           fi
           if [ ! -d "$dist_path" ]; then
-            echo "❌ dist path, `dist/$(basename "${{ matrix.path }}")`, not found for $project"
+            echo "❌ dist path, `dist/$(basename "${name}")`, not found for $project"
             exit 1
           fi
 
