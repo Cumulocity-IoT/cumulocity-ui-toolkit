@@ -11,27 +11,27 @@ jobs:
   setup-matrix:
     runs-on: ubuntu-latest
     outputs:
-      projects: ${{ steps.get-projects.outputs.projects }}
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Get projects and their paths from angular.json
-        id: get-projects
+      - name: Extract projects and their paths from angular.json
+        id: set-matrix
+        shell: bash
         run: |
-          echo "Extracting projects from angular.json..."
-          MATRIX=$(jq -c '{
-            include: [
-              (.projects | to_entries[] | { project: .key, path: .value.root })
-            ]
-          }' angular.json)
-          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+          echo "📦 Parsing angular.json..."
+          MATRIX_JSON=$(jq -c '{include: [ (.projects | to_entries[] | {project: .key, path: .value.root}) ]}' angular.json)
+          echo "Matrix: $MATRIX_JSON"
+          # Write valid single-line JSON to output
+          echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
 
   build:
     name: Build ${{ matrix.project }}
     runs-on: ubuntu-latest
     needs: setup-matrix
     strategy:
+      fail-fast: false
       matrix: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
 
     steps:
@@ -51,7 +51,7 @@ jobs:
         run: npx nx build ${{ matrix.project }}
 
       - name: Prepare ZIP with version
-        id: prepare-zip
+        shell: bash
         run: |
           mkdir -p dist-zips
 
@@ -63,17 +63,14 @@ jobs:
             exit 1
           fi
 
-          # Extract name + version from package.json
           name=$(jq -r '.name' "$pkg_path" | sed 's/@//; s/\//-/g')
           version=$(jq -r '.version' "$pkg_path")
 
-          # Build output location (works for both Angular CLI & Nx)
+          # Determine correct dist folder
           dist_path="dist/${project}"
           if [ ! -d "$dist_path" ]; then
-            # fallback to use directory name from root
             dist_path="dist/$(basename "${{ matrix.path }}")"
           fi
-
           if [ ! -d "$dist_path" ]; then
             echo "❌ dist folder not found for $project"
             exit 1
@@ -112,5 +109,3 @@ jobs:
           files: release/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # publish to npm
