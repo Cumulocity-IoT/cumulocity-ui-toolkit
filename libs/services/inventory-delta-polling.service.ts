@@ -12,13 +12,22 @@ export type InventoryDelta = {
 export class InventoryDeltaPollingService {
   constructor(private inventory: InventoryService) {}
 
-  createPolling$(filter: object, interval = FETCH_INTERVAL, mos: string[] = []): Observable<InventoryDelta> {
+  createPolling$(
+    filter: object,
+    interval = FETCH_INTERVAL,
+    mos: string[] = []
+  ): Observable<InventoryDelta> {
     return new Observable<InventoryDelta>((observer) => {
       this.iterateAfter(observer, filter, interval, mos);
     });
   }
 
-  private iterateAfter(observer: Subscriber<InventoryDelta>, filter: object, interval: number, mos: string[]) {
+  private iterateAfter(
+    observer: Subscriber<InventoryDelta>,
+    filter: object,
+    interval: number,
+    mos: string[]
+  ) {
     if (observer.closed) {
       return;
     }
@@ -46,6 +55,7 @@ export class InventoryDeltaPollingService {
       add: new Array<IManagedObject>(),
       remove: new Array<string>(),
     };
+
     for (const mo of matches) {
       if (!old.includes(mo.id)) {
         delta.add.push(mo);
@@ -53,6 +63,7 @@ export class InventoryDeltaPollingService {
     }
 
     const toRemoveIds = old.filter((id) => matches.find((m) => m.id === id) === undefined);
+
     toRemoveIds.forEach((id) => delta.remove.push(id));
 
     return delta;
@@ -67,6 +78,7 @@ export class InventoryDeltaPollingService {
     };
 
     let res = await this.inventory.list(queryParams);
+
     while (res.data.length) {
       res.data.forEach((mo) => result.push(mo));
 
@@ -75,6 +87,7 @@ export class InventoryDeltaPollingService {
       }
       res = await res.paging.next();
     }
+
     return result;
   }
 }

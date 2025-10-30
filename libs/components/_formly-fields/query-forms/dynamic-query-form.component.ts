@@ -14,7 +14,12 @@ import { set } from 'lodash';
       <h4 class="card-title">Query filter</h4>
     </div>
     <div class="card-block">
-      <button *ngFor="let p of params" class="btn btn-default btn-icon btn-sm m-t-8 m-l-0 m-r-8" [ngClass]="selectedFilters.includes(p) ? 'active' : ''" (click)="queryParamClick(p)">
+      <button
+        class="btn btn-default btn-icon btn-sm m-t-8 m-l-0 m-r-8"
+        *ngFor="let p of params"
+        [ngClass]="selectedFilters.includes(p) ? 'active' : ''"
+        (click)="queryParamClick(p)"
+      >
         <i [c8yIcon]="getIcon(p)"></i>
         {{ p.title }}
       </button>
@@ -46,6 +51,7 @@ export class DynamicQueryFormComponent implements AfterViewInit {
   ngAfterViewInit(): void {
     for (const title of Object.keys(this.filter)) {
       const match = this.params.find((p) => p.title === title);
+
       if (match) {
         this.selectedFilters.push(match);
         set((<any>this.queryFormJSON).properties, match.title, match);
@@ -72,6 +78,7 @@ export class DynamicQueryFormComponent implements AfterViewInit {
 
   queryParamClick(b: { title: string }) {
     const properties = (<any>this.queryFormJSON).properties;
+
     if (this.selectedFilters.includes(b)) {
       this.selectedFilters = this.selectedFilters.filter((f) => f !== b);
       delete properties[b.title];

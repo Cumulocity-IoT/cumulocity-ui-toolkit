@@ -9,7 +9,7 @@ import { set } from 'lodash';
 @Component({
   selector: 'ps-heatmap',
   template: `<div class="c8y-map">
-    <div #heatMap class="heatmap-container"></div>
+    <div class="heatmap-container" #heatMap></div>
   </div> `,
   styleUrls: ['./ps-heatmap.component.css'],
   standalone: true,
@@ -30,10 +30,12 @@ export class HeatmapComponent implements OnInit, OnDestroy {
     if (this.heatLayer) {
       this.map.removeLayer(this.heatLayer);
     }
+
     if (value?.length) {
       this.addHeatLayer(value);
     }
   }
+
   private destroy$ = new Subject<void>();
   heatLayer!: L.GridLayer;
   l!: typeof L;
@@ -46,7 +48,10 @@ export class HeatmapComponent implements OnInit, OnDestroy {
   }
 
   private initMap(): void {
-    const baseLayer = this.l.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {...this.options, className: 'bw-layer'});
+    const baseLayer = this.l.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      ...this.options,
+      className: 'bw-layer',
+    });
 
     this.map = this.l.map(this.mapReference.nativeElement, {
       ...this.options,
@@ -54,7 +59,8 @@ export class HeatmapComponent implements OnInit, OnDestroy {
     });
 
     setTimeout(() => {
-      const bwLayerElement = document.querySelector('div.leaflet-layer.bw-layer') as HTMLElement;
+      const bwLayerElement = document.querySelector('div.leaflet-layer.bw-layer');
+
       if (bwLayerElement) {
         bwLayerElement.style.filter = 'grayscale(100%)';
       }
@@ -63,15 +69,17 @@ export class HeatmapComponent implements OnInit, OnDestroy {
 
   private addHeatLayer(data: { lat: number; lng: number; value: number }[]) {
     this.heatLayer = this.l.gridLayer({ className: 'heat-layer' });
+
     const createTile = (coords: L.Coords) => {
-      var tile = L.DomUtil.create('canvas', 'leaflet-tile');
-      var ctx = tile.getContext('2d');
-      var size = this.heatLayer.getTileSize();
+      const tile = L.DomUtil.create('canvas', 'leaflet-tile');
+      const ctx = tile.getContext('2d');
+      const size = this.heatLayer.getTileSize();
 
       tile.width = size.x;
       tile.height = size.y;
 
       const subTileSize = size.x / 4;
+
       for (let i = 0; i < 4; i++) {
         for (let j = 0; j < 4; j++) {
           const x = i * subTileSize;
@@ -90,8 +98,10 @@ export class HeatmapComponent implements OnInit, OnDestroy {
           });
 
           if (posInSubTile.length) {
-            const averageValue = posInSubTile.reduce((sum, pos) => sum + pos.value, 0) / posInSubTile.length;
+            const averageValue =
+              posInSubTile.reduce((sum, pos) => sum + pos.value, 0) / posInSubTile.length;
             const rgb = this.getRGBForValue(averageValue);
+
             ctx!.fillStyle = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.9)`;
             ctx!.fillRect(x, y, subTileSize, subTileSize);
           }
@@ -100,17 +110,20 @@ export class HeatmapComponent implements OnInit, OnDestroy {
 
       return tile;
     };
+
     set(this.heatLayer, 'createTile', createTile);
     this.heatLayer.addTo(this.map);
 
     setTimeout(() => {
-      const bwLayerElement = document.querySelector('div.leaflet-layer.heat-layer') as HTMLElement;
+      const bwLayerElement = document.querySelector('div.leaflet-layer.heat-layer');
+
       if (bwLayerElement) {
         bwLayerElement.style.filter = `blur(${this.blurRadius}px)`;
       }
     }, 100);
 
     const bounds = this.l.latLngBounds(data.map((d) => [d.lat, d.lng]));
+
     this.map.fitBounds(bounds);
   }
 
@@ -135,7 +148,11 @@ export class HeatmapComponent implements OnInit, OnDestroy {
     }
   }
 
-  private interpolateColor(from: [number, number, number], to: [number, number, number], t: number): [number, number, number] {
+  private interpolateColor(
+    from: [number, number, number],
+    to: [number, number, number],
+    t: number
+  ): [number, number, number] {
     const r = Math.round(from[0] + (to[0] - from[0]) * t);
     const g = Math.round(from[1] + (to[1] - from[1]) * t);
     const b = Math.round(from[2] + (to[2] - from[2]) * t);

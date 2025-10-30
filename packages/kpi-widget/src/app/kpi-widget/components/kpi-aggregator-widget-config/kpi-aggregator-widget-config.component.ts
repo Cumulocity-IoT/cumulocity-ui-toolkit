@@ -16,6 +16,7 @@ import { KpiAggregatorWidgetConfig } from '../../models/kpi-aggregator-widget.mo
   selector: 'c8y-kpi-aggregator-widget-config',
   template: '<formly-form [form]="form" [fields]="fields" [model]="config"></formly-form>',
   styleUrl: 'kpi-aggregator-widget-config.component.less',
+  standalone: false,
 })
 export class KpiAggregatorWidgetConfigComponent implements OnInit {
   private optionsService = inject(OptionsService);

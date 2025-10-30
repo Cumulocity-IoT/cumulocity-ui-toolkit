@@ -36,6 +36,7 @@ interface MeasurementSeries {
   selector: 'c8y-energy-consumption-widget',
   templateUrl: './energy-consumption-widget.component.html',
   styleUrl: './energy-consumption-widget.component.scss',
+  standalone: false,
 })
 export class EnergyConsumptionWidgetComponent implements OnInit {
   private measurementService = inject(MeasurementService);

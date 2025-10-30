@@ -1,0 +1,22 @@
+<c8y-title>{{ 'favorites.title' | translate }}</c8y-title>
+<div class="card">
+  <div class="content-fullpage d-flex d-col">
+    <c8y-data-grid
+      class="flex-grow col-xs-12 no-gutter"
+      [title]="'favorites.grid.title' | translate"
+      [columns]="COLUMNS"
+      [serverSideDataCallback]="favoritesManagerService.serverSideDataCallback"
+      [pagination]="PAGINATION"
+      [actionControls]="[]"
+      data-cy="favorites-list"
+    >
+      <c8y-ui-empty-state
+        class="d-block"
+        [horizontal]="true"
+        [title]="'favorites.grid.empty-state' | translate"
+        icon="mark-as-favorite"
+        data-cy="favorites-empty-state"
+      ></c8y-ui-empty-state>
+    </c8y-data-grid>
+  </div>
+</div>

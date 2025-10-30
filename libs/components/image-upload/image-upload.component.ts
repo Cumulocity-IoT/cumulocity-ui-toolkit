@@ -1,7 +1,13 @@
 import { Component, EventEmitter, Output, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IManagedObjectBinary, InventoryBinaryService } from '@c8y/client';
-import { AlertService, CommonModule, CoreModule, DropAreaComponent, DroppedFile } from '@c8y/ngx-components';
+import {
+  AlertService,
+  CommonModule,
+  CoreModule,
+  DropAreaComponent,
+  DroppedFile,
+} from '@c8y/ngx-components';
 import { isNil } from 'lodash';
 
 @Component({
@@ -18,23 +24,32 @@ export class ImageUploadComponent {
 
   @Output() imageUploaded = new EventEmitter<IManagedObjectBinary>();
 
-  constructor(private binaryService: InventoryBinaryService, private alert: AlertService) {}
+  constructor(
+    private binaryService: InventoryBinaryService,
+    private alert: AlertService
+  ) {}
 
   onFileDropped(droppedFiles?: DroppedFile[]) {
     if (isNil(droppedFiles)) {
       this.selectedFile = undefined;
+
       return;
     }
 
     if (droppedFiles.length > 1) {
       this.alert.danger('Upload of multiple files is not allowed');
       this.resetFileUpload();
+
       return;
     }
     const [file] = droppedFiles;
+
     if (file.file.size > this.FILE_SIZE_LIMIT) {
-      this.alert.danger(`Maximum file size of ${this.FILE_SIZE_LIMIT / (1024 * 1024)} MB exceeded!`);
+      this.alert.danger(
+        `Maximum file size of ${this.FILE_SIZE_LIMIT / (1024 * 1024)} MB exceeded!`
+      );
       this.resetFileUpload();
+
       return;
     }
     this.selectedFile = file.file;

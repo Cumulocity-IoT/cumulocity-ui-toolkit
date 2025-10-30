@@ -20,7 +20,13 @@ export class ActionBarSearchComponent {
   @Input() set filter(value: object) {
     this._filter = { ...value, withTotalPages: true, pageSize: 10 };
   }
-  private _filter: object = { fragmentType: 'c8y_IsDevice', query: 'has(c8y_Position)', withTotalPages: true, pageSize: 10 };
+
+  private _filter: object = {
+    fragmentType: 'c8y_IsDevice',
+    query: 'has(c8y_Position)',
+    withTotalPages: true,
+    pageSize: 10,
+  };
 
   @Output() selectionChange = new EventEmitter<IManagedObject>();
 
@@ -36,7 +42,9 @@ export class ActionBarSearchComponent {
     this.pattern = filterStr;
     this.filterPipe = pipe(
       map((data: []) => {
-        return data.filter((mo: any) => mo.name && mo.name.toLowerCase().indexOf(filterStr.toLowerCase()) > -1);
+        return data.filter(
+          (mo: any) => mo.name && mo.name.toLowerCase().indexOf(filterStr.toLowerCase()) > -1
+        );
       })
     );
   }

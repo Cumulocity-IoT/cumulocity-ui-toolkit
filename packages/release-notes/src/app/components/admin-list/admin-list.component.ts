@@ -10,6 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
   selector: 'c8y-release-notes-admin-list',
   templateUrl: './admin-list.component.html',
   styleUrl: './admin-list.component.scss',
+  standalone: false,
 })
 export class ReminderNotesAdminListComponent implements OnInit {
   private releaseNoteServive = inject(ReleaseNotesService);

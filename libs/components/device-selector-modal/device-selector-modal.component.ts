@@ -1,7 +1,10 @@
 import { Component } from '@angular/core';
 import { IIdentified } from '@c8y/client';
 import { CommonModule, CoreModule } from '@c8y/ngx-components';
-import { AssetSelectionChangeEvent, AssetSelectorModule } from '@c8y/ngx-components/assets-navigator';
+import {
+  AssetSelectionChangeEvent,
+  AssetSelectorModule,
+} from '@c8y/ngx-components/assets-navigator';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Subject } from 'rxjs';
 
@@ -25,6 +28,7 @@ export class DeviceSelectorModalComponent {
     singleColumn: false,
     label: 'Asset selection',
   };
+
   model?: IIdentified;
   selectedItems: IIdentified[] = [];
 

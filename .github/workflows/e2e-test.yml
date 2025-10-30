@@ -1,0 +1,91 @@
+name: E2E Test Runner
+
+on:
+  pull_request:
+
+env:
+  C8Y_TENANT: ${{ vars.C8Y_TENANT }}
+  C8Y_USERNAME: ${{ vars.C8Y_USERNAME }}
+  C8Y_PASSWORD: ${{ secrets.C8Y_PASSWORD }}
+  C8Y_BASEURL: ${{ vars.C8Y_BASEURL }}
+  C8Y_SHELL_TARGET: 'cockpit'
+  C8Y_CYPRESS_URL: 'http://localhost:9001'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for git diff
+
+      - name: Detect changed packages
+        id: set-matrix
+        run: |
+          git fetch origin main
+          components=$(git diff --name-only origin/main...HEAD | grep '^packages/' | cut -d '/' -f2 | sort -u | jq -R -s -c 'split("\n") | map(select(. != ""))')
+          echo "matrix={\"component\": $components}" >> $GITHUB_OUTPUT
+        shell: bash
+  
+  test-components:
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    environment: e2e
+    if: fromJson(needs.detect-changes.outputs.matrix).component != '[]'
+    strategy:
+      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
+    name: E2E Test ${{ matrix.component }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Start Angular Server (package ${{ matrix.component }})
+        run: |
+          echo "Starting Angular server for package ${{ matrix.component }}"
+          npm run serve:${{ matrix.component }} &
+          npx wait-on http://localhost:9001 --timeout 120000
+          sleep 10
+          echo "Angular server is up!"
+        env:
+          NODE_OPTIONS: --max_old_space_size=4096
+
+      - name: Run Cypress Tests (testing package ${{ matrix.component }})
+        env:
+          CYPRESS_C8Y_TENANT: ${{ env.C8Y_TENANT }}
+          CYPRESS_C8Y_USERNAME: ${{ env.C8Y_USERNAME }}
+          CYPRESS_C8Y_PASSWORD: ${{ secrets.C8Y_PASSWORD }}
+          CYPRESS_C8Y_CYPRESS_URL: ${{ env.C8Y_CYPRESS_URL }}
+          CYPRESS_C8Y_SHELL_TARGET: ${{ env.C8Y_SHELL_TARGET }}
+        run: |
+          echo "Running tests with test ${{ matrix.component }}"
+          npm run e2e:run:${{ matrix.component }}
+        timeout-minutes: 10
+
+      - name: Stop Angular Server
+        if: always()
+        run: |
+          echo "Stopping Angular server..."
+          pkill -f "ng serve" || echo "Server was not running."
+          echo "Angular server stopped."
+
+      - name: Upload Cypress Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: test/cypress/screenshots

@@ -10,6 +10,7 @@ import {
   selector: 'app-operations-widget',
   templateUrl: './operations-widget.component.html',
   styleUrls: ['./operations-widget.component.scss'],
+  standalone: false,
 })
 export class OperationsWidgetComponent {
   private operationsService = inject(OperationService);

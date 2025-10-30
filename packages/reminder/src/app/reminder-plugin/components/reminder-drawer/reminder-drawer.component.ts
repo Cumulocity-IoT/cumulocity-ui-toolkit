@@ -24,6 +24,7 @@ import { ReminderModalComponent } from '../reminder-modal/reminder-modal.compone
   selector: 'c8y-reminder-drawer',
   templateUrl: './reminder-drawer.component.html',
   styleUrl: './reminder-drawer.component.less',
+  standalone: false,
 })
 export class ReminderDrawerComponent implements OnDestroy {
   private alertService = inject(AlertService);
@@ -127,7 +128,8 @@ export class ReminderDrawerComponent implements OnDestroy {
         value = this.browserNotificationsEnabled;
         break;
     }
-    this.reminderService.setConfig(configOption, value);
+
+    this.reminderService.setConfig(configOption, value as object);
   }
 
   toggleDrawer(open?: boolean): boolean {

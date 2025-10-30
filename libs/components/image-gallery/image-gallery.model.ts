@@ -1,3 +1,3 @@
 export interface GalleryImages {
-    images: string[];
+  images: string[];
 }

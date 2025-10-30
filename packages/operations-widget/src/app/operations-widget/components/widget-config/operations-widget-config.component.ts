@@ -9,6 +9,7 @@ import {
   selector: 'app-operations-widget-config',
   templateUrl: './operations-widget-config.component.html',
   styleUrl: './operations-widget-config.component.scss',
+  standalone: false,
 })
 export class OperationsWidgetConfigComponent {
   @Input() get config(): OperationWidgetConfig {

@@ -1,0 +1,21 @@
+{
+  "name": "cypress-tests",
+  "version": "0.0.0",
+  "description": "Contains end-to-end tests for the packages.",
+  "keywords": [],
+  "author": "UI Guild, @hnaether-c8y",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@angular/common": "^18.2.0",
+    "@c8y/client": "^1021.22.37",
+    "bignumber.js": "^9.3.0",
+    "cumulocity-cypress": "^0.8.14",
+    "cypress-terminal-report": "^7.2.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^5.2.2",
+    "@types/lodash": "^4.17.16",
+    "cypress": "~14.3.3",
+    "typescript": "~5.8.3"
+  }
+}

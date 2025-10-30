@@ -27,6 +27,7 @@ interface FormlySelectOptions {
 @Component({
   selector: 'c8y-reminder-modal',
   templateUrl: './reminder-modal.component.html',
+  standalone: false,
 })
 export class ReminderModalComponent implements OnInit {
   private activatedRoute = inject(ActivatedRoute);

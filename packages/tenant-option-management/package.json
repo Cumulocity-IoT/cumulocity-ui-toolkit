@@ -1,0 +1,10 @@
+{
+  "name": "cumulocity-tenant-option-management-plugin",
+  "version": "1.0.4",
+  "description": "",
+  "author": "Hendrik Naether",
+  "homepage": "___TODO___",
+  "dependencies": {
+    "jsoneditor": "^9.10.2"
+  }
+}

@@ -43,16 +43,16 @@ jobs:
           node-version: '20'
 
       - name: Install root dependencies
-        run: npm install
+        run: npm ci
 
       - name: Lint ${{ matrix.component }}
         run: npx eslint ./packages/${{ matrix.component }} --quiet
 
       - name: Test ${{ matrix.component }}
-        run: npm run test packages/${{ matrix.component }} --if-present
+        run: npm run test:${{ matrix.component }} --if-present
 
       - name: Build ${{ matrix.component }}
-        run: npm run build packages/${{ matrix.component }}
+        run: npm run build:${{ matrix.component }}
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4

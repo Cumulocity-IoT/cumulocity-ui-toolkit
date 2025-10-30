@@ -7,6 +7,7 @@ import { ReleaseNotesService } from '../../services/release-notes.service';
   selector: 'c8y-release-notes-display-list-modal',
   templateUrl: './display-list-modal.component.html',
   styleUrl: './display-list-modal.component.scss',
+  standalone: false,
 })
 export class ReleaseNotesDisplayListModalComponent implements OnInit {
   private bsModalRef = inject(BsModalRef);

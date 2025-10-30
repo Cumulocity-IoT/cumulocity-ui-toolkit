@@ -3,6 +3,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 @Component({
   selector: 'operations-value',
   templateUrl: './operations-value.component.html',
+  standalone: false,
 })
 export class OperationsValueComponent implements OnInit {
   @Input() value: string;
