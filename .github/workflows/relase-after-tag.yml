@@ -77,14 +77,14 @@ jobs:
           fi
 
           zip_name="${name}-${version}.zip"
-          (cd dist && zip -r "../dist-zips/${zip_name}" "$(basename "$dist_path")")
-          echo "✅ Created dist-zips/${zip_name}"
+          (cd dist && zip -r "../release/${zip_name}" "$(basename "$dist_path")")
+          echo "✅ Created release/${zip_name}"
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.project }}
-          path: dist-zips/*.zip
+          path: release/*.zip
           if-no-files-found: error
           retention-days: 5
 
