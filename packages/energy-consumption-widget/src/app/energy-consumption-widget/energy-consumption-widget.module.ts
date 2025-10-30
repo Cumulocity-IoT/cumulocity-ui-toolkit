@@ -7,6 +7,7 @@ import { FormlyModule } from '@ngx-formly/core';
 import { NgChartsModule } from 'ng2-charts';
 import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
+import { assets } from './assets/assets';
 import { EnergyConsumptionWidgetConfigComponent } from './components/energy-consumption-widget-config/energy-consumption-widget-config.component';
 import { EnergyConsumptionWidgetComponent } from './components/energy-consumption-widget/energy-consumption-widget.component';
 
@@ -41,7 +42,7 @@ import { EnergyConsumptionWidgetComponent } from './components/energy-consumptio
       description: '',
       component: EnergyConsumptionWidgetComponent,
       configComponent: EnergyConsumptionWidgetConfigComponent,
-      previewImage: require('./assets/preview.png') as string,
+      previewImage: assets.previewImage,
       data: {
         settings: {
           noNewWidgets: false,

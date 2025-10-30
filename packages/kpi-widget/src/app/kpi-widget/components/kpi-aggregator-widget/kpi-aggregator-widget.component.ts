@@ -21,6 +21,7 @@ interface AssetGroup {
   selector: 'c8y-kpi-aggregator-widget',
   templateUrl: './kpi-aggregator-widget.component.html',
   styleUrls: ['./kpi-aggregator-widget.component.less'],
+  standalone: false,
 })
 export class KpiAggregatorWidgetComponent implements OnInit {
   private activatedRoute = inject(ActivatedRoute);

@@ -1,22 +1,21 @@
-import { Injectable } from '@angular/core';
-import { UserService } from '@c8y/ngx-components/api';
+import { inject, Injectable } from '@angular/core';
 import { IUserCustomerProperties } from './favorites-manager.model';
 import { isEmpty } from 'lodash';
 import { DataSourceModifier, ServerSideDataResult } from '@c8y/ngx-components';
 import { InventoryDatasourceService } from '../services/inventory-datasource.service';
+import { UserService } from '@c8y/client';
 
 @Injectable()
 export class FavoritesManagerService {
+  serverSideDataCallback: Promise<ServerSideDataResult>;
+
   private BASE_QUERY = {
     __and: [],
   };
 
-  serverSideDataCallback: Promise<ServerSideDataResult>;
+  private userService = inject(UserService);
 
-  constructor(
-    private userService: UserService,
-    private inventoryDatasource: InventoryDatasourceService
-  ) {}
+  private inventoryDatasource = inject(InventoryDatasourceService);
 
   async initFavorites(): Promise<void> {
     const favorites = await this.getFavoritesForCurrentUser();

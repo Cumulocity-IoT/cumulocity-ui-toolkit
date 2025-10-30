@@ -484,6 +484,107 @@
         }
       }
     },
+    "plugin.tenant-option-management": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "less"
+        }
+      },
+      "root": "packages/tenant-option-management",
+      "sourceRoot": "packages/tenant-option-management/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@c8y/devkit:build",
+          "options": {
+            "outputPath": "dist/cumulocity-tenant-option-management-plugin",
+            "main": "packages/tenant-option-management/src/main.ts",
+            "tsConfig": "packages/tenant-option-management/tsconfig.app.json",
+            "polyfills": ["zone.js"],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "assets",
+                "output": "assets"
+              }
+            ],
+            "inlineStyleLanguage": "less",
+            "scripts": [],
+            "aot": false,
+            "buildOptimizer": false,
+            "allowedCommonJsDependencies": [
+              "regenerator-runtime/runtime",
+              "@cordobo/qrcode",
+              "zone.js/dist/zone",
+              "chroma-js",
+              "lodash"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "all",
+              "buildOptimizer": false
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@c8y/devkit:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.tenant-option-management:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.tenant-option-management:build:development"
+            }
+          },
+          "defaultConfiguration": "development",
+          "options": {
+            "port": 9001,
+            "publicHost": "localhost:9001"
+          }
+        },
+        "deploy": {
+          "builder": "@c8y/devkit:deploy",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.tenant-option-management:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.tenant-option-management:build:development"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "packages/tenant-option-management/src/test.ts",
+            "polyfills": "packages/tenant-option-management/src/polyfills.ts",
+            "tsConfig": "packages/tenant-option-management/tsconfig.app.json",
+            "karmaConfig": "packages/tenant-option-management/karma.conf.js"
+          }
+        }
+      }
+    },
     "plugin.operations-widget": {
       "projectType": "application",
       "schematics": {

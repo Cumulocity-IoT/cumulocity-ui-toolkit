@@ -7,6 +7,7 @@ import { FormlyModule } from '@ngx-formly/core';
 import { NgChartsModule } from 'ng2-charts';
 import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
+import { assets } from './assets/assets';
 import { KpiAggregatorWidgetConfigComponent } from './components/kpi-aggregator-widget-config/kpi-aggregator-widget-config.component';
 import { KpiAggregatorWidgetComponent } from './components/kpi-aggregator-widget/kpi-aggregator-widget.component';
 
@@ -29,7 +30,7 @@ import { KpiAggregatorWidgetComponent } from './components/kpi-aggregator-widget
       description: '',
       component: KpiAggregatorWidgetComponent,
       configComponent: KpiAggregatorWidgetConfigComponent,
-      previewImage: require('./assets/preview.png') as string,
+      previewImage: assets.previewImage,
       data: {
         settings: {
           noNewWidgets: false,

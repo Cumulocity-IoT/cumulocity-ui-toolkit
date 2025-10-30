@@ -1,5 +1,5 @@
 import type { ConfigurationOptions } from '@c8y/devkit';
-import { author, description, version } from './package.json';
+import { author, name, description, version } from './package.json';
 
 export default {
   runTime: {
@@ -12,10 +12,7 @@ export default {
     dynamicOptionsUrl: true,
     remotes: {
       // 'plugin name from package.json': [ PluginModule ]
-      'cumulocity-release-notes-plugin': [
-        'ReleaseNotesAdminPluginModule',
-        'ReleaseNotesPluginModule',
-      ],
+      [name]: ['ReleaseNotesAdminPluginModule', 'ReleaseNotesPluginModule'],
     },
     package: 'plugin',
     isPackage: true,

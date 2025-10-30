@@ -3,11 +3,11 @@ import { FavoritesManagerNavigationFactory } from './favorites-manager.factory';
 import { FavoritesManagerComponent } from './favorites-manager.component';
 import { FavoritesActionFactory } from './favorites-action.factory';
 
-export const pluginViewProviders = [
+export const favoritesManagerViewProviders = [
+  hookActionBar(FavoritesActionFactory),
   hookNavigator(FavoritesManagerNavigationFactory),
   hookRoute({
     path: 'favorites',
     component: FavoritesManagerComponent,
   }),
-  hookActionBar(FavoritesActionFactory),
 ];

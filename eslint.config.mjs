@@ -29,7 +29,9 @@ export default [
       '**/bootstrap.ts',
       '**/polyfills.ts',
       '**/i18n.ts',
-      '**/*.html'
+      '**/src/index.html',
+      '**/test/cypress',
+      '**/*.html',
     ],
   },
   {
@@ -74,7 +76,7 @@ export default [
 
       'no-unused-vars': 'off',
       'no-prototype-builtins': 'off',
-
+      '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unused-vars': [
         'warn',
         {
