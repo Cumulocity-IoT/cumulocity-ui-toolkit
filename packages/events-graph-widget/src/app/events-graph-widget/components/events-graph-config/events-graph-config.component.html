@@ -1,0 +1,132 @@
+<div class="form-group">
+  <c8y-form-group>
+    <label for="hours">Display duration (in hours):</label>
+    <input
+      class="form-control"
+      id="hours"
+      [(ngModel)]="config.hours"
+      type="number"
+      min="1"
+      max="24"
+      name="hours"
+      placeholder="Enter duration (1-24)"
+    />
+  </c8y-form-group>
+
+  <c8y-form-group>
+    <label for="hours">Auto refresh:</label>
+
+    <label class="c8y-switch">
+      <input [(ngModel)]="config.realtime" type="checkbox" checked="checked" />
+      <span></span>
+    </label>
+
+    <label for="refresh-interval">Refresh Interval (in ms):</label>
+    <input
+      class="form-control"
+      id="refresh-interval"
+      [(ngModel)]="config.realtimeInterval"
+      [disabled]="!config.realtime"
+      type="number"
+      min="1000"
+      step="1000"
+      name="refreshInterval"
+      placeholder="Enter interval (e.g., 1000)"
+    />
+  </c8y-form-group>
+
+  @for (eventType of config.types; track eventType; let i = $index) {
+    <div class="card">
+      <div class="egw-card-header card-header separator">
+        <div class="form-group row">
+          <div class="col-md-10">
+            <label for="type-{{ i }}">Event Type: </label>
+            <input
+              class="form-control"
+              id="type-{{ i }}"
+              [(ngModel)]="eventType.type"
+              type="text"
+              name="type-{{ i }}"
+              required
+              placeholder="e.g. Path-PathExecution"
+            />
+          </div>
+          <div class="col-md-2">
+            <i
+              class="event-type-del"
+              *ngIf="config.types.length > 1"
+              [c8yIcon]="'delete'"
+              (click)="removeEventType(i)"
+            ></i>
+          </div>
+        </div>
+      </div>
+
+      @for (value of eventType.values; track value; let j = $index) {
+        <div class="card-block">
+          <div class="row">
+            <div class="col-md-4 mb-2">
+              <label for="value-name-{{ i }}-{{ j }}">Value:</label>
+              <input
+                class="form-control"
+                id="value-name-{{ i }}-{{ j }}"
+                [(ngModel)]="value.name"
+                type="text"
+                name="value-{{ i }}-{{ j }}"
+                placeholder="e.g. READY"
+              />
+            </div>
+            <div class="col-md-4 mb-2">
+              <label for="value-label-{{ i }}-{{ j }}">Label:</label>
+              <input
+                class="form-control"
+                id="value-label-{{ i }}-{{ j }}"
+                [(ngModel)]="value.label"
+                type="text"
+                placeholder="Display label"
+              />
+            </div>
+            <div class="col-md-2 mb-2">
+              <label for="value-color-{{ i }}-{{ j }}">Color:</label>
+              <input
+                class="form-control form-control-color"
+                id="value-color-{{ i }}-{{ j }}"
+                [(ngModel)]="value.color"
+                type="color"
+              />
+            </div>
+
+            <div class="col-md-2 text-end">
+              @if (eventType.values.length > 1) {
+                <button
+                  class="btn btn-sm btn-link text-danger"
+                  (click)="removeValue(i, j)"
+                  title="Remove value"
+                >
+                  <i class="event-value-del" c8yIcon="minus-circle"></i>
+                </button>
+              }
+            </div>
+          </div>
+          @if (j === eventType.values.length - 1) {
+            <div class="row">
+              <div class="col-md-12 text-center">
+                <button
+                  class="btn btn-sm btn-link text-success"
+                  (click)="addValue(i)"
+                  title="Add value"
+                >
+                  <i class="dlt-c8y-icon-plus-circle event-value-add"></i>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <div class="text-end">
+    <button class="btn btn-primary" (click)="addEventType()">Add Event Type</button>
+  </div>
+</div>
