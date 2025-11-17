@@ -668,6 +668,99 @@
           "defaultConfiguration": "production"
         }
       }
+    },
+    "plugin.events-graph-widget": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "less"
+        }
+      },
+      "root": "packages/events-graph-widget",
+      "sourceRoot": "packages/events-graph-widget/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@c8y/devkit:build",
+          "options": {
+            "outputPath": "dist/cumulocity-events-graph-widget-plugin",
+            "main": "packages/events-graph-widget/src/main.ts",
+            "tsConfig": "packages/events-graph-widget/tsconfig.app.json",
+            "polyfills": ["zone.js"],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "packages/events-graph-widget/public"
+              },
+              "packages/events-graph-widget/src/assets"
+            ],
+            "inlineStyleLanguage": "less",
+            "styles": ["packages/events-graph-widget/src/styles.less"],
+            "scripts": [],
+            "aot": false,
+            "buildOptimizer": false,
+            "allowedCommonJsDependencies": [
+              "regenerator-runtime/runtime",
+              "@cordobo/qrcode",
+              "zone.js/dist/zone",
+              "chroma-js",
+              "lodash"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "all",
+              "buildOptimizer": false
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@c8y/devkit:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.events-graph-widget:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.events-graph-widget:build:development"
+            }
+          },
+          "defaultConfiguration": "development",
+          "options": {
+            "port": 9001,
+            "publicHost": "localhost:9001"
+          }
+        },
+        "deploy": {
+          "builder": "@c8y/devkit:deploy",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.events-graph-widget:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.events-graph-widget:build:development"
+            }
+          },
+          "defaultConfiguration": "production"
+        }
+      }
     }
   }
 }

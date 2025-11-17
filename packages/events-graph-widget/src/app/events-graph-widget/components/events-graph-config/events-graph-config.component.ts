@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { CoreModule, DynamicComponent, GlobalTimeContextWidgetConfig } from '@c8y/ngx-components';
-import { EventStatusTrackerConfig } from '../../models/event-status-tracker';
+import { EventStatusTrackerConfig } from '../../models/event-graph.model';
 
 @Component({
   selector: 'c8y-event-status',
