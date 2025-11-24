@@ -4,7 +4,7 @@
   "config": {},
   "scripts": {
     "serve": "from-env ng serve -u %C8Y_BASEURL",
-    "build": "npm-run-all build:reminder build:kpi-widget build:energy-consumption-widget build:release-notes build:operations-widget build:favorites-manager build:tenant-option-management",
+    "build": "npm-run-all build:reminder build:kpi-widget build:energy-consumption-widget build:release-notes build:operations-widget build:favorites-manager build:tenant-option-management build:events-graph-widget",
     "prebuild": "npm run clean",
     "clean": "rimraf dist",
     "e2e:open": "cypress open",
@@ -46,13 +46,16 @@
     "e2e:run:operations-widget": "npm run e2e:run -- --config-file config/operations-widget.config.ts",
     "e2e:run:tenant-option-management": "npm run e2e:run -- --config-file config/tenant-option-management.config.ts",
     "e2e:open:favorites-manager": "npx --workspace=test -- cypress open --config-file config/favorites-manager.config.ts",
-    "e2e:open:release-notes": "npx --workspace=test -- cypress open --config-file config/release-notes.config.ts"
+    "e2e:open:release-notes": "npx --workspace=test -- cypress open --config-file config/release-notes.config.ts",
+    "ng": "ng",
+    "eslint": "eslint"
   },
   "keywords": [
     "cumulocity",
     "cumulocity-package",
     "cumulocity-iot",
     "cumulocity-ui-plugin",
+    "cumulocity-ui-widget",
     "cumulocity-ui-guild"
   ],
   "author": "Cumulocity UI Guild, @dirk-peter-c8y",

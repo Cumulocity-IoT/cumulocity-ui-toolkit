@@ -29,7 +29,7 @@ export class ExternalIdService {
         return null;
       }
     } catch (error) {
-      console.warm('Could not fetch external ID for device', (error as Error).message);
+      console.warn('Could not fetch external ID for device', (error as Error).message);
 
       return null;
     }

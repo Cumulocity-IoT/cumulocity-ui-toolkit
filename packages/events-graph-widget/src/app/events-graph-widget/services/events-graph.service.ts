@@ -3,14 +3,7 @@ import { EventService, IEvent } from '@c8y/client';
 import { subHours } from 'date-fns';
 import { CustomSeriesRenderItem } from 'echarts';
 import { groupBy, isEmpty } from 'lodash';
-import { EventConfig, EventTypeConfig } from '../models/event-graph.model';
-
-export interface IEventDuration extends IEvent {
-  /**
-   * Duration in seconds
-   */
-  duration: number | null;
-}
+import { EventConfig, EventTypeConfig, IEventDuration } from '../models/event-graph.model';
 
 @Injectable()
 export class EventStatusTrackerService {
@@ -131,8 +124,8 @@ export class EventStatusTrackerService {
 
     return names.map((name) => ({
       name,
+      renderItem,
       type: 'custom',
-      renderItem: <any>renderItem,
       itemStyle: {
         opacity: 0.9,
         color: types.find((type) => type.name === name || type.label === name)?.color ?? null,

@@ -1,3 +1,5 @@
+import { IEvent } from '@c8y/client';
+
 export type EventStatusTrackerConfig = {
   hours: number;
   realtime: boolean;
@@ -23,3 +25,19 @@ export type EventTypeConfig = {
     label: string;
   }[];
 };
+
+export interface IEventDuration extends IEvent {
+  /**
+   * Duration in seconds
+   */
+  duration: number | null;
+}
+
+export interface EventSeries {
+  type: 'custom';
+  name: string;
+  renderItem: echarts.CustomSeriesRenderItem;
+  itemStyle: { opacity: number; color: string };
+  encode: { x: number[]; y: number };
+  data: { name: string; value: number[] }[];
+}

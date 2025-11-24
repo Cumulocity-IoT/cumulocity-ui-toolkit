@@ -21,7 +21,7 @@ export default {
       {
         name: 'Event Graph Widget',
         module: 'EventsGraphModule',
-        path: './src/app/event-graph-widget/event-graph-widget.module.ts',
+        path: './src/app/events-graph-widget/events-graph-widget.module.ts',
         description: 'Display markers on a indoor map and their datapoints',
       },
     ],

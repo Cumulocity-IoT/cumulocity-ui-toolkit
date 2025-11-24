@@ -11,8 +11,12 @@ import { has } from 'lodash';
 import { ModalModule } from 'ngx-bootstrap/modal';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
-import { EventStatusTrackerConfig } from '../../models/event-graph.model';
-import { EventStatusTrackerService, IEventDuration } from '../../services/events-graph.service';
+import {
+  EventSeries,
+  EventStatusTrackerConfig,
+  IEventDuration,
+} from '../../models/event-graph.model';
+import { EventStatusTrackerService } from '../../services/events-graph.service';
 
 echartsCore.use([BarChart, GridComponent, CanvasRenderer]);
 
@@ -33,14 +37,7 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
 
   events: IEventDuration[] = [];
   chartOptions: EChartsOption;
-  series: {
-    type: string;
-    name: string;
-    renderItem: any;
-    itemStyle: { opacity: number; color: string };
-    encode: { x: number[]; y: number };
-    data: { name: string; value: number[] }[];
-  }[];
+  series: EventSeries[];
 
   constructor(private date: DatePipe) {}
 
@@ -83,18 +80,7 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
 
         this.chartOptions = {
           tooltip: {
-            formatter: (item: echarts.DefaultLabelFormatterCallbackParams) => {
-              const event = this.series[item.seriesIndex].data[item.dataIndex];
-              const [, startDate, endDate, duration] = item.value as number[];
-
-              return `<b>Text:</b> ${event.name}<br/><b>Start date:</b> ${this.date.transform(
-                startDate
-              )}<br/><b>End date:</b>${this.date.transform(
-                endDate
-              )}<br/><b>Duration:</b> ca. ${formatDistance(0, duration, {
-                includeSeconds: true,
-              })}`;
-            },
+            formatter: this.formatTooltip,
           },
           dataZoom: [
             {
@@ -121,13 +107,13 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
             min: timeBoxStart,
             scale: true,
             axisLabel: {
-              formatter: (val: number) => this.date.transform(val, 'HH:mm'),
+              formatter: this.formatAxisLabel,
             },
           },
           yAxis: {
             data: categories,
           },
-          series: <any>this.series,
+          series: this.series,
         };
       } catch (e) {
         console.error(e);
@@ -135,8 +121,13 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
     }
   }
 
-  async prepareChartData(now: Date, start: Date, timeBoxStart: number, timeBoxEnd: number) {
-    const series = [];
+  async prepareChartData(
+    now: Date,
+    start: Date,
+    timeBoxStart: number,
+    timeBoxEnd: number
+  ): Promise<EventSeries[]> {
+    const series: EventSeries[] = [];
 
     for (const [index, type] of this.config.types.entries()) {
       const custom = await this.eventStatusService.fetchAndPrepareEvents(
@@ -149,7 +140,12 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
         timeBoxEnd
       );
 
-      series.push(...this.eventStatusService.toSeries(custom, this.renderItem, type.values));
+      series.push(
+        ...this.eventStatusService.toSeries(custom, this.renderItem, type.values).map((s) => ({
+          ...s,
+          type: 'custom' as const,
+        }))
+      );
     }
 
     return series;
@@ -158,8 +154,14 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
   renderItem = (
     params: echarts.CustomSeriesRenderItemParams,
     api: echarts.CustomSeriesRenderItemAPI
-  ) => {
-    const categoryIndex = api.value(0);
+  ): echarts.CustomSeriesRenderItemReturn => {
+    const coordSys = params.coordSys as unknown as {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    };
+    const categoryIndex = api.value(0) as number;
     const start = api.coord([api.value(1), categoryIndex]);
     const end = api.coord([api.value(2), categoryIndex]);
     const height = api.size([0, 1])[1] * 0.2;
@@ -170,21 +172,39 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
         width: end[0] - start[0],
         height: height,
       },
-      {
-        x: (<any>params.coordSys).x,
-        y: (<any>params.coordSys).y,
-        width: (<any>params.coordSys).width,
-        height: (<any>params.coordSys).height,
-      }
+      coordSys
     );
 
-    return (
-      rectShape && {
-        type: 'rect',
-        transition: ['shape'],
-        shape: rectShape,
-        style: api.style(),
-      }
-    );
+    return rectShape
+      ? {
+          type: 'rect',
+          transition: ['shape'],
+          shape: rectShape,
+          style: api.style(),
+        }
+      : null;
+  };
+
+  private formatTooltip = (params: echarts.TooltipComponentFormatterCallbackParams): string => {
+    const item = params as echarts.TooltipComponentFormatterCallbackParams & {
+      seriesIndex: number;
+      dataIndex: number;
+      value: [number, number, number, number];
+    };
+    const event = this.series[item.seriesIndex]?.data[item.dataIndex];
+    const [, startDate, endDate, duration] = item.value;
+
+    return `<b>Text:</b> ${event?.name || 'N/A'}<br/><b>Start date:</b> ${this.date.transform(
+      startDate
+    )}<br/><b>End date:</b>${this.date.transform(
+      endDate
+    )}<br/><b>Duration:</b> ca. ${formatDistance(0, duration, {
+      includeSeconds: true,
+    })}`;
+  };
+
+  private formatAxisLabel = (val: number): string => {
+    const transformed = this.date.transform(val, 'HH:mm') as string;
+    return transformed ? transformed : '';
   };
 }
