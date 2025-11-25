@@ -99,10 +99,18 @@ export class ReminderModalComponent implements OnInit {
     }
   }
 
-  close() {
+  /**
+   * Closes the modal dialog.
+   * @returns {void}
+   */
+  close(): void {
     this.bsModalRef.hide();
   }
 
+  /**
+   * Submits the reminder form, creates a new reminder event, and displays success or error messages.
+   * @returns {Promise<void>} A promise that resolves when the submission process is complete.
+   */
   async submit(): Promise<void> {
     this.isLoading = true;
 
@@ -148,6 +156,12 @@ export class ReminderModalComponent implements OnInit {
     }
   }
 
+  /**
+   * Recursively searches for context data in the route hierarchy.
+   * @param {ActivatedRouteSnapshot} route - The current route snapshot.
+   * @param {number} [numberOfCheckedParents=0] - The number of parent routes checked so far.
+   * @returns {IManagedObject | undefined} The managed object context data, if found.
+   */
   private recursiveContextSearch(
     route: ActivatedRouteSnapshot,
     numberOfCheckedParents = 0
@@ -169,6 +183,11 @@ export class ReminderModalComponent implements OnInit {
         : undefined;
   }
 
+  /**
+   * Retrieves the asset from the current route.
+   * @param {ActivatedRouteSnapshot} route - The current route snapshot.
+   * @returns {IManagedObject | undefined} The managed object representing the asset, if found.
+   */
   private getAssetFromRoute(route: ActivatedRouteSnapshot): IManagedObject | undefined {
     if (!route) console.error('No Route provided');
     else {
@@ -180,6 +199,10 @@ export class ReminderModalComponent implements OnInit {
     return undefined;
   }
 
+  /**
+   * Sets the type field options for the reminder form based on available reminder types.
+   * @returns {void}
+   */
   private setTypeField(): void {
     this.typeOptions = this.reminderService.types.map((type: ReminderType) => ({
       label: type.name,
