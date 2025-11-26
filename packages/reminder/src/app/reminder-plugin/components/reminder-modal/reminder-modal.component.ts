@@ -96,6 +96,8 @@ export class ReminderModalComponent implements OnInit {
     if (asset && asset.id) {
       this.asset = asset;
       this.reminder.source = { id: asset.id, name: this.asset['name'] as string };
+
+      this.fields[0].fieldGroup[0].props['asset'] = this.reminder.source;
     }
   }
 
