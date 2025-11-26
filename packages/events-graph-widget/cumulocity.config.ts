@@ -6,13 +6,13 @@ export default {
     author,
     description,
     version,
-    name: 'KPI Aggeregator Widget',
+    name: 'Events Graph Widget',
     contentSecurityPolicy:
       "base-uri 'none'; default-src 'self' 'unsafe-inline' http: https: ws: wss:; connect-src 'self' http: https: ws: wss:;  script-src 'self' *.bugherd.com *.twitter.com *.twimg.com *.aptrinsic.com 'unsafe-inline' 'unsafe-eval' data:; style-src * 'unsafe-inline' blob:; img-src * data: blob:; font-src * data:; frame-src *; worker-src 'self' blob:;",
     dynamicOptionsUrl: true,
     remotes: {
       // 'plugin name from package.json': [ PluginModule ]
-      [name]: ['KpiAggregatorWidgetPluginModule'],
+      [name]: ['EventsGraphWidgetModule'],
     },
     package: 'plugin',
     isPackage: true,
@@ -20,7 +20,7 @@ export default {
     exports: [
       {
         name: 'Event Graph Widget',
-        module: 'EventsGraphModule',
+        module: 'EventsGraphWidgetModule',
         path: './src/app/events-graph-widget/events-graph-widget.module.ts',
         description: 'Display markers on a indoor map and their datapoints',
       },

@@ -53,4 +53,4 @@ async function loadConfigComponent() {
     } as DynamicWidgetDefinition),
   ],
 })
-export class EventsGraphModule {}
+export class EventsGraphWidgetModule {}
