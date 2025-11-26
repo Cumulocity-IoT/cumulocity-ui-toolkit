@@ -269,8 +269,8 @@ export class ReminderService {
   private deleteRminderFromList(
     message: Partial<RealtimeMessage<Reminder>>,
     reminders: Reminder[]
-  ): Reminder | undefined {
-    let deleted: Reminder | undefined;
+  ): Reminder {
+    let deleted: Reminder;
 
     reminders = reminders.filter((r) => {
       if (r.id === message.data) {
@@ -334,7 +334,7 @@ export class ReminderService {
     return url;
   }
 
-  private handleReminderUpdate(message: Partial<RealtimeMessage<Reminder>>): Reminder | undefined {
+  private handleReminderUpdate(message: Partial<RealtimeMessage<Reminder>>): Reminder {
     let reminders = cloneDeep(this.reminders);
     const now = moment();
 

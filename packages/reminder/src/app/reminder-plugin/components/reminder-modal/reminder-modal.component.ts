@@ -162,13 +162,13 @@ export class ReminderModalComponent implements OnInit {
    * Recursively searches for context data in the route hierarchy.
    * @param {ActivatedRouteSnapshot} route - The current route snapshot.
    * @param {number} [numberOfCheckedParents=0] - The number of parent routes checked so far.
-   * @returns {IManagedObject | undefined} The managed object context data, if found.
+   * @returns {IManagedObject} The managed object context data, if found.
    */
   private recursiveContextSearch(
     route: ActivatedRouteSnapshot,
     numberOfCheckedParents = 0
-  ): IManagedObject | undefined {
-    let context: { contextData: IManagedObject } | undefined = undefined;
+  ): IManagedObject {
+    let context: { contextData: IManagedObject } = undefined;
 
     if (route?.data['contextData']) {
       context = route.data as { contextData: IManagedObject };
@@ -188,9 +188,9 @@ export class ReminderModalComponent implements OnInit {
   /**
    * Retrieves the asset from the current route.
    * @param {ActivatedRouteSnapshot} route - The current route snapshot.
-   * @returns {IManagedObject | undefined} The managed object representing the asset, if found.
+   * @returns {IManagedObject} The managed object representing the asset, if found.
    */
-  private getAssetFromRoute(route: ActivatedRouteSnapshot): IManagedObject | undefined {
+  private getAssetFromRoute(route: ActivatedRouteSnapshot): IManagedObject {
     if (!route) console.error('No Route provided');
     else {
       const mo = this.recursiveContextSearch(route);
