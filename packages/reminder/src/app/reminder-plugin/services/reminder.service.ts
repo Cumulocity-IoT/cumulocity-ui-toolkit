@@ -92,25 +92,40 @@ export class ReminderService {
     this.subscriptions.unsubscribe();
   }
 
+  /**
+   * Initializes the ReminderService by loading configurations, fetching reminder types, and setting up subscriptions.
+   * @returns {Promise<void>} A promise that resolves when initialization is complete.
+   */
   async init(): Promise<void> {
     if (this.drawer) return;
 
     this.loadConfig();
     void this.requestNotificationPermission();
     this._types = await this.fetchReminderTypes();
-    void this.fetchActiveReminderCounter();
     this.createDrawer();
     this.reminders = await this.fetchReminders(REMINDER_INITIAL_QUERY_SIZE);
+    void this.fetchActiveReminderCounter();
     this.setupReminderSubscription();
     this.setupConfigSubscription();
   }
 
+  /**
+   * Retrieves the name of a reminder type based on its ID.
+   * @param {ReminderType['id']} reminderTypeID - The ID of the reminder type.
+   * @returns {ReminderType['name']} The name of the reminder type, or 'Unknown' if not found.
+   */
   getReminderTypeName(reminderTypeID: ReminderType['id']): ReminderType['name'] {
     const type = this.types.find((t) => t.id === reminderTypeID);
 
     return type ? type.name : 'Unknown';
   }
 
+  /**
+   * Groups reminders into categories: due, upcoming, and cleared.
+   * @param {Reminder[]} reminders - The list of reminders to group.
+   * @param {string} [context] - Optional context for filtering reminders.
+   * @returns {ReminderGroup[]} An array of grouped reminders.
+   */
   groupReminders(reminders: Reminder[], context?: string): ReminderGroup[] {
     let dueDate: number;
     const now = new Date().getTime();
@@ -151,6 +166,10 @@ export class ReminderService {
     return this.filterReminder(this.sortReminder(due, upcoming, cleared), context);
   }
 
+  /**
+   * Resets the filter configuration by removing the current filter.
+   * @returns {void}
+   */
   resetFilterConfig(): void {
     const config = this.config$.getValue();
 
@@ -158,6 +177,12 @@ export class ReminderService {
     this.config$.next(config);
   }
 
+  /**
+   * Updates the configuration with a new key-value pair.
+   * @param {string} key - The configuration key to update.
+   * @param {object} value - The value to set for the configuration key.
+   * @returns {void}
+   */
   setConfig(key: string, value: object): void {
     const config = this.config$.getValue();
 
@@ -167,17 +192,26 @@ export class ReminderService {
     this.config$.next(config);
   }
 
-  toggleDrawer() {
+  /**
+   * Toggles the visibility of the reminder drawer.
+   * @returns {void}
+   */
+  toggleDrawer(): void {
     this.drawer?.toggleDrawer();
   }
 
+  /**
+   * Updates a reminder's status and clears its `isCleared` fragment if applicable.
+   * @param {Reminder} reminder - The reminder to update.
+   * @returns {Promise<IResult<Reminder>>} A promise that resolves with the updated reminder result.
+   */
   async update(reminder: Reminder): Promise<IResult<Reminder>> {
     const event: Partial<IEvent> = {
       id: reminder.id,
       status: reminder.status,
     };
 
-    // (un)set `isCleared` fragment to supoprt using retention rules for cleared reminders
+    // (un)set `isCleared` fragment to support using retention rules for cleared reminders
     event.isCleared = reminder.status === ReminderStatus.cleared ? {} : null;
 
     return (await this.eventService.update(event)) as IResult<Reminder>;
