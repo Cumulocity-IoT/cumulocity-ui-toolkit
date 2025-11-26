@@ -30,7 +30,7 @@ export interface IEventDuration extends IEvent {
   /**
    * Duration in seconds
    */
-  duration: number | null;
+  duration: number;
 }
 
 export interface EventSeries {

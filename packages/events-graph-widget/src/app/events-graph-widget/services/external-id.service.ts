@@ -8,7 +8,7 @@ export class ExternalIdService {
 
   private externalIdCache: { [key: string]: string } = {};
 
-  async getExternalIdForDevice(managedObjectId: string): Promise<string | null> {
+  async getExternalIdForDevice(managedObjectId: string): Promise<string> {
     // If the result is in the cache, return it
     if (this.externalIdCache[managedObjectId]) {
       return this.externalIdCache[managedObjectId];
