@@ -2,7 +2,7 @@ import { ComponentRef, Injectable } from '@angular/core';
 import { EventService, IEvent, IResult, TenantOptionsService } from '@c8y/client';
 import { AlertService, EventRealtimeService, RealtimeMessage } from '@c8y/ngx-components';
 import { TranslateService } from '@ngx-translate/core';
-import { filter as _filter, cloneDeep, has, orderBy, sortBy } from 'lodash';
+import { filter as _filter, cloneDeep, debounce, has, orderBy, sortBy } from 'lodash';
 import moment from 'moment';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
@@ -29,6 +29,8 @@ import {
 
 @Injectable()
 export class ReminderService {
+  readonly DAY_IN_MS = 24 * 60 * 60 * 1000;
+
   config$ = new BehaviorSubject<ReminderConfig>({});
   filters$ = new BehaviorSubject<ReminderGroupFilter>({});
   open$?: BehaviorSubject<boolean>;
@@ -49,6 +51,8 @@ export class ReminderService {
   private _reminders: Reminder[] = [];
   private _types: ReminderType[] = [];
 
+  private debouncedSetUpdateTimer = debounce(() => this.setUpdateTimer(), 300);
+
   private get reminderCounter(): number {
     return this._reminderCounter;
   }
@@ -67,7 +71,7 @@ export class ReminderService {
     this._reminders = reminders;
     this.reminders$.next(this._reminders);
     this.updateCounter();
-    this.setUpdateTimer();
+    this.debouncedSetUpdateTimer();
   }
 
   constructor(
@@ -516,10 +520,14 @@ export class ReminderService {
 
     if (!closestReminder) return;
 
+    // timeouts larger than 24.8 days result in immediate execution
+    const diff = moment(closestReminder.time).diff(now);
+    const timeout = diff > this.DAY_IN_MS ? this.DAY_IN_MS : diff;
+
     this.updateTimer = setTimeout(() => {
       this.reminders = this.digestReminders(this.reminders);
       this.sendNotification(closestReminder);
-    }, moment(closestReminder.time).diff(now));
+    }, timeout);
   }
 
   private setupConfigSubscription(): void {
