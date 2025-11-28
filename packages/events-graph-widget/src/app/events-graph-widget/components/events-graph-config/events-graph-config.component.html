@@ -1,6 +1,7 @@
 <div class="form-group">
   <c8y-form-group>
-    <label for="hours">Display duration (in hours):</label>
+    <label for="hours" translate>Display duration</label>
+    <div class="input-group">
     <input
       class="form-control"
       id="hours"
@@ -9,30 +10,35 @@
       min="1"
       max="24"
       name="hours"
-      placeholder="Enter duration (1-24)"
+      placeholder="{{ 'Enter duration' | translate }} (1-24)"
     />
+      <div class="input-group-addon" translate>hours</div>
+    </div>
   </c8y-form-group>
 
   <c8y-form-group>
-    <label for="hours">Auto refresh:</label>
+    <label for="hours" translate>Auto refresh</label>
 
     <label class="c8y-switch">
       <input [(ngModel)]="config.realtime" type="checkbox" checked="checked" />
       <span></span>
     </label>
 
-    <label for="refresh-interval">Refresh Interval (in ms):</label>
-    <input
+    <label for="refresh-interval" translate>Refresh Interval</label>
+    <div class="input-group">
+      <input
       class="form-control"
       id="refresh-interval"
-      [(ngModel)]="config.realtimeInterval"
+      [(ngModel)]="refreshInterval"
       [disabled]="!config.realtime"
       type="number"
-      min="1000"
-      step="1000"
+      min="1"
+      step="1"
       name="refreshInterval"
-      placeholder="Enter interval (e.g., 1000)"
-    />
+      placeholder="{{ 'Enter refresh interval (e.g. 5)' | translate }}"
+      />
+      <div class="input-group-addon" translate>seconds</div>
+    </div>
   </c8y-form-group>
 
   @for (eventType of config.types; track eventType; let i = $index) {
@@ -40,7 +46,7 @@
       <div class="egw-card-header card-header separator">
         <div class="form-group row">
           <div class="col-md-10">
-            <label for="type-{{ i }}">Event Type: </label>
+            <label for="type-{{ i }}" translate>Event Type</label>
             <input
               class="form-control"
               id="type-{{ i }}"
@@ -66,7 +72,7 @@
         <div class="card-block">
           <div class="row">
             <div class="col-md-4 mb-2">
-              <label for="value-name-{{ i }}-{{ j }}">Value:</label>
+              <label for="value-name-{{ i }}-{{ j }}" translate>Event Text</label>
               <input
                 class="form-control"
                 id="value-name-{{ i }}-{{ j }}"
@@ -77,7 +83,7 @@
               />
             </div>
             <div class="col-md-4 mb-2">
-              <label for="value-label-{{ i }}-{{ j }}">Label:</label>
+              <label for="value-label-{{ i }}-{{ j }}" translate>Label</label>
               <input
                 class="form-control"
                 id="value-label-{{ i }}-{{ j }}"
@@ -87,7 +93,7 @@
               />
             </div>
             <div class="col-md-2 mb-2">
-              <label for="value-color-{{ i }}-{{ j }}">Color:</label>
+              <label for="value-color-{{ i }}-{{ j }}" translate>Color</label>
               <input
                 class="form-control form-control-color"
                 id="value-color-{{ i }}-{{ j }}"
@@ -101,7 +107,7 @@
                 <button
                   class="btn btn-sm btn-link text-danger"
                   (click)="removeValue(i, j)"
-                  title="Remove value"
+                  title="{{ 'Remove value' | translate }}"
                 >
                   <i class="event-value-del" c8yIcon="minus-circle"></i>
                 </button>
@@ -114,7 +120,7 @@
                 <button
                   class="btn btn-sm btn-link text-success"
                   (click)="addValue(i)"
-                  title="Add value"
+                  title="{{ 'Add value' | translate }}"
                 >
                   <i class="dlt-c8y-icon-plus-circle event-value-add"></i>
                 </button>
@@ -127,6 +133,6 @@
   }
 
   <div class="text-end">
-    <button class="btn btn-primary" (click)="addEventType()">Add Event Type</button>
+    <button class="btn btn-primary" (click)="addEventType()" translate>Add Event Type</button>
   </div>
 </div>

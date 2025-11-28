@@ -12,6 +12,7 @@ import { ModalModule } from 'ngx-bootstrap/modal';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
 import {
+  DEFAULT_GRAPH_ITEM_SCALE,
   EventSeries,
   EventStatusTrackerConfig,
   IEventDuration,
@@ -163,7 +164,8 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
     const categoryIndex = api.value(0) as number;
     const start = api.coord([api.value(1), categoryIndex]);
     const end = api.coord([api.value(2), categoryIndex]);
-    const height = api.size([0, 1])[1] * 0.2;
+    const scale = this.config.scale || DEFAULT_GRAPH_ITEM_SCALE;
+    const height = api.size([0, 1])[1] * scale;
     const rectShape = echarts.graphic.clipRectByRect(
       {
         x: start[0],

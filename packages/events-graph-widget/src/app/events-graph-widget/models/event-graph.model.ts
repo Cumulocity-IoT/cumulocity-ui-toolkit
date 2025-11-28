@@ -9,6 +9,7 @@ export type EventStatusTrackerConfig = {
     name: string;
   };
   types: EventTypeConfig[];
+  scale: number;
 };
 
 export type EventConfig = {
@@ -41,3 +42,6 @@ export interface EventSeries {
   encode: { x: number[]; y: number };
   data: { name: string; value: number[] }[];
 }
+
+export const DEFAULT_GRAPH_ITEM_SCALE = 0.2;
+export const DEFAULT_GRAPH_INTERVAL = 30000;
