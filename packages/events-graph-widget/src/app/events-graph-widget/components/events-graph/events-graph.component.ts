@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, inject, Input, OnInit, ViewChild } from '@angular/core';
-import { CoreModule, CountdownIntervalComponent, DatePipe } from '@c8y/ngx-components';
+import { CoreModule, CountdownIntervalComponent, DatePipe, gettext } from '@c8y/ngx-components';
 import { formatDistance, subHours } from 'date-fns';
 import * as echarts from 'echarts';
 import { EChartsOption } from 'echarts';
@@ -87,7 +87,6 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
               type: 'slider',
               filterMode: 'weakFilter',
               showDataShadow: false,
-              top: 250,
               labelFormatter: '',
             },
             {
@@ -96,12 +95,12 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
             },
           ],
           legend: {
-            top: 10,
+            top: 8,
           },
           grid: {
             left: '3%',
+            right: 32,
             containLabel: true,
-            height: 150,
           },
           xAxis: {
             min: timeBoxStart,
@@ -194,13 +193,14 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
     const event = this.series[item.seriesIndex]?.data[item.dataIndex];
     const [, startDate, endDate, duration] = item.value;
 
-    return `<b>Text:</b> ${event?.name || 'N/A'}<br/><b>Start date:</b> ${this.date.transform(
-      startDate
-    )}<br/><b>End date:</b>${this.date.transform(
-      endDate
-    )}<br/><b>Duration:</b> ca. ${formatDistance(0, duration, {
-      includeSeconds: true,
-    })}`;
+    return (
+      `<b>${gettext('Text')}:</b> ${event?.name || 'N/A'}<br/>` +
+      `<b>${gettext('Start date')}:</b> ${this.date.transform(startDate)}<br/>` +
+      `<b>${gettext('End date')}:</b> ${this.date.transform(endDate)}<br/>` +
+      `<b>${gettext('Duration')}:</b> ca. ${formatDistance(0, duration, {
+        includeSeconds: true,
+      })}`
+    );
   };
 
   private formatAxisLabel = (val: number): string => {
