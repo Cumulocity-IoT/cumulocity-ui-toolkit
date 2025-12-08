@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "config": {},
   "scripts": {
+    "eslint": "eslint",
     "serve": "from-env ng serve -u %C8Y_BASEURL",
     "build": "npm-run-all build:reminder build:kpi-widget build:energy-consumption-widget build:release-notes build:operations-widget build:favorites-manager build:tenant-option-management build:events-graph-widget",
     "prebuild": "npm run clean",
@@ -12,6 +13,7 @@
     "lint:fix": "eslint . --quiet --fix",
     "serve:reminder": "npm run serve plugin.reminder -- --shell %C8Y_SHELL_TARGET",
     "build:reminder": "ng build plugin.reminder",
+    "test:reminder": "ng test plugin.reminder --watch=false --browsers=ChromeHeadless --code-coverage",
     "postbuild:reminder": "node tools/build-rename.js -p 'packages/reminder'",
     "serve:kpi-widget": "npm run serve plugin.kpi-widget -- --shell %C8Y_SHELL_TARGET",
     "build:kpi-widget": "ng build plugin.kpi-widget",
