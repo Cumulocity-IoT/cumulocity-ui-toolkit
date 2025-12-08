@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { FavoritesManagerService } from './favorites-manager.service';
 import { UserService } from '@c8y/ngx-components/api';
 import { InventoryService, IResult, IUser } from '@c8y/client';
-import { provideMock } from '../../../../../../libs/helper/auto-mock.helper';
+import { provideMock } from '../../../../../../libs/helpers/auto-mock.helper';
 
 describe('FavoritesManagerService', () => {
   let service: FavoritesManagerService;

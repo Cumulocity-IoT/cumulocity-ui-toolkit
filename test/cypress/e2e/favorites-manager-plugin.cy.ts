@@ -39,7 +39,7 @@ describe('Favorites Manager', () => {
     cy.visitShellAndWaitForSelector('', 'en', '#navigator');
 
     // check for the favorites menu item and click on it
-    cy.get('#navigator [data-cy="favorites.title"]', { timeout: 60000 })
+    cy.get('#navigator [data-cy="Favorites"]', { timeout: 60000 })
       .should('exist')
       .should('be.visible')
       .contains('Favorites')
@@ -54,7 +54,7 @@ describe('Favorites Manager', () => {
     cy.visitShellAndWaitForSelector('', 'en', '#navigator');
 
     // check for the favorites menu item and click on it to navigate to the favorites list
-    cy.get('#navigator [data-cy="favorites.title"]', { timeout: 60000 })
+    cy.get('#navigator [data-cy="Favorites"]', { timeout: 60000 })
       .should('exist')
       .should('be.visible')
       .contains('Favorites')
@@ -91,7 +91,7 @@ describe('Favorites Manager', () => {
       .contains('Remove from favorites');
 
     // navigate back to the favorites list and expect the list to contain the favorite
-    cy.get('#navigator [data-cy="favorites.title"]')
+    cy.get('#navigator [data-cy="Favorites"]')
       .should('exist')
       .should('be.visible')
       .contains('Favorites')
@@ -134,7 +134,7 @@ describe('Favorites Manager', () => {
       .contains('Add to favorites');
 
     // navigate back to the favorites list and expect the list to be empty
-    cy.get('#navigator [data-cy="favorites.title"]')
+    cy.get('#navigator [data-cy="Favorites"]')
       .should('exist')
       .should('be.visible')
       .contains('Favorites')
