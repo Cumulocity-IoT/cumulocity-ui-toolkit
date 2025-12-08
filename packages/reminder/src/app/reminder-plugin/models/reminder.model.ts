@@ -21,6 +21,7 @@ export const REMINDER_LOCAL_STORAGE_DEFAULT_CONFIG: ReminderConfig = {
 };
 
 export interface Reminder extends IEvent {
+  type: typeof REMINDER_TYPE;
   status: ReminderStatus;
   isGroup?: object;
   diff?: number;

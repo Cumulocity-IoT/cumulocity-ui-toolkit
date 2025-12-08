@@ -96,13 +96,23 @@ export class ReminderModalComponent implements OnInit {
     if (asset && asset.id) {
       this.asset = asset;
       this.reminder.source = { id: asset.id, name: this.asset['name'] as string };
+
+      this.fields[0].fieldGroup[0].props['asset'] = this.reminder.source;
     }
   }
 
-  close() {
+  /**
+   * Closes the modal dialog.
+   * @returns {void}
+   */
+  close(): void {
     this.bsModalRef.hide();
   }
 
+  /**
+   * Submits the reminder form, creates a new reminder event, and displays success or error messages.
+   * @returns {Promise<void>} A promise that resolves when the submission process is complete.
+   */
   async submit(): Promise<void> {
     this.isLoading = true;
 
@@ -148,11 +158,17 @@ export class ReminderModalComponent implements OnInit {
     }
   }
 
+  /**
+   * Recursively searches for context data in the route hierarchy.
+   * @param {ActivatedRouteSnapshot} route - The current route snapshot.
+   * @param {number} [numberOfCheckedParents=0] - The number of parent routes checked so far.
+   * @returns {IManagedObject} The managed object context data, if found.
+   */
   private recursiveContextSearch(
     route: ActivatedRouteSnapshot,
     numberOfCheckedParents = 0
-  ): IManagedObject | undefined {
-    let context: { contextData: IManagedObject } | undefined = undefined;
+  ): IManagedObject {
+    let context: { contextData: IManagedObject } = undefined;
 
     if (route?.data['contextData']) {
       context = route.data as { contextData: IManagedObject };
@@ -169,7 +185,12 @@ export class ReminderModalComponent implements OnInit {
         : undefined;
   }
 
-  private getAssetFromRoute(route: ActivatedRouteSnapshot): IManagedObject | undefined {
+  /**
+   * Retrieves the asset from the current route.
+   * @param {ActivatedRouteSnapshot} route - The current route snapshot.
+   * @returns {IManagedObject} The managed object representing the asset, if found.
+   */
+  private getAssetFromRoute(route: ActivatedRouteSnapshot): IManagedObject {
     if (!route) console.error('No Route provided');
     else {
       const mo = this.recursiveContextSearch(route);
@@ -180,6 +201,10 @@ export class ReminderModalComponent implements OnInit {
     return undefined;
   }
 
+  /**
+   * Sets the type field options for the reminder form based on available reminder types.
+   * @returns {void}
+   */
   private setTypeField(): void {
     this.typeOptions = this.reminderService.types.map((type: ReminderType) => ({
       label: type.name,
