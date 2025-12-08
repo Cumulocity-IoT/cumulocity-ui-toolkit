@@ -22,6 +22,7 @@
     "prebuild": "npm run clean",
     "--tools--------------": "--------------------",
     "generate:scripts": "node tools/generate-scripts.js",
+    "generate:assets": "node tools/generate-assets.js",
     "clean": "rimraf dist",
     "--shortcuts----------": "--------------------",
     "_serve": "from-env ng serve -u %C8Y_BASEURL --shell %C8Y_SHELL_TARGET",
