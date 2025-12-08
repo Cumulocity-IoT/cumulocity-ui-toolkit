@@ -20,10 +20,10 @@ Available scripts (via `npm run`):
 
 ### Tool Scripts
 
-| script                                    | task                                                                    | details                                                                  |
-| ----------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `generate:assets [path-to-assets-folder]` | generates an `assets.ts`                                                | based off of the contents of the folder and the `index.d.ts` definitions |
-| `generate:scripts`                        | generates the serve/build/test scripts, per plugin, in the package.json | based off of the configuration in the `angular.json`                     |
+| script                                    | task                                                                    | details                                                                                                                                    |
+| ----------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `generate:assets [path-to-assets-folder]` | generates an `assets.ts`                                                | based off of the contents of the folder and the `index.d.ts` definitions, to allow easy include of media-files (e.g. images) in components |
+| `generate:scripts`                        | generates the serve/build/test scripts, per plugin, in the package.json | based off of the configuration in the `angular.json`                                                                                       |
 
 ## Workspaces
 
