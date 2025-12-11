@@ -72,7 +72,7 @@ jobs:
         uses: Cumulocity-IoT/plugins-e2e-setup/get-shell-app@main # reference to get-shell-app action
         with:
           shell-name: cockpit
-          shell-version: y2026-lts
+          shell-version: 1023.9.0
           shell-path: dist/apps
 
       - name: Cypress run
