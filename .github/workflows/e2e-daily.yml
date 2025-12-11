@@ -47,6 +47,7 @@ jobs:
 
   test-component:
     runs-on: ubuntu-latest
+    needs: build-plugin
     environment: e2e
     name: E2E Test Reminder Plugin
     steps:
