@@ -8,8 +8,10 @@ env:
   C8Y_USERNAME: ${{ vars.C8Y_USERNAME }}
   C8Y_PASSWORD: ${{ secrets.C8Y_PASSWORD }}
   C8Y_BASEURL: ${{ vars.C8Y_BASEURL }}
-  C8Y_SHELL_TARGET: 'administration'
-  C8Y_CYPRESS_URL: 'http://localhost:4200'
+  C8Y_SHELL_TARGET: 'cockpit'
+  C8Y_CYPRESS_URL: 'http://localhost:9001'
+  C8YCTRL_PORT: 9001
+  C8YCTRL_ROOT: ./dist
 
 permissions:
   contents: read
@@ -75,11 +77,23 @@ jobs:
           shell-version: 1023.9.0
           shell-path: dist/apps
 
-      - name: Cypress run
-        uses: cypress-io/github-action@v5
-        with:
-          start: npm run cypress:ctrl # using cumulocity-cypress-control package to host dist folder
-          install: false
-          wait-on: 'http://localhost:4200/apps/cockpit/index.html?remotes=%7B"sag-pkg-community-plugins"%3A%5B"ExampleWidgetPluginModule"%2C"DatapointsGraphWidgetModule"%5D%7D#'
-          browser: chrome
-          config-file: cypress.config.ts
+      - name: Start server with Cockpit app and Reminder plugin
+        run: |
+          npx c8yctrl &
+          npx wait-on http://localhost:9001/apps/cockpit --timeout 120000
+          sleep 10
+          echo "Angular server is up!"
+
+      - name: Run E2E Tests for Reminder Plugin
+        env:
+          CYPRESS_C8Y_TENANT: ${{ env.C8Y_TENANT }}
+          CYPRESS_C8Y_USERNAME: ${{ env.C8Y_USERNAME }}
+          CYPRESS_C8Y_PASSWORD: ${{ secrets.C8Y_PASSWORD }}
+          CYPRESS_C8Y_CYPRESS_URL: ${{ env.C8Y_CYPRESS_URL }}
+          CYPRESS_C8Y_SHELL_TARGET: ${{ env.C8Y_SHELL_TARGET }}
+        run: |
+          echo "Running tests for reminder plugin"
+          npm run e2e:run:reminder
+        timeout-minutes: 10
+      
+          
