@@ -59,8 +59,68 @@ jobs:
           packages=$(ls -1 packages | jq -R -s -c 'split("\n") | map(select(. != ""))')
           echo "packages=$packages" >> $GITHUB_OUTPUT
 
+  download-shell-apps:
+    runs-on: ubuntu-latest
+    outputs:
+      shell-version: ${{ steps.collect-shell-versions.outputs.version }}
+    steps:
+      - name: Collect Latest Shell Version
+        id: collect-shell-versions
+        uses: Cumulocity-IoT/plugins-e2e-setup/collect-shell-versions@main
+        with:
+          include-latest: true
+          versions-length: 1
+
+      - name: Extract version
+        id: extract-version
+        run: |
+          VERSION=$(echo '${{ steps.collect-shell-versions.outputs.shell_versions }}' | jq -r '.[0].version')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Cache shell apps
+        id: cache-shell-apps
+        uses: actions/cache@v4
+        with:
+          path: shell-apps
+          key: shell-apps-${{ steps.extract-version.outputs.version }}
+
+      - name: Download shell apps
+        if: steps.cache-shell-apps.outputs.cache-hit != 'true'
+        run: mkdir -p shell-apps
+
+      - name: Get Cockpit shell app
+        if: steps.cache-shell-apps.outputs.cache-hit != 'true'
+        uses: Cumulocity-IoT/plugins-e2e-setup/get-shell-app@main
+        with:
+          shell-name: cockpit
+          shell-version: ${{ steps.extract-version.outputs.version }}
+          shell-path: shell-apps
+
+      - name: Get Administration shell app
+        if: steps.cache-shell-apps.outputs.cache-hit != 'true'
+        uses: Cumulocity-IoT/plugins-e2e-setup/get-shell-app@main
+        with:
+          shell-name: administration
+          shell-version: ${{ steps.extract-version.outputs.version }}
+          shell-path: shell-apps
+
+      - name: Get Devicemanagement shell app
+        if: steps.cache-shell-apps.outputs.cache-hit != 'true'
+        uses: Cumulocity-IoT/plugins-e2e-setup/get-shell-app@main
+        with:
+          shell-name: devicemanagement
+          shell-version: ${{ steps.extract-version.outputs.version }}
+          shell-path: shell-apps
+
+      - name: Save shell apps to cache
+        uses: actions/cache/save@v4
+        if: steps.cache-shell-apps.outputs.cache-hit != 'true'
+        with:
+          path: shell-apps
+          key: shell-apps-${{ steps.extract-version.outputs.version }}
+
   test-plugins:
-    needs: [install-dependencies, collect-packages]
+    needs: [install-dependencies, collect-packages, download-shell-apps]
     runs-on: ubuntu-latest
     environment: e2e
     strategy:
@@ -89,6 +149,13 @@ jobs:
           key: node-modules-${{ github.sha }}
           fail-on-cache-miss: true
 
+      - name: Restore shell apps from cache
+        uses: actions/cache/restore@v4
+        with:
+          path: shell-apps
+          key: shell-apps-${{ needs.download-shell-apps.outputs.shell-version }}
+          fail-on-cache-miss: true
+
       - name: Build ${{ matrix.package }} Plugin
         run: |
           npm run build:${{ matrix.package }}
@@ -97,38 +164,9 @@ jobs:
           PACKAGE_NAME=$(node -p "require('./packages/${{ matrix.package }}/package.json').name")
           cp -r "dist/$PACKAGE_NAME" dist/apps/
 
-      - name: Collect Latest Shell Version
-        id: collect-shell-versions
-        uses: Cumulocity-IoT/plugins-e2e-setup/collect-shell-versions@main
-        with:
-          include-latest: true
-          versions-length: 1
-
-      - name: Debug shell versions
+      - name: Copy shell apps to dist/apps
         run: |
-          echo "Versions output: ${{ steps.collect-shell-versions.outputs.shell_versions }}"
-          echo "First version: ${{ fromJson(steps.collect-shell-versions.outputs.shell_versions)[0].version }}"
-
-      - name: Get Cockpit shell app
-        uses: Cumulocity-IoT/plugins-e2e-setup/get-shell-app@main
-        with:
-          shell-name: cockpit
-          shell-version: ${{ fromJson(steps.collect-shell-versions.outputs.shell_versions)[0].version }}
-          shell-path: dist/apps
-
-      - name: Get Administration shell app
-        uses: Cumulocity-IoT/plugins-e2e-setup/get-shell-app@main
-        with:
-          shell-name: administration
-          shell-version: ${{ fromJson(steps.collect-shell-versions.outputs.shell_versions)[0].version }}
-          shell-path: dist/apps
-
-      - name: Get Devicemanagement shell app
-        uses: Cumulocity-IoT/plugins-e2e-setup/get-shell-app@main
-        with:
-          shell-name: devicemanagement
-          shell-version: ${{ fromJson(steps.collect-shell-versions.outputs.shell_versions)[0].version }}
-          shell-path: dist/apps
+          cp -r shell-apps/* dist/apps/
 
       - name: Start server with apps deployed
         run: |
