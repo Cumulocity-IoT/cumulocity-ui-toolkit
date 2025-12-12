@@ -34,7 +34,7 @@
 
 1. Create a new test file under `cypress/e2e`. The convention is that the test file's name must match *{name from package.json}*.cy.ts. This is how it will be configured in the `config`.
 2. Add a new config file under `config`.
-3. Add a new script in the `test/package.json`.
+3. Add a new script in the `package.json` in root.
 
 ## Add reusable commands
 
