@@ -50,6 +50,11 @@ jobs:
           include-latest: true
           versions-length: 1
 
+      - name: Debug shell versions
+        run: |
+          echo "Versions output: ${{ steps.collect-shell-versions.outputs.versions }}"
+          echo "First version: ${{ fromJson(steps.collect-shell-versions.outputs.versions)[0] }}"
+
       - name: Get Cockpit shell app
         uses: Cumulocity-IoT/plugins-e2e-setup/get-shell-app@main
         with:
