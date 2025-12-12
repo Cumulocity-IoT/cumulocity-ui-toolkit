@@ -34,13 +34,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Cache node_modules
-        uses: actions/cache@v4
+      - name: Save node_modules to cache
+        uses: actions/cache/save@v4
         with:
           path: |
             node_modules
             packages/*/node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
+          key: node-modules-${{ github.sha }}
 
   collect-packages:
     runs-on: ubuntu-latest
@@ -78,13 +78,14 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Cache node_modules
-        uses: actions/cache@v4
+      - name: Restore node_modules from cache
+        uses: actions/cache/restore@v4
         with:
           path: |
             node_modules
             packages/*/node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
+          key: node-modules-${{ github.sha }}
+          fail-on-cache-miss: true
 
       - name: Build ${{ matrix.package }} Plugin
         run: |
