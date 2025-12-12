@@ -2,6 +2,8 @@ name: E2E Daily Test Runner
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *" # Runs daily at midnight UTC
 
 env:
   C8Y_TENANT: ${{ vars.C8Y_TENANT }}
