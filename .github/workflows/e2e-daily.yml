@@ -2,11 +2,210 @@ name: E2E Daily Test Runner
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *" # Runs daily at midnight UTC
 
 env:
   C8Y_TENANT: ${{ vars.C8Y_TENANT }}
   C8Y_USERNAME: ${{ vars.C8Y_USERNAME }}
   C8Y_PASSWORD: ${{ secrets.C8Y_PASSWORD }}
   C8Y_BASEURL: ${{ vars.C8Y_BASEURL }}
-  C8Y_SHELL_TARGET: 'administration'
-  C8Y_CYPRESS_URL: 'http://localhost:4200'
+  C8Y_SHELL_TARGET: 'cockpit'
+  C8Y_CYPRESS_URL: 'http://localhost:9001'
+  C8YCTRL_PORT: 9001
+  C8YCTRL_ROOT: ./dist
+
+permissions:
+  contents: read
+
+jobs: 
+  install-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Save node_modules to cache
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            node_modules
+            packages/*/node_modules
+            /home/runner/.cache/Cypress
+          key: node-modules-${{ github.sha }}
+
+  collect-packages:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.get-packages.outputs.packages }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Get all packages
+        id: get-packages
+        run: |
+          packages=$(ls -1 packages | jq -R -s -c 'split("\n") | map(select(. != ""))')
+          echo "packages=$packages" >> $GITHUB_OUTPUT
+
+  download-shell-apps:
+    runs-on: ubuntu-latest
+    outputs:
+      shell-version: ${{ steps.collect-shell-versions.outputs.version }}
+    steps:
+      - name: Collect Latest Shell Version
+        id: collect-shell-versions
+        uses: Cumulocity-IoT/plugins-e2e-setup/collect-shell-versions@main
+        with:
+          include-latest: true
+          versions-length: 1
+
+      - name: Extract version
+        id: extract-version
+        run: |
+          VERSION=$(echo '${{ steps.collect-shell-versions.outputs.shell_versions }}' | jq -r '.[0].version')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Cache shell apps
+        id: cache-shell-apps
+        uses: actions/cache@v4
+        with:
+          path: shell-apps
+          key: shell-apps-${{ steps.extract-version.outputs.version }}
+
+      - name: Download shell apps
+        if: steps.cache-shell-apps.outputs.cache-hit != 'true'
+        run: mkdir -p shell-apps
+
+      - name: Get Cockpit shell app
+        if: steps.cache-shell-apps.outputs.cache-hit != 'true'
+        uses: Cumulocity-IoT/plugins-e2e-setup/get-shell-app@main
+        with:
+          shell-name: cockpit
+          shell-version: ${{ steps.extract-version.outputs.version }}
+          shell-path: shell-apps
+
+      - name: Get Administration shell app
+        if: steps.cache-shell-apps.outputs.cache-hit != 'true'
+        uses: Cumulocity-IoT/plugins-e2e-setup/get-shell-app@main
+        with:
+          shell-name: administration
+          shell-version: ${{ steps.extract-version.outputs.version }}
+          shell-path: shell-apps
+
+      - name: Get Devicemanagement shell app
+        if: steps.cache-shell-apps.outputs.cache-hit != 'true'
+        uses: Cumulocity-IoT/plugins-e2e-setup/get-shell-app@main
+        with:
+          shell-name: devicemanagement
+          shell-version: ${{ steps.extract-version.outputs.version }}
+          shell-path: shell-apps
+
+      - name: Save shell apps to cache
+        uses: actions/cache/save@v4
+        if: steps.cache-shell-apps.outputs.cache-hit != 'true'
+        with:
+          path: shell-apps
+          key: shell-apps-${{ steps.extract-version.outputs.version }}
+
+  test-plugins:
+    needs: [install-dependencies, collect-packages, download-shell-apps]
+    runs-on: ubuntu-latest
+    environment: e2e
+    strategy:
+      matrix:
+        package: ${{ fromJson(needs.collect-packages.outputs.packages) }}
+    name: Build and test ${{ matrix.package }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Restore node_modules from cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            packages/*/node_modules
+            /home/runner/.cache/Cypress
+          key: node-modules-${{ github.sha }}
+          fail-on-cache-miss: true
+
+      - name: Restore shell apps from cache
+        uses: actions/cache/restore@v4
+        with:
+          path: shell-apps
+          key: shell-apps-${{ needs.download-shell-apps.outputs.shell-version }}
+          fail-on-cache-miss: true
+
+      - name: Build ${{ matrix.package }} Plugin
+        run: |
+          npm run build:${{ matrix.package }}
+          mkdir -p dist/apps
+          # Extract package name from package.json and copy built plugin to dist/apps
+          PACKAGE_NAME=$(node -p "require('./packages/${{ matrix.package }}/package.json').name")
+          cp -r "dist/$PACKAGE_NAME" dist/apps/
+
+      - name: Copy shell apps to dist/apps
+        run: |
+          cp -r shell-apps/* dist/apps/
+
+      - name: Start server with apps deployed
+        run: |
+          npx c8yctrl &
+          npx wait-on http://localhost:9001/apps/cockpit --timeout 120000
+          sleep 10
+          echo "Server is up!"
+
+      - name: Run E2E Tests for ${{ matrix.package }} Plugin
+        env:
+          CYPRESS_C8Y_TENANT: ${{ env.C8Y_TENANT }}
+          CYPRESS_C8Y_USERNAME: ${{ env.C8Y_USERNAME }}
+          CYPRESS_C8Y_PASSWORD: ${{ secrets.C8Y_PASSWORD }}
+          CYPRESS_C8Y_CYPRESS_URL: ${{ env.C8Y_CYPRESS_URL }}
+          CYPRESS_C8Y_SHELL_TARGET: ${{ env.C8Y_SHELL_TARGET }}
+        run: |
+          echo "Running tests for ${{ matrix.package }} plugin"
+          npm run e2e:run:${{ matrix.package }}
+        timeout-minutes: 10
+
+      - name: Stop server
+        if: always()
+        run: |
+          pkill -f "c8yctrl" || echo "Server was not running"
+
+      - name: Upload Cypress screenshots (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots-${{ matrix.package }}
+          path: test/cypress/screenshots
+          if-no-files-found: ignore
+
+      - name: Upload Cypress videos (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-videos-${{ matrix.package }}
+          path: test/cypress/videos
+          if-no-files-found: ignore

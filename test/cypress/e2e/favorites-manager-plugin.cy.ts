@@ -4,10 +4,10 @@ describe('Favorites Manager', () => {
   // define a user, which should be used for the test instead
   // of technical users, which are only used for the test setup
   const testUser = {
-    userName: 'testuser',
+    userName: 'cypress-favorites-manager-user',
     password: 'ZVfJbDXuN!3t',
-    displayName: 'Test User',
-    email: 'test.user@softwareag.com',
+    displayName: 'Cypress Favorites Manager User',
+    email: 'cypress-favorites-manager-user@cumulocity.com',
   } as IUser;
 
   const assetId = '6916200';
@@ -16,8 +16,6 @@ describe('Favorites Manager', () => {
   // and permissions to access the Cockpit application extended with the Favorites Manager module
   before(() => {
     Cypress.session.clearAllSavedSessions();
-
-    console.log('environment variables', Cypress.env());
 
     cy.getAuth().login();
     cy.createUser(testUser, ['business'], ['cockpit']);
@@ -30,6 +28,8 @@ describe('Favorites Manager', () => {
 
   // delete the user after the test suite runs
   after(() => {
+    Cypress.session.clearAllSavedSessions();
+
     cy.getAuth().login().deleteUser(testUser);
   });
 

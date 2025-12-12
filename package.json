@@ -44,7 +44,8 @@
     "serve:tenant-option-management": "npm run serve plugin.tenant-option-management -- --shell %APP",
     "build:tenant-option-management": "ng build plugin.tenant-option-management",
     "postbuild:tenant-option-management": "node tools/build-rename.js -p ./packages/tenant-option-management",
-    "test:tenant-option-management": "ng test plugin.tenant-option-management --watch=false --browsers=ChromeHeadless --code-coverage"
+    "test:tenant-option-management": "ng test plugin.tenant-option-management --watch=false --browsers=ChromeHeadless --code-coverage",
+    "cypress:ctrl": "npx c8yctrl"
   },
   "keywords": [
     "cumulocity",
