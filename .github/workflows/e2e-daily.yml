@@ -17,11 +17,8 @@ permissions:
   contents: read
 
 jobs: 
-  test-plugins:
+  install-dependencies:
     runs-on: ubuntu-latest
-    environment: e2e
-    name: Build and test plugins
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -37,11 +34,66 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Reminder Plugin
+      - name: Cache node_modules
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            node_modules
+            packages/*/node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
+
+  collect-packages:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.get-packages.outputs.packages }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Get all packages
+        id: get-packages
         run: |
-          npm run build:reminder
+          packages=$(ls -1 packages | jq -R -s -c 'split("\n") | map(select(. != ""))')
+          echo "packages=$packages" >> $GITHUB_OUTPUT
+
+  test-plugins:
+    needs: [install-dependencies, collect-packages]
+    runs-on: ubuntu-latest
+    environment: e2e
+    strategy:
+      matrix:
+        package: ${{ fromJson(needs.collect-packages.outputs.packages) }}
+    name: Build and test ${{ matrix.package }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Restore node_modules cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            packages/*/node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
+          fail-on-cache-miss: true
+
+      - name: Build ${{ matrix.package }} Plugin
+        run: |
+          npm run build:${{ matrix.package }}
           mkdir -p dist/apps
-          cp -r dist/cumulocity-reminder-plugin dist/apps/
+          # Extract package name from package.json and copy built plugin to dist/apps
+          PACKAGE_NAME=$(node -p "require('./packages/${{ matrix.package }}/package.json').name")
+          cp -r "dist/$PACKAGE_NAME" dist/apps/
 
       - name: Collect Latest Shell Version
         id: collect-shell-versions
@@ -83,7 +135,7 @@ jobs:
           sleep 10
           echo "Server is up!"
 
-      - name: Run E2E Tests for Reminder Plugin
+      - name: Run E2E Tests for ${{ matrix.package }} Plugin
         env:
           CYPRESS_C8Y_TENANT: ${{ env.C8Y_TENANT }}
           CYPRESS_C8Y_USERNAME: ${{ env.C8Y_USERNAME }}
@@ -91,8 +143,8 @@ jobs:
           CYPRESS_C8Y_CYPRESS_URL: ${{ env.C8Y_CYPRESS_URL }}
           CYPRESS_C8Y_SHELL_TARGET: ${{ env.C8Y_SHELL_TARGET }}
         run: |
-          echo "Running tests for reminder plugin"
-          npm run e2e:run:reminder
+          echo "Running tests for ${{ matrix.package }} plugin"
+          npm run e2e:run:${{ matrix.package }}
         timeout-minutes: 10
 
       - name: Stop server
@@ -104,7 +156,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: cypress-screenshots
+          name: cypress-screenshots-${{ matrix.package }}
           path: test/cypress/screenshots
           if-no-files-found: ignore
 
@@ -112,6 +164,6 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: cypress-videos
+          name: cypress-videos-${{ matrix.package }}
           path: test/cypress/videos
           if-no-files-found: ignore
