@@ -52,28 +52,28 @@ jobs:
 
       - name: Debug shell versions
         run: |
-          echo "Versions output: ${{ steps.collect-shell-versions.outputs.versions }}"
-          echo "First version: ${{ fromJson(steps.collect-shell-versions.outputs.versions)[0] }}"
+          echo "Versions output: ${{ steps.collect-shell-versions.outputs.shell_versions }}"
+          echo "First version: ${{ fromJson(steps.collect-shell-versions.outputs.shell_versions)[0].version }}"
 
       - name: Get Cockpit shell app
         uses: Cumulocity-IoT/plugins-e2e-setup/get-shell-app@main
         with:
           shell-name: cockpit
-          shell-version: ${{ fromJson(steps.collect-shell-versions.outputs.versions)[0] }}
+          shell-version: ${{ fromJson(steps.collect-shell-versions.outputs.shell_versions)[0].version }}
           shell-path: dist/apps
 
       - name: Get Administration shell app
         uses: Cumulocity-IoT/plugins-e2e-setup/get-shell-app@main
         with:
           shell-name: administration
-          shell-version: ${{ fromJson(steps.collect-shell-versions.outputs.versions)[0] }}
+          shell-version: ${{ fromJson(steps.collect-shell-versions.outputs.shell_versions)[0].version }}
           shell-path: dist/apps
 
       - name: Get Devicemanagement shell app
         uses: Cumulocity-IoT/plugins-e2e-setup/get-shell-app@main
         with:
           shell-name: devicemanagement
-          shell-version: ${{ fromJson(steps.collect-shell-versions.outputs.versions)[0] }}
+          shell-version: ${{ fromJson(steps.collect-shell-versions.outputs.shell_versions)[0].version }}
           shell-path: dist/apps
 
       - name: Start server with apps deployed
