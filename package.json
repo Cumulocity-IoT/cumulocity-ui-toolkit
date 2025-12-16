@@ -5,7 +5,7 @@
   "scripts": {
     "eslint": "eslint",
     "serve": "from-env ng serve -u %C8Y_BASEURL",
-    "build": "npm-run-all build:reminder build:kpi-widget build:energy-consumption-widget build:release-notes build:operations-widget build:favorites-manager build:tenant-option-management",
+    "build": "npm-run-all build:reminder build:kpi-widget build:energy-consumption-widget build:release-notes build:operations-widget build:favorites-manager build:tenant-option-management build:events-graph-widget",
     "prebuild": "npm run clean",
     "clean": "rimraf dist",
     "e2e:open": "cypress open",
@@ -31,6 +31,14 @@
     "build:favorites-manager": "ng build plugin.favorites",
     "postbuild:favorites-manager": "node tools/build-rename.js -p ./packages/favorites-manager",
     "test:favorites-manager": "ng test plugin.favorites --watch=false --browsers=ChromeHeadless --code-coverage",
+    "serve:tenant-option-management": "npm run serve plugin.tenant-option-management -- --shell %C8Y_SHELL_TARGET",
+    "build:tenant-option-management": "ng build plugin.tenant-option-management",
+    "postbuild:tenant-option-management": "node tools/build-rename.js -p ./packages/tenant-option-management",
+    "test:tenant-option-management": "ng test plugin.tenant-option-management --watch=false --browsers=ChromeHeadless --code-coverage",
+    "serve:events-graph-widget": "npm run serve plugin.events-graph-widget -- --shell %C8Y_SHELL_TARGET",
+    "build:events-graph-widget": "ng build plugin.events-graph-widget",
+    "postbuild:events-graph-widget": "node tools/build-rename.js -p ./packages/events-graph-widget",
+    "test:events-graph-widget": "ng test plugin.events-graph-widget --watch=false --browsers=ChromeHeadless --code-coverage",
     "e2e:run": "npx --workspace=test -- cypress run --browser chrome",
     "e2e:run:favorites-manager": "npm run e2e:run -- --config-file config/favorites-manager.config.ts",
     "e2e:run:reminder": "npm run e2e:run -- --config-file config/reminder.config.ts",
@@ -41,16 +49,15 @@
     "e2e:run:tenant-option-management": "npm run e2e:run -- --config-file config/tenant-option-management.config.ts",
     "e2e:open:favorites-manager": "npx --workspace=test -- cypress open --config-file config/favorites-manager.config.ts",
     "e2e:open:release-notes": "npx --workspace=test -- cypress open --config-file config/release-notes.config.ts",
-    "serve:tenant-option-management": "npm run serve plugin.tenant-option-management -- --shell %APP",
-    "build:tenant-option-management": "ng build plugin.tenant-option-management",
-    "postbuild:tenant-option-management": "node tools/build-rename.js -p ./packages/tenant-option-management",
-    "test:tenant-option-management": "ng test plugin.tenant-option-management --watch=false --browsers=ChromeHeadless --code-coverage"
+    "ng": "ng",
+    "eslint": "eslint"
   },
   "keywords": [
     "cumulocity",
     "cumulocity-package",
     "cumulocity-iot",
     "cumulocity-ui-plugin",
+    "cumulocity-ui-widget",
     "cumulocity-ui-guild"
   ],
   "author": "Cumulocity UI Guild, @dirk-peter-c8y",
