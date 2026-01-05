@@ -35,6 +35,7 @@ export class LocationGeocoderService {
     );
 
     const data = (await response.json()) as NominatimLocationData[];
+
     if (isArray(data) && !isEmpty(data)) {
       const { lat, lon } = data[0];
       return { lat: parseFloat(lat), lon: parseFloat(lon) };

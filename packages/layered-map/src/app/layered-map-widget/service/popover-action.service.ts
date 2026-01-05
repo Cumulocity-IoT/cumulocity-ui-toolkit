@@ -26,17 +26,6 @@ export class PopoverActionService {
     private alert: AlertService
   ) {}
 
-  send(action: PopoverAction, mo: IManagedObject) {
-    switch (action.type) {
-      case 'alarm':
-        return this.addToast(action, this.sendAlarm(action, mo));
-      case 'event':
-        return this.addToast(action, this.sendEvent(action, mo));
-      case 'operation':
-        return this.addToast(action, this.sendOperation(action, mo));
-    }
-  }
-
   protected addToast<T>(action: PopoverAction, promise: Promise<IResult<T>>) {
     return promise.then(
       () => this.alert.success(`${action.label} successful`),
@@ -49,10 +38,11 @@ export class PopoverActionService {
     let newAlarm: IAlarm = {
       source: mo,
       time: new Date().toISOString(),
-      severity: partial.severity!,
-      type: partial.type!,
-      text: partial.text!,
+      severity: partial.severity,
+      type: partial.type,
+      text: partial.text,
     };
+
     // add potential custom fragments
     newAlarm = { ...newAlarm, ...partial };
 
@@ -64,9 +54,10 @@ export class PopoverActionService {
     let newEvent: IEvent = {
       source: mo,
       time: new Date().toISOString(),
-      type: partial.type!,
-      text: partial.text!,
+      type: partial.type,
+      text: partial.text,
     };
+
     // add potential custom fragments
     newEvent = { ...newEvent, ...partial };
 
@@ -78,9 +69,21 @@ export class PopoverActionService {
     let newOperation: IOperation = {
       deviceId: mo.id,
     };
+
     // add potential custom fragments
     newOperation = { ...newOperation, ...partial };
 
     return this.operationService.create(newOperation);
+  }
+
+  send(action: PopoverAction, mo: IManagedObject) {
+    switch (action.type) {
+      case 'alarm':
+        return this.addToast(action, this.sendAlarm(action, mo));
+      case 'event':
+        return this.addToast(action, this.sendEvent(action, mo));
+      case 'operation':
+        return this.addToast(action, this.sendOperation(action, mo));
+    }
   }
 }

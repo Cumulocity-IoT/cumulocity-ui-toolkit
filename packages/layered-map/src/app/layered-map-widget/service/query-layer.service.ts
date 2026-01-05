@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { AlarmService, EventService, IManagedObject, InventoryService } from '@c8y/client';
+import { AlarmService, EventService, InventoryService } from '@c8y/client';
 import { get, set } from 'lodash';
+import { PositionUpdateManagedObject } from '../layered-map-widget.model';
 
 @Injectable({
   providedIn: 'root',
@@ -12,8 +13,8 @@ export class QueryLayerService {
     private event: EventService
   ) {}
 
-  async fetchByAlarmQuery(params: object): Promise<IManagedObject[]> {
-    const result = new Map<string, IManagedObject | null>();
+  async fetchByAlarmQuery(params: object): Promise<PositionUpdateManagedObject[]> {
+    const result = new Map<string, PositionUpdateManagedObject | null>();
     const filter = {
       withTotalPages: true,
       pageSize: 200,
@@ -23,14 +24,16 @@ export class QueryLayerService {
     const resolvers: Promise<void>[] = [];
 
     let res = await this.alarm.list(filter);
+
     while (res.data.length) {
       const ids = res.data
         .filter((alarm) => !result.has(alarm.source.id))
         .map((alarm) => alarm.source.id);
+
       ids.forEach((id) => result.set(id, null));
       resolvers.push(
         this.resolveManagedObjects(ids).then((mos) =>
-          mos.data.forEach((mo) => result.set(mo.id, mo))
+          mos.data.forEach((mo) => result.set(mo.id, mo as PositionUpdateManagedObject))
         )
       );
 
@@ -41,11 +44,12 @@ export class QueryLayerService {
     }
 
     await Promise.all(resolvers);
-    return [...result.values()].filter((mo) => mo !== null) as IManagedObject[];
+
+    return [...result.values()].filter((mo) => mo !== null);
   }
 
   async fetchByInventoryQuery(params: object) {
-    const result: IManagedObject[] = [];
+    const result: PositionUpdateManagedObject[] = [];
     const filter = {
       withTotalPages: true,
       pageSize: 2000,
@@ -53,21 +57,25 @@ export class QueryLayerService {
     };
 
     let res = await this.inventory.list(filter);
+
     while (res.data.length) {
-      result.push(...res.data);
+      result.push(...(res.data as PositionUpdateManagedObject[]));
+
       if (res.data.length < (res.paging?.pageSize ?? -1)) {
         break;
       }
+
       if (!res.paging?.nextPage) {
         break;
       }
       res = await res.paging.next();
     }
+
     return result;
   }
 
-  async fetchByEventQuery(params: object): Promise<IManagedObject[]> {
-    const result = new Map<string, IManagedObject | null>();
+  async fetchByEventQuery(params: object): Promise<PositionUpdateManagedObject[]> {
+    const result = new Map<string, PositionUpdateManagedObject | null>();
     const filter = {
       withTotalPages: true,
       pageSize: 200,
@@ -76,23 +84,27 @@ export class QueryLayerService {
     const resolvers: Promise<void>[] = [];
 
     let res = await this.event.list(filter);
+
     while (res.data.length) {
       const ids = res.data
         .filter((event) => !result.has(event.source.id))
         .map((event) => event.source.id);
+
       ids.forEach((id) => result.set(id, null));
       resolvers.push(
         this.resolveManagedObjects(ids).then((mos) =>
-          mos.data.forEach((mo) => result.set(mo.id, mo))
+          (mos.data as PositionUpdateManagedObject[]).forEach((mo) => result.set(mo.id, mo))
         )
       );
+
       if (!res.paging?.nextPage) {
         break;
       }
       res = await res.paging.next();
     }
     await Promise.all(resolvers);
-    return [...result.values()].filter((mo) => mo !== null) as IManagedObject[];
+
+    return [...result.values()].filter((mo) => mo !== null);
   }
 
   resolveManagedObjects(ids: string[]) {
@@ -108,9 +120,10 @@ export class QueryLayerService {
   normalize(params: object) {
     for (const key of Object.keys(params)) {
       if (get(params, key) instanceof Date) {
-        set(params, key, get(params, key).toISOString());
+        set(params, key, (<Date>get(params, key)).toISOString());
       }
     }
+
     return params;
   }
 }

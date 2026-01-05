@@ -1,9 +1,23 @@
-<c8y-modal title="{{ title | translate }}" (onClose)="onClose()" (onDismiss)="onDismiss()" [labels]="labels" [disabled]="type === 'Unset' || !layer.name" style="width: 100%">
+<c8y-modal
+  [labels]="labels"
+  [disabled]="type === 'Unset' || !layer.name"
+  (onClose)="onClose()"
+  (onDismiss)="onDismiss()"
+  title="{{ title | translate }}"
+  style="width: 100%"
+>
   <div class="m-16">
     <div class="legend form-block center">General</div>
     <div class="form-group">
       <label translate for="layerName">Name</label>
-      <input id="layerName" class="form-control" type="text" name="layerName" [maxlength]="254" [(ngModel)]="layer.name" />
+      <input
+        class="form-control"
+        id="layerName"
+        [(ngModel)]="layer.name"
+        [maxlength]="254"
+        type="text"
+        name="layerName"
+      />
     </div>
     <div class="legend form-block center">Marker</div>
     <div class="form-group">
@@ -12,15 +26,36 @@
         <div class="input-group-btn">
           <button class="btn btn-primary" (click)="openIconModal()">Pick icon</button>
         </div>
-        <input id="iconInput" class="form-control" type="text" name="iconInput" [(ngModel)]="layer.icon" />
-        <span *ngIf="layer.icon" class="input-group-addon"><i [c8yIcon]="layer.icon"></i></span>
+        <input
+          class="form-control"
+          id="iconInput"
+          [(ngModel)]="layer.icon"
+          type="text"
+          name="iconInput"
+        />
+        <span class="input-group-addon" *ngIf="layer.icon"><i [c8yIcon]="layer.icon"></i></span>
       </div>
     </div>
-    <div class="form-group" *ngIf="!((type === 'QueryLayerConfig' && queryType === 'Alarm') || type === 'WebMapServiceLayer')">
+    <div
+      class="form-group"
+      *ngIf="
+        !((type === 'QueryLayerConfig' && queryType === 'Alarm') || type === 'WebMapServiceLayer')
+      "
+    >
       <label translate for="iconColorInput">Icon Color</label>
-      <div class="form-control" style="width: 36px; cursor: pointer" title="Click to select a marker color.">
+      <div
+        class="form-control"
+        style="width: 36px; cursor: pointer"
+        title="Click to select a marker color."
+      >
         <div class="c8y-colorpicker">
-          <input id="iconColorInput" type="color" [attr.aria-label]="'Color' | translate" [(ngModel)]="layer.color" (click)="$event.stopPropagation()" />
+          <input
+            id="iconColorInput"
+            [(ngModel)]="layer.color"
+            [attr.aria-label]="'Color' | translate"
+            (click)="$event.stopPropagation()"
+            type="color"
+          />
           <span [style.background-color]="layer.color"></span>
         </div>
       </div>
@@ -28,62 +63,44 @@
     <div class="form-group">
       <label translate for="layerType">Layer Type</label>
       <div class="c8y-select-wrapper" title="{{ 'Select type' | translate }}">
-        <select id="layerType" #typeSelect class="btn btn-default dropdown-toggle c8y-dropdown" required="true" (change)="changeType(typeSelect.value)">
+        <select
+          class="btn btn-default dropdown-toggle c8y-dropdown"
+          id="layerType"
+          #typeSelect
+          (change)="changeType(typeSelect.value)"
+          required="true"
+        >
           <option value="" selected disabled>Select a type</option>
-          <option value="DeviceFragmentLayerConfig" [selected]="type === 'DeviceFragmentLayerConfig'">
-            {{ 'Device-Fragment' | translate }}
-          </option>
-          <option value="InventoryQueryLayerConfig" [selected]="type === 'QueryLayerConfig' && queryType === 'Inventory'">
+          <option
+            [selected]="type === 'QueryLayerConfig' && queryType === 'Inventory'"
+            value="InventoryQueryLayerConfig"
+          >
             {{ 'Inventory Query' | translate }}
           </option>
-          <option value="AlarmQueryLayerConfig" [selected]="type === 'QueryLayerConfig' && queryType === 'Alarm'">
+          <option
+            [selected]="type === 'QueryLayerConfig' && queryType === 'Alarm'"
+            value="AlarmQueryLayerConfig"
+          >
             {{ 'Alarm Query' | translate }}
           </option>
-          <option value="EventQueryLayerConfig" [selected]="type === 'QueryLayerConfig' && queryType === 'Event'">
+          <option
+            [selected]="type === 'QueryLayerConfig' && queryType === 'Event'"
+            value="EventQueryLayerConfig"
+          >
             {{ 'Event Query' | translate }}
           </option>
-          <option value="WebMapServiceLayer" [selected]="type === 'WebMapServiceLayer'">
+          <option [selected]="type === 'WebMapServiceLayer'" value="WebMapServiceLayer">
             {{ 'Web Map Service (WMS)' | translate }}
           </option>
         </select>
       </div>
     </div>
-
-    <span *ngIf="type === 'DeviceFragmentLayerConfig'">
-      <div class="legend form-block center">Device Fragment Configuration</div>
-
-      <div class="row">
-        <div class="col-sm-12">
-          <div class="card">
-            <div class="card-header separator"></div>
-            <div class="card-block d-flex d-col p-t-0 p-b-0 bg-level-1" style="height: 300px">
-              <c8y-asset-selector-miller
-                [(ngModel)]="layer.device"
-                [config]="{
-                  groupsSelectable: true,
-                  singleColumn: true,
-                  columnHeaders: true,
-                  showFilter: true,
-                  search: true
-                }"
-              ></c8y-asset-selector-miller>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="fragment" translate>Fragment</label>
-        <input name="fragment" id="fragment" class="form-control" placeholder="type" [(ngModel)]="layer.fragment" />
-      </div>
-      <div class="form-group">
-        <label for="value" translate>Value</label>
-        <input name="value" id="value" class="form-control" placeholder="c8y_Event" [(ngModel)]="layer.value" />
-      </div>
-    </span>
     <span *ngIf="type === 'QueryLayerConfig'">
       <div class="legend form-block center">{{ queryType }} Query Configuration</div>
-      <inventory-query-form *ngIf="queryType === 'Inventory'" [filter]="layer.filter"></inventory-query-form>
+      <inventory-query-form
+        *ngIf="queryType === 'Inventory'"
+        [filter]="layer.filter"
+      ></inventory-query-form>
       <alarm-query-form *ngIf="queryType === 'Alarm'" [filter]="layer.filter"></alarm-query-form>
       <event-query-form *ngIf="queryType === 'Event'" [filter]="layer.filter"></event-query-form>
     </span>
@@ -92,49 +109,103 @@
       <div class="legend form-block center">Web Map Service</div>
       <div class="form-group">
         <label for="url" translate>URL</label>
-        <input name="url" id="url" type="url" class="form-control" placeholder="http://ows.mundialis.de/services/service?" [(ngModel)]="layer.url" (ngModelChange)="onWmsURLChange($event)" required />
+        <input
+          class="form-control"
+          id="url"
+          [(ngModel)]="layer.url"
+          (ngModelChange)="onWmsURLChange($event)"
+          name="url"
+          type="url"
+          placeholder="http://ows.mundialis.de/services/service?"
+          required
+        />
       </div>
       <ul class="list-unstyled">
         <label translate>WMS Layers</label>
         <li class="m-b-8" *ngFor="let item of layer.wmsLayers; let i = index">
-          <c8y-input-group-list [index]="i" (onAdd)="addWMSLayer()" (onRemove)="removeWMSLayer($event)">
-            <input type="text" name="wsLayer" class="form-control m-r-4" placeholder="{{ 'WMS Layer, e.g. TOPO-OSM-WMS' | translate }}" style="flex-grow: 2" [(ngModel)]="item.name" [required]="true"
+          <c8y-input-group-list
+            [index]="i"
+            (onAdd)="addWMSLayer()"
+            (onRemove)="removeWMSLayer($event)"
+          >
+            <input
+              class="form-control m-r-4"
+              [(ngModel)]="item.name"
+              [required]="true"
+              type="text"
+              name="wsLayer"
+              placeholder="{{ 'WMS Layer, e.g. TOPO-OSM-WMS' | translate }}"
+              style="flex-grow: 2"
           /></c8y-input-group-list>
         </li>
       </ul>
 
       <div class="form-group">
         <label for="username" translate>Username</label>
-        <input name="username" id="username" type="text" class="form-control" [(ngModel)]="wmsCredentials.username" />
+        <input
+          class="form-control"
+          id="username"
+          [(ngModel)]="wmsCredentials.username"
+          name="username"
+          type="text"
+        />
       </div>
       <div class="form-group">
         <label for="password" translate>Password</label>
-        <input name="password" id="password" type="password" class="form-control" [(ngModel)]="wmsCredentials.password" />
+        <input
+          class="form-control"
+          id="password"
+          [(ngModel)]="wmsCredentials.password"
+          name="password"
+          type="password"
+        />
       </div>
-      <button *ngIf="layer.token" class="btn btn-danger" type="button" (click)="clearAllPasswords()">
+      <button
+        class="btn btn-danger"
+        *ngIf="layer.token"
+        (click)="clearAllPasswords()"
+        type="button"
+      >
         {{ 'Clear all passwords' | translate }}
       </button>
     </span>
 
-    <div *ngIf="type === 'QueryLayerConfig'" class="legend form-block center">Polling</div>
+    <div class="legend form-block center" *ngIf="type === 'QueryLayerConfig'">Polling</div>
 
-    <div *ngIf="type === 'QueryLayerConfig'" class="row d-flex a-i-center">
+    <div class="row d-flex a-i-center" *ngIf="type === 'QueryLayerConfig'">
       <div class="col-xs-6">
         <div class="form-group m-b-0 form-group-sm">
-          <label for="positionPolling" class="control-label">{{ 'Polling' | translate }}</label>
+          <label class="control-label" for="positionPolling">{{ 'Polling' | translate }}</label>
           <div class="c8y-select-wrapper">
             <select class="form-control" id="positionPolling" [(ngModel)]="layer.enablePolling">
-              <option value="false" title="Only refreshing on interaction">No automatic polling</option>
-              <option value="true" title="Refreshing after a give interval and on interaction">Activate polling</option>
+              <option value="false" title="Only refreshing on interaction">
+                No automatic polling
+              </option>
+              <option value="true" title="Refreshing after a give interval and on interaction">
+                Activate polling
+              </option>
             </select>
           </div>
         </div>
       </div>
       <div class="col-xs-6">
         <div class="form-group form-group-sm m-b-0">
-          <label for="pollingSlider" class="control-label">{{ 'Polling interval in seconds' | translate }}</label>
-          <c8y-range [(ngModel)]="layer.pollingInterval" [disabled]="!(layer.enablePolling | stringToBool)" class="label-bottom">
-            <input id="pollingSlider" type="range" min="1" max="180" step="1" [disabled]="!(layer.enablePolling | stringToBool)" />
+          <label class="control-label" for="pollingSlider">{{
+            'Polling interval in seconds' | translate
+          }}</label>
+          <c8y-range
+            class="label-bottom"
+            [(ngModel)]="layer.pollingInterval"
+            [disabled]="!(layer.enablePolling | stringToBool)"
+          >
+            <input
+              id="pollingSlider"
+              [disabled]="!(layer.enablePolling | stringToBool)"
+              type="range"
+              min="1"
+              max="180"
+              step="1"
+            />
           </c8y-range>
         </div>
       </div>

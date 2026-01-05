@@ -6,7 +6,6 @@ import { Subject } from 'rxjs';
 import {
   BasicLayerConfig,
   DeviceFragmentLayerConfig,
-  isDeviceFragmentLayerConfig,
   isQueryLayerConfig,
   isWebMapServiceLayerConfig,
   QueryLayerConfig,
@@ -14,10 +13,10 @@ import {
 } from '../layered-map-widget.model';
 import { TenantOptionCredentialsService } from '../service/tenant-option-credentials.service';
 
-@Component({ templateUrl: './layer-modal.component.html' })
+@Component({ templateUrl: './layer-modal.component.html', standalone: true })
 export class LayerModalComponent {
   title = 'Create layer';
-  closeSubject: Subject<DeviceFragmentLayerConfig | QueryLayerConfig | WebMapServiceLayerConfig | undefined> = new Subject();
+  closeSubject: Subject<QueryLayerConfig | WebMapServiceLayerConfig | undefined> = new Subject();
   labels: ModalLabels = { ok: 'Create', cancel: 'Cancel' };
   layer: Partial<DeviceFragmentLayerConfig | QueryLayerConfig | WebMapServiceLayerConfig> = {
     name: '',
@@ -27,26 +26,31 @@ export class LayerModalComponent {
     pollingInterval: 60,
   };
 
-  type: 'DeviceFragmentLayerConfig' | 'QueryLayerConfig' | 'Unset' | 'WebMapServiceLayer' = 'Unset';
+  type: 'QueryLayerConfig' | 'Unset' | 'WebMapServiceLayer' = 'Unset';
   queryType: 'Alarm' | 'Inventory' | 'Event' = 'Inventory';
 
   protected wmsCredentials = { username: '', password: '' };
 
-  constructor(public bsModalRef: BsModalRef, private iconSelector: IconSelectorService, private modal: ModalService, private tenantOptionCredentials: TenantOptionCredentialsService) {}
+  constructor(
+    public bsModalRef: BsModalRef,
+    private iconSelector: IconSelectorService,
+    private modal: ModalService,
+    private tenantOptionCredentials: TenantOptionCredentialsService
+  ) {}
 
   setLayer(layer: BasicLayerConfig) {
     this.layer = layer;
     this.title = 'Edit layer';
     this.labels = { ok: 'Update', cancel: 'Cancel' };
-    if (isDeviceFragmentLayerConfig(layer)) {
-      this.type = 'DeviceFragmentLayerConfig';
-    } else if (isQueryLayerConfig(layer)) {
+
+    if (isQueryLayerConfig(layer)) {
       this.type = 'QueryLayerConfig';
       this.queryType = layer.type;
     } else if (isWebMapServiceLayerConfig(layer)) {
       this.type = 'WebMapServiceLayer';
+
       if (layer.token) {
-        this.tenantOptionCredentials.getCredentials(layer.token).then((creds) => {
+        void this.tenantOptionCredentials.getCredentials(layer.token).then((creds) => {
           this.wmsCredentials = creds;
         });
       }
@@ -55,6 +59,7 @@ export class LayerModalComponent {
 
   async openIconModal() {
     const icon = await this.iconSelector.selectIcon({ currentSelection: this.layer.icon });
+
     if (icon) {
       this.layer.icon = icon;
     }
@@ -62,17 +67,8 @@ export class LayerModalComponent {
 
   changeType(type: string) {
     const { name, color, icon, pollingInterval, enablePolling } = this.layer;
-    if (type === 'DeviceFragmentLayerConfig') {
-      this.layer = {
-        name,
-        color,
-        icon,
-        pollingInterval,
-        enablePolling,
-        ...{ fragment: '', value: '', device: { id: '', name: '' } },
-      } as DeviceFragmentLayerConfig;
-      this.type = type;
-    } else if (type === 'AlarmQueryLayerConfig') {
+
+    if (type === 'AlarmQueryLayerConfig') {
       this.layer = {
         name,
         color,
@@ -121,9 +117,11 @@ export class LayerModalComponent {
   onWmsURLChange(url?: string) {
     if (url && url.length) {
       const params = new URLSearchParams(decodeURI(url));
+
       if (params.has('layers')) {
         const layers = params.get('layers')?.split(',') ?? [];
         const existingLayers = (<WebMapServiceLayerConfig>this.layer).wmsLayers;
+
         for (const layer of layers) {
           if (!existingLayers.find((l) => l.name === layer)) {
             existingLayers.push({ name: layer });
@@ -142,15 +140,11 @@ export class LayerModalComponent {
   }
 
   clearAllPasswords() {
-    this.modal.confirm('Clear passwords', 'Are you sure you want to clear all passwords?', Status.DANGER).then((result) => {
-      if (result) this.onClearPasswordsConfirmation();
-    });
-  }
-
-  private onClearPasswordsConfirmation() {
-    this.tenantOptionCredentials.clearAllCredentials();
-    this.wmsCredentials = { username: '', password: '' };
-    delete (<WebMapServiceLayerConfig>this.layer).token;
+    void this.modal
+      .confirm('Clear passwords', 'Are you sure you want to clear all passwords?', Status.DANGER)
+      .then((result) => {
+        if (result) this.onClearPasswordsConfirmation();
+      });
   }
 
   // - MODAL section
@@ -162,17 +156,28 @@ export class LayerModalComponent {
 
   // called if save is pressed
   onClose(): void {
-    if (this.type === 'WebMapServiceLayer' && this.wmsCredentials.username.length && this.wmsCredentials.password.length) {
+    if (
+      this.type === 'WebMapServiceLayer' &&
+      this.wmsCredentials.username.length &&
+      this.wmsCredentials.password.length
+    ) {
       const creds = {
         username: this.wmsCredentials.username,
         password: this.wmsCredentials.password,
       };
-      this.tenantOptionCredentials.saveCredentials(creds).then((token) => {
+
+      void this.tenantOptionCredentials.saveCredentials(creds).then((token) => {
         (<WebMapServiceLayerConfig>this.layer).token = token;
-        this.closeSubject.next(this.layer as any);
+        this.closeSubject.next(this.layer);
       });
     } else {
-      this.closeSubject.next(this.layer as any);
+      this.closeSubject.next(this.layer);
     }
+  }
+
+  private onClearPasswordsConfirmation() {
+    void this.tenantOptionCredentials.clearAllCredentials();
+    this.wmsCredentials = { username: '', password: '' };
+    delete (<WebMapServiceLayerConfig>this.layer).token;
   }
 }

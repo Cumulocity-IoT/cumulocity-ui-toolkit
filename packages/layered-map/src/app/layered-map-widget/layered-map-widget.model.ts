@@ -53,7 +53,9 @@ export type WebMapServiceLayerConfig = BasicLayerConfig & {
   token?: string;
 };
 
-export function isWebMapServiceLayerConfig(config: BasicLayerConfig): config is WebMapServiceLayerConfig {
+export function isWebMapServiceLayerConfig(
+  config: BasicLayerConfig
+): config is WebMapServiceLayerConfig {
   return has(config, 'url') && has(config, 'wmsLayers');
 }
 
@@ -83,10 +85,15 @@ export class MyLayer implements LayerAttributes {
 }
 
 export type PollingDelta = {
-  add: IManagedObject[];
-  update?: IManagedObject[];
+  add: PositionUpdateManagedObject[];
+  update?: PositionUpdateManagedObject[];
   remove: string[];
 };
+
+export interface PositionUpdateManagedObject extends IManagedObject {
+  c8y_Position: { lat: number; lng: number };
+  c8y_ActiveAlarmsStatus?: { critical?: number; major?: number; minor?: number; warning?: number };
+}
 
 export interface ILayeredMapWidgetConfig {
   devices?: { name: string; id: string }[];

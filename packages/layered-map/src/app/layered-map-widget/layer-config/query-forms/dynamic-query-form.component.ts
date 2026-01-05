@@ -1,99 +1,93 @@
 import { AfterViewInit, Component, Input } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { C8yJSONSchema } from '@c8y/ngx-components';
+import { CoreModule } from '@c8y/ngx-components';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { JSONSchema7 } from 'json-schema';
-import { set } from 'lodash';
 
 @Component({
-  selector: 'dynamic-query-form',
+  selector: 'ps-dynamic-query-form',
+  standalone: true,
+  imports: [CoreModule],
   template: `<form class="card" [formGroup]="form">
     <div class="card-header">
       <h4 class="card-title">Query filter</h4>
     </div>
     <div class="card-block">
       <button
-        *ngFor="let p of params"
         class="btn btn-default btn-icon btn-sm m-t-8 m-l-0 m-r-8"
-        [ngClass]="selectedFilters.includes(p) ? 'active' : ''"
-        (click)="queryParamClick(p)"
+        *ngFor="let p of params"
+        [ngClass]="selectedFilters.includes(p.key!.toString()) ? 'active' : ''"
+        (click)="queryParamClick(p.key!.toString())"
       >
         <i [c8yIcon]="getIcon(p)"></i>
-        {{ p.title }}
+        {{ p.key }}
       </button>
 
       <div class="form-group m-t-16">
         <formly-form [form]="form" [fields]="fields" [model]="filter"></formly-form>
       </div>
+
+      <ng-content></ng-content>
     </div>
   </form>`,
 })
 export class DynamicQueryFormComponent implements AfterViewInit {
-  selectedFilters: { title: string }[] = [];
-
-  queryFormJSON: JSONSchema7 = {
-    $schema: 'https://json-schema.org/draft/2019-09/schema',
-    type: 'object',
-    properties: {},
-    required: [],
-    additionalProperties: false,
-  };
-
+  selectedFilters: string[] = [];
   form = new FormGroup({});
   fields: FormlyFieldConfig[] = [];
-  @Input() filter: any = {};
-  @Input() params: any[] = [];
+  @Input() filter: Record<string, any> = {};
+  @Input() params: FormlyFieldConfig[] = [];
 
-  constructor(private jsonschema: C8yJSONSchema) {}
+  constructor() {}
 
   ngAfterViewInit(): void {
+    const fields: FormlyFieldConfig[] = [];
+
     for (const title of Object.keys(this.filter)) {
-      const match = this.params.find((p) => p.title === title);
+      const match = this.params.find((p) => p.key === title);
+
       if (match) {
-        this.selectedFilters.push(match);
-        set((<any>this.queryFormJSON).properties, match.title, match);
+        this.selectedFilters.push(match.key.toString());
+        fields.push(match);
       }
     }
-    this.reloadForm();
+    this.fields = fields;
   }
 
-  getIcon(b: { type: string; enum?: [] }) {
-    if (b.type === 'date') {
+  getIcon(b: FormlyFieldConfig) {
+    const key = b.key?.toString();
+
+    if (key?.includes('date') || key?.includes('created')) {
       return 'calendar-1';
-    } else if (b.type === 'boolean') {
-      return 'radio-button-on';
-    } else if (b.type === 'string') {
-      if (b.enum) {
-        return 'radio-button-on';
-      } else {
-        return 'text-input';
-      }
     }
+
+    if (b.type == 'select' || b.type == 'checkbox') {
+      return 'radio-button-on';
+    } else if (b.type === 'input') {
+      return 'text-input';
+    }
+    // if (b.type === 'date') {
+    //   return 'calendar-1';
+
+    // }
 
     return '';
   }
 
-  queryParamClick(b: { title: string }) {
-    const properties = (<any>this.queryFormJSON).properties;
-    if (this.selectedFilters.includes(b)) {
-      this.selectedFilters = this.selectedFilters.filter((f) => f !== b);
-      delete properties[b.title];
-      delete this.filter[b.title];
+  queryParamClick(key: string) {
+    // const properties = <any>this.fields;
+    if (this.selectedFilters.some((f) => f === key)) {
+      this.selectedFilters = this.selectedFilters.filter((f) => f !== key);
+      // delete properties[b.key!];
+      delete this.filter[key];
+      this.fields = this.fields.filter((f) => f.key !== key);
     } else {
-      set((<any>this.queryFormJSON).properties, b.title, b);
-      this.selectedFilters.push(b);
-    }
-    this.reloadForm();
-  }
+      // set(<any>this.fields, b.key, b);
+      const param = this.params.find((p) => p.key === key);
 
-  private reloadForm() {
-    this.fields = [
-      this.jsonschema.toFieldConfig(this.queryFormJSON, {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        map(mappedField: FormlyFieldConfig, _mapSource: JSONSchema7) {
-          return mappedField;
-        },
-      }),
-    ];
+      if (param) {
+        this.fields = [...this.fields, param];
+        this.selectedFilters.push(key);
+      }
+    }
   }
 }

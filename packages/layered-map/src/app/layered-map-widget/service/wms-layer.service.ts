@@ -1,10 +1,13 @@
 import { Injectable } from '@angular/core';
 import { FetchClient, IFetchOptions } from '@c8y/client';
-
 import { isEmpty } from 'lodash';
 import * as L from 'leaflet';
-
-import { ILayeredMapWidgetConfig, LayerConfig, WebMapServiceLayerConfig, isWebMapServiceLayerConfig } from '../layered-map-widget.model';
+import {
+  ILayeredMapWidgetConfig,
+  LayerConfig,
+  WebMapServiceLayerConfig,
+  isWebMapServiceLayerConfig,
+} from '../layered-map-widget.model';
 
 @Injectable()
 export class WMSLayerService {
@@ -12,13 +15,16 @@ export class WMSLayerService {
 
   filterWMSLayers(config: ILayeredMapWidgetConfig): LayerConfig<WebMapServiceLayerConfig>[] {
     if (config.layers && !isEmpty(config.layers)) {
-      return config.layers.filter((l) => isWebMapServiceLayerConfig(l.config)) as LayerConfig<WebMapServiceLayerConfig>[];
+      return config.layers.filter((l) =>
+        isWebMapServiceLayerConfig(l.config)
+      ) as LayerConfig<WebMapServiceLayerConfig>[];
     }
+
     return [];
   }
 
   createWMSLayer(layerConfig: LayerConfig<WebMapServiceLayerConfig>, leaf: typeof L) {
-    const cfg = layerConfig.config as WebMapServiceLayerConfig;
+    const cfg = layerConfig.config;
     const layers = cfg.wmsLayers.map((l) => l.name).toString();
     const shortUrl = cfg.url.includes('?') ? cfg.url.split('?')[0] : cfg.url;
 
@@ -34,6 +40,7 @@ export class WMSLayerService {
       const createTile = (coords: L.Coords, done: L.DoneCallback) => {
         const url = layer.getTileUrl(coords);
         const img = document.createElement('img');
+
         img.setAttribute('role', 'presentation');
         img.setAttribute('data-url', url);
 
@@ -50,14 +57,16 @@ export class WMSLayerService {
           .then(
             (blob) => {
               const reader = new FileReader();
+
               reader.onload = () => {
                 img.src = <string>reader.result;
               };
               reader.readAsDataURL(blob);
               done(undefined, img);
             },
-            (error) => done(error, img)
+            (error: Error) => done(error, img)
           );
+
         return img;
       };
 
