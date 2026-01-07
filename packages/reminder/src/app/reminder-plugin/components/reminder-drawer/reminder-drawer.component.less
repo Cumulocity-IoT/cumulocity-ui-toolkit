@@ -31,7 +31,12 @@ aside {
   > footer {
     flex: 0 0 auto;
     padding: 16px 16px 24px;
-    background: var(--c8y-global-odd);
+    color: var(--navigator-title-color, var(--c8y-navigator-title-color));
+    background-color: var(--navigator-header-bg, var(--c8y-navigator-header-bg));
+
+    .c8y-switch {
+      color: inherit;
+    }
   }
 
   > .drawer-actions {
@@ -45,6 +50,7 @@ aside {
     margin: 16px 0 0;
     display: flex;
     flex-direction: column;
+    color: var(--navigator-text-color, var(--c8y-navigator-text-color));
     box-shadow: inset 0 -1px 0 var(--c8y-component-border-color, var(--c8y-root-component-border-color));
 
     > div,
@@ -93,7 +99,7 @@ aside {
   > header {
     font-size: var(--c8y-font-size-base);
     display: flex;
-    padding: 8px 16px;
+    padding: 8px 0;
     box-shadow: inset 0 -1px 0 var(--c8y-component-border-color, var(--c8y-root-component-border-color));
 
     > button {
