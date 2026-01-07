@@ -13,9 +13,9 @@ em {
   height: 36px;
   font-style: normal;
   font-size: 16px;
-  border-radius: 8px;
-  background-color: var(--c8y-palette-status-success-light);
-  border: 1px solid var(--c8y-palette-status-success);
+  border-radius: calc(var(--btn-border-radius-base) * 1px);
+  background-color: var(--palette-status-success-light);
+  border: 1px solid var(--palette-status-success);
   transition: all .3s ease-in-out;
 }
 
@@ -35,13 +35,13 @@ button {
   background: none;
 
   &.status-warning em {
-    background-color: var(--c8y-palette-status-warning-high);
-    border-color: var(--c8y-palette-status-warning);
+    background-color: var(--palette-status-warning-light);
+    border-color: var(--palette-status-warning);
   }
 
   &.status-danger em {
-    background-color: var(--c8y-palette-status-danger-light);
-    border-color: var(--c8y-palette-status-danger);
+    background-color: var(--palette-status-danger-light);
+    border-color: var(--palette-status-danger);
   }
 
   &.open em {
@@ -49,3 +49,5 @@ button {
     border-width: 3px;
   }
 }
+
+// c8y-dark-theme
