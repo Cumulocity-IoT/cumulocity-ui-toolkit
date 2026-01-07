@@ -2,7 +2,8 @@ import { Component } from '@angular/core';
 import { ITenantOption } from '@c8y/client';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Subject } from 'rxjs';
-import { TenantOptionRow } from '../tenant-option-management.component';
+import { TenantOptionManagementService } from '../tenant-option-management.service';
+import { TenantOptionRow } from '../model';
 
 // TODO: add conflict detection!
 interface Tab {
@@ -19,13 +20,12 @@ interface Tab {
   standalone: false,
 })
 export class AddOptionModalComponent {
-  closeSubject: Subject<ITenantOption & { encrypted: string }> = new Subject();
+  closeSubject: Subject<TenantOptionRow> = new Subject();
 
-  option = {
+  option: ITenantOption | TenantOptionRow = {
     key: '',
     category: '',
     value: '',
-    encrypted: '0',
   };
 
   tabs: Tab[] = [
@@ -51,16 +51,17 @@ export class AddOptionModalComponent {
   ids: string[];
   showConflictError = false;
 
-  constructor(private modal: BsModalRef) {}
+  isLoading = false;
+  apiError?: string;
+
+  constructor(
+    private modal: BsModalRef,
+    private optionsService: TenantOptionManagementService
+  ) {}
 
   setOption(row: TenantOptionRow) {
     this.isEditing = true;
-    this.option = {
-      category: row.category,
-      key: row.key,
-      encrypted: row.key.startsWith('credentials') ? '1' : '0',
-      value: row.value,
-    };
+    this.option = row;
     let tabId: 'text' | 'json' = 'json';
 
     try {
@@ -108,12 +109,28 @@ export class AddOptionModalComponent {
     }
   }
 
-  save() {
-    if (this.option.encrypted === '1' && !this.option.key.includes('credentials')) {
-      this.option.key = `credentials.${this.option.key}`;
+  async save() {
+    try {
+      this.isLoading = true;
+      delete this.apiError;
+      let row: TenantOptionRow;
+
+      if (this.isEditing) {
+        row = await this.optionsService.updateOption(this.option as TenantOptionRow);
+      } else {
+        row = await this.optionsService.addOption(this.option);
+      }
+      this.closeSubject.next(row);
+      this.modal.hide();
+    } catch (e) {
+      if (typeof e === 'string') {
+        this.apiError = e;
+      } else if (typeof e === 'object') {
+        this.apiError = JSON.stringify(e);
+      }
+    } finally {
+      this.isLoading = false;
     }
-    this.closeSubject.next(this.option);
-    this.modal.hide();
   }
 
   close() {

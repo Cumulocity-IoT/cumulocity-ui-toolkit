@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-floating-promises */
 import { Component } from '@angular/core';
 import { ITenantOption, TenantOptionsService } from '@c8y/client';
 import {
@@ -14,9 +13,9 @@ import {
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
-import { TenantOptionRow, ImportStatus } from '../tenant-option-management.component';
 import { TenantOptionManagementService } from '../tenant-option-management.service';
 import { isEmpty } from 'lodash';
+import { ImportStatus, TenantOptionImportRow } from '../model';
 
 @Component({
   templateUrl: './file-import-modal.component.html',
@@ -26,8 +25,8 @@ export class FileImportModalComponent {
   closeSubject: Subject<(ITenantOption & { encrypted: string }) | null> = new Subject();
 
   columns: Column[] = [];
-  rows: TenantOptionRow[] = [];
-  selectedItems: TenantOptionRow[] = [];
+  rows: TenantOptionImportRow[] = [];
+  selectedItems: TenantOptionImportRow[] = [];
 
   displayOptions: DisplayOptions = {
     bordered: false,
@@ -96,8 +95,15 @@ export class FileImportModalComponent {
         try {
           const fileContent = e.target.result as string;
 
-          this.rows = JSON.parse(fileContent) as TenantOptionRow[];
-          this.rows.forEach((row) => {
+          const rows = JSON.parse(fileContent) as TenantOptionImportRow[];
+
+          this.rows = rows.map((r) => ({
+            ...r,
+            status: ImportStatus.LOADING,
+            id: `${r.category}-${r.key}`,
+          }));
+
+          for (const row of this.rows) {
             this.tenantOptionService
               .detail({ category: row.category, key: row.key })
               .then((_option) => {
@@ -106,7 +112,7 @@ export class FileImportModalComponent {
               .catch((_error) => {
                 row.status = ImportStatus.NEW;
               });
-          });
+          }
         } catch (error) {
           this.alertService.danger('Invalid file content. Please select a valid JSON file.');
           console.warn(error);
@@ -168,7 +174,7 @@ export class FileImportModalComponent {
     }
   }
 
-  async importOrUpdateItem(item: TenantOptionRow) {
+  async importOrUpdateItem(item: TenantOptionImportRow) {
     const row = this.rows.find((r) => r.id == item.id);
 
     if (!isEmpty(row)) {
@@ -178,7 +184,6 @@ export class FileImportModalComponent {
           key: item.key,
           category: item.category,
           value: item.value,
-          encrypted: '',
         };
 
         await this.optionsManagement.updateOption(option);
@@ -196,7 +201,6 @@ export class FileImportModalComponent {
           key: item.key,
           category: item.category,
           value: item.value,
-          encrypted: '',
         };
 
         await this.optionsManagement.addOption(option);

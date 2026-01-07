@@ -4,13 +4,14 @@ import { AlertService } from '@c8y/ngx-components';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Subject } from 'rxjs';
 import { TenantOptionManagementService } from '../tenant-option-management.service';
+import { TenantOptionRow } from '../model';
 
 @Component({
   templateUrl: './import-option-modal.component.html',
   standalone: false,
 })
 export class ImportOptionModalComponent {
-  closeSubject: Subject<(ITenantOption & { encrypted: string }) | null> = new Subject();
+  closeSubject: Subject<TenantOptionRow | null> = new Subject();
 
   option: ITenantOption = {
     key: '',
@@ -28,10 +29,10 @@ export class ImportOptionModalComponent {
   import() {
     this.isLoading = true;
     this.tenantOptionMgmt
-      .importOption(this.option)
+      .allowListOption(this.option)
       .then(
-        (option) => {
-          this.closeSubject.next(option);
+        (row) => {
+          this.closeSubject.next(row);
           this.modal.hide();
         },
         (error) => {

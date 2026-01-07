@@ -1,21 +1,18 @@
 import { Injectable } from '@angular/core';
-import { IManagedObject, ITenantOption, InventoryService, TenantOptionsService } from '@c8y/client';
-import { TenantOptionRow } from './tenant-option-management.component';
-import { cloneDeep } from 'lodash';
+import { ITenantOption, InventoryService, TenantOptionsService, UserService } from '@c8y/client';
 import { AlertService } from '@c8y/ngx-components';
+import { TenantOptionConfiguration, TenantOptionConfigurationItem, TenantOptionRow } from './model';
 
-export interface TenantOptionConfiguration extends IManagedObject {
-  type: 'tenant_option_plugin_config';
-  options: ITenantOption[];
-}
 @Injectable()
 export class TenantOptionManagementService {
   private readonly MAX_PAGE_SIZE = 2000;
+  currentUser?: Promise<string> = null;
 
   constructor(
     private inventory: InventoryService,
     private tenantOption: TenantOptionsService,
-    private alertService: AlertService
+    private alertService: AlertService,
+    private userService: UserService
   ) {}
 
   async getConfiguration(): Promise<TenantOptionConfiguration> {
@@ -38,41 +35,71 @@ export class TenantOptionManagementService {
     }
   }
 
-  async addOption(
-    option: ITenantOption & { encrypted: string }
-  ): Promise<ITenantOption & { encrypted: string }> {
+  async addOption(option: ITenantOption): Promise<TenantOptionRow> {
     await this.tenantOption.create(option);
-
-    await this.addOptionToConfiguration(option);
-
-    return option;
+    const item = await this.addOptionToConfiguration(option);
+    return { id: `${option.category}-${option.key}`, value: option.value, ...item };
   }
 
-  async addOptionToConfiguration(option: ITenantOption & { encrypted: string }) {
+  async addOptionToConfiguration(to: ITenantOption): Promise<TenantOptionConfigurationItem> {
     const config = await this.getConfiguration();
 
-    if (config.options.find((o) => o.category === option.category && o.key === option.key)) {
+    if (config.options.find((o) => o.category === to.category && o.key === to.key)) {
       return Promise.reject(new Error('Tenant option already exists!'));
     }
-    const toSend = cloneDeep(option);
 
-    delete toSend.value;
-    config.options.push(toSend);
+    const item: TenantOptionConfigurationItem = {
+      key: to.key,
+      category: to.category,
+      lastUpdated: new Date().toISOString(),
+      user: await this.getUser(),
+    };
 
-    return this.inventory.update({ id: config.id, options: config.options });
+    config.options.push(item);
+
+    await this.inventory
+      .update({ id: config.id, options: config.options })
+      .then((res) => res.data as TenantOptionConfiguration);
+
+    return item;
   }
 
-  async importOption(keyCategory: ITenantOption): Promise<ITenantOption & { encrypted: string }> {
+  async updateOptionForConfiguration(to: ITenantOption): Promise<TenantOptionConfigurationItem> {
+    const config = await this.getConfiguration();
+
+    const item = config.options.find((o) => o.category === to.category && o.key === to.key);
+
+    if (!item) {
+      return Promise.reject(new Error('Tenant option configuration does not exist!'));
+    }
+
+    item.lastUpdated = new Date().toISOString();
+    item.user = await this.getUser();
+
+    await this.inventory
+      .update({ id: config.id, options: config.options })
+      .then((res) => res.data as TenantOptionConfiguration);
+
+    return item;
+  }
+
+  async allowListOption(keyCategory: ITenantOption): Promise<TenantOptionRow> {
     const { data: option } = await this.tenantOption.detail(keyCategory);
-    const combined = { ...option, encrypted: option.key.startsWith('credentials') ? '1' : '0' };
 
-    await this.addOptionToConfiguration(combined);
-
-    return combined;
+    const item = await this.addOptionToConfiguration(option);
+    return { id: `${option.category}-${option.key}`, value: option.value, ...item };
   }
 
-  updateOption(option: ITenantOption) {
-    return this.tenantOption.update(option);
+  async updateOption(row: ITenantOption & { value: string }): Promise<TenantOptionRow> {
+    const option: ITenantOption = {
+      category: row.category,
+      key: row.key,
+      value: row.value,
+    };
+
+    await this.tenantOption.update(option).then((res) => res.data);
+    const item = await this.updateOptionForConfiguration(option);
+    return { id: `${option.category}-${option.key}`, value: option.value, ...item };
   }
 
   async getAllOptions(): Promise<{ id: string; value: string }[]> {
@@ -121,5 +148,16 @@ export class TenantOptionManagementService {
     };
 
     await this.inventory.update(delta);
+  }
+
+  private getUser(): Promise<string> {
+    if (this.currentUser == null) {
+      this.currentUser = this.userService.current().then((data) => {
+        const { id, email } = data.data;
+        return id ?? email;
+      });
+    }
+
+    return this.currentUser;
   }
 }

@@ -6,7 +6,7 @@
     </h3>
   </ng-container>
   <div class="modal-body">
-    <c8y-form-group class="m-16" [hasError]="showConflictError">
+    <c8y-form-group class="m-16" [hasError]="showConflictError || !!apiError">
       <label for="categoryInput" translate>Category</label>
       <input
         type="text"
@@ -42,7 +42,7 @@
       </c8y-messages>
     </c8y-form-group>
 
-    <div class="form-group m-16" *ngIf="option.key?.length && option.category?.length">
+    <div class="form-group m-t-24 m-l-16 m-r-16">
       <div class="tabContainer">
         <!-- tabs -->
         <ul class="nav nav-tabs nav-tabsc8y m-b-8">
@@ -80,30 +80,11 @@
               ></mapping-json-editor>
               <small class="text-danger" *ngIf="jsonErrorMessage">{{ jsonErrorMessage }}</small>
             </ng-container>
+             <small class="text-danger" *ngIf="apiError">{{ apiError }}</small>
           </ng-container>
         </div>
       </div>
     </div>
-
-    <c8y-form-group class="m-16" *ngIf="!isEditing">
-      <button
-        type="button"
-        class="btn"
-        btnCheckbox
-        btnCheckboxTrue="1"
-        btnCheckboxFalse="0"
-        [(ngModel)]="option.encrypted"
-      >
-        <i
-          c8yIcon="lock"
-          [class]="{
-            'text-success': option.encrypted === '1',
-            'text-danger': option.encrypted === '0'
-          }"
-        ></i>
-        Encrypt
-      </button>
-    </c8y-form-group>
   </div>
   <div class="modal-footer separator-top bg-level-0 sticky-bottom">
     <button
@@ -117,10 +98,11 @@
     <button
       title="{{ 'Save' | translate }}"
       class="btn btn-primary"
+      [class.btn-pending]="isLoading"
       type="button"
       (click)="save()"
       [disabled]="
-        !option.key.length || !option.category.length || !option.value.length || showConflictError
+        !option.key.length || !option.category.length || !option.value.length || showConflictError || isLoading
       "
     >
       {{ 'Save' | translate }}
