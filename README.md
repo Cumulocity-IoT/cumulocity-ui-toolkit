@@ -1,8 +1,29 @@
 # Cumulocity UI Guild Toolkit
 
+<div style="text-align:center">
+
 ![Logo of the Cumulocity UI Guild, showing an medival looking shield with the letters "U" and "I"](./public/ui-guild-logo.png)
 
+</div>
+
 ---
+
+## Local development
+
+Available scripts (via `npm run`):
+
+| script  | task                              | details                                                                             |
+| ------- | --------------------------------- | ----------------------------------------------------------------------------------- |
+| `build` | builds all plugins                | all npm scripts starting with `build:`                                              |
+| `lint`  | starts linting the entire project | individual files/folders can be linted using `npm run eslint [path-to-folder/file]` |
+| `test`  | runs unit tests for all plugins   | run all `test:` npm scripts                                                         |
+
+### Tool Scripts
+
+| script                                    | task                                                                    | details                                                                                                                                    |
+| ----------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `generate:assets [path-to-assets-folder]` | generates an `assets.ts`                                                | based off of the contents of the folder and the `index.d.ts` definitions, to allow easy include of media-files (e.g. images) in components |
+| `generate:scripts`                        | generates the serve/build/test scripts, per plugin, in the package.json | based off of the configuration in the `angular.json`                                                                                       |
 
 ## Workspaces
 
