@@ -22,8 +22,13 @@ jobs:
         id: set-matrix
         run: |
           git fetch origin main
-          components=$(git diff --name-only origin/main...HEAD | grep '^packages/' | cut -d '/' -f2 | sort -u | jq -R -s -c 'split("\n") | map(select(. != ""))')
-          echo "matrix={\"component\": $components}" >> $GITHUB_OUTPUT
+          components=$(git diff --name-only origin/main...HEAD | grep '^packages/' | cut -d '/' -f2 | sort -u || true)
+          if [ -z "$components" ]; then
+            echo "matrix={\"component\": []}" >> $GITHUB_OUTPUT
+          else
+            components_json=$(echo "$components" | jq -R -s -c 'split("\n") | map(select(. != ""))')
+            echo "matrix={\"component\": $components_json}" >> $GITHUB_OUTPUT
+          fi
         shell: bash
 
   test-components:

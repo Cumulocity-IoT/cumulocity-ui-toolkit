@@ -1,0 +1,12 @@
+name: E2E Daily Test Runner
+
+on:
+  workflow_dispatch:
+
+env:
+  C8Y_TENANT: ${{ vars.C8Y_TENANT }}
+  C8Y_USERNAME: ${{ vars.C8Y_USERNAME }}
+  C8Y_PASSWORD: ${{ secrets.C8Y_PASSWORD }}
+  C8Y_BASEURL: ${{ vars.C8Y_BASEURL }}
+  C8Y_SHELL_TARGET: 'administration'
+  C8Y_CYPRESS_URL: 'http://localhost:4200'
