@@ -209,7 +209,12 @@
     <footer>
       <!-- type -->
       @if (types.length && reminder.reminderType) {
-        <button class="btn btn-clean" (click)="setFilter(reminder.reminderType)" type="button">
+        <button
+          class="btn btn-clean reminder-tag"
+          (click)="setFilter(reminder.reminderType)"
+          type="button"
+          title="{{ 'Filter by this Reminder Type' | translate }}"
+        >
           <i class="m-r-4" [c8yIcon]="'tag'"></i>
           <c8y-reminder-type [id]="reminder.reminderType"></c8y-reminder-type>
         </button>
