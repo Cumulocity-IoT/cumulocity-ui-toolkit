@@ -18,10 +18,15 @@ aside {
   flex-direction: column;
   width: 240px;
   padding: 24px 0 0;
-  background-color: var(--navigator-bg-color, var(--c8y-navigator-bg-color));
-  border-left: 1px solid var(--navigator-separator-color, var(--c8y-navigator-separator-color));
+  background-color: var(--right-drawer-background-default, var(--navigator-bg-color, var(--c8y-right-drawer-background-default)));
+  color: var(--right-drawer-text-color-default, var(--navigator-text-color, var(--c8y-right-drawer-text-color-default)));
+  box-shadow: var(--c8y-elevation-md-right);
   transform: translateX(100%);
   transition: all .4s ease-in-out;
+
+  .text-muted {
+    color: var(--right-drawer-text-muted, var(--c8y-right-drawer-text-color-muted));
+  }
 
   > header {
     flex: 0 0 auto;
@@ -31,12 +36,6 @@ aside {
   > footer {
     flex: 0 0 auto;
     padding: 16px 16px 24px;
-    color: var(--navigator-title-color, var(--c8y-navigator-title-color));
-    background-color: var(--navigator-header-bg, var(--c8y-navigator-header-bg));
-
-    .c8y-switch {
-      color: inherit;
-    }
   }
 
   > .drawer-actions {
@@ -50,8 +49,6 @@ aside {
     margin: 16px 0 0;
     display: flex;
     flex-direction: column;
-    color: var(--navigator-text-color, var(--c8y-navigator-text-color));
-    box-shadow: inset 0 -1px 0 var(--c8y-component-border-color, var(--c8y-root-component-border-color));
 
     > div,
     > small {
@@ -99,14 +96,14 @@ aside {
   > header {
     font-size: var(--c8y-font-size-base);
     display: flex;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--navigator-separator-color, var(--c8y-navigator-separator-color));
+    padding-top: 8px;
+    padding-bottom: 8px;
+    box-shadow: inset 0 1px 0 var(--c8y-component-border-color, var(--c8y-root-component-border-color));
 
     > button {
       flex: 1;
       display: flex;
       align-items: center;
-      color: var(--navigator-text-color, var(--c8y-navigator-text-color));
 
       i {
         transition: all .3s ease-in-out;
@@ -114,11 +111,6 @@ aside {
         &.expanded {
           transform: rotate(180deg);
         }
-      }
-
-      &:hover {
-        color: var(--navigator-color-active, var(--c8y-navigator-color-active));
-        background-color: var(--navigator-active-bg, var(--c8y-navigator-active-bg));
       }
     }
 
@@ -144,7 +136,7 @@ aside {
   flex-direction: column;
   padding: 12px 16px;
   overflow: hidden;
-  box-shadow: inset 0 -1px 0 var(--c8y-component-border-color, var(--c8y-root-component-border-color));
+  box-shadow: inset 0 1px 0 var(--c8y-component-border-color, var(--c8y-root-component-border-color));
 
   &::after {
     content: '';
@@ -177,7 +169,7 @@ aside {
     bottom: -.5rem;
     font-size: 7rem;
     pointer-events: none;
-    opacity: .07;
+    opacity: .1;
   }
 
   .date {
