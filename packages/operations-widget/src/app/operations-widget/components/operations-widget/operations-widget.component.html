@@ -1,6 +1,32 @@
 @if (config?.buttons) {
   @for (button of config.buttons; track button.id) {
-    <button-instance [config]="button" (clickedOperation)="onButtonClick(button)">
+    <button-instance [config]="button" (clickedOperation)="onButtonClick(button, operationModal)">
     </button-instance>
   }
 }
+<ng-template #operationModal>
+  <div class="modal-header">
+    <h4 class="modal-title">Configure Operation</h4>
+  </div>
+  <div class="modal-body">
+    <form [formGroup]="form">
+      <formly-form 
+        [form]="form" 
+        [fields]="formlyFields" 
+        [model]="model"
+        (modelChange)="onFormModelChange($event)">
+      </formly-form>
+    </form>
+    
+    <div class="mt-16">
+        <label>Preview Payload</label>
+        <pre class="small p-8">{{ previewPayload }}</pre>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-default" (click)="cancelOperation()">Cancel</button>
+    <button class="btn btn-primary" (click)="sendOperation()" [disabled]="!form.valid">
+      Send
+    </button>
+  </div>
+</ng-template>

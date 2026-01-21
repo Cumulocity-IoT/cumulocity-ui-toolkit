@@ -2,6 +2,7 @@ import { Component, Input } from '@angular/core';
 import { ICONS } from '../../models/icons.const';
 import {
   OperationButtonConfig,
+  OperationParamConfig,
   OperationWidgetConfig,
 } from '../../models/operations-widget-config.model';
 
@@ -37,6 +38,30 @@ export class OperationsWidgetConfigComponent {
   supportedOperations: string[] = [];
 
   private _config: OperationWidgetConfig;
+  jsonError = false;
+
+  addField(buttonIndex: number) {
+    if (!this.config.buttons[buttonIndex].fields) this.config.buttons[buttonIndex].fields = [];
+    this.config.buttons[buttonIndex].fields.push({
+      key: '',
+      label: '',
+      type: 'input',
+      options: [],
+    });
+  }
+
+  addOption(field: OperationParamConfig) {
+    if (!field.options) field.options = [];
+    field.options.push({ label: '', value: '' });
+  }
+
+  removeField(buttonIndex: number, index: number) {
+    this.config.buttons[buttonIndex].fields.splice(index, 1);
+  }
+
+  removeOption(field: OperationParamConfig, index: number) {
+    field.options.splice(index, 1);
+  }
 
   addNewButton(): void {
     if (!this.config.buttons) {
