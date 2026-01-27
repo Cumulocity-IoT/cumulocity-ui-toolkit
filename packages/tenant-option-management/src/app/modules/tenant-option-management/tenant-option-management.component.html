@@ -36,12 +36,12 @@
     </ng-container>
   </c8y-column>
   @if (isLoading) {
-  <c8y-loading></c8y-loading>
+    <c8y-loading></c8y-loading>
   }
   @if(!isLoading && !rows?.length) {
-  <c8y-ui-empty-state [title]="'No Tenant Option created or imported yet.'" [subtitle]="
-      'You can add existing Tenant Options, import a JSON file from a previous export, or create a new Tenant Option.'
-    " [horizontal]="true">
-  </c8y-ui-empty-state>
+    <c8y-ui-empty-state [title]="'No Tenant Option created or imported yet.'" [subtitle]="
+        'You can add existing Tenant Options, import a JSON file from a previous export, or create a new Tenant Option.'
+      " [horizontal]="true">
+    </c8y-ui-empty-state>
   }
 </c8y-data-grid>

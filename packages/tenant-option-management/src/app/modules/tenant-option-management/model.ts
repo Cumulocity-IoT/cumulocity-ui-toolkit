@@ -1,13 +1,15 @@
 import { IManagedObject, ITenantOption } from '@c8y/client';
 
-export enum ImportStatus {
-  LOADING = 'LOADING',
-  NEW = 'NEW',
-  CONFLICT = 'CONFLICT',
-  OVERWRITE = 'OVERWRITE',
-  UPDATED = 'UPDATED',
-  ADDED = 'ADDED',
-}
+export const ImportStatusEnum = {
+  LOADING: 'LOADING',
+  NEW: 'NEW',
+  CONFLICT: 'CONFLICT',
+  OVERWRITE: 'OVERWRITE',
+  UPDATED: 'UPDATED',
+  ADDED: 'ADDED',
+} as const satisfies Record<string, string>;
+
+export type ImportStatus = (typeof ImportStatusEnum)[keyof typeof ImportStatusEnum];
 
 export type TenantOptionConfigurationItem = Omit<TenantOptionRow, 'value' | 'id' | 'status'>;
 

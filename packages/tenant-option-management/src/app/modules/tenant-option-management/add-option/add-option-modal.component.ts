@@ -1,11 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { ITenantOption } from '@c8y/client';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Subject } from 'rxjs';
 import { TenantOptionManagementService } from '../tenant-option-management.service';
 import { TenantOptionRow } from '../model';
+import { CoreModule } from '@c8y/ngx-components';
+import { JsonEditorComponent } from '../editor/jsoneditor.component';
 
-// TODO: add conflict detection!
 interface Tab {
   id: 'text' | 'json';
   label: string;
@@ -17,7 +18,8 @@ interface Tab {
 @Component({
   templateUrl: './add-option-modal.component.html',
   styleUrls: ['./add-option-modal.component.less'],
-  standalone: false,
+  standalone: true,
+  imports: [CoreModule, JsonEditorComponent],
 })
 export class AddOptionModalComponent {
   closeSubject: Subject<TenantOptionRow> = new Subject();
@@ -54,10 +56,8 @@ export class AddOptionModalComponent {
   isLoading = false;
   apiError?: string;
 
-  constructor(
-    private modal: BsModalRef,
-    private optionsService: TenantOptionManagementService
-  ) {}
+  private modal = inject(BsModalRef);
+  private optionsService = inject(TenantOptionManagementService);
 
   setOption(row: TenantOptionRow) {
     this.isEditing = true;
@@ -96,6 +96,7 @@ export class AddOptionModalComponent {
       JSON.parse(text);
       this.option.value = text;
       this.jsonErrorMessage = '';
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       this.jsonErrorMessage = 'No valid JSON!';
     }

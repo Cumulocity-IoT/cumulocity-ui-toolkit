@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { ITenantOption, InventoryService, TenantOptionsService, UserService } from '@c8y/client';
 import { AlertService } from '@c8y/ngx-components';
 import { TenantOptionConfiguration, TenantOptionConfigurationItem, TenantOptionRow } from './model';
@@ -8,12 +8,10 @@ export class TenantOptionManagementService {
   private readonly MAX_PAGE_SIZE = 2000;
   currentUser?: Promise<string> = null;
 
-  constructor(
-    private inventory: InventoryService,
-    private tenantOption: TenantOptionsService,
-    private alertService: AlertService,
-    private userService: UserService
-  ) {}
+  private inventory = inject(InventoryService);
+  private tenantOption = inject(TenantOptionsService);
+  private alertService = inject(AlertService);
+  private userService = inject(UserService);
 
   async getConfiguration(): Promise<TenantOptionConfiguration> {
     const { data } = await this.inventory.list({

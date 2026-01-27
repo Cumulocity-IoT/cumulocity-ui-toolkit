@@ -39,6 +39,7 @@ import {
   forwardRef,
   ChangeDetectionStrategy,
   ViewEncapsulation,
+  inject,
 } from '@angular/core';
 import JSONEditor from 'jsoneditor';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -49,6 +50,7 @@ import {
   IError,
 } from './jsoneditor-options';
 import { isEmpty } from 'lodash';
+import { CoreModule } from '@c8y/ngx-components';
 
 @Component({
   selector: 'mapping-json-editor',
@@ -67,7 +69,8 @@ import { isEmpty } from 'lodash';
     '../../../../../../../node_modules/jsoneditor/dist/jsoneditor.min.css',
   ],
   encapsulation: ViewEncapsulation.None,
-  standalone: false,
+  standalone: true,
+  imports: [CoreModule],
 })
 export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDestroy {
   private editor: any;
@@ -111,7 +114,7 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
   @Output()
   onPathChanged: EventEmitter<string> = new EventEmitter<string>();
 
-  constructor(private elementRef: ElementRef) {}
+  private elementRef = inject(ElementRef);
 
   ngOnInit() {
     let optionsBefore = this.options;

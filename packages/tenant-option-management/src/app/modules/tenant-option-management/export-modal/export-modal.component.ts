@@ -1,6 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { ITenantOption } from '@c8y/client';
-import { Column, ColumnDataType, DisplayOptions, Pagination } from '@c8y/ngx-components';
+import {
+  Column,
+  ColumnDataType,
+  CoreModule,
+  DisplayOptions,
+  Pagination,
+} from '@c8y/ngx-components';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Subject } from 'rxjs';
 import { TenantOptionManagementService } from '../tenant-option-management.service';
@@ -8,7 +14,8 @@ import { TenantOptionConfigurationItem } from '../model';
 
 @Component({
   templateUrl: './export-modal.component.html',
-  standalone: false,
+  standalone: true,
+  imports: [CoreModule],
 })
 export class ExportModalComponent {
   closeSubject: Subject<(ITenantOption & { encrypted: string }) | null> = new Subject();
@@ -36,10 +43,10 @@ export class ExportModalComponent {
 
   title = 'Tenant Options Export';
 
-  constructor(
-    private optionsManagement: TenantOptionManagementService,
-    private modal: BsModalRef
-  ) {
+  private optionsManagement = inject(TenantOptionManagementService);
+  private modal = inject(BsModalRef);
+
+  constructor() {
     this.columns = this.getDefaultColumns();
     this.reload();
   }

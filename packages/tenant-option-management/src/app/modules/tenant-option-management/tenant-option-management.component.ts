@@ -1,9 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import {
   ActionControl,
   BuiltInActionType,
   Column,
   ColumnDataType,
+  CoreModule,
+  FormsModule,
   ModalService,
   Pagination,
   Row,
@@ -19,11 +21,21 @@ import { ImportOptionModalComponent } from './import-option/import-option-modal.
 import { ExportModalComponent } from './export-modal/export-modal.component';
 import { FileImportModalComponent } from './file-import-modal/file-import-modal.component';
 import { TenantOptionRow } from './model';
+import { ButtonsModule } from 'ngx-bootstrap/buttons';
 
 @Component({
   templateUrl: './tenant-option-management.component.html',
   styleUrls: ['./tenant-option-management.component.less'],
-  standalone: false,
+  standalone: true,
+  imports: [
+    CoreModule,
+    FormsModule,
+    ButtonsModule,
+    AddOptionModalComponent,
+    ImportOptionModalComponent,
+    FileImportModalComponent,
+    ExportModalComponent,
+  ],
 })
 export class TenantOptionManagementComponent {
   columns: Column[];
@@ -47,12 +59,12 @@ export class TenantOptionManagementComponent {
 
   isLoading = false;
 
-  constructor(
-    private optionsManagement: TenantOptionManagementService,
-    private bsModalService: BsModalService,
-    protected modal: ModalService,
-    protected translateService: TranslateService
-  ) {
+  private optionsManagement = inject(TenantOptionManagementService);
+  private bsModalService = inject(BsModalService);
+  protected modal = inject(ModalService);
+  protected translateService = inject(TranslateService);
+
+  constructor() {
     this.columns = this.getDefaultColumns();
     void this.reload();
   }
