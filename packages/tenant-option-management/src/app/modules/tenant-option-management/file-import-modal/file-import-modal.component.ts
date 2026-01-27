@@ -161,7 +161,7 @@ export class FileImportModalComponent {
     }
   }
 
-  reload() { }
+  reload() {}
 
   async import() {
     if (this.selectedItems.length > 0) {
