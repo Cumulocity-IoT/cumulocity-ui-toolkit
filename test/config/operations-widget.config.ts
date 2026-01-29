@@ -1,6 +1,6 @@
 import { baseConfig } from './base.config';
-import tenantOptionManagement from '../../packages/tenant-option-management/cumulocity.config';
+import operationsWidget from '../../packages/operations-widget/cumulocity.config';
 
-export default baseConfig(JSON.stringify(tenantOptionManagement.runTime.remotes), [
+export default baseConfig(JSON.stringify(operationsWidget.runTime.remotes), [
   'cypress/e2e/operations-widget-plugin.cy.ts',
 ]);
