@@ -2,7 +2,7 @@ import { ComponentRef, Injectable } from '@angular/core';
 import { EventService, IEvent, IResult, TenantOptionsService } from '@c8y/client';
 import { AlertService, EventRealtimeService, RealtimeMessage } from '@c8y/ngx-components';
 import { TranslateService } from '@ngx-translate/core';
-import { filter as _filter, cloneDeep, has, orderBy, sortBy } from 'lodash';
+import { filter as _filter, cloneDeep, debounce, has, orderBy, sortBy } from 'lodash';
 import moment from 'moment';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
@@ -29,6 +29,8 @@ import {
 
 @Injectable()
 export class ReminderService {
+  readonly DAY_IN_MS = 24 * 60 * 60 * 1000;
+
   config$ = new BehaviorSubject<ReminderConfig>({});
   filters$ = new BehaviorSubject<ReminderGroupFilter>({});
   open$?: BehaviorSubject<boolean>;
@@ -49,6 +51,8 @@ export class ReminderService {
   private _reminders: Reminder[] = [];
   private _types: ReminderType[] = [];
 
+  private debouncedSetUpdateTimer = debounce(() => this.setUpdateTimer(), 300);
+
   private get reminderCounter(): number {
     return this._reminderCounter;
   }
@@ -67,7 +71,7 @@ export class ReminderService {
     this._reminders = reminders;
     this.reminders$.next(this._reminders);
     this.updateCounter();
-    this.setUpdateTimer();
+    this.debouncedSetUpdateTimer();
   }
 
   constructor(
@@ -92,25 +96,40 @@ export class ReminderService {
     this.subscriptions.unsubscribe();
   }
 
+  /**
+   * Initializes the ReminderService by loading configurations, fetching reminder types, and setting up subscriptions.
+   * @returns {Promise<void>} A promise that resolves when initialization is complete.
+   */
   async init(): Promise<void> {
     if (this.drawer) return;
 
     this.loadConfig();
     void this.requestNotificationPermission();
     this._types = await this.fetchReminderTypes();
-    void this.fetchActiveReminderCounter();
     this.createDrawer();
     this.reminders = await this.fetchReminders(REMINDER_INITIAL_QUERY_SIZE);
+    void this.fetchActiveReminderCounter();
     this.setupReminderSubscription();
     this.setupConfigSubscription();
   }
 
+  /**
+   * Retrieves the name of a reminder type based on its ID.
+   * @param {ReminderType['id']} reminderTypeID - The ID of the reminder type.
+   * @returns {ReminderType['name']} The name of the reminder type, or 'Unknown' if not found.
+   */
   getReminderTypeName(reminderTypeID: ReminderType['id']): ReminderType['name'] {
     const type = this.types.find((t) => t.id === reminderTypeID);
 
     return type ? type.name : 'Unknown';
   }
 
+  /**
+   * Groups reminders into categories: due, upcoming, and cleared.
+   * @param {Reminder[]} reminders - The list of reminders to group.
+   * @param {string} [context] - Optional context for filtering reminders.
+   * @returns {ReminderGroup[]} An array of grouped reminders.
+   */
   groupReminders(reminders: Reminder[], context?: string): ReminderGroup[] {
     let dueDate: number;
     const now = new Date().getTime();
@@ -151,6 +170,10 @@ export class ReminderService {
     return this.filterReminder(this.sortReminder(due, upcoming, cleared), context);
   }
 
+  /**
+   * Resets the filter configuration by removing the current filter.
+   * @returns {void}
+   */
   resetFilterConfig(): void {
     const config = this.config$.getValue();
 
@@ -158,6 +181,12 @@ export class ReminderService {
     this.config$.next(config);
   }
 
+  /**
+   * Updates the configuration with a new key-value pair.
+   * @param {string} key - The configuration key to update.
+   * @param {object} value - The value to set for the configuration key.
+   * @returns {void}
+   */
   setConfig(key: string, value: object): void {
     const config = this.config$.getValue();
 
@@ -167,17 +196,26 @@ export class ReminderService {
     this.config$.next(config);
   }
 
-  toggleDrawer() {
+  /**
+   * Toggles the visibility of the reminder drawer.
+   * @returns {void}
+   */
+  toggleDrawer(): void {
     this.drawer?.toggleDrawer();
   }
 
+  /**
+   * Updates a reminder's status and clears its `isCleared` fragment if applicable.
+   * @param {Reminder} reminder - The reminder to update.
+   * @returns {Promise<IResult<Reminder>>} A promise that resolves with the updated reminder result.
+   */
   async update(reminder: Reminder): Promise<IResult<Reminder>> {
     const event: Partial<IEvent> = {
       id: reminder.id,
       status: reminder.status,
     };
 
-    // (un)set `isCleared` fragment to supoprt using retention rules for cleared reminders
+    // (un)set `isCleared` fragment to support using retention rules for cleared reminders
     event.isCleared = reminder.status === ReminderStatus.cleared ? {} : null;
 
     return (await this.eventService.update(event)) as IResult<Reminder>;
@@ -235,8 +273,8 @@ export class ReminderService {
   private deleteRminderFromList(
     message: Partial<RealtimeMessage<Reminder>>,
     reminders: Reminder[]
-  ): Reminder | undefined {
-    let deleted: Reminder | undefined;
+  ): Reminder {
+    let deleted: Reminder;
 
     reminders = reminders.filter((r) => {
       if (r.id === message.data) {
@@ -300,7 +338,7 @@ export class ReminderService {
     return url;
   }
 
-  private handleReminderUpdate(message: Partial<RealtimeMessage<Reminder>>): Reminder | undefined {
+  private handleReminderUpdate(message: Partial<RealtimeMessage<Reminder>>): Reminder {
     let reminders = cloneDeep(this.reminders);
     const now = moment();
 
@@ -482,10 +520,14 @@ export class ReminderService {
 
     if (!closestReminder) return;
 
+    // timeouts larger than 24.8 days result in immediate execution
+    const diff = moment(closestReminder.time).diff(now);
+    const timeout = diff > this.DAY_IN_MS ? this.DAY_IN_MS : diff;
+
     this.updateTimer = setTimeout(() => {
       this.reminders = this.digestReminders(this.reminders);
       this.sendNotification(closestReminder);
-    }, moment(closestReminder.time).diff(now));
+    }, timeout);
   }
 
   private setupConfigSubscription(): void {

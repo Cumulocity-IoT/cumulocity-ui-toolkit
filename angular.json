@@ -92,6 +92,15 @@
             }
           },
           "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "packages/reminder/src/test.ts",
+            "polyfills": "packages/reminder/src/polyfills.ts",
+            "tsConfig": "packages/reminder/tsconfig.app.json",
+            "karmaConfig": "packages/reminder/karma.conf.js"
+          }
         }
       }
     },

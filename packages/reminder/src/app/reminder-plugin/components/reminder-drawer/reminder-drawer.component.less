@@ -18,7 +18,8 @@ aside {
   flex-direction: column;
   width: 240px;
   padding: 24px 0 0;
-  background-color: #fff;
+  background-color: var(--navigator-bg-color, var(--c8y-navigator-bg-color));
+  border-left: 1px solid var(--navigator-separator-color, var(--c8y-navigator-separator-color));
   transform: translateX(100%);
   transition: all .4s ease-in-out;
 
