@@ -1,5 +1,5 @@
 import { Component, inject, Input, TemplateRef } from '@angular/core';
-import { IOperation, IResult, OperationService } from '@c8y/client';
+import { IOperation } from '@c8y/client';
 import { AlertService } from '@c8y/ngx-components';
 import {
   OperationButtonConfig,
@@ -9,6 +9,7 @@ import {
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { FormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
+import { OperationsWidgetService } from '../../services/operations-widget.service';
 @Component({
   selector: 'app-operations-widget',
   templateUrl: './operations-widget.component.html',
@@ -16,9 +17,9 @@ import { FormlyFieldConfig } from '@ngx-formly/core';
   standalone: false,
 })
 export class OperationsWidgetComponent {
-  private operationsService = inject(OperationService);
   private alertService = inject(AlertService);
   private modalService = inject(BsModalService);
+  private operationsWidgetService = inject(OperationsWidgetService);
   modalRef: BsModalRef;
   form = new FormGroup({});
   model: object = {};
@@ -70,7 +71,11 @@ export class OperationsWidgetComponent {
   async sendOperation() {
     this.selectedButton.operationValue = this.payloadData;
     this.modalRef.hide();
-    await this.createOperation(this.selectedButton);
+    await this.operationsWidgetService.createOperation(
+      this.selectedButton,
+      this.selectedButton.operationValue,
+      this.config.device.id
+    );
     this.selectedButton.operationValue = JSON.stringify(this.operationValue);
   }
 
@@ -103,30 +108,11 @@ export class OperationsWidgetComponent {
       this.generateFormlyFields(button);
       this.modalRef = this.modalService.show(template);
     } else {
-      await this.createOperation(button);
-    }
-  }
-
-  async createOperation(button: OperationButtonConfig): Promise<void> {
-    let request: IResult<IOperation> | null = null;
-
-    const operation: IOperation = {
-      deviceId: this.config.device.id,
-      [button.operationFragment]: this.selectedButton.operationValue || {},
-      description: button.description,
-    };
-
-    operation.deviceId = this.config.device.id;
-
-    try {
-      request = await this.operationsService.create(operation);
-    } catch (error) {
-      console.error('Error creating operation:', error);
-      this.alertService.danger(`Failed to create '${button.label}' operation.`);
-    }
-
-    if (request && request.res.status === 201) {
-      this.alertService.success(`Operation '${button.label}' successfully created.`);
+      await this.operationsWidgetService.createOperation(
+        button,
+        this.selectedButton.operationValue,
+        this.config.device.id
+      );
     }
   }
 

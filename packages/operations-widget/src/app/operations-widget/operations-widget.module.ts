@@ -7,6 +7,7 @@ import { ButtonInstanceComponent } from './components/button-instance/button-ins
 import { OperationsValueComponent } from './components/operations-value/operations-value.component';
 import { OperationsWidgetComponent } from './components/operations-widget/operations-widget.component';
 import { OperationsWidgetConfigComponent } from './components/widget-config/operations-widget-config.component';
+import { OperationsWidgetService } from './services/operations-widget.service';
 
 @NgModule({
   imports: [CommonModule, CoreModule, BsDropdownModule],
@@ -17,6 +18,7 @@ import { OperationsWidgetConfigComponent } from './components/widget-config/oper
     OperationsValueComponent,
   ],
   providers: [
+    OperationsWidgetService,
     hookComponent({
       id: 'operations.widget',
       label: 'Operation Button Widget',
