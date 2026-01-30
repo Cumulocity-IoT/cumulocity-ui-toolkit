@@ -1,12 +1,14 @@
-import { Component } from '@angular/core';
-import { ITenantOption } from '@c8y/client';
+import { Component, inject } from '@angular/core';
 import {
   ActionControl,
   BuiltInActionType,
   Column,
   ColumnDataType,
+  CoreModule,
+  FormsModule,
   ModalService,
   Pagination,
+  Row,
   Status,
   _,
 } from '@c8y/ngx-components';
@@ -18,27 +20,26 @@ import { TenantOptionManagementService } from './tenant-option-management.servic
 import { ImportOptionModalComponent } from './import-option/import-option-modal.component';
 import { ExportModalComponent } from './export-modal/export-modal.component';
 import { FileImportModalComponent } from './file-import-modal/file-import-modal.component';
+import { TenantOptionRow } from './model';
+import { ButtonsModule } from 'ngx-bootstrap/buttons';
 
-export interface TenantOptionRow extends ITenantOption {
-  id: string;
-  status?: ImportStatus;
-}
-export enum ImportStatus {
-  LOADING = 'LOADING',
-  NEW = 'NEW',
-  CONFLICT = 'CONFLICT',
-  OVERWRITE = 'OVERWRITE',
-  UPDATED = 'UPDATED',
-  ADDED = 'ADDED',
-}
 @Component({
   templateUrl: './tenant-option-management.component.html',
   styleUrls: ['./tenant-option-management.component.less'],
-  standalone: false,
+  standalone: true,
+  imports: [
+    CoreModule,
+    FormsModule,
+    ButtonsModule,
+    AddOptionModalComponent,
+    ImportOptionModalComponent,
+    FileImportModalComponent,
+    ExportModalComponent,
+  ],
 })
 export class TenantOptionManagementComponent {
   columns: Column[];
-  rows: TenantOptionRow[];
+  rows: (Row | TenantOptionRow)[];
 
   pagination: Pagination = {
     pageSize: 30,
@@ -56,28 +57,37 @@ export class TenantOptionManagementComponent {
     },
   ];
 
-  constructor(
-    private optionsManagement: TenantOptionManagementService,
-    private bsModalService: BsModalService,
-    protected modal: ModalService,
-    protected translateService: TranslateService
-  ) {
+  isLoading = false;
+
+  private optionsManagement = inject(TenantOptionManagementService);
+  private bsModalService = inject(BsModalService);
+  protected modal = inject(ModalService);
+  protected translateService = inject(TranslateService);
+
+  constructor() {
     this.columns = this.getDefaultColumns();
-    this.reload();
+    void this.reload();
   }
 
-  reload() {
-    void this.optionsManagement
-      .getConfiguration()
-      .then(
-        (config) =>
-          (this.rows = config.options.map((o) => ({ id: `${o.category}-${o.key}`, ...o }))),
-        () => (this.rows = [])
-      )
-      .then(() => this.optionsManagement.getAllOptions())
-      .then((allOptions) =>
-        this.rows.forEach((r) => (r.value = allOptions.find((o) => o.id === r.id)?.value))
-      );
+  async reload() {
+    this.isLoading = true;
+
+    try {
+      const allOptions = this.optionsManagement.getAllOptions();
+
+      const config = await this.optionsManagement.getConfiguration();
+
+      this.rows = config.options.map((o) => ({ id: `${o.category}-${o.key}`, ...o })) as Row[];
+      const options = await allOptions;
+
+      for (const r of this.rows) {
+        r.value = options.find((o) => o.id === r.id)?.value;
+      }
+    } catch (e) {
+      this.rows = [];
+    } finally {
+      this.isLoading = false;
+    }
   }
 
   getDefaultColumns(): Column[] {
@@ -103,6 +113,20 @@ export class TenantOptionManagementComponent {
         filterable: true,
         dataType: ColumnDataType.TextLong,
       },
+      {
+        header: 'Last updated',
+        name: 'lastUpdated',
+        path: 'lastUpdated',
+        filterable: true,
+        dataType: ColumnDataType.TextShort,
+      },
+      {
+        header: 'Owner',
+        name: 'user',
+        path: 'user',
+        filterable: true,
+        dataType: ColumnDataType.TextShort,
+      },
     ];
   }
 
@@ -116,14 +140,14 @@ export class TenantOptionManagementComponent {
     }
     modalRef.content.closeSubject.pipe(take(1)).subscribe((option) => {
       if (option) {
-        if (row) {
-          void this.optionsManagement.updateOption(option).then(() => this.reload());
+        const index = this.rows.findIndex((r) => r.id === option.id);
+
+        if (index !== -1) {
+          this.rows[index] = option;
         } else {
-          void this.optionsManagement.addOption(option).then((o) => {
-            this.rows.push({ id: `${o.category}-${o.key}`, ...o });
-            this.rows = [...this.rows]; // trigger binding
-          });
+          this.rows.push(option);
         }
+        this.rows = [...this.rows]; // trigger binding
       }
     });
   }
@@ -132,16 +156,16 @@ export class TenantOptionManagementComponent {
     const modalRef = this.bsModalService.show(FileImportModalComponent, { class: 'modal-lg' });
 
     modalRef.content.closeSubject.pipe(take(1)).subscribe(() => {
-      this.reload();
+      void this.reload();
     });
   }
 
-  openImportModal() {
+  openAllowListModal() {
     const modalRef = this.bsModalService.show(ImportOptionModalComponent, { class: 'modal-lg' });
 
-    modalRef.content.closeSubject.pipe(take(1)).subscribe((o) => {
-      if (o) {
-        this.rows.push({ id: `${o.category}-${o.key}`, ...o });
+    modalRef.content.closeSubject.pipe(take(1)).subscribe((row) => {
+      if (row) {
+        this.rows.push(row);
         this.rows = [...this.rows]; // trigger binding
       }
     });

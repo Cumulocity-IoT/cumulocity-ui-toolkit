@@ -10,9 +10,8 @@
       [columns]="columns"
       [rows]="rows"
       [pagination]="pagination"
-      [actionControls]="[]"
       [displayOptions]="displayOptions"
-      [selectable]="selectable"
+      [selectable]="true"
       (itemsSelect)="onItemsSelect($event)"
       (onReload)="reload()"
     >
@@ -33,6 +32,7 @@
       type="button"
       (click)="export()"
       [ngClass]="{ 'btn-pending': isLoading }"
+      [disabled]="isLoading"
     >
       {{ 'Export' | translate }}
     </button>

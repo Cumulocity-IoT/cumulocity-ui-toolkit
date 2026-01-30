@@ -7,6 +7,9 @@ import { FormlyFieldConfig } from '@ngx-formly/core';
   selector: 'tenant-option-template',
   templateUrl: './template.component.html',
   standalone: false,
+  // imports FormlyModule.forRoot({
+  //   wrappers: [{ name: 'panel', component: PanelWrapperComponent }],
+  // }),
 })
 export class TemplateComponent {
   form = new FormGroup({});

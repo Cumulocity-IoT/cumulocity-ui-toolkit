@@ -1,21 +1,28 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { ITenantOption } from '@c8y/client';
-import { Column, ColumnDataType, DisplayOptions, Pagination } from '@c8y/ngx-components';
+import {
+  Column,
+  ColumnDataType,
+  CoreModule,
+  DisplayOptions,
+  Pagination,
+} from '@c8y/ngx-components';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Subject } from 'rxjs';
 import { TenantOptionManagementService } from '../tenant-option-management.service';
-import { TenantOptionRow } from '../tenant-option-management.component';
+import { TenantOptionConfigurationItem } from '../model';
 
 @Component({
   templateUrl: './export-modal.component.html',
-  standalone: false,
+  standalone: true,
+  imports: [CoreModule],
 })
 export class ExportModalComponent {
   closeSubject: Subject<(ITenantOption & { encrypted: string }) | null> = new Subject();
 
   columns: Column[] = [];
-  rows: TenantOptionRow[] = [];
-  selectedItems: TenantOptionRow[] = [];
+  rows: (TenantOptionConfigurationItem & { id: string })[] = [];
+  selectedItems: (TenantOptionConfigurationItem & { id: string })[] = [];
 
   displayOptions: DisplayOptions = {
     bordered: false,
@@ -36,10 +43,10 @@ export class ExportModalComponent {
 
   title = 'Tenant Options Export';
 
-  constructor(
-    private optionsManagement: TenantOptionManagementService,
-    private modal: BsModalRef
-  ) {
+  private optionsManagement = inject(TenantOptionManagementService);
+  private modal = inject(BsModalRef);
+
+  constructor() {
     this.columns = this.getDefaultColumns();
     this.reload();
   }
@@ -68,31 +75,50 @@ export class ExportModalComponent {
   }
 
   reload() {
-    void this.optionsManagement
-      .getConfiguration()
-      .then(
-        (config) =>
-          (this.rows = config.options.map((o) => ({ id: `${o.category}-${o.key}`, ...o }))),
-        () => (this.rows = [])
-      )
-      .then(() => this.optionsManagement.getAllOptions())
-      .then((allOptions) => {
-        this.rows.forEach((r) => (r.value = allOptions.find((o) => o.id === r.id)?.value));
-      });
+    void this.optionsManagement.getConfiguration().then(
+      (config) =>
+        (this.rows = config.options.map((o) => ({
+          id: `${o.category}-${o.key}`,
+          category: o.category,
+          key: o.key,
+        }))),
+      () => (this.rows = [])
+    );
   }
 
-  export() {
+  async export() {
     this.isLoading = true;
-    const selectedItemsJson = JSON.stringify(this.selectedItems);
-    const blob = new Blob([selectedItemsJson], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
 
-    link.href = url;
-    link.download = 'export_tenant_options.json';
-    link.click();
-    this.isLoading = false;
-    this.close();
+    try {
+      const all = await this.optionsManagement.getAllOptions();
+      const items: ITenantOption[] = [];
+
+      for (const selected of this.selectedItems) {
+        const found = all.find((o) => o.id === selected.id);
+
+        if (found) {
+          items.push({
+            category: selected.category,
+            key: selected.key,
+            value: found.value,
+          });
+        }
+      }
+
+      const selectedItemsJson = JSON.stringify(items);
+      const blob = new Blob([selectedItemsJson], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+
+      link.href = url;
+      link.download = 'export_tenant_options.json';
+      link.click();
+    } catch (e) {
+      console.error('Export failed', e);
+    } finally {
+      this.isLoading = false;
+      this.close();
+    }
   }
 
   close() {

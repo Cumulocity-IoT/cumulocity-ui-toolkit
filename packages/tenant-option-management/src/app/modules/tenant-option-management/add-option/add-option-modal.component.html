@@ -6,123 +6,78 @@
     </h3>
   </ng-container>
   <div class="modal-body">
-    <c8y-form-group class="m-16" [hasError]="showConflictError">
+    <c8y-form-group class="m-16" [hasError]="showConflictError || !!apiError">
       <label for="categoryInput" translate>Category</label>
-      <input
-        type="text"
-        class="form-control"
-        id="categoryInput"
-        [(ngModel)]="option.category"
-        (ngModelChange)="validateExistence()"
-        [disabled]="isEditing"
-        required
-      />
+      <input type="text" class="form-control" id="categoryInput" [(ngModel)]="option.category"
+        (ngModelChange)="validateExistence()" [disabled]="isEditing" required />
       <c8y-messages>
-        <c8y-message *ngIf="showConflictError">{{
+        @if (showConflictError) {
+        <c8y-message>{{
           'Combination of Category and Key exists already.' | translate
-        }}</c8y-message>
+          }}</c8y-message>
+        }
       </c8y-messages>
     </c8y-form-group>
 
     <c8y-form-group class="m-16" [hasError]="showConflictError">
       <label for="keyInput" translate>Key</label>
-      <input
-        type="text"
-        class="form-control"
-        id="keyInput"
-        [(ngModel)]="option.key"
-        (ngModelChange)="validateExistence()"
-        [disabled]="isEditing"
-        required
-      />
+      <input type="text" class="form-control" id="keyInput" [(ngModel)]="option.key"
+        (ngModelChange)="validateExistence()" [disabled]="isEditing" required />
       <c8y-messages>
-        <c8y-message *ngIf="showConflictError">{{
+        @if (showConflictError) {
+        <c8y-message>{{
           'Combination of Category and Key exists already.' | translate
-        }}</c8y-message>
+          }}</c8y-message>
+        }
       </c8y-messages>
     </c8y-form-group>
 
-    <div class="form-group m-16" *ngIf="option.key?.length && option.category?.length">
+    <div class="form-group m-t-24 m-l-16 m-r-16">
       <div class="tabContainer">
         <!-- tabs -->
         <ul class="nav nav-tabs nav-tabsc8y m-b-8">
-          <li *ngFor="let t of tabs" [class.active]="t.active">
-            <button
-              type="button"
-              [title]="t.label"
-              [disabled]="t.disabled"
-              (click)="changeTab(t.id)"
-            >
-              <i *ngIf="t.icon" class="{{ t.icon }}"></i>
+          @for (t of tabs; track t) {
+          <li [class.active]="t.active">
+            <button type="button" [title]="t.label" [disabled]="t.disabled" (click)="changeTab(t.id)">
+              @if (t.icon) {
+              <i class="{{ t.icon }}"></i>
+              }
               <span class="txt">{{ t.label }}</span>
             </button>
           </li>
+          }
         </ul>
 
         <div class="tab">
-          <ng-container [ngSwitch]="currentTab">
-            <ng-container *ngSwitchCase="'text'">
-              <c8y-form-group class="m-b-16">
-                <label for="valueInput" translate>Value</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="valueInput"
-                  [(ngModel)]="option.value"
-                  required
-                />
-              </c8y-form-group>
-            </ng-container>
-            <ng-container *ngSwitchCase="'json'">
-              <mapping-json-editor
-                [data]="jsonEditorData"
-                (textChange)="onJSONChange($event)"
-              ></mapping-json-editor>
-              <small class="text-danger" *ngIf="jsonErrorMessage">{{ jsonErrorMessage }}</small>
-            </ng-container>
-          </ng-container>
+          @switch (currentTab) {
+            @case ('text') {
+            <c8y-form-group class="m-b-16">
+              <label for="valueInput" translate>Value</label>
+              <input type="text" class="form-control" id="valueInput" [(ngModel)]="option.value" required />
+            </c8y-form-group>
+            }
+            @case ('json') {
+              <mapping-json-editor [data]="jsonEditorData" (textChange)="onJSONChange($event)"></mapping-json-editor>
+              @if (jsonErrorMessage) {
+                <small class="text-danger">{{ jsonErrorMessage }}</small>
+              }
+            }
+          }
+          @if (apiError) {
+            <small class="text-danger">{{ apiError }}</small>
+          }
         </div>
       </div>
     </div>
-
-    <c8y-form-group class="m-16" *ngIf="!isEditing">
-      <button
-        type="button"
-        class="btn"
-        btnCheckbox
-        btnCheckboxTrue="1"
-        btnCheckboxFalse="0"
-        [(ngModel)]="option.encrypted"
-      >
-        <i
-          c8yIcon="lock"
-          [class]="{
-            'text-success': option.encrypted === '1',
-            'text-danger': option.encrypted === '0'
-          }"
-        ></i>
-        Encrypt
-      </button>
-    </c8y-form-group>
   </div>
   <div class="modal-footer separator-top bg-level-0 sticky-bottom">
-    <button
-      title="{{ 'Cancel' | translate }}"
-      class="btn btn-default"
-      type="button"
-      (click)="close()"
-    >
+    <button title="{{ 'Cancel' | translate }}" class="btn btn-default" type="button" (click)="close()">
       {{ 'Cancel' | translate }}
     </button>
-    <button
-      title="{{ 'Save' | translate }}"
-      class="btn btn-primary"
-      type="button"
-      (click)="save()"
-      [disabled]="
-        !option.key.length || !option.category.length || !option.value.length || showConflictError
-      "
-    >
+    <button title="{{ 'Save' | translate }}" class="btn btn-primary" [class.btn-pending]="isLoading" type="button"
+      (click)="save()" [disabled]="
+        !option.key.length || !option.category.length || !option.value.length || showConflictError || isLoading
+      ">
       {{ 'Save' | translate }}
     </button>
   </div>

@@ -19,7 +19,7 @@ export default {
     package: 'plugin',
     isPackage: true,
     noAppSwitcher: true,
-    webSdkVersion: '1020.0.19',
+    webSdkVersion: '1021.22.0',
     exports: [
       {
         name: 'Tenant option plugin',

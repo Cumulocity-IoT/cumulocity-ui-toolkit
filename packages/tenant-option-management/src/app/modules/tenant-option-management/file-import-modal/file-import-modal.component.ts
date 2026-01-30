@@ -1,10 +1,10 @@
-/* eslint-disable @typescript-eslint/no-floating-promises */
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { ITenantOption, TenantOptionsService } from '@c8y/client';
 import {
   AlertService,
   Column,
   ColumnDataType,
+  CoreModule,
   DisplayOptions,
   ModalService,
   Pagination,
@@ -14,20 +14,21 @@ import {
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
-import { TenantOptionRow, ImportStatus } from '../tenant-option-management.component';
 import { TenantOptionManagementService } from '../tenant-option-management.service';
 import { isEmpty } from 'lodash';
+import { ImportStatusEnum, TenantOptionImportRow } from '../model';
 
 @Component({
   templateUrl: './file-import-modal.component.html',
-  standalone: false,
+  standalone: true,
+  imports: [CoreModule],
 })
 export class FileImportModalComponent {
   closeSubject: Subject<(ITenantOption & { encrypted: string }) | null> = new Subject();
 
   columns: Column[] = [];
-  rows: TenantOptionRow[] = [];
-  selectedItems: TenantOptionRow[] = [];
+  rows: TenantOptionImportRow[] = [];
+  selectedItems: TenantOptionImportRow[] = [];
 
   displayOptions: DisplayOptions = {
     bordered: false,
@@ -48,14 +49,13 @@ export class FileImportModalComponent {
 
   title = 'Tenant Options Export';
 
-  constructor(
-    private modal: BsModalRef,
-    private alertService: AlertService,
-    private optionsManagement: TenantOptionManagementService,
-    private tenantOptionService: TenantOptionsService,
-    protected confirmationModal: ModalService,
-    protected translateService: TranslateService
-  ) {
+  private modal = inject(BsModalRef);
+  private alertService = inject(AlertService);
+  private optionsManagement = inject(TenantOptionManagementService);
+  private tenantOptionService = inject(TenantOptionsService);
+  protected confirmationModal = inject(ModalService);
+  protected translateService = inject(TranslateService);
+  constructor() {
     this.columns = this.getDefaultColumns();
   }
 
@@ -96,17 +96,24 @@ export class FileImportModalComponent {
         try {
           const fileContent = e.target.result as string;
 
-          this.rows = JSON.parse(fileContent) as TenantOptionRow[];
-          this.rows.forEach((row) => {
+          const rows = JSON.parse(fileContent) as TenantOptionImportRow[];
+
+          this.rows = rows.map((r) => ({
+            ...r,
+            status: ImportStatusEnum.LOADING,
+            id: `${r.category}-${r.key}`,
+          }));
+
+          for (const row of this.rows) {
             this.tenantOptionService
               .detail({ category: row.category, key: row.key })
               .then((_option) => {
-                row.status = ImportStatus.CONFLICT;
+                row.status = ImportStatusEnum.CONFLICT;
               })
               .catch((_error) => {
-                row.status = ImportStatus.NEW;
+                row.status = ImportStatusEnum.NEW;
               });
-          });
+          }
         } catch (error) {
           this.alertService.danger('Invalid file content. Please select a valid JSON file.');
           console.warn(error);
@@ -122,8 +129,9 @@ export class FileImportModalComponent {
 
   async onItemsSelect(selectedItemIds: string[]) {
     if (
-      this.rows.filter((r) => r.status === ImportStatus.CONFLICT && selectedItemIds.includes(r.id))
-        .length > 0
+      this.rows.filter(
+        (r) => r.status === ImportStatusEnum.CONFLICT && selectedItemIds.includes(r.id)
+      ).length > 0
     ) {
       await this.confirmationModal
         .confirm(
@@ -138,11 +146,13 @@ export class FileImportModalComponent {
           if (result) {
             this.selectedItems = this.rows.filter((r) => selectedItemIds.includes(r.id));
             this.rows
-              .filter((r) => r.status === ImportStatus.CONFLICT && selectedItemIds.includes(r.id))
-              .forEach((r) => (r.status = ImportStatus.OVERWRITE));
+              .filter(
+                (r) => r.status === ImportStatusEnum.CONFLICT && selectedItemIds.includes(r.id)
+              )
+              .forEach((r) => (r.status = ImportStatusEnum.OVERWRITE));
           } else {
             this.selectedItems = this.rows.filter(
-              (r) => r.status === ImportStatus.NEW && selectedItemIds.includes(r.id)
+              (r) => r.status === ImportStatusEnum.NEW && selectedItemIds.includes(r.id)
             );
           }
         });
@@ -168,17 +178,16 @@ export class FileImportModalComponent {
     }
   }
 
-  async importOrUpdateItem(item: TenantOptionRow) {
+  async importOrUpdateItem(item: TenantOptionImportRow) {
     const row = this.rows.find((r) => r.id == item.id);
 
     if (!isEmpty(row)) {
-      if (row.status === ImportStatus.OVERWRITE) {
-        row.status = ImportStatus.LOADING;
+      if (row.status === ImportStatusEnum.OVERWRITE) {
+        row.status = ImportStatusEnum.LOADING;
         const option = {
           key: item.key,
           category: item.category,
           value: item.value,
-          encrypted: '',
         };
 
         await this.optionsManagement.updateOption(option);
@@ -189,18 +198,17 @@ export class FileImportModalComponent {
           // Ignore the rejection
           console.warn(error);
         }
-        row.status = ImportStatus.UPDATED;
+        row.status = ImportStatusEnum.UPDATED;
       } else {
-        row.status = ImportStatus.LOADING;
+        row.status = ImportStatusEnum.LOADING;
         const option = {
           key: item.key,
           category: item.category,
           value: item.value,
-          encrypted: '',
         };
 
         await this.optionsManagement.addOption(option);
-        row.status = ImportStatus.ADDED;
+        row.status = ImportStatusEnum.ADDED;
       }
     }
   }
