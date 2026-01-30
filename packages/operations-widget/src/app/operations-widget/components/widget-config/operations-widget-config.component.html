@@ -151,12 +151,12 @@
 
           <!-- operation value -->
          @if (item.operationFragment && item.operationValue) {
-           <div class="col-sm-12" style="height: 200px; border: 1px solid var(--c8y-component-border-color, var(--c8y-root-component-border-color))">
+           <div class="col-sm-12 m-b-8" style="height: 200px; border: 1px solid var(--c8y-component-border-color, var(--c8y-root-component-border-color))">
              <operations-editor [(value)]="item.operationValue" (valueChange)="onOperationBodyChanged($event, buttonIndex)" [supportedOperation]="item.operationFragment"></operations-editor>
            </div>
          }
      
-          <div class="col-sm-12">
+          <div class="col-sm-12 m-t-32">
           <c8y-form-group>
             <label>Placeholders</label>
             @for (field of config.buttons[buttonIndex].fields; let i = $index; track $index) {
