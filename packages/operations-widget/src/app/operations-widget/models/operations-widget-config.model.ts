@@ -22,6 +22,7 @@ export interface OperationButtonConfig {
 
 export interface OperationParamConfig {
   key: string;
+  path: string;
   label: string;
   type: 'input' | 'number' | 'select';
   options: DropDownOption[];

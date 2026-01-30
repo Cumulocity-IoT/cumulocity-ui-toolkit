@@ -1,6 +1,6 @@
 import { Component, inject, Input, TemplateRef } from '@angular/core';
 import { IOperation } from '@c8y/client';
-import { AlertService } from '@c8y/ngx-components';
+import { AlertService, CoreModule } from '@c8y/ngx-components';
 import {
   OperationButtonConfig,
   OperationParamConfig,
@@ -10,11 +10,13 @@ import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { FormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { OperationsWidgetService } from '../../services/operations-widget.service';
+import { ButtonInstanceComponent } from '../button-instance/button-instance.component';
 @Component({
   selector: 'app-operations-widget',
   templateUrl: './operations-widget.component.html',
   styleUrls: ['./operations-widget.component.scss'],
-  standalone: false,
+  standalone: true,
+  imports: [CoreModule, ButtonInstanceComponent],
 })
 export class OperationsWidgetComponent {
   private alertService = inject(AlertService);
@@ -37,7 +39,7 @@ export class OperationsWidgetComponent {
 
     this.formlyFields = button.fields.map((field: OperationParamConfig) => {
       const fieldConfig: FormlyFieldConfig = {
-        key: field.key,
+        key: field.path,
         type: field.type,
         props: {
           label: field.label || field.key,
@@ -118,7 +120,9 @@ export class OperationsWidgetComponent {
 
   onFormModelChange() {
     this.previewPayload = JSON.stringify(
-      this.jsonArrayOrObject(this.operationValue, this.model) as unknown as string
+      this.jsonArrayOrObject(this.operationValue, this.model) as unknown as string,
+      undefined,
+      2
     );
     this.payloadData = this.jsonArrayOrObject(this.operationValue, this.model) as unknown as string;
   }

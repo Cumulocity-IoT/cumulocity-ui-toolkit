@@ -1,0 +1,25 @@
+<form [formGroup]="form" class="d-contents">
+  <c8y-form-group class="d-col fit-h">
+    <label for="jsonEditor" translate>JSON Editor (with JSON schema validation)</label>
+    <c8y-editor
+      class="flex-grow"
+      name="jsonEditor"
+      [formControlName]="'jsonEditor'"
+      (editorInit)="assignSchema()"
+      (ngModelChange)="jsonChange($event)"
+      [editorOptions]="options"
+      monacoEditorMarkerValidator
+    ></c8y-editor>
+    <c8y-messages [helpMessage]="''"></c8y-messages>
+  </c8y-form-group>
+
+  @if (form.valid) {
+    <p class="d-flex a-i-center">
+      <i class="dlt-c8y-icon-ok text-success icon-20 m-r-4"></i> Form is valid.
+    </p>
+  } @else {
+    <p class="d-flex a-i-center">
+      <i class="dlt-c8y-icon-exclamation-circle text-danger icon-20 m-r-4"></i> Form is invalid.
+    </p>
+  }
+</form>

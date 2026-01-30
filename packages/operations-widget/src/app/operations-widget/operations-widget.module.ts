@@ -1,30 +1,30 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { CoreModule, hookComponent } from '@c8y/ngx-components';
-import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
+import { CoreModule, hookWidget } from '@c8y/ngx-components';
 import { assets } from './assets/assets';
-import { ButtonInstanceComponent } from './components/button-instance/button-instance.component';
-import { OperationsValueComponent } from './components/operations-value/operations-value.component';
-import { OperationsWidgetComponent } from './components/operations-widget/operations-widget.component';
-import { OperationsWidgetConfigComponent } from './components/widget-config/operations-widget-config.component';
 import { OperationsWidgetService } from './services/operations-widget.service';
 
+async function loadViewComponent() {
+  const { OperationsWidgetComponent } =
+    await import('./components/operations-widget/operations-widget.component');
+  return OperationsWidgetComponent;
+}
+
+async function loadConfigComponent() {
+  const { OperationsWidgetConfigComponent } =
+    await import('./components/widget-config/operations-widget-config.component');
+  return OperationsWidgetConfigComponent;
+}
 @NgModule({
-  imports: [CommonModule, CoreModule, BsDropdownModule],
-  declarations: [
-    OperationsWidgetComponent,
-    OperationsWidgetConfigComponent,
-    ButtonInstanceComponent,
-    OperationsValueComponent,
-  ],
+  imports: [CommonModule, CoreModule],
   providers: [
     OperationsWidgetService,
-    hookComponent({
+    hookWidget({
       id: 'operations.widget',
       label: 'Operation Button Widget',
       description: '',
-      component: OperationsWidgetComponent,
-      configComponent: OperationsWidgetConfigComponent,
+      loadComponent: loadViewComponent,
+      loadConfigComponent: loadConfigComponent,
       previewImage: assets.previewImage,
       data: {
         settings: {
