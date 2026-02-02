@@ -25,7 +25,7 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 })
 export class OperationsEditorComponent implements OnInit, OnChanges {
   @Input() supportedOperation: string;
-  @Input() value: string;
+  @Input() readonly value: string;
   @Output() valueChange = new EventEmitter<string>();
 
   @ViewChild(EditorComponent) editorComponent!: EditorComponent;
@@ -43,7 +43,6 @@ export class OperationsEditorComponent implements OnInit, OnChanges {
 
     if (!json[this.supportedOperation]) {
       json[this.supportedOperation] = { example: '{{test}}' };
-      this.value = JSON.stringify(json);
     }
 
     this.form = new FormGroup({
@@ -71,12 +70,11 @@ export class OperationsEditorComponent implements OnInit, OnChanges {
         const current = changes['supportedOperation'].currentValue as string;
 
         json[current] = prevValue ?? { example: '{{test}}' };
-        this.value = JSON.stringify(json, undefined, 2);
+        const value = JSON.stringify(json, undefined, 2);
 
-        if (this.editorComponent?.monaco?.json) {
-          this.assignSchema();
-          this.form?.get('jsonEditor')?.setValue(this.value, { emitEvent: false });
-        }
+        setTimeout(() => this.assignSchema());
+
+        this.form?.get('jsonEditor')?.setValue(value, { emitEvent: false });
       }
     }
   }
@@ -96,7 +94,7 @@ export class OperationsEditorComponent implements OnInit, OnChanges {
       additionalProperties: true,
     } as const;
 
-    this.editorComponent.monaco.json.jsonDefaults.setDiagnosticsOptions({
+    this.editorComponent.monaco?.json?.jsonDefaults?.setDiagnosticsOptions({
       validate: true,
       schemas: [{ schema, fileMatch: ['*'], uri: 'editor-json-sample' }],
       enableSchemaRequest: false,
