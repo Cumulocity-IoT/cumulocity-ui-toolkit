@@ -119,8 +119,8 @@
   
               <ul class="dropdown-menu" *dropdownMenu>
                 <li *ngFor="let class of buttonClasses" (click)="item.buttonClasses = class">
-                  <button [ngClass]="'btn ' + class" type="button" style="width: 100%">
-                    <i [c8yButton]="item.button" [c8yIcon]="item.icon"></i>
+                  <button type="button">
+                    <i [c8yButton]="item.button"></i>
                     {{ class }}
                   </button>
                 </li>
@@ -204,29 +204,31 @@
         
   
         <!-- confirmation -->
-        <div class="col-sm-12">
-          <c8y-form-group>
-            <label translate for="confirmation_{{ $index }}">Requires confirmation</label>
-            <label class="c8y-switch" title="{{ 'Active' | translate }}">
-              <input [(ngModel)]="item.showModal" type="checkbox" />
-              <span></span>
-              <span>
-                {{ 'Confirm operation' }}
-              </span>
-            </label>
-            <input
-              class="form-control"
-              id="confirmation_{{ $index }}"
-              *ngIf="item.showModal"
-              [(ngModel)]="item.modalText"
-              [maxlength]="254"
-              type="text"
-              name="description"
-              autocomplete="off"
-              placeholder="e.g. Restart device"
-            />
-          </c8y-form-group>
-        </div>
+        @if (config.buttons[buttonIndex].fields?.length === 0) {
+          <div class="col-sm-12">
+            <c8y-form-group>
+              <label translate for="confirmation_{{ $index }}">Requires confirmation</label>
+              <label class="c8y-switch" title="{{ 'Active' | translate }}">
+                <input [(ngModel)]="item.showModal" type="checkbox" />
+                <span></span>
+                <span>
+                  {{ 'Confirm operation' }}
+                </span>
+              </label>
+              <input
+                class="form-control"
+                id="confirmation_{{ $index }}"
+                *ngIf="item.showModal"
+                [(ngModel)]="item.modalText"
+                [maxlength]="254"
+                type="text"
+                name="description"
+                autocomplete="off"
+                placeholder="e.g. Restart device"
+              />
+            </c8y-form-group>
+          </div>
+        }
   
         <!-- admin -->
         <div class="col-sm-12">

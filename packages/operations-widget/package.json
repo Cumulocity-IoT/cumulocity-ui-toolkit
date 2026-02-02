@@ -1,7 +1,7 @@
 {
   "name": "cumulocity-operations-widget-plugin",
   "version": "0.1.4",
-  "description": "",
+  "description": "Configurable action buttons with labels, icons, and input fields to send parameterized operation to device.",
   "author": "@dirk-peter-c8y",
   "homepage": "___TODO___",
   "dependencies": {}
