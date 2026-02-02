@@ -22,7 +22,8 @@ async function loadConfigComponent() {
     hookWidget({
       id: 'operations.widget',
       label: 'Operation Button Widget',
-      description: '',
+      description:
+        'Configurable action buttons with labels, icons, and input fields to send parameterized operation to device.',
       loadComponent: loadViewComponent,
       loadConfigComponent: loadConfigComponent,
       previewImage: assets.previewImage,
