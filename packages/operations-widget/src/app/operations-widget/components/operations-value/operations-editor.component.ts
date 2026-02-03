@@ -1,15 +1,17 @@
 import {
   Component,
+  effect,
   EventEmitter,
   Input,
   OnChanges,
   OnInit,
   Output,
+  signal,
   SimpleChanges,
   ViewChild,
 } from '@angular/core';
 import { EditorComponent, MonacoEditorMarkerValidatorDirective } from '@c8y/ngx-components/editor';
-import { FormGroupComponent, MessagesComponent, throttle } from '@c8y/ngx-components';
+import { FormGroupComponent, MessagesComponent } from '@c8y/ngx-components';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 @Component({
   selector: 'operations-editor',
@@ -25,8 +27,11 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 })
 export class OperationsEditorComponent implements OnInit, OnChanges {
   @Input() supportedOperation: string;
-  @Input() readonly value: string;
+  @Input() value: string;
   @Output() valueChange = new EventEmitter<string>();
+
+  protected code = signal<string>('');
+  private timeout: NodeJS.Timeout;
 
   @ViewChild(EditorComponent) editorComponent!: EditorComponent;
   form: FormGroup;
@@ -38,6 +43,21 @@ export class OperationsEditorComponent implements OnInit, OnChanges {
     },
   };
 
+  constructor() {
+    effect(() => {
+      const value = this.code();
+
+      clearTimeout(this.timeout);
+      this.timeout = setTimeout(() => {
+        this.notifyIfValid(value); // emit after 200ms of inactivity
+      }, 200);
+    });
+  }
+
+  updateCode(value: string) {
+    this.code.set(value);
+  }
+
   ngOnInit() {
     const json = JSON.parse(this.value) as Record<string, unknown>;
 
@@ -45,29 +65,33 @@ export class OperationsEditorComponent implements OnInit, OnChanges {
       json[this.supportedOperation] = { example: '{{test}}' };
     }
 
+    const jsonStr = JSON.stringify(
+      json, // { deviceId: this.deviceId, [this.supportedOperation]: { example: '{{test}}' } }
+      undefined,
+      2
+    );
+
     this.form = new FormGroup({
-      jsonEditor: new FormControl(
-        JSON.stringify(
-          json, // { deviceId: this.deviceId, [this.supportedOperation]: { example: '{{test}}' } }
-          undefined,
-          2
-        )
-      ),
+      jsonEditor: new FormControl(jsonStr),
     });
+
+    this.notifyIfValid(jsonStr);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['supportedOperation'] && !changes['supportedOperation'].firstChange) {
-      if (this.value) {
+      const previous = changes['supportedOperation'].previousValue as string;
+      const current = changes['supportedOperation'].currentValue as string;
+
+      if (this.value && previous !== current) {
         const json = JSON.parse(this.value) as Record<string, unknown>;
-        const previous = changes['supportedOperation'].previousValue as string;
+
         let prevValue: unknown = null;
 
         if (previous && json[previous]) {
           prevValue = json[previous];
           delete json[previous];
         }
-        const current = changes['supportedOperation'].currentValue as string;
 
         json[current] = prevValue ?? { example: '{{test}}' };
         const value = JSON.stringify(json, undefined, 2);
@@ -102,14 +126,13 @@ export class OperationsEditorComponent implements OnInit, OnChanges {
     });
   }
 
-  @throttle(200)
-  jsonChange(value: string) {
-    if (this.form.valid) {
+  notifyIfValid(value: string) {
+    if (value?.length && this.form.valid) {
       try {
         JSON.parse(value);
         this.valueChange.emit(value);
       } catch (e) {
-        console.warn(e);
+        console.warn('JSON parse failed for value: ' + value, e);
       }
     }
   }

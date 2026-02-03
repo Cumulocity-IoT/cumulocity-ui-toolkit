@@ -1,3 +1,5 @@
+import { set } from "lodash";
+
 /**
  * Recursively walks an object/array and extracts unique template placeholders
  * of the form `{{ ... }}` along with the path where they were found.
@@ -43,4 +45,12 @@ export function extractPlaceholdersFromObject(obj: unknown): { key: string; path
   visit(obj, '');
 
   return results;
+}
+
+export function removePlaceholders(obj: object) {
+  const tuples = extractPlaceholdersFromObject(obj);
+
+  for (const tuple of tuples) {
+    set(obj, tuple.path, undefined);
+  }
 }

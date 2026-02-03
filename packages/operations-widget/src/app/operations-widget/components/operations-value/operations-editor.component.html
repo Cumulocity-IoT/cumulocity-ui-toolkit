@@ -6,7 +6,7 @@
       name="jsonEditor"
       [formControlName]="'jsonEditor'"
       (editorInit)="assignSchema()"
-      (ngModelChange)="jsonChange($event)"
+      (ngModelChange)="updateCode($event)"
       [editorOptions]="options"
       monacoEditorMarkerValidator
     ></c8y-editor>

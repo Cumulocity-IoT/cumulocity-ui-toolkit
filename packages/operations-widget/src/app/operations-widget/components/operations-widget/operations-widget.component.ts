@@ -11,6 +11,9 @@ import { FormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { OperationsWidgetService } from '../../services/operations-widget.service';
 import { ButtonInstanceComponent } from '../button-instance/button-instance.component';
+import { isToCreateIOperation } from '~helpers/domain-model-type.helper';
+import { removePlaceholders } from '~helpers/extract-placeholders';
+import { cloneDeep } from 'lodash';
 @Component({
   selector: 'app-operations-widget',
   templateUrl: './operations-widget.component.html',
@@ -32,7 +35,7 @@ export class OperationsWidgetComponent {
   operationValue: Partial<IOperation> = {};
   selectedButton: OperationButtonConfig = null;
   previewPayload: string = '';
-  payloadData: string = '';
+  payloadData: Record<string, unknown> = {};
 
   generateFormlyFields(button: OperationButtonConfig) {
     if (!button.fields) return;
@@ -71,19 +74,20 @@ export class OperationsWidgetComponent {
   }
 
   async sendOperation() {
-    this.selectedButton.operationValue = this.payloadData;
+    // this.selectedButton.operationValue = this.payloadData;
     this.modalRef.hide();
-    await this.operationsWidgetService.createOperation(
-      this.selectedButton,
-      this.selectedButton.operationValue,
-      this.config.device.id
-    );
-    this.selectedButton.operationValue = JSON.stringify(this.operationValue);
+
+    if (isToCreateIOperation(this.payloadData)) {
+      await this.operationsWidgetService.createOperation(this.selectedButton, this.payloadData);
+      this.selectedButton.operationValue = JSON.stringify(this.operationValue);
+    } else {
+      this.alertService.danger('No valid Operation!', this.selectedButton.operationValue);
+    }
   }
 
   cancelOperation() {
     this.model = {};
-    this.payloadData = '';
+    this.payloadData = {};
     this.previewPayload = '';
     this.modalRef.hide();
   }
@@ -102,19 +106,19 @@ export class OperationsWidgetComponent {
       return;
     }
 
-    this.model = {};
-
     this.operationValue = JSON.parse(button.operationValue) as Partial<IOperation>;
+    removePlaceholders(this.operationValue);
+    this.model = cloneDeep(this.operationValue ?? {});
 
     if (button.fields.length > 0) {
       this.generateFormlyFields(button);
       this.modalRef = this.modalService.show(template);
     } else {
-      await this.operationsWidgetService.createOperation(
-        button,
-        this.selectedButton.operationValue,
-        this.config.device.id
-      );
+      if (isToCreateIOperation(this.operationValue)) {
+        await this.operationsWidgetService.createOperation(button, this.operationValue);
+      } else {
+        this.alertService.danger('No valid Operation!', JSON.stringify(this.operationValue));
+      }
     }
   }
 
@@ -124,7 +128,10 @@ export class OperationsWidgetComponent {
       undefined,
       2
     );
-    this.payloadData = this.jsonArrayOrObject(this.operationValue, this.model) as unknown as string;
+    this.payloadData = this.jsonArrayOrObject(this.operationValue, this.model) as Record<
+      string,
+      unknown
+    >;
   }
 
   jsonArrayOrObject<T extends object>(existing: T | T[], newData: Partial<T>): T | T[] {

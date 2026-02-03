@@ -12,20 +12,13 @@ export class OperationsWidgetService {
   private operationsService = inject(OperationService);
   private alertService = inject(AlertService);
 
-  async createOperation(
-    button: OperationButtonConfig,
-    operationValue: string,
-    configDeviceId: string
-  ): Promise<void> {
+  async createOperation(button: OperationButtonConfig, operationValue: IOperation): Promise<void> {
     let request: IResult<IOperation> | null = null;
 
     const operation: IOperation = {
-      deviceId: configDeviceId,
-      [button.operationFragment]: operationValue || {},
+      ...operationValue,
       description: button.description,
     };
-
-    operation.deviceId = configDeviceId;
 
     try {
       request = await this.operationsService.create(operation);

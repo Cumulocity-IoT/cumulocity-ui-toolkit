@@ -9,7 +9,6 @@ import { CoreModule, HumanizePipe } from '@c8y/ngx-components';
 import { OperationsEditorComponent } from '../operations-value/operations-editor.component';
 import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
 import { ButtonInstanceComponent } from '../button-instance/button-instance.component';
-import { throttle } from '@c8y/ngx-components';
 import { extractPlaceholdersFromObject } from '~helpers/extract-placeholders';
 
 @Component({
@@ -117,10 +116,12 @@ export class OperationsWidgetConfigComponent {
     this.config.buttons?.splice(index, 1);
   }
 
-  @throttle(200)
   onOperationBodyChanged(operation: string, buttonIndex: number) {
     try {
       const json = JSON.parse(operation) as Record<string, unknown>;
+
+      this._config.buttons[buttonIndex].operationValue = operation;
+      console.warn(operation);
       const placeholders = extractPlaceholdersFromObject(json);
       const placeholderKeys = (placeholders ?? []).map((p) => p.key);
       const fields = this.config.buttons[buttonIndex].fields ?? [];

@@ -93,7 +93,6 @@
             @for ( class of buttonClasses; track class) {
                <li (click)="item.buttonClasses = class">
               <button type="button">
-                <i [c8yButton]="item.button"></i>
                 {{ class }}
               </button>
             </li>  
@@ -119,7 +118,7 @@
     @if (item.operationFragment && item.operationValue) {
     <div class="col-sm-12 m-b-8"
       style="height: 200px; border: 1px solid var(--c8y-component-border-color, var(--c8y-root-component-border-color))">
-      <operations-editor [(value)]="item.operationValue" (valueChange)="onOperationBodyChanged($event, buttonIndex)"
+      <operations-editor [value]="item.operationValue" (valueChange)="onOperationBodyChanged($event, buttonIndex)"
         [supportedOperation]="item.operationFragment"></operations-editor>
     </div>
     }
