@@ -675,6 +675,15 @@
             }
           },
           "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "packages/operations-widget/src/test.ts",
+            "polyfills": "packages/operations-widget/src/polyfills.ts",
+            "tsConfig": "packages/operations-widget/tsconfig.app.json",
+            "karmaConfig": "packages/operations-widget/karma.conf.js"
+          }
         }
       }
     }

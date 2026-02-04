@@ -22,7 +22,8 @@ export default {
         name: 'Operations Widget',
         module: 'OperationsWidgetModule',
         path: './src/app/operations-widget/operations-widget.module.ts',
-        description: '',
+        description:
+          'Configurable action buttons with labels, icons, and input fields to send parameterized operation to device.',
       },
     ],
   },
