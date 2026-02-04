@@ -79,7 +79,6 @@ export class OperationsWidgetComponent {
 
     if (isToCreateIOperation(this.payloadData)) {
       await this.operationsWidgetService.createOperation(this.selectedButton, this.payloadData);
-      this.selectedButton.operationValue = JSON.stringify(this.operationValue);
     } else {
       this.alertService.danger('No valid Operation!', this.selectedButton.operationValue);
     }
