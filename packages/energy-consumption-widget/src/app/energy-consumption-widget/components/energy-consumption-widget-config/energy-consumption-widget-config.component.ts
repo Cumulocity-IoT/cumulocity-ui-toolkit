@@ -17,6 +17,7 @@ import {
   selector: 'c8y-energy-consumption-widget-config',
   template: '<formly-form [form]="form" [fields]="fields" [model]="config"></formly-form>',
   styleUrl: './energy-consumption-widget-config.component.scss',
+  standalone: false,
 })
 export class EnergyConsumptionWidgetConfigComponent {
   @Input() config!: EnergyConsumptionWidgetConfig;

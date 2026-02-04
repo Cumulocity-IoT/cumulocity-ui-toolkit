@@ -1,0 +1,113 @@
+name: Create Release on Tag
+run-name: ${{ github.actor }} set a tag
+
+on:
+  push:
+    tags:
+      - 'v*'
+      # - 'v[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  setup-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract projects and their paths from angular.json
+        id: set-matrix
+        shell: bash
+        run: |
+          echo "📦 Parsing angular.json..."
+          MATRIX_JSON=$(jq -c '{include: [ (.projects | to_entries[] | {project: .key, path: .value.root}) ]}' angular.json)
+          echo "Matrix: $MATRIX_JSON"
+          # Write valid single-line JSON to output
+          echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
+
+  build:
+    name: Build ${{ matrix.project }}
+    runs-on: ubuntu-latest
+    needs: setup-matrix
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project ${{ matrix.project }}
+        run: npx ng build ${{ matrix.project }}
+
+      - name: Prepare ZIP with version
+        shell: bash
+        run: |
+          mkdir -p release
+
+          project="${{ matrix.project }}"
+          pkg_path="${{ matrix.path }}/package.json"
+
+          if [ ! -f "$pkg_path" ]; then
+            echo "❌ package.json not found for $project at $pkg_path"
+            exit 1
+          fi
+
+          name=$(jq -r '.name' "$pkg_path" | sed 's/@//; s/\//-/g')
+          version=$(jq -r '.version' "$pkg_path")
+          echo "name: ${name}"
+          echo "version: ${version}"
+
+          # Determine correct dist folder
+          dist_path="dist/${project}"
+          if [ ! -d "$dist_path" ]; then
+            dist_path="dist/$(basename "${name}")"
+          fi
+          if [ ! -d "$dist_path" ]; then
+            echo "❌ dist path, `dist/$(basename "${name}")`, not found for $project"
+            exit 1
+          fi
+
+          zip_name="${name}-${version}.zip"
+          (cd dist && zip -r "../release/${zip_name}" "$(basename "$dist_path")")
+          echo "✅ Created release/${zip_name}"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.project }}
+          path: release/*.zip
+          if-no-files-found: error
+          retention-days: 5
+
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v5
+        with:
+          pattern: build-*
+          merge-multiple: true
+          path: release
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          files: release/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

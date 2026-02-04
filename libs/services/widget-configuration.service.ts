@@ -5,11 +5,15 @@ import { has } from 'lodash';
 
 @Injectable()
 export class WidgetConfigurationService {
-  constructor(private inventoryService: InventoryService, private alertService: AlertService) {}
+  constructor(
+    private inventoryService: InventoryService,
+    private alertService: AlertService
+  ) {}
 
   async updateWidgetConfiguration(dashboardId: string, widgetId: string, newConfig: any) {
     const { data: mo } = await this.inventoryService.detail(dashboardId);
     const dashboard = mo['c8y_Dashboard'];
+
     if (!has(dashboard.children, widgetId)) {
       throw new Error(widgetId + ' doesn not exist in Dashboard ' + dashboardId);
     }
@@ -26,9 +30,11 @@ export class WidgetConfigurationService {
   getWidgetConfiguration(dashboardId: string, widgetId: string) {
     this.inventoryService.detail(dashboardId).then((res) => {
       const dashboard = res.data['c8y_Dashboard'];
+
       if (!has(dashboard.children, widgetId)) {
         throw new Error(widgetId + ' doesn not exist in Dashboard ' + dashboardId);
       }
+
       return dashboard.children[widgetId].config;
     });
   }

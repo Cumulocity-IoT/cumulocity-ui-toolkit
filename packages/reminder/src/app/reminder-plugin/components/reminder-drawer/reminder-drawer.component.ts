@@ -24,6 +24,7 @@ import { ReminderModalComponent } from '../reminder-modal/reminder-modal.compone
   selector: 'c8y-reminder-drawer',
   templateUrl: './reminder-drawer.component.html',
   styleUrl: './reminder-drawer.component.less',
+  standalone: false,
 })
 export class ReminderDrawerComponent implements OnDestroy {
   private alertService = inject(AlertService);
@@ -85,12 +86,21 @@ export class ReminderDrawerComponent implements OnDestroy {
     clearTimeout(this.updateTimer);
   }
 
+  /**
+   * Creates a new reminder by opening a modal dialog.
+   * @returns void
+   */
   createReminder(): void {
     this.modalService.show(ReminderModalComponent, {
       class: 'modal-sm',
     });
   }
 
+  /**
+   * Sets the filter for reminders based on the provided type.
+   * @param type - The ID of the reminder type to filter by.
+   * @returns void
+   */
   async setFilter(type?: ReminderType['id']): Promise<void> {
     await this.sleep(1000);
     if (type) this.reminderTypeFilter = type;
@@ -99,6 +109,10 @@ export class ReminderDrawerComponent implements OnDestroy {
     this.filterByType();
   }
 
+  /**
+   * Filters reminders by their type and updates the reminder groups.
+   * @returns void
+   */
   filterByType(): void {
     if (!this.types.length) return;
 
@@ -108,7 +122,12 @@ export class ReminderDrawerComponent implements OnDestroy {
     );
   }
 
-  setConfig(configOption: string) {
+  /**
+   * Updates the configuration for reminders based on the provided option.
+   * @param configOption - The configuration option to update (e.g., 'filter', 'useContext').
+   * @returns void
+   */
+  setConfig(configOption: string): void {
     let value;
 
     switch (configOption) {
@@ -127,9 +146,15 @@ export class ReminderDrawerComponent implements OnDestroy {
         value = this.browserNotificationsEnabled;
         break;
     }
-    this.reminderService.setConfig(configOption, value);
+
+    this.reminderService.setConfig(configOption, value as object);
   }
 
+  /**
+   * Toggles the state of the reminder drawer.
+   * @param open - Optional boolean to explicitly set the drawer's open state.
+   * @returns The updated open state of the drawer.
+   */
   toggleDrawer(open?: boolean): boolean {
     open = typeof open === 'boolean' ? open : !this.open;
 
@@ -139,6 +164,12 @@ export class ReminderDrawerComponent implements OnDestroy {
     return this.open;
   }
 
+  /**
+   * Updates the status of a reminder and displays a success or error message.
+   * @param reminder - The reminder to update.
+   * @param status - The new status to set for the reminder.
+   * @returns void
+   */
   async updateReminder(reminder: Reminder, status: Reminder['status']): Promise<void> {
     reminder.status = status;
 
@@ -151,6 +182,11 @@ export class ReminderDrawerComponent implements OnDestroy {
     }
   }
 
+  /**
+   * Processes and updates the reminders, grouping them and highlighting changes.
+   * @param reminders - The list of reminders to process.
+   * @returns void
+   */
   private digestReminders(reminders: Reminder[]): void {
     this.reminders = reminders;
     this.lastUpdate = new Date();
@@ -159,13 +195,22 @@ export class ReminderDrawerComponent implements OnDestroy {
     if (reminders.length) this.highlightChanges();
   }
 
+  /**
+   * Retrieves the available reminder types and resets obsolete configurations if necessary.
+   * @returns void
+   */
   private getReminderTypes(): void {
     this.types = this.reminderService.types;
 
-    // prevent obsolte configs to remain in local storage
+    // prevent obsolete configs to remain in local storage
     if (!this.types.length) this.reminderService.resetFilterConfig();
   }
 
+  /**
+   * Handles changes in the reminder configuration and updates the component state.
+   * @param config - The updated reminder configuration.
+   * @returns void
+   */
   private handleConfigChange(config: ReminderConfig): void {
     if (
       has(config.filter, 'reminderType') &&
@@ -180,6 +225,11 @@ export class ReminderDrawerComponent implements OnDestroy {
     this.browserNotificationsEnabled = config.browser;
   }
 
+  /**
+   * Handles route changes and updates the context for reminders.
+   * @param url - The new route URL.
+   * @returns void
+   */
   private handleRouteChange(url: string): void {
     if (isEmpty(url)) {
       return undefined;
@@ -198,6 +248,10 @@ export class ReminderDrawerComponent implements OnDestroy {
     this.reminderGroups = this.reminderService.groupReminders(this.reminders, this.context);
   }
 
+  /**
+   * Highlights changes in reminders by marking new reminders in groups.
+   * @returns void
+   */
   private highlightChanges(): void {
     if (!this.reminders.length) return;
 
@@ -218,6 +272,10 @@ export class ReminderDrawerComponent implements OnDestroy {
     });
   }
 
+  /**
+   * Initializes subscriptions for drawer state, reminders, configuration, and route changes.
+   * @returns void
+   */
   private initSubscriptions(): void {
     // check if the actual drawer was opened
     this.subscriptions.add(
@@ -252,6 +310,11 @@ export class ReminderDrawerComponent implements OnDestroy {
     );
   }
 
+  /**
+   * Toggles the right drawer's open state and manages its CSS classes.
+   * @param open - Whether to open or close the drawer.
+   * @returns void
+   */
   private toggleRightDrawer(open: boolean): void {
     const drawer = document.getElementsByClassName(REMINDER_MAIN_HEADER_CLASS)[0];
 
@@ -268,6 +331,11 @@ export class ReminderDrawerComponent implements OnDestroy {
     }
   }
 
+  /**
+   * Pauses execution for a specified duration.
+   * @param milliseconds - The duration to sleep in milliseconds.
+   * @returns A promise that resolves after the specified duration.
+   */
   private sleep(milliseconds: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, milliseconds));
   }

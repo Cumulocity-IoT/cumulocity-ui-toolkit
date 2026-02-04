@@ -6,6 +6,7 @@ import { ReminderService } from '../../services/reminder.service';
   selector: 'c8y-reminder-type',
   templateUrl: './reminder-type.component.html',
   styleUrl: './reminder-type.component.less',
+  standalone: false,
 })
 export class ReminderTypeComponent {
   private reminderService = inject(ReminderService);

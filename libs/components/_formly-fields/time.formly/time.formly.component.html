@@ -1,5 +1,25 @@
 <div class="form-group">
   <label>{{ field.props.label }}</label>
-  <c8y-date-time-picker [formControl]="formControl" [formlyAttributes]="field">
-  </c8y-date-time-picker>
+
+  <div class="datetime-picker">
+    <div class="datepicker form-group">
+      <input
+        class="form-control"
+        [(ngModel)]="day"
+        [minDate]="now"
+        (ngModelChange)="setDay($event)"
+        placeholder="{{ 'Select a date…' | translate }}"
+        bsDatepicker
+      />
+    </div>
+
+    <timepicker
+      [(ngModel)]="time"
+      [formlyAttributes]="field"
+      [showSpinners]="false"
+      [showMeridian]="false"
+      [minuteStep]="15"
+      (ngModelChange)="setTime($event)"
+    ></timepicker>
+  </div>
 </div>

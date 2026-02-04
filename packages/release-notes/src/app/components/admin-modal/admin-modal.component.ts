@@ -10,6 +10,7 @@ import { ReleaseNotesService } from '../../services/release-notes.service';
 @Component({
   selector: 'c8y-release-notes-admin-modal',
   templateUrl: './admin-modal.component.html',
+  standalone: false,
 })
 export class ReminderNotesAdminModalComponent {
   private releaseNoteServive = inject(ReleaseNotesService);

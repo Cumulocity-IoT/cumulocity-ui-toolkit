@@ -12,10 +12,7 @@ export default {
     dynamicOptionsUrl: true,
     remotes: {
       // 'plugin name from package.json': [ PluginModule ]
-      [name]: [
-        'ReleaseNotesAdminPluginModule',
-        'ReleaseNotesPluginModule',
-      ],
+      [name]: ['ReleaseNotesAdminPluginModule', 'ReleaseNotesPluginModule'],
     },
     package: 'plugin',
     isPackage: true,

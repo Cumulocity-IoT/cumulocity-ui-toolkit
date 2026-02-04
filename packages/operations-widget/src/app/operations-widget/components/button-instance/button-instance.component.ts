@@ -1,11 +1,14 @@
 import { Component, EventEmitter, inject, Input, Output, TemplateRef } from '@angular/core';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { OperationButtonConfig } from '../../models/operations-widget-config.model';
+import { CoreModule } from '@c8y/ngx-components';
 
 @Component({
   selector: 'button-instance',
   templateUrl: './button-instance.component.html',
   styleUrls: ['./button-instance.component.scss'],
+  standalone: true,
+  imports: [CoreModule],
 })
 export class ButtonInstanceComponent {
   private modalService = inject(BsModalService);

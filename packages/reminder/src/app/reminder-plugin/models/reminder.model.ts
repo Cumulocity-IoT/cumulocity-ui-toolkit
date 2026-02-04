@@ -21,6 +21,7 @@ export const REMINDER_LOCAL_STORAGE_DEFAULT_CONFIG: ReminderConfig = {
 };
 
 export interface Reminder extends IEvent {
+  type: typeof REMINDER_TYPE;
   status: ReminderStatus;
   isGroup?: object;
   diff?: number;
@@ -51,16 +52,14 @@ export const ReminderGroupStatus = {
   upcoming: 'UPCOMING',
   cleared: 'CLEARED',
 } as const;
-export type ReminderGroupStatus =
-  (typeof ReminderGroupStatus)[keyof typeof ReminderGroupStatus];
+export type ReminderGroupStatus = (typeof ReminderGroupStatus)[keyof typeof ReminderGroupStatus];
 
 export const ReminderStatus = {
   active: 'ACTIVE',
   acknowledged: 'ACKNOWLEDGED',
   cleared: 'CLEARED',
 } as const;
-export type ReminderStatus =
-  (typeof ReminderStatus)[keyof typeof ReminderStatus];
+export type ReminderStatus = (typeof ReminderStatus)[keyof typeof ReminderStatus];
 
 export interface ReminderType {
   id: string;

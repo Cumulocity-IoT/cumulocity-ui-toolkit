@@ -1,0 +1,33 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: c8yui\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language: en\n"
+"Language-Team: \n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "favorites.title"
+msgstr "Favorites"
+
+msgid "favorites.grid.title"
+msgstr "Favorites"
+
+msgid "favorites.grid.empty-state"
+msgstr "No favorites to display."
+
+msgid "favorites.action.remove"
+msgstr "Remove from favorites"
+
+msgid "favorites.action.add"
+msgstr "Add to favorites"
+
+msgid "filter.object-type.title"
+msgstr "Object Type"
+
+msgid "filter.object-type.hint"
+msgstr "Show objects with type:"

@@ -38,4 +38,4 @@
 
 ## Add reusable commands
 
-- You can add those under `cypress/support/commands.ts`.
+- You can add those under `cypress/support/commands.ts`. 

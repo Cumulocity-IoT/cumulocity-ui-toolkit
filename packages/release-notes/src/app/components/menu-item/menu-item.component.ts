@@ -4,6 +4,7 @@ import { ReleaseNotesService } from '../../services/release-notes.service';
 @Component({
   selector: 'c8y-release-notes-menu-item',
   templateUrl: './menu-item.component.html',
+  standalone: false,
 })
 export class ReleaseNotesMenuItemComponent {
   private releaseNotesService = inject(ReleaseNotesService);
