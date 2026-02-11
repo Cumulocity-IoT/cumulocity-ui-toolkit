@@ -18,6 +18,7 @@ import { TenantOptionManagementService } from './tenant-option-management.servic
       path: 'tenant-option-management',
       label: 'Options',
       parent: 'Settings',
+      preventDuplicates: true,
     }),
   ],
 })
