@@ -11,7 +11,7 @@
 | Add linting setup, apply linting | Dirk, Hendrik, Christian | 100% |
 | Add CI/CD | Christian, Dirk | 100% |
 | Add as much plugins/ widgets as possible | Christian, Dirk, Divya, Felix, Vignesh | 42% (8/19) |
-| Publish repository | - | 0% |
+| Publish repository | - | 100% |
 
 
 ## Contributions 2025:
@@ -74,7 +74,7 @@ This document summarizes all commits in the repository, categorizing them by pac
     - Added plugin for managing tenant options, including encryption and JSON support.
   - *Feature/tenant options fixes* ([e1eaefe](https://github.com/Cumulocity-IoT/cumulocity-ui-toolkit/commit/e1eaefe7))
     - Updated for UI v. 1021 compatibility.
-
+    - 
 ---
 
 ### Shared Libraries (libs/components, helpers, pipes, services)
@@ -111,6 +111,25 @@ This document summarizes all commits in the repository, categorizing them by pac
 
 *This summary was generated based on commit messages, code changes, and file authorship. For full details, see the commit history on GitHub.*
 
+### Non toolkit improvements
+
+#### 1. new indoor-map-widget
+- **Authors:** Felix Lange
+- **Key Commits:**
+- Added features (https://github.com/Cumulocity-IoT/cumulocity-indoor-map-plugin)
+
+#### 2. layered-map-widget
+- **Authors:** Felix Lange
+- **Key Commits:**
+- Bugfixes + Version update (https://github.com/Cumulocity-IoT/cumulocity-indoor-map-plugin)
+
+### 3. Tech community article
+- **Authors:** Felix Lange
+- https://community.cumulocity.com/t/transforming-indoor-asset-tracking-with-the-cumulocity-indoor-map-plugin/14203
+
+### 4. Advanced data simulator (not yet published)
+- **Authors:** Felix Lange
+- Microservice to configure complex simulators via tenant options 
 
 # Goals 2026:
 
@@ -127,3 +146,5 @@ This document summarizes all commits in the repository, categorizing them by pac
 | GitHub page, TechCommunity article for Plugins and Lib |
 | Change setup to pnpm |
 | Contribute to c8y-skills |
+| AI research | 
+| Incorporate AI into CI/CD workflow |
