@@ -79,7 +79,7 @@ jobs:
           fi
 
           zip_name="${name}-${version}.zip"
-          (cd dist && zip -r "../release/${zip_name}" "$(basename "$dist_path")")
+          (cd "dist/$(basename "$dist_path")" && zip -r "../../release/${zip_name}" .)
           echo "✅ Created release/${zip_name}"
 
       - name: Upload build artifact
