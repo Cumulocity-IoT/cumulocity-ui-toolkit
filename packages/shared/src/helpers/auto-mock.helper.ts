@@ -1,5 +1,5 @@
 /**
- * Utility functions for creating and providing auto-mocked Angular services/classes for unit testing with Jasmine.
+ * Utility functions for creating and providing auto-mocked Angular services/classes for unit testing with Jest.
  *
  * @module auto-mock.helper
  */
@@ -12,7 +12,7 @@ import { Provider } from '@angular/core';
 /**
  * Automatically creates a mock object for the given class type.
  *
- * All methods are replaced with Jasmine spies, and all properties are defined with a getter returning an empty string.
+ * All methods are replaced with Jest mock functions (`jest.fn()`), and all properties are defined with a getter returning an empty string.
  *
  * @template T The type to mock.
  * @param obj The class constructor to mock.
@@ -33,7 +33,7 @@ export function autoMock<T>(obj: new (...args: any[]) => T): T {
 
   const allProperties = keys.filter((x) => !allMethods.includes(x));
 
-  allMethods.forEach((method) => (res[method] = jasmine.createSpy()));
+  allMethods.forEach((method) => (res[method] = jest.fn()));
 
   allProperties.forEach((property) => {
     Object.defineProperty(res, property, {

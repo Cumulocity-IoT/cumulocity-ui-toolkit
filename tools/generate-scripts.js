@@ -43,11 +43,18 @@ console.log('♻️  Removed all existing plugin scripts from package.json.');
 // -------------------------------------------------------------
 plugins.forEach((plugin) => {
   const short = plugin.replace('plugin.', '');
+  const pluginPkgPath = path.join(process.cwd(), 'packages', short, 'package.json');
 
-  pkg.scripts[`serve:${short}`] = `npm run _serve ${plugin}`;
+  pkg.scripts[`serve:${short}`] = `pnpm run _serve ${plugin}`;
   pkg.scripts[`build:${short}`] = `ng build ${plugin}`;
-  // pkg.scripts[`postbuild:${short}`] = `npm run _postbuild packages/${plugin.replace('plugin.', '')}`;
-  pkg.scripts[`test:${short}`] = `npm run _test ${plugin}`;
+
+  // Only generate a test script if the plugin package has its own test script
+  if (fs.existsSync(pluginPkgPath)) {
+    const pluginPkg = JSON.parse(fs.readFileSync(pluginPkgPath, 'utf8'));
+    if (pluginPkg.scripts && pluginPkg.scripts.test) {
+      pkg.scripts[`test:${short}`] = `pnpm --filter ${pluginPkg.name} run test`;
+    }
+  }
 });
 
 // -------------------------------------------------------------
