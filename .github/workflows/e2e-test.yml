@@ -51,18 +51,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'pnpm'
 
       - name: Install root dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Start Angular Server (package ${{ matrix.component }})
         run: |
           echo "Starting Angular server for package ${{ matrix.component }}"
-          npm run serve:${{ matrix.component }} &
+          pnpm run serve:${{ matrix.component }} &
           npx wait-on http://localhost:9001 --timeout 120000
           sleep 10
           echo "Angular server is up!"
@@ -78,7 +82,7 @@ jobs:
           CYPRESS_C8Y_SHELL_TARGET: ${{ env.C8Y_SHELL_TARGET }}
         run: |
           echo "Running tests with test ${{ matrix.component }}"
-          npm run e2e:run:${{ matrix.component }}
+          pnpm run e2e:run:${{ matrix.component }}
         timeout-minutes: 10
 
       - name: Stop Angular Server
