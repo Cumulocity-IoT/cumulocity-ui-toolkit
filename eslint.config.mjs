@@ -32,6 +32,7 @@ export default [
       '**/src/index.html',
       '**/test/cypress',
       '**/*.html',
+      'setup-jest.ts',
     ],
   },
   {

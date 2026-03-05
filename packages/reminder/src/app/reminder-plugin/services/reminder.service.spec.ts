@@ -68,9 +68,9 @@ describe('ReminderService', () => {
       status: 'CLEARED',
     };
 
-    const eventSpy = spyOn(eventService, 'update').and.returnValue(
-      Promise.resolve({ data: mockReminder }) as Promise<IResult<Reminder>>
-    );
+    const eventSpy = jest
+      .spyOn(eventService, 'update')
+      .mockResolvedValue({ data: mockReminder } as IResult<Reminder>);
 
     await service.update(mockReminder);
 
