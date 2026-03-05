@@ -60,8 +60,19 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
+      - name: Cache Cypress binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Cypress
+          key: cypress-${{ runner.os }}-${{ hashFiles('test/package.json') }}
+          restore-keys: |
+            cypress-${{ runner.os }}-
+
       - name: Install root dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Install Cypress binary
+        run: pnpm -C test exec cypress install
 
       - name: Start Angular Server (package ${{ matrix.component }})
         run: |
