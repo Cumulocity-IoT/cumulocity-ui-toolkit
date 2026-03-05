@@ -5,13 +5,5 @@ export default defineConfig({
   format: ['esm', 'cjs'],
   dts: true,
   clean: true,
-  external: [
-    /^@angular\//,
-    /^@c8y\//,
-    /^@ngx-/,
-    'rxjs',
-    'rxjs/operators',
-    'tslib',
-    'zone.js',
-  ],
+  external: [/^@angular\//, /^@c8y\//, /^@ngx-/, 'rxjs', 'rxjs/operators', 'tslib', 'zone.js'],
 });

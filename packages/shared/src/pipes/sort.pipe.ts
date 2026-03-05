@@ -11,7 +11,6 @@ export class SortPipe implements PipeTransform {
       return [];
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return sortBy(values, attr);
   }
 }

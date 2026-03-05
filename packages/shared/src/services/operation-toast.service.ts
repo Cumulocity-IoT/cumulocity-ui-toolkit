@@ -51,7 +51,7 @@ export class OperationToastService {
   }
 
   private handleRealtimeElement(operation: IOperation) {
-    const uuid = operation['uuid'];
+    const uuid = operation['uuid'] as string;
     const alert = this.alertsCache.get(uuid);
 
     if (alert) {
@@ -66,7 +66,7 @@ export class OperationToastService {
       // text += `<br /><a href="/apps/devicemanagement/index.html#/device/${operation.deviceId}/operations" target="_blank">Go to operation details</a>`;
       detailedData = operation['failureReason'] as string;
     } else {
-      detailedData = operation['param'];
+      detailedData = operation['param'] as string;
     }
 
     this.alertService.add({
@@ -76,7 +76,7 @@ export class OperationToastService {
       allowHtml: true,
     });
 
-    // first need to remove from cahhe and then check for unsubscribe!
+    // first need to remove from cache and then check for unsubscribe!
     this.alertsCache.delete(uuid);
     this.unsubscribe(uuid);
   }

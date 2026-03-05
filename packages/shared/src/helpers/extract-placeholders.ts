@@ -1,4 +1,4 @@
-import { set } from "lodash";
+import { set } from 'lodash';
 
 /**
  * Recursively walks an object/array and extracts unique template placeholders
