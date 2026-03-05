@@ -84,7 +84,8 @@ All commands run from the **repository root** unless noted.
 ## Shared Library (`packages/shared`)
 
 - The public API is defined entirely in `src/index.ts`.
-- Built with **tsdown** (`pnpm --filter shared build`), not Angular CLI.
+- Built with **ng-packagr** (`ng build shared`), not Angular CLI application builder.
+- Output goes to `packages/shared/dist/` (FESM2022 format).
 - When adding new exports, always add them to `src/index.ts`.
 - Unit tests inside `shared/` use the root `setup-jest.ts` (Angular TestBed environment).
 

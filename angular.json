@@ -3,6 +3,31 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
+    "shared": {
+      "projectType": "library",
+      "schematics": {},
+      "root": "packages/shared",
+      "sourceRoot": "packages/shared/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "tsConfig": "packages/shared/tsconfig.json",
+            "project": "packages/shared/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "packages/shared/tsconfig.json"
+            },
+            "development": {
+              "tsConfig": "packages/shared/tsconfig.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        }
+      }
+    },
     "plugin.reminder": {
       "projectType": "application",
       "schematics": {

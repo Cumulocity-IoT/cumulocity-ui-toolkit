@@ -1,6 +1,6 @@
 // Components
 export * from './components/alarm-icon/alarm-icon.component';
-export * from './components/auto-refresh/auto-refresh.component';
+export * from './components/auto-refresh/ps-auto-refresh.component';
 
 // Helpers
 export * from './helpers/auto-mock.helper';

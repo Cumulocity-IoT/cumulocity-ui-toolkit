@@ -20,7 +20,7 @@ export class C8yMeasurementPipe implements PipeTransform {
       return '-';
     } else if (l === 1) {
       const m = get(measurement, paths[0]) as { value: number | string; unit?: string };
-      const { value } = m;
+      let { value } = m;
       const unit = m.unit;
 
       if (!isNaN(+value)) {
