@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-misused-promises */
-import { CommonModule } from '@angular/common';
+
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CoreModule, FormsModule } from '@c8y/ngx-components';
 import { MapService } from '@c8y/ngx-components/map';
@@ -14,7 +14,7 @@ import { set } from 'lodash';
   </div> `,
   styleUrls: ['./ps-heatmap.component.css'],
   standalone: true,
-  imports: [CommonModule, CoreModule, FormsModule],
+  imports: [CoreModule, FormsModule],
 })
 export class HeatmapComponent implements OnInit, OnDestroy {
   private map!: L.Map;

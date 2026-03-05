@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { CoreModule } from '@c8y/ngx-components';
-import { CommonModule } from '@angular/common';
 import { CarouselModule } from 'ngx-bootstrap/carousel';
 import { GalleryImages } from './image-gallery.model';
 import { ViewEncapsulation } from '@angular/core';
@@ -10,7 +9,7 @@ import { ViewEncapsulation } from '@angular/core';
   templateUrl: './image-gallery.component.html',
   encapsulation: ViewEncapsulation.None,
   standalone: true,
-  imports: [CoreModule, CommonModule, CarouselModule],
+  imports: [CoreModule, CarouselModule],
 })
 export class ImageGalleryComponent {
   /**
