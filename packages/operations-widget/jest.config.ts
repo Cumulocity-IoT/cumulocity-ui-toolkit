@@ -15,7 +15,7 @@ const config: Config = {
       },
     ],
   },
-  transformIgnorePatterns: ['/node_modules/(?!.*(lodash-es|\.mjs))'],
+  transformIgnorePatterns: ['/node_modules/(?!.*(lodash-es|.mjs))'],
   moduleNameMapper: {
     '^~components/(.*)$': '<rootDir>/../shared/src/components/$1',
     '^~helpers/(.*)$': '<rootDir>/../shared/src/helpers/$1',

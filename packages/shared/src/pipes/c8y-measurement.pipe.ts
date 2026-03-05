@@ -19,8 +19,9 @@ export class C8yMeasurementPipe implements PipeTransform {
     if (l === 0) {
       return '-';
     } else if (l === 1) {
-      const m = get(measurement, paths[0]);
-      let { value, unit } = m;
+      const m = get(measurement, paths[0]) as { value: number | string; unit?: string };
+      const { value } = m;
+      const unit = m.unit;
 
       if (!isNaN(+value)) {
         value = this.number.transform(value, round ?? 'ceil', digitsInfo ?? '1.1-2');
@@ -38,7 +39,7 @@ export class C8yMeasurementPipe implements PipeTransform {
     const fragmentCandidates = Object.keys(m).filter((key) => !nope.includes(key));
 
     for (const key of fragmentCandidates) {
-      const fragment = get(m, key);
+      const fragment = get(m, key) as Record<string, unknown>;
       const nestedKeys = Object.keys(fragment);
 
       for (const nestedKey of nestedKeys) {

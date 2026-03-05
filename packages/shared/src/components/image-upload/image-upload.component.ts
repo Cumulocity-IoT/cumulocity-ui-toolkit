@@ -55,7 +55,7 @@ export class ImageUploadComponent {
     this.selectedFile = file.file;
 
     this.isLoading = true;
-    this.binaryService
+    void this.binaryService
       .create(file.file)
       .then((result) => {
         this.imageUploaded.emit(result.data);

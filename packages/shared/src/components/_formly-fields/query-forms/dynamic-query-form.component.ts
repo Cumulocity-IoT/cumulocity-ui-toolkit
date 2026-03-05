@@ -31,7 +31,7 @@ import { set } from 'lodash';
   </form>`,
 })
 export class DynamicQueryFormComponent implements AfterViewInit {
-  selectedFilters: { title: string }[] = [];
+  selectedFilters: Array<JSONSchema7 & { title: string }> = [];
 
   queryFormJSON: JSONSchema7 = {
     $schema: 'https://json-schema.org/draft/2019-09/schema',
@@ -43,18 +43,20 @@ export class DynamicQueryFormComponent implements AfterViewInit {
 
   form = new FormGroup({});
   fields: FormlyFieldConfig[] = [];
-  @Input() filter: any = {};
-  @Input() params: any[] = [];
+  @Input() filter: Record<string, unknown> = {};
+  @Input() params: Array<JSONSchema7 & { title: string }> = [];
 
   constructor(private jsonschema: C8yJSONSchema) {}
 
   ngAfterViewInit(): void {
+    const properties = this.queryFormJSON.properties as Record<string, JSONSchema7>;
+
     for (const title of Object.keys(this.filter)) {
       const match = this.params.find((p) => p.title === title);
 
       if (match) {
         this.selectedFilters.push(match);
-        set((<any>this.queryFormJSON).properties, match.title, match);
+        set(properties, match.title, match);
       }
     }
     this.reloadForm();
@@ -76,15 +78,15 @@ export class DynamicQueryFormComponent implements AfterViewInit {
     return '';
   }
 
-  queryParamClick(b: { title: string }) {
-    const properties = (<any>this.queryFormJSON).properties;
+  queryParamClick(b: JSONSchema7 & { title: string }) {
+    const properties = this.queryFormJSON.properties as Record<string, JSONSchema7>;
 
     if (this.selectedFilters.includes(b)) {
       this.selectedFilters = this.selectedFilters.filter((f) => f !== b);
       delete properties[b.title];
       delete this.filter[b.title];
     } else {
-      set((<any>this.queryFormJSON).properties, b.title, b);
+      set(properties, b.title, b);
       this.selectedFilters.push(b);
     }
     this.reloadForm();

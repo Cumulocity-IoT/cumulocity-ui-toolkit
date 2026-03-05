@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { IMeasurement, MeasurementService } from '@c8y/client';
 import { saveAs } from 'file-saver';
-import { from, Observable } from 'rxjs';
+import { concatMap, from, map, Observable, switchMap } from 'rxjs';
 import { get, has, isNil } from 'lodash';
 
 @Injectable()
@@ -35,49 +35,44 @@ export class MeasurementDownloadService {
   getMeasurementsWithProgress(
     source: string
   ): Observable<{ progress: number; measurements: IMeasurement[] }> {
-    return new Observable((subscriber) => {
-      const filter = this.createBaseFilter(source);
+    const filter = this.createBaseFilter(source);
 
-      from(this.getTotalPages(filter)).subscribe({
-        next: async (totalPagesArray) => {
-          const totalPages = totalPagesArray.length;
+    return from(this.getTotalPages(filter)).pipe(
+      switchMap((totalPagesArray) => {
+        const totalPages = totalPagesArray.length;
 
-          for (const currentPage of totalPagesArray) {
-            try {
-              const { data: measurements } = await this.measurementService.list({
+        return from(totalPagesArray).pipe(
+          concatMap((currentPage) =>
+            from(
+              this.measurementService.list({
                 ...filter,
                 withTotalPages: true,
                 currentPage,
-              });
-
-              subscriber.next({
+              })
+            ).pipe(
+              map(({ data: measurements }) => ({
                 progress: Math.round((currentPage / totalPages) * 100),
                 measurements,
-              });
-            } catch (error) {
-              subscriber.error(error);
-
-              return;
-            }
-          }
-
-          subscriber.complete();
-        },
-        error: (err) => {
-          subscriber.error(err);
-        },
-      });
-    });
+              }))
+            )
+          )
+        );
+      })
+    );
   }
 
   prepare(measurements: IMeasurement[]): string {
     const jsonRows = measurements.map((m) => {
-      const json = {};
+      const json: Record<string, unknown> = {};
       const paths = this.detectMeasurementPaths(m);
 
       for (const path of paths) {
-        json[path] = get(m, path).value;
+        const measurementValue = get(m, path) as { value: unknown };
+
+        json[path] = measurementValue.value;
       }
+
+      return json;
     });
     const csv = this.jsonToCsv(jsonRows);
     return csv;
@@ -89,7 +84,7 @@ export class MeasurementDownloadService {
     const fragmentCandidates = Object.keys(m).filter((key) => !nope.includes(key));
 
     for (const key of fragmentCandidates) {
-      const fragment = get(m, key);
+      const fragment = get(m, key) as Record<string, unknown>;
       const nestedKeys = Object.keys(fragment);
 
       for (const nestedKey of nestedKeys) {
@@ -102,7 +97,7 @@ export class MeasurementDownloadService {
     return result;
   }
 
-  private jsonToCsv(jsonData: any[]): string {
+  private jsonToCsv(jsonData: Record<string, unknown>[]): string {
     if (jsonData.length === 0) {
       throw new Error('The input JSON is empty.');
     }
@@ -114,7 +109,7 @@ export class MeasurementDownloadService {
     jsonData.forEach((item) => {
       const row = headers
         .map((header) => {
-          const value = item[header];
+          const value = item[header] as string | number | boolean | null | undefined;
           return !isNil(value) ? `"${value}"` : '';
         })
         .join(',');

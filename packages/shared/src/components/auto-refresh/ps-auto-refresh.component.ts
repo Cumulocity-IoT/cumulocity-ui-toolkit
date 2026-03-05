@@ -148,7 +148,9 @@ export class PSAutoRefreshComponent implements OnInit, AfterViewInit, OnDestroy 
 
   private listenOnLoadingChanges() {
     this.isLoading$.pipe(tap(() => this.countdownIntervalComponent?.stop())).subscribe((state) => {
-      !state && this.countdownIntervalComponent?.reset();
+      if (!state) {
+        this.countdownIntervalComponent?.reset();
+      }
     });
   }
 }

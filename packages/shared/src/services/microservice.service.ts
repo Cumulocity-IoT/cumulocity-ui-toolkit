@@ -34,20 +34,28 @@ export class MicroserviceService {
     },
   };
 
-  defaultResponseHandler = async (response: IFetchResponse) => {
+  defaultResponseHandler = async (response: IFetchResponse): Promise<unknown> => {
     if (!response.ok) {
-      try {
-        const errorMessage = await response.text();
-        const parsed = JSON.parse(errorMessage);
+      const errorMessage = await response.text();
+      let message = `Request failed with status ${response.status}`;
 
-        throw new Error(parsed.message);
-      } catch (e) {
-        return Promise.reject(response);
+      try {
+        const parsed = JSON.parse(errorMessage) as { message?: string };
+
+        if (parsed.message) {
+          message = parsed.message;
+        }
+      } catch {
+        // ignore JSON parse errors, use the status message
       }
+
+      throw new Error(message);
     }
 
     if (response.status !== 204) {
-      return response.json();
+      const data: unknown = await response.json();
+
+      return data;
     }
   };
 
@@ -55,17 +63,17 @@ export class MicroserviceService {
 
   async get(
     url: string,
-    responseHandler: (response: IFetchResponse) => Promise<any> = this.defaultResponseHandler
-  ) {
+    responseHandler: (response: IFetchResponse) => Promise<unknown> = this.defaultResponseHandler
+  ): Promise<unknown> {
     const response = await this.fetch.fetch(url, this.GET_OPTIONS);
     return responseHandler(response);
   }
 
   async post(
     url: string,
-    data: any,
-    responseHandler: (response: IFetchResponse) => Promise<any> = this.defaultResponseHandler
-  ) {
+    data: unknown,
+    responseHandler: (response: IFetchResponse) => Promise<unknown> = this.defaultResponseHandler
+  ): Promise<unknown> {
     const options = cloneDeep(this.POST_OPTIONS);
 
     options.body = JSON.stringify(data);
@@ -76,9 +84,9 @@ export class MicroserviceService {
 
   async put(
     url: string,
-    data: any,
-    responseHandler: (response: IFetchResponse) => Promise<any> = this.defaultResponseHandler
-  ) {
+    data: unknown,
+    responseHandler: (response: IFetchResponse) => Promise<unknown> = this.defaultResponseHandler
+  ): Promise<unknown> {
     const options = cloneDeep(this.PUT_OPTIONS);
 
     options.body = JSON.stringify(data);
@@ -87,11 +95,11 @@ export class MicroserviceService {
     return responseHandler(response);
   }
 
-  async delete(url: string) {
+  async delete(url: string): Promise<IFetchResponse> {
     const response = await this.fetch.fetch(url, this.DELETE_OPTIONS);
 
     if (!response.ok) {
-      return Promise.reject(response);
+      throw new Error(`DELETE request failed with status ${response.status}`);
     }
 
     return response;

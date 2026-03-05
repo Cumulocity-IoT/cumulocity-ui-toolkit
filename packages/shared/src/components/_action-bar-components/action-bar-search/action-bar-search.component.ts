@@ -13,7 +13,7 @@ export class ActionBarSearchComponent {
   @Input() placement: 'left' | 'right' = 'left';
 
   devices?: IResultList<IManagedObject>;
-  filterPipe?: UnaryFunction<Observable<[]>, Observable<never[]>>;
+  filterPipe?: UnaryFunction<Observable<IManagedObject[]>, Observable<IManagedObject[]>>;
   pattern = '';
   selected: IIdentified = { id: undefined, name: '' };
 
@@ -35,15 +35,17 @@ export class ActionBarSearchComponent {
   }
 
   loadDevices() {
-    this.inventory.list(this._filter).then((devices) => (this.devices = devices));
+    void this.inventory.list(this._filter).then((devices) => (this.devices = devices));
   }
 
   setPipe(filterStr: string) {
     this.pattern = filterStr;
     this.filterPipe = pipe(
-      map((data: []) => {
-        return data.filter(
-          (mo: any) => mo.name && mo.name.toLowerCase().indexOf(filterStr.toLowerCase()) > -1
+      map((data: IManagedObject[]) => {
+        return data.filter((mo) =>
+          (mo as IManagedObject & { name?: string }).name
+            ?.toLowerCase()
+            .includes(filterStr.toLowerCase())
         );
       })
     );

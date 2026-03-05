@@ -9,7 +9,7 @@ import { CoreModule } from '@c8y/ngx-components';
 })
 export class ActionBarReloadButton {
   requestInProgress = false;
-  @Input() refreshCallBack: () => Promise<any>;
+  @Input() refreshCallBack: () => Promise<void>;
 
   @Input() placement: 'left' | 'right' = 'left';
 

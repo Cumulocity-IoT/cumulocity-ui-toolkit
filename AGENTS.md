@@ -148,6 +148,15 @@ Use the `c8y-docs` tools when you need to look up Cumulocity REST API endpoints,
 
 ---
 
+## External Reference Docs
+
+Agents should consult these authoritative references when writing or reviewing code:
+
+- **Angular 18 full API & guide context:** [https://angular.dev/assets/context/llms-full.txt](https://angular.dev/assets/context/llms-full.txt) — use this when working with Angular APIs, decorators, lifecycle hooks, signals, or framework patterns.
+- **Mastering TypeScript skill:** [https://github.com/SpillwaveSolutions/mastering-typescript-skill/tree/main/mastering-typescript](https://github.com/SpillwaveSolutions/mastering-typescript-skill/tree/main/mastering-typescript) — follow the patterns and conventions described here for all TypeScript code in this repository.
+
+---
+
 ## What to Avoid
 
 - Do **not** manually add `serve:*`, `build:*`, or `test:*` scripts to the root `package.json` — use `generate:scripts`.

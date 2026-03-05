@@ -50,7 +50,7 @@ export class InventoryDeltaPollingService {
     return this.fetchMatchingManagedObjects(filter).then((sources) => this.toDelta(sources, mos));
   }
 
-  async toDelta(matches: Array<IManagedObject>, old: Array<string>) {
+  toDelta(matches: Array<IManagedObject>, old: Array<string>) {
     const delta = {
       add: new Array<IManagedObject>(),
       remove: new Array<string>(),
