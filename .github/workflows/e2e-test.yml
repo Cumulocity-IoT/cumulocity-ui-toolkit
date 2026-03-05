@@ -45,6 +45,7 @@ jobs:
     environment: e2e
     if: fromJson(needs.detect-changes.outputs.matrix).component != '[]'
     strategy:
+      fail-fast: false
       matrix: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
     name: E2E Test ${{ matrix.component }}
     steps:
