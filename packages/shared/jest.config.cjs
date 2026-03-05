@@ -15,5 +15,4 @@ module.exports = {
     ],
   },
   transformIgnorePatterns: ['/node_modules/(?!.*(lodash-es|\.mjs))'],
-  passWithNoTests: true,
 };

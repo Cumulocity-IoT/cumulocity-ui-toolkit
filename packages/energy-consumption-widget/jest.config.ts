@@ -24,7 +24,6 @@ const config: Config = {
     '^~services/(.*)$': '<rootDir>/../shared/src/services/$1',
     '^shared$': '<rootDir>/../shared/src/index.ts',
   },
-  passWithNoTests: true,
 };
 
 export default config;

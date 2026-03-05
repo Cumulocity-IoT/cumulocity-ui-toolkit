@@ -16,7 +16,7 @@
   ],
   "scripts": {
     "build": "run-s build:*",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --quiet --fix",
     "--pre/post-----------": "--------------------",
