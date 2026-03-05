@@ -5,6 +5,7 @@ import { NumberPipe } from '@c8y/ngx-components';
 
 @Pipe({
   name: 'c8yMeasurement',
+  standalone: false,
 })
 export class C8yMeasurementPipe implements PipeTransform {
   constructor(private number: NumberPipe) {}

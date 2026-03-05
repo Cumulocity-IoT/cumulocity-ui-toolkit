@@ -6,6 +6,7 @@ export interface FilterPipeValue {
 }
 @Pipe({
   name: 'filter',
+  standalone: false,
 })
 export class FilterPipe implements PipeTransform {
   transform<T>(data: T[], filterValue: FilterPipeValue[]): T[] {

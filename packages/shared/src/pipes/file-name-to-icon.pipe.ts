@@ -1,7 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { get } from 'lodash';
 
-@Pipe({ name: 'fileNameToIcon' })
+@Pipe({ name: 'fileNameToIcon', standalone: false })
 export class FileNameToIconPipe implements PipeTransform {
   fileTypeIconsMap: { [key: string]: string[] } = {
     'file-archive-o': ['7z', 'apk', 'cab', 'gz', 'iso', 'jar', 'rar', 'tar', 'zip'],
