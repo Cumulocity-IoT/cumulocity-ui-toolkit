@@ -30,7 +30,7 @@ jobs:
         id: set-matrix
         run: |
           git fetch origin main
-          components=$(git diff --name-only origin/main...HEAD | grep '^packages/' | cut -d '/' -f2 | sort -u || true)
+          components=$(git diff --name-only origin/main...HEAD | grep '^packages/' | cut -d '/' -f2 | sort -u | grep -v '^shared$' || true)
           if [ -z "$components" ]; then
             echo "matrix={\"component\": []}" >> $GITHUB_OUTPUT
           else
