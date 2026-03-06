@@ -64,7 +64,10 @@
     "test:tenant-option-management": "pnpm --filter cumulocity-tenant-option-management-plugin run test",
     "serve:operations-widget": "pnpm run _serve plugin.operations-widget",
     "build:operations-widget": "ng build plugin.operations-widget",
-    "test:operations-widget": "pnpm --filter cumulocity-operations-widget-plugin run test"
+    "test:operations-widget": "pnpm --filter cumulocity-operations-widget-plugin run test",
+    "serve:layered-map-widget": "pnpm run _serve plugin.layered-map-widget",
+    "build:layered-map-widget": "ng build plugin.layered-map-widget",
+    "test:layered-map-widget": "pnpm --filter cumulocity-layered-map-widget run test"
   },
   "dependencies": {
     "@angular/animations": "^18.2.0",

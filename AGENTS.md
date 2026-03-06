@@ -30,7 +30,7 @@ cumulocity-ui-toolkit/
 │   ├── energy-consumption-widget/
 │   ├── favorites-manager/
 │   ├── kpi-widget/
-│   ├── layered-map/
+│   ├── layered-map-widget/
 │   ├── operations-widget/
 │   ├── release-notes/
 │   ├── reminder/
