@@ -116,13 +116,15 @@ export class QueryLayerService {
     });
   }
 
-  normalize(params: object) {
-    for (const key of Object.keys(params)) {
-      if (get(params, key) instanceof Date) {
-        set(params, key, (get(params, key) as Date).toISOString());
+  normalize(params: object): object {
+    const result = { ...params };
+
+    for (const key of Object.keys(result)) {
+      if (get(result, key) instanceof Date) {
+        set(result, key, (get(result, key) as Date).toISOString());
       }
     }
 
-    return params;
+    return result;
   }
 }

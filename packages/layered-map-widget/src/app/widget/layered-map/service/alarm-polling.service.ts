@@ -6,7 +6,8 @@ import {
   PollingDelta,
   QueryLayerConfig,
 } from '../layered-map-widget.model';
-import { Observable, Subscriber } from 'rxjs';
+import { Observable, timer } from 'rxjs';
+import { exhaustMap, filter } from 'rxjs/operators';
 import { QueryLayerService } from './query-layer.service';
 import { isEmpty } from 'lodash';
 
@@ -25,28 +26,10 @@ export class AlarmPollingService {
       throw new Error('Layer is not alarm layer!');
     }
 
-    return new Observable<PollingDelta>((observer) => {
-      this.iterateAfter(observer, layer, interval);
-    });
-  }
-
-  private iterateAfter(observer: Subscriber<PollingDelta>, layer: MyLayer, interval: number) {
-    if (observer.closed) {
-      return;
-    }
-    setTimeout(() => {
-      this.checkForUpdates(layer).then(
-        (delta) => {
-          if (delta.add.length || delta.remove.length) {
-            observer.next(delta);
-          }
-          this.iterateAfter(observer, layer, interval);
-        },
-        () => {
-          this.iterateAfter(observer, layer, interval);
-        }
-      );
-    }, interval);
+    return timer(interval, interval).pipe(
+      exhaustMap(() => this.checkForUpdates(layer)),
+      filter((delta) => delta.add.length > 0 || delta.remove.length > 0)
+    );
   }
 
   private checkForUpdates(layer: MyLayer) {

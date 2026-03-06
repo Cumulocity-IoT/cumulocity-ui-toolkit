@@ -26,7 +26,7 @@ export class LayerModalComponent {
     name: '',
     color: '',
     icon: '',
-    enablePolling: 'true',
+    enablePolling: true,
     pollingInterval: 60,
   };
 
@@ -57,7 +57,7 @@ export class LayerModalComponent {
 
       if (layer.token) {
         void this.tenantOptionCredentials.getCredentials(layer.token).then((creds) => {
-          if (!creds) this.wmsCredentials = creds;
+          if (creds) this.wmsCredentials = creds;
         });
       }
     }

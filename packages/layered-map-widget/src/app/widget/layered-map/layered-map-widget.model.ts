@@ -7,7 +7,7 @@ export type BasicLayerConfig = {
   icon: string;
   color: string;
   pollingInterval: number;
-  enablePolling: 'true' | 'false';
+  enablePolling: boolean;
   popoverConfig?: PopoverConfig;
 };
 
@@ -96,10 +96,10 @@ export interface ILayeredMapWidgetConfig {
   saved?: boolean;
   layers: LayerConfig<BasicLayerConfig>[];
   positionPolling?: {
-    enabled: 'true' | 'false';
+    enabled: boolean;
     interval: number;
   };
-  autoCenter?: 'true' | 'false';
+  autoCenter?: boolean;
   manualCenter: {
     lat: number;
     long: number;

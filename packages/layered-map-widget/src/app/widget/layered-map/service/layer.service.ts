@@ -89,7 +89,7 @@ export class LayerService {
     const layer = Object.assign(new MyLayer(), setup);
 
     if (isWebMapServiceLayerConfig(setup.config)) {
-      layer.config.enablePolling = 'false';
+      layer.config.enablePolling = false;
       layer.config.icon = 'globe1';
       layer.initialLoad = Promise.resolve();
     }
@@ -127,8 +127,6 @@ export class LayerService {
 
   updateManagedObjects(mos: IManagedObject[], layer: MyLayer): void {
     for (const mo of mos) {
-      this.updatePosition(layer, mo.id, mo['c8y_Position'] as Position | undefined);
-
       if (isQueryLayerConfig(layer.config) && layer.config.type === 'Alarm') {
         this.updateMarkerIcon(mo.id, layer, mo['c8y_ActiveAlarmsStatus'] as AlarmStatus);
       }

@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { IManagedObject, InventoryService } from '@c8y/client';
 import { MyLayer } from '../layered-map-widget.model';
-import { Observable, Subscriber } from 'rxjs';
+import { Observable, timer } from 'rxjs';
+import { exhaustMap, filter } from 'rxjs/operators';
 import { QueryLayerService } from './query-layer.service';
 
 const FETCH_INTERVAL = 5000;
@@ -18,13 +19,14 @@ export class InventoryPollingService {
   ) {}
 
   createPolling$(
-    filter: object,
+    layerFilter: object,
     layer: MyLayer,
     interval = FETCH_INTERVAL
   ): Observable<InventoryDelta> {
-    return new Observable<InventoryDelta>((observer) => {
-      this.iterateAfter(observer, filter, layer, interval);
-    });
+    return timer(interval, interval).pipe(
+      exhaustMap(() => this.checkForUpdates(layerFilter, layer)),
+      filter((delta) => delta.add.length > 0 || delta.remove.length > 0)
+    );
   }
 
   toDelta(mos: Array<IManagedObject>, layer: MyLayer) {
@@ -46,32 +48,10 @@ export class InventoryPollingService {
     return delta;
   }
 
-  private iterateAfter(
-    observer: Subscriber<InventoryDelta>,
-    filter: object,
-    layer: MyLayer,
-    interval: number
-  ) {
-    if (observer.closed) {
-      return;
-    }
-    setTimeout(() => {
-      this.checkForUpdates(filter, layer).then(
-        (delta) => {
-          if (delta.add.length || delta.remove.length) {
-            observer.next(delta);
-          }
-          this.iterateAfter(observer, filter, layer, interval);
-        },
-        () => {
-          this.iterateAfter(observer, filter, layer, interval);
-        }
-      );
-    }, interval);
-  }
-
-  private checkForUpdates(filter: object, layer: MyLayer) {
-    return this.fetchMatchingManagedObjects(filter).then((sources) => this.toDelta(sources, layer));
+  private checkForUpdates(layerFilter: object, layer: MyLayer) {
+    return this.fetchMatchingManagedObjects(layerFilter).then((sources) =>
+      this.toDelta(sources, layer)
+    );
   }
 
   private async fetchMatchingManagedObjects(layerFilter: object) {

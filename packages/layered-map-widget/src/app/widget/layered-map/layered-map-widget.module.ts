@@ -26,7 +26,6 @@ import { AlarmDisplayComponent } from './popup/alarm-display/alarm-display.compo
 import { PopoverModalComponent } from './popover-config/popover-modal.component';
 import { ActionIconPipe } from './popup/action-icon.pipe';
 import { CenterMapModalComponent } from './center-map/center-map-modal.component';
-import { StringToBoolPipe } from './pipes/string-to-bool.pipe';
 import { assetPaths } from '../../../assets/assets';
 
 const BOOSTRAP_MODULES = [BsDatepickerModule, TimepickerModule, CollapseModule, TooltipModule];
@@ -41,7 +40,6 @@ const BOOSTRAP_MODULES = [BsDatepickerModule, TimepickerModule, CollapseModule, 
     PopoverModalComponent,
   ],
   declarations: [
-    StringToBoolPipe,
     LayeredMapWidgetConfig,
     LayeredMapWidgetComponent,
     SubDeviceResolverComponent,

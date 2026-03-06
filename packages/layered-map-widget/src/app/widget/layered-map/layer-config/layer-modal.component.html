@@ -144,8 +144,8 @@
               <label for="positionPolling" class="control-label">{{ 'Polling' | translate }}</label>
               <div class="c8y-select-wrapper">
                 <select class="form-control" id="positionPolling" [(ngModel)]="layer.enablePolling">
-                  <option value="false" title="Only refreshing on interaction">No automatic polling</option>
-                  <option value="true" title="Refreshing after a give interval and on interaction">Activate polling</option>
+                  <option [ngValue]="false" title="Only refreshing on interaction">No automatic polling</option>
+                  <option [ngValue]="true" title="Refreshing after a give interval and on interaction">Activate polling</option>
                 </select>
               </div>
             </div>
@@ -153,8 +153,8 @@
           <div class="col-xs-6">
             <div class="form-group form-group-sm m-b-0">
               <label for="pollingSlider" class="control-label">{{ 'Polling interval in seconds' | translate }}</label>
-              <c8y-range [(ngModel)]="layer.pollingInterval" [disabled]="!(layer.enablePolling | stringToBool)" class="label-bottom">
-                <input id="pollingSlider" type="range" min="1" max="180" step="1" [disabled]="!(layer.enablePolling | stringToBool)" />
+              <c8y-range [(ngModel)]="layer.pollingInterval" [disabled]="!layer.enablePolling" class="label-bottom">
+                <input id="pollingSlider" type="range" min="1" max="180" step="1" [disabled]="!layer.enablePolling" />
               </c8y-range>
             </div>
           </div>

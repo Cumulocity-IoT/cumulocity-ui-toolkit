@@ -18,7 +18,7 @@ export class TenantOptionCredentialsService {
    * @returns A promise that resolves to the generated token.
    */
   saveCredentials(credentials: { username: string; password: string }): Promise<string> {
-    const token = `${Math.floor(Math.random() * 1e16)}`;
+    const token = crypto.randomUUID();
     const username = this.tenantOptions.create({
       category: this.CATEGORY,
       key: `${token}.username`,

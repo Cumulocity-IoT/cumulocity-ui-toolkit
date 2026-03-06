@@ -43,7 +43,9 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
     }
 
     if (!has(this.config, 'autoCenter')) {
-      this.config.autoCenter = 'true';
+      this.config.autoCenter = true;
+    } else {
+      this.config.autoCenter = `${this.config.autoCenter}` === 'true';
     }
 
     if (!has(this.config, 'manualCenter')) {
@@ -52,10 +54,16 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
 
     if (!has(this.config, 'positionPolling')) {
       this.config.positionPolling = {
-        enabled: 'true',
+        enabled: true,
         interval: 10,
       };
+    } else {
+      this.config.positionPolling.enabled = `${this.config.positionPolling.enabled}` === 'true';
     }
+
+    this.config.layers.forEach((layer) => {
+      layer.config.enablePolling = `${layer.config.enablePolling}` === 'true';
+    });
   }
 
   async openLayerModal(layer?: LayerConfig<BasicLayerConfig>) {

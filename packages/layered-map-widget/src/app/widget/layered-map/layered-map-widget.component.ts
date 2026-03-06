@@ -1,9 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { AfterViewInit, Component, ElementRef, Input, OnDestroy, ViewChild } from '@angular/core';
 import type * as L from 'leaflet';
-import { LayeredMapWidgetService } from './service/layered-map-widget.service';
 import { isEmpty, isNil } from 'lodash';
 import { fromEvent, Subject, Subscription } from 'rxjs';
 import {
@@ -25,7 +21,6 @@ import { DashboardChildComponent } from '@c8y/ngx-components';
 @Component({
   selector: 'layered-map-widget',
   providers: [
-    LayeredMapWidgetService,
     InventoryPollingService,
     AlarmPollingService,
     EventPollingService,
@@ -162,6 +157,15 @@ export class LayeredMapWidgetComponent implements AfterViewInit, OnDestroy {
   }
 
   private async draw(config: ILayeredMapWidgetConfig) {
+    const asBool = (v: unknown): boolean => v === true || v === 'true';
+
+    if (config.autoCenter !== undefined) config.autoCenter = asBool(config.autoCenter);
+    if (config.positionPolling)
+      config.positionPolling.enabled = asBool(config.positionPolling.enabled);
+    config.layers?.forEach((l) => {
+      l.config.enablePolling = asBool(l.config.enablePolling);
+    });
+
     this.cfg = config;
     const osm = this.leaf.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 22,
@@ -204,7 +208,7 @@ export class LayeredMapWidgetComponent implements AfterViewInit, OnDestroy {
         }
       }
 
-      if (config.autoCenter === 'true') {
+      if (config.autoCenter) {
         void Promise.all(this.allLayers.map((layer) => layer.initialLoad)).then(() => {
           const bounds = this.layerService.extractMinMaxBounds(this.allLayers);
 
@@ -230,7 +234,7 @@ export class LayeredMapWidgetComponent implements AfterViewInit, OnDestroy {
     //   this.map.fitBounds(line.getBounds());
     // }
 
-    if (this.config.positionPolling?.enabled === 'true') {
+    if (this.config.positionPolling?.enabled) {
       this.createPositionUpdatePolling(this.allLayers);
     }
   }
@@ -239,7 +243,7 @@ export class LayeredMapWidgetComponent implements AfterViewInit, OnDestroy {
     this.stopPolling(layer);
     const cfg = layer.config;
 
-    if (!cfg.enablePolling || cfg.enablePolling === 'false') {
+    if (!cfg.enablePolling) {
       return;
     }
 
@@ -305,6 +309,7 @@ export class LayeredMapWidgetComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.destroy$.next();
+    this.destroy$.complete();
 
     try {
       this.tearDownRealtime();

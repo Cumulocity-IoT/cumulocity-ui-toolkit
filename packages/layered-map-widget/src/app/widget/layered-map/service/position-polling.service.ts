@@ -1,46 +1,27 @@
 import { Injectable } from '@angular/core';
 import { IManagedObject, InventoryService } from '@c8y/client';
-import { Observable, Subscriber } from 'rxjs';
+import { Observable, timer } from 'rxjs';
+import { exhaustMap, filter, map, tap } from 'rxjs/operators';
 
 @Injectable()
 export class PositionPollingService {
   constructor(private inventory: InventoryService) {}
 
   createPolling$(filterQuery: string, interval: number): Observable<IManagedObject[]> {
-    return new Observable<IManagedObject[]>((observer) => {
-      const currentDate = new Date().toISOString();
+    let currentDate = new Date().toISOString();
 
-      this.iterateAfter(observer, currentDate, filterQuery, interval);
-    });
-  }
+    return timer(interval, interval).pipe(
+      exhaustMap(() => this.checkForUpdates(filterQuery, currentDate)),
+      filter((result) => result.data.length > 0),
+      tap((result) => {
+        const moWithLatestDate = result.data.reduce((a, b) =>
+          a.lastUpdated > b.lastUpdated ? a : b
+        );
 
-  private iterateAfter(
-    observer: Subscriber<IManagedObject[]>,
-    currentDate: string,
-    filterQuery: string,
-    interval: number
-  ) {
-    if (observer.closed) {
-      return;
-    }
-    setTimeout(() => {
-      this.checkForUpdates(filterQuery, currentDate).then(
-        (result) => {
-          if (result.data.length) {
-            observer.next(result.data);
-            const moWithLatestDate = result.data.reduce((a, b) =>
-              a.lastUpdated > b.lastUpdated ? a : b
-            );
-
-            currentDate = new Date(moWithLatestDate.lastUpdated).toISOString();
-          }
-          this.iterateAfter(observer, currentDate, filterQuery, interval);
-        },
-        () => {
-          this.iterateAfter(observer, currentDate, filterQuery, interval);
-        }
-      );
-    }, interval);
+        currentDate = new Date(moWithLatestDate.lastUpdated).toISOString();
+      }),
+      map((result) => result.data)
+    );
   }
 
   private checkForUpdates(filterQuery: string, lastUpdate: string) {
