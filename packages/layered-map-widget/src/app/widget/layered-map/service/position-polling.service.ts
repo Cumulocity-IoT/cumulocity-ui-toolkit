@@ -9,6 +9,7 @@ export class PositionPollingService {
   createPolling$(filterQuery: string, interval: number): Observable<IManagedObject[]> {
     return new Observable<IManagedObject[]>((observer) => {
       const currentDate = new Date().toISOString();
+
       this.iterateAfter(observer, currentDate, filterQuery, interval);
     });
   }
@@ -30,6 +31,7 @@ export class PositionPollingService {
             const moWithLatestDate = result.data.reduce((a, b) =>
               a.lastUpdated > b.lastUpdated ? a : b
             );
+
             currentDate = new Date(moWithLatestDate.lastUpdated).toISOString();
           }
           this.iterateAfter(observer, currentDate, filterQuery, interval);

@@ -11,6 +11,7 @@ export class SelectedDevicesService {
   async getDevices(input: IManagedObject | { id: string }) {
     let deviceMOs: IManagedObject[];
     let mo: IManagedObject;
+
     if (!has(input, 'name') || !has(input, 'type')) {
       mo = (await this.inventory.detail(input.id)).data;
     } else {
@@ -22,6 +23,7 @@ export class SelectedDevicesService {
     } else {
       deviceMOs = [mo];
     }
+
     return deviceMOs;
   }
 

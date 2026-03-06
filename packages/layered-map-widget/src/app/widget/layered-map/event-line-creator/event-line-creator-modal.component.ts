@@ -21,7 +21,7 @@ type IEventsForm = {
   providers: [LayeredMapWidgetService],
   templateUrl: './event-line-creator-modal.component.html',
   styleUrls: ['./event-line-creator-modal.component.less'],
-  standalone: false
+  standalone: false,
 })
 export class EventLineCreatorModalComponent implements AfterViewInit {
   title = 'Create track';
@@ -45,6 +45,7 @@ export class EventLineCreatorModalComponent implements AfterViewInit {
     endTime: null,
     trackName: '',
   };
+
   isLoadingEvents = false;
 
   options: MapOptions = {
@@ -60,9 +61,13 @@ export class EventLineCreatorModalComponent implements AfterViewInit {
     center: latLng(0, 0),
     attributionControl: false,
   };
+
   map: LMap | undefined;
 
-  constructor(public bsModalRef: BsModalRef, private trackService: LayeredMapWidgetService) {}
+  constructor(
+    public bsModalRef: BsModalRef,
+    private trackService: LayeredMapWidgetService
+  ) {}
 
   ngAfterViewInit(): void {
     if (this.map) {
@@ -81,14 +86,18 @@ export class EventLineCreatorModalComponent implements AfterViewInit {
   async onReload() {
     this.isLoadingEvents = true;
     const f = this.eventsForm;
+
     if (!f.startDate || !f.startTime || !f.endDate || !f.endTime) {
       this.text = 'Please provide valid start and end dates and times.';
       this.isLoadingEvents = false;
+
       return;
     }
+
     if (f.deviceId === null) {
       this.text = 'Please select a device.';
       this.isLoadingEvents = false;
+
       return;
     }
     const startDateAndTime = new Date(
@@ -112,9 +121,12 @@ export class EventLineCreatorModalComponent implements AfterViewInit {
       endDateAndTime,
       f.deviceId
     );
+
     this.isLoadingEvents = false;
+
     if (isEmpty(coords)) {
       this.text = 'Could not find any coordinates for timeframe.';
+
       return;
     }
 
@@ -123,7 +135,7 @@ export class EventLineCreatorModalComponent implements AfterViewInit {
       this.line = polyline(coords ?? []);
       this.line.addTo(this.map);
       this.map.fitBounds(this.line.getBounds());
-  
+
       this.coordinates = coords ?? [];
       this.text = `Loaded ${(coords ?? []).length} coordinates.`;
     }

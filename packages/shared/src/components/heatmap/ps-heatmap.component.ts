@@ -54,7 +54,7 @@ export class HeatmapComponent implements OnInit, OnDestroy {
       className: 'bw-layer',
     });
 
-    this.map = this.l.map(this.mapReference.nativeElement, {
+    this.map = this.l.map(this.mapReference.nativeElement as HTMLElement, {
       ...this.options,
       layers: [baseLayer],
     });
@@ -103,8 +103,8 @@ export class HeatmapComponent implements OnInit, OnDestroy {
               posInSubTile.reduce((sum, pos) => sum + pos.value, 0) / posInSubTile.length;
             const rgb = this.getRGBForValue(averageValue);
 
-            ctx!.fillStyle = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.9)`;
-            ctx!.fillRect(x, y, subTileSize, subTileSize);
+            ctx.fillStyle = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.9)`;
+            ctx.fillRect(x, y, subTileSize, subTileSize);
           }
         }
       }

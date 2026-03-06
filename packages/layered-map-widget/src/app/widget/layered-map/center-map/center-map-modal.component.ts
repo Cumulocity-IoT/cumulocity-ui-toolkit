@@ -11,7 +11,7 @@ import { MapService } from '@c8y/ngx-components/map';
   providers: [LocationGeocoderService],
   styleUrls: ['./center-map-modal.component.less'],
   templateUrl: './center-map-modal.component.html',
-  standalone: false
+  standalone: false,
 })
 export class CenterMapModalComponent implements AfterViewInit, OnDestroy {
   leaf!: typeof L;
@@ -28,6 +28,7 @@ export class CenterMapModalComponent implements AfterViewInit, OnDestroy {
       }
     | undefined
   > = new Subject();
+
   labels: ModalLabels = {
     ok: 'Save',
     cancel: 'Cancel',
@@ -39,9 +40,17 @@ export class CenterMapModalComponent implements AfterViewInit, OnDestroy {
     zoomLevel: number;
   };
 
-  constructor(public bsModalRef: BsModalRef, private geo: LocationGeocoderService, private mapService: MapService) {}
+  constructor(
+    public bsModalRef: BsModalRef,
+    private geo: LocationGeocoderService,
+    private mapService: MapService
+  ) {}
 
-  async ngAfterViewInit() {
+  ngAfterViewInit(): void {
+    void this.initAfterView();
+  }
+
+  private async initAfterView(): Promise<void> {
     this.leaf = await this.mapService.getLeaflet();
     const options: L.MapOptions = {
       zoom: 15,
@@ -56,25 +65,32 @@ export class CenterMapModalComponent implements AfterViewInit, OnDestroy {
       attributionControl: false,
       scrollWheelZoom: false,
     };
-    this.map = this.leaf.map(this.mapReference.nativeElement, options).setView(this.leaf.latLng(51.505, -0.09), 13);
+
+    this.map = this.leaf
+      .map(this.mapReference.nativeElement as HTMLElement, options)
+      .setView(this.leaf.latLng(51.505, -0.09), 13);
 
     const { lat, long, zoomLevel } = this.center;
+
     if (lat && long && zoomLevel) {
       const bounds = this.leaf.latLng(lat, long);
+
       this.map.setView(bounds, zoomLevel);
     }
 
     fromEvent<L.LeafletEvent>(this.map, 'zoomend')
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
-        const zoom = this.map!.getZoom();
+        const zoom = this.map.getZoom();
+
         this.center.zoomLevel = zoom;
       });
 
     fromEvent<L.DragEndEvent>(this.map, 'dragend')
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
-        const center = this.map!.getCenter();
+        const center = this.map.getCenter();
+
         this.center.lat = center.lat;
         this.center.long = center.lng;
       });
@@ -98,6 +114,7 @@ export class CenterMapModalComponent implements AfterViewInit, OnDestroy {
 
   async navigateToAddress(address: string): Promise<void> {
     const { lat, lon } = await this.geo.geoCode(address);
+
     if (!isNil(lat) && !isNaN(lat) && !isNil(lon) && !isNaN(lon)) {
       this.map?.flyTo([lat, lon], this.center.zoomLevel, { duration: 1 });
       this.center.lat = lat;
@@ -109,6 +126,7 @@ export class CenterMapModalComponent implements AfterViewInit, OnDestroy {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition((position) => {
         const { latitude, longitude } = position.coords;
+
         this.center.lat = latitude;
         this.center.long = longitude;
         this.map?.flyTo([latitude, longitude], this.center.zoomLevel, { duration: 1 });

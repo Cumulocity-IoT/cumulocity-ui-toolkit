@@ -1,5 +1,11 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { BasicLayerConfig, isDeviceFragmentLayerConfig, isQueryLayerConfig, isWebMapServiceLayerConfig, LayerConfig } from '../layered-map-widget.model';
+import {
+  BasicLayerConfig,
+  isDeviceFragmentLayerConfig,
+  isQueryLayerConfig,
+  isWebMapServiceLayerConfig,
+  LayerConfig,
+} from '../layered-map-widget.model';
 @Component({
   templateUrl: './layer-list.component.html',
   selector: 'layer-list',
@@ -45,6 +51,7 @@ export class LayerListComponent {
     if (isDeviceFragmentLayerConfig(cfg)) {
       return `Devices with ${cfg.fragment}=${cfg.value}`;
     }
+
     if (isQueryLayerConfig(cfg)) {
       return `${cfg.type} with query ${JSON.stringify(cfg.filter)}`;
     }

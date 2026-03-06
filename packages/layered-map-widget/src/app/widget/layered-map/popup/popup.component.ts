@@ -9,10 +9,14 @@ import { isEmpty } from 'lodash';
   selector: 'popup-component',
   templateUrl: './popup.component.html',
   providers: [PopoverActionService],
-  standalone: false
+  standalone: false,
 })
 export class PopupComponent {
-  constructor(private inventory: InventoryService, private events: EventService, private actions: PopoverActionService) {}
+  constructor(
+    private inventory: InventoryService,
+    private events: EventService,
+    private actions: PopoverActionService
+  ) {}
 
   private _content!: { deviceId: string; layer: MyLayer };
   @Input() set content(value: { deviceId: string; layer: MyLayer }) {
@@ -35,27 +39,29 @@ export class PopupComponent {
     this.isLoading = true;
 
     const promises = [this.fetchDevice()];
+
     if (this.cfg.showDate) {
       promises.push(this.fetchLatestDate());
     }
 
-    Promise.all(promises).finally(() => (this.isLoading = false));
+    void Promise.all(promises).finally(() => (this.isLoading = false));
   }
 
-  private fetchDevice() {
-    this.inventory.detail(this._content.deviceId).then((result) => {
+  private fetchDevice(): Promise<void> {
+    return this.inventory.detail(this._content.deviceId).then((result) => {
       this.mo = result.data;
     });
   }
 
-  private fetchLatestDate() {
+  private fetchLatestDate(): Promise<void> {
     const eventFilter = {
       pageSize: 1,
       withTotalPages: false,
       fragmentType: 'c8y_Position',
       source: this._content.deviceId,
     };
-    this.events.list(eventFilter).then((result) => {
+
+    return this.events.list(eventFilter).then((result) => {
       if (!isEmpty(result.data)) {
         this.lastUpdated = result.data[0].time;
       }
@@ -69,12 +75,15 @@ export class PopupComponent {
 
   onUpdate(mo: IManagedObject): void {
     this.lastUpdated = mo.lastUpdated;
+
     if (this.active) {
-      const newCoord = latLng(mo['c8y_Position']);
+      const newCoord = latLng(mo['c8y_Position'] as { lat: number; lng: number });
+
       if (isEmpty(this.line)) {
         this.line.push(newCoord);
       } else {
         const latestCoord = this.line[this.line.length - 1];
+
         if (latestCoord.distanceTo(newCoord) > 0) {
           this.line.push(newCoord);
         }
@@ -83,9 +92,8 @@ export class PopupComponent {
   }
 
   sendAction(action: PopoverAction, mo: IManagedObject) {
-    this.actions.send(action, mo);
+    void this.actions.send(action, mo);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   onHide(): void {}
 }

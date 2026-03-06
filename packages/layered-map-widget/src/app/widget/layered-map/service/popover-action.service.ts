@@ -49,10 +49,11 @@ export class PopoverActionService {
     let newAlarm: IAlarm = {
       source: mo,
       time: new Date().toISOString(),
-      severity: partial.severity!,
-      type: partial.type!,
-      text: partial.text!,
+      severity: partial.severity,
+      type: partial.type,
+      text: partial.text,
     };
+
     // add potential custom fragments
     newAlarm = { ...newAlarm, ...partial };
 
@@ -64,9 +65,10 @@ export class PopoverActionService {
     let newEvent: IEvent = {
       source: mo,
       time: new Date().toISOString(),
-      type: partial.type!,
-      text: partial.text!,
+      type: partial.type,
+      text: partial.text,
     };
+
     // add potential custom fragments
     newEvent = { ...newEvent, ...partial };
 
@@ -78,6 +80,7 @@ export class PopoverActionService {
     let newOperation: IOperation = {
       deviceId: mo.id,
     };
+
     // add potential custom fragments
     newOperation = { ...newOperation, ...partial };
 

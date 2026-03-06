@@ -21,7 +21,10 @@ const EMPTY_EVENT: ILocationUpdateEvent = {
 };
 @Injectable()
 export class LocationRealtimeService extends RealtimeService<IEvent> {
-  constructor(realtime: RealtimeSubjectService, private event: EventService) {
+  constructor(
+    realtime: RealtimeSubjectService,
+    private event: EventService
+  ) {
     super(realtime);
   }
 
@@ -35,10 +38,13 @@ export class LocationRealtimeService extends RealtimeService<IEvent> {
 
   startListening(devices: IManagedObject[]): Map<string, Observable<ILocationUpdateEvent>> {
     const cache = new Map<string, Observable<ILocationUpdateEvent>>();
+
     for (const device of devices) {
       const observable$ = this.fetchLatestAndRealtime$(device.id);
+
       cache.set(device.id, observable$);
     }
+
     return cache;
   }
 
@@ -60,7 +66,7 @@ export class LocationRealtimeService extends RealtimeService<IEvent> {
 
     const realtime$ = this.onCreate$(source).pipe(
       filter((event) => this.isLocationUpdateEvent(event)),
-      map((event) => event as ILocationUpdateEvent)
+      map((event) => event)
     );
 
     return merge(latestValue$, realtime$).pipe(

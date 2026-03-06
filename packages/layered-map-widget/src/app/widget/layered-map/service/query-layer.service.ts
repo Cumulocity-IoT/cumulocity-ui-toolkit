@@ -23,10 +23,12 @@ export class QueryLayerService {
     const resolvers: Promise<void>[] = [];
 
     let res = await this.alarm.list(filter);
+
     while (res.data.length) {
       const ids = res.data
         .filter((alarm) => !result.has(alarm.source.id))
         .map((alarm) => alarm.source.id);
+
       ids.forEach((id) => result.set(id, null));
       resolvers.push(
         this.resolveManagedObjects(ids).then((mos) =>
@@ -41,7 +43,8 @@ export class QueryLayerService {
     }
 
     await Promise.all(resolvers);
-    return [...result.values()].filter((mo) => mo !== null) as IManagedObject[];
+
+    return [...result.values()].filter((mo) => mo !== null);
   }
 
   async fetchByInventoryQuery(params: object) {
@@ -53,16 +56,20 @@ export class QueryLayerService {
     };
 
     let res = await this.inventory.list(filter);
+
     while (res.data.length) {
       result.push(...res.data);
+
       if (res.data.length < (res.paging?.pageSize ?? -1)) {
         break;
       }
+
       if (!res.paging?.nextPage) {
         break;
       }
       res = await res.paging.next();
     }
+
     return result;
   }
 
@@ -76,23 +83,27 @@ export class QueryLayerService {
     const resolvers: Promise<void>[] = [];
 
     let res = await this.event.list(filter);
+
     while (res.data.length) {
       const ids = res.data
         .filter((event) => !result.has(event.source.id))
         .map((event) => event.source.id);
+
       ids.forEach((id) => result.set(id, null));
       resolvers.push(
         this.resolveManagedObjects(ids).then((mos) =>
           mos.data.forEach((mo) => result.set(mo.id, mo))
         )
       );
+
       if (!res.paging?.nextPage) {
         break;
       }
       res = await res.paging.next();
     }
     await Promise.all(resolvers);
-    return [...result.values()].filter((mo) => mo !== null) as IManagedObject[];
+
+    return [...result.values()].filter((mo) => mo !== null);
   }
 
   resolveManagedObjects(ids: string[]) {
@@ -108,9 +119,10 @@ export class QueryLayerService {
   normalize(params: object) {
     for (const key of Object.keys(params)) {
       if (get(params, key) instanceof Date) {
-        set(params, key, get(params, key).toISOString());
+        set(params, key, (get(params, key) as Date).toISOString());
       }
     }
+
     return params;
   }
 }

@@ -27,21 +27,26 @@ export class LayeredMapWidgetService {
     ) {
       return config.tracks?.find((t) => t.name === config.selectedTrack);
     }
+
     return undefined;
   }
 
   createLines(coords: LatLng[]): Polyline[] {
     const last = coords.length - 1;
     const circuit: Polyline[] = [];
+
     for (let i = 0; i < last; i++) {
       const line = polyline([coords[i], coords[i + 1]]);
+
       circuit.push(line);
     }
+
     return circuit;
   }
 
   async fetchCoordinates(startDate: string, endDate: string, deviceId: number) {
     const events = await this.fetchHistoricEvents(startDate, endDate, deviceId);
+
     if (isEmpty(events)) {
       return null;
     }

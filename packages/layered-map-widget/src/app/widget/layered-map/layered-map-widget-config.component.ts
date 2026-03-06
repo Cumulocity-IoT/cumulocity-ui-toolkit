@@ -6,7 +6,12 @@ import { take } from 'rxjs/operators';
 import { clone, cloneDeep, has } from 'lodash';
 import { EventLineCreatorModalComponent } from './event-line-creator/event-line-creator-modal.component';
 import { DrawLineCreatorModalComponent } from './draw-line-creator/draw-line-creator-modal.component';
-import { BasicLayerConfig, ILayeredMapWidgetConfig, ITrack, LayerConfig } from './layered-map-widget.model';
+import {
+  BasicLayerConfig,
+  ILayeredMapWidgetConfig,
+  ITrack,
+  LayerConfig,
+} from './layered-map-widget.model';
 import { LayerModalComponent } from './layer-config/layer-modal.component';
 import { PopoverModalComponent } from './popover-config/popover-modal.component';
 import { CenterMapModalComponent } from './center-map/center-map-modal.component';
@@ -22,6 +27,8 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
     layers: [],
     manualCenter: { lat: 0, long: 0, zoomLevel: 15 },
   };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ng1FormRef?: any;
   items: IManagedObject[] = [];
   mode!: WidgetConfigMode;
@@ -55,18 +62,22 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
     const modalRef = this.bsModalService.show(LayerModalComponent, {});
 
     const close = modalRef.content?.closeSubject.pipe(take(1)).toPromise();
+
     if (!layer) {
       // create mode
       const created = await close;
-      if (!!created) {
+
+      if (created) {
         this.config.layers?.push({ config: created, active: true });
         this.config.layers = [...this.config.layers];
       }
     } else {
       // edit mode
       const original = cloneDeep(layer.config);
+
       modalRef.content?.setLayer(layer.config);
       const updated = await close;
+
       if (!updated) {
         layer.config = original;
       }
@@ -80,6 +91,7 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
     const modalRef = this.bsModalService.show(PopoverModalComponent, { initialState });
     const close = modalRef.content?.closeSubject.pipe(take(1)).toPromise();
     const popoverConfig = await close;
+
     if (popoverConfig) {
       layer.config.popoverConfig = popoverConfig;
     }
@@ -92,17 +104,18 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
     const modalRef = this.bsModalService.show(CenterMapModalComponent, { initialState });
     const modal = modalRef.content?.closeSubject.pipe(take(1)).toPromise();
     const center = await modal;
+
     if (center) {
       this.config.manualCenter = center;
     }
   }
 
   editLayer(layer: LayerConfig<BasicLayerConfig>) {
-    this.openLayerModal(layer);
+    void this.openLayerModal(layer);
   }
 
   editPopover(layer: LayerConfig<BasicLayerConfig>) {
-    this.openPopoverModal(layer);
+    void this.openPopoverModal(layer);
   }
 
   deleteLayer(layer: LayerConfig<BasicLayerConfig>) {
@@ -111,9 +124,11 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
 
   async openEventTrackCreatorModal() {
     const modalRef = this.bsModalService.show(EventLineCreatorModalComponent, {});
-    modalRef.content!.items = clone(this.config.devices ?? []); // TODO: remove this and add device selection in event modal
+
+    modalRef.content.items = clone(this.config.devices ?? []); // TODO: remove this and add device selection in event modal
     const openExportTemplateModal = modalRef.content?.closeSubject.pipe(take(1)).toPromise();
     const track = await openExportTemplateModal;
+
     if (track) {
       this.addTrackToConfig(track);
     }
@@ -123,8 +138,9 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
     const modalRef = this.bsModalService.show(DrawLineCreatorModalComponent, {
       class: 'modal-lg',
     });
-    const openExportTemplateModal = modalRef.content!.closeSubject.pipe(take(1)).toPromise();
+    const openExportTemplateModal = modalRef.content.closeSubject.pipe(take(1)).toPromise();
     const track = await openExportTemplateModal;
+
     if (track) {
       this.addTrackToConfig(track);
     }
@@ -134,6 +150,7 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
     if (!track) {
       return;
     }
+
     if (!this.config.tracks) {
       this.config.tracks = [];
     }
@@ -142,6 +159,7 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
 
   deleteTrack(track: ITrack): void {
     this.config.tracks = this.config.tracks?.filter((t) => t.name !== track.name);
+
     if (this.config.selectedTrack === track.name) {
       this.config.selectedTrack = undefined;
     }
@@ -149,6 +167,7 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
 
   userChangedSelection(event: { checked: boolean; track: ITrack }): void {
     const { checked, track } = event;
+
     if (checked) {
       // check and select a new element (automatically unchecks other ones)
       this.config.selectedTrack = track.name;
@@ -157,12 +176,13 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
     }
   }
 
-  async onBeforeSave(config?: ILayeredMapWidgetConfig): Promise<boolean> {
+  onBeforeSave(config?: ILayeredMapWidgetConfig): Promise<boolean> {
     if (!config) {
-      return false;
+      return Promise.resolve(false);
     }
 
     config.saved = true;
-    return true;
+
+    return Promise.resolve(true);
   }
 }

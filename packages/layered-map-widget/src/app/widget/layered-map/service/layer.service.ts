@@ -17,25 +17,39 @@ import { PopUpService } from './popup.service';
 import { QueryLayerService } from './query-layer.service';
 import { SelectedDevicesService } from './selected-devices.service';
 
+type Position = { lat: number; lng: number; alt?: number };
+type AlarmStatus = { critical?: number; major?: number; minor?: number; warning?: number };
+
 @Injectable({ providedIn: 'root' })
 export class LayerService {
-  constructor(private popupService: PopUpService, private markerIconService: MarkerIconService, private queryLayerService: QueryLayerService, private selectedDevicesService: SelectedDevicesService) {}
+  constructor(
+    private popupService: PopUpService,
+    private markerIconService: MarkerIconService,
+    private queryLayerService: QueryLayerService,
+    private selectedDevicesService: SelectedDevicesService
+  ) {}
 
-  createLayers(configs: LayerConfig<BasicLayerConfig>[]) {
-    return Promise.all(configs.map((cfg) => this.createLayer(cfg)));
+  createLayers(configs: LayerConfig<BasicLayerConfig>[]): Promise<MyLayer[]> {
+    return Promise.resolve(configs.map((cfg) => this.createLayer(cfg)));
   }
 
   load(layer: MyLayer) {
     const cfg = layer.config;
+
     if (isQueryLayerConfig(cfg)) {
-      layer.initialLoad = this.fechtRequestForType(cfg.type, cfg.filter).then((devices) => this.responseHandlerForType(cfg.type, devices, layer));
+      layer.initialLoad = this.fechtRequestForType(cfg.type, cfg.filter).then((devices) =>
+        this.responseHandlerForType(cfg.type, devices, layer)
+      );
     } else if (isDeviceFragmentLayerConfig(cfg)) {
       layer.initialLoad = this.selectedDevicesService.getDevices(cfg.device).then((devices) => {
         const matches = this.getMatches(cfg, devices || []);
+
         // assign devices mathcing the layer criteria
         layer.devices = matches.map((d) => d.id);
         // create coordinate cache for devices having the c8y_Position fragment
-        matches.filter((d) => has(d, 'c8y_Position') && !isEmpty(d['c8y_Position'])).forEach((d) => layer.coordinates.set(d.id, latLng(d['c8y_Position'])));
+        matches
+          .filter((d) => has(d, 'c8y_Position') && !isEmpty(d['c8y_Position']))
+          .forEach((d) => layer.coordinates.set(d.id, latLng(d['c8y_Position'] as Position)));
 
         this.createLayerGroup(layer);
       });
@@ -51,25 +65,29 @@ export class LayerService {
       case 'Event':
         return this.queryLayerService.fetchByEventQuery(filter);
       default:
-        return Promise.reject(`Unknown type: ${type}`);
+        return Promise.reject(new Error(`Unknown type: ${type}`));
     }
   }
 
   private responseHandlerForType(type: string, devices: IManagedObject[], layer: MyLayer) {
     layer.devices = devices.map((d) => d.id);
+
     if (type === 'Alarm') {
       devices.forEach((d) => {
-        this.updatePosition(layer, d.id, d['c8y_Position']);
-        this.updateMarkerIcon(d.id, layer, d['c8y_ActiveAlarmsStatus']);
+        this.updatePosition(layer, d.id, d['c8y_Position'] as Position | undefined);
+        this.updateMarkerIcon(d.id, layer, d['c8y_ActiveAlarmsStatus'] as AlarmStatus);
       });
     } else {
       layer.devices = devices.map((d) => d.id);
-      devices.forEach((d) => this.updatePosition(layer, d.id, d['c8y_Position']));
+      devices.forEach((d) =>
+        this.updatePosition(layer, d.id, d['c8y_Position'] as Position | undefined)
+      );
     }
   }
 
-  async createLayer(setup: LayerConfig<BasicLayerConfig>) {
+  createLayer(setup: LayerConfig<BasicLayerConfig>) {
     const layer = Object.assign(new MyLayer(), setup);
+
     if (isWebMapServiceLayerConfig(setup.config)) {
       layer.config.enablePolling = 'false';
       layer.config.icon = 'globe1';
@@ -90,6 +108,7 @@ export class LayerService {
     }
   ) {
     let classNames = '';
+
     if (status.critical) {
       classNames = `status critical`;
     } else if (status.major) {
@@ -100,18 +119,21 @@ export class LayerService {
       classNames = 'status warning';
     }
 
-    const marker = layer.markerCache.get(deviceId)!;
+    const marker = layer.markerCache.get(deviceId);
     const icon = this.markerIconService.getIcon(layer.config.icon, classNames);
+
     marker.setIcon(icon);
   }
 
   updateManagedObjects(mos: IManagedObject[], layer: MyLayer): void {
     for (const mo of mos) {
-      this.updatePosition(layer, mo.id, mo['c8y_Position']);
+      this.updatePosition(layer, mo.id, mo['c8y_Position'] as Position | undefined);
+
       if (isQueryLayerConfig(layer.config) && layer.config.type === 'Alarm') {
-        this.updateMarkerIcon(mo.id, layer, mo['c8y_ActiveAlarmsStatus']);
+        this.updateMarkerIcon(mo.id, layer, mo['c8y_ActiveAlarmsStatus'] as AlarmStatus);
       }
-      const marker = this.updatePosition(layer, mo.id, mo['c8y_Position']);
+      const marker = this.updatePosition(layer, mo.id, mo['c8y_Position'] as Position | undefined);
+
       if (marker) {
         this.popupService.getPopupComponent(marker).onUpdate(mo);
       }
@@ -121,21 +143,26 @@ export class LayerService {
   updatePollingDelta(delta: PollingDelta, layer: MyLayer): void {
     for (const d of delta.add) {
       layer.devices.push(d.id);
+
       if (has(d, 'c8y_Position') && !isEmpty(d.c8y_Position)) {
-        this.updatePosition(layer, d.id, d.c8y_Position);
+        this.updatePosition(layer, d.id, d.c8y_Position as Position | undefined);
+
         if (isQueryLayerConfig(layer.config) && layer.config.type === 'Alarm') {
-          this.updateMarkerIcon(d.id, layer, d['c8y_ActiveAlarmsStatus']);
+          this.updateMarkerIcon(d.id, layer, d['c8y_ActiveAlarmsStatus'] as AlarmStatus);
         }
       }
     }
 
     for (const toDeleteId of delta.remove) {
       layer.devices = layer.devices.filter((id) => id !== toDeleteId);
+
       if (layer.coordinates.has(toDeleteId)) {
         layer.coordinates.delete(toDeleteId);
       }
+
       if (layer.markerCache.has(toDeleteId)) {
-        const markerToDelete = layer.markerCache.get(toDeleteId)!;
+        const markerToDelete = layer.markerCache.get(toDeleteId);
+
         layer.group.removeLayer(markerToDelete);
         layer.markerCache.delete(toDeleteId);
       }
@@ -144,9 +171,12 @@ export class LayerService {
 
   createLayerGroup(layer: MyLayer): void {
     const markers = [...layer.coordinates.keys()].map((key) => {
-      const coord = layer.coordinates.get(key)!;
+      const coord = layer.coordinates.get(key);
+
       const marker = this.createMarker(key, coord, layer);
+
       layer.markerCache.set(key, marker);
+
       return marker;
     });
 
@@ -161,8 +191,10 @@ export class LayerService {
     const marker = new Marker(coordinate, {
       icon,
     });
+
     marker.bindPopup(popup.html, { offset: [0, -24] });
-    set(marker.getPopup()!, 'ref', popup.ref);
+    set(marker.getPopup(), 'ref', popup.ref);
+
     return marker;
   }
 
@@ -174,39 +206,52 @@ export class LayerService {
     return devices;
   }
 
-  private updatePosition(layer: MyLayer, id: string, position: any): Marker | undefined {
-    let marker: Marker<any> | undefined = undefined;
+  private updatePosition(
+    layer: MyLayer,
+    id: string,
+    position: Position | undefined
+  ): Marker | undefined {
+    let marker: Marker | undefined = undefined;
+
     if (!position) {
       if (layer.coordinates.has(id)) {
         layer.coordinates.delete(id);
         layer.markerCache.delete(id);
       }
+
       return marker;
     }
+
     // we haven't had any position yet
     if (!layer.coordinates.has(id)) {
       const coordinate = latLng(position);
+
       layer.coordinates.set(id, coordinate);
       marker = this.createMarker(id, coordinate, layer);
       layer.markerCache.set(id, marker);
       layer.group.addLayer(marker);
     } else {
-      const oldCoord = layer.coordinates.get(id)!;
+      const oldCoord = layer.coordinates.get(id);
       const newCoord = latLng(position);
-      marker = layer.markerCache.get(id)!;
+
+      marker = layer.markerCache.get(id);
+
       if (oldCoord.distanceTo(newCoord) > 0) {
         layer.coordinates.set(id, newCoord);
         marker.setLatLng(newCoord);
       }
     }
+
     return marker;
   }
 
   extractMinMaxBounds(allLayers: MyLayer[]) {
     const markers = flatten(allLayers.map((l) => [...l.markerCache.values()]));
+
     if (isEmpty(markers)) {
       return undefined;
     }
+
     return new FeatureGroup(markers).getBounds();
   }
 }

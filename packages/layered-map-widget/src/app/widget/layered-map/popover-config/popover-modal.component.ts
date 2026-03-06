@@ -85,8 +85,7 @@ export class PopoverModalComponent {
   ];
 
   isActionsFormCollapsed = true;
-
-  jsonErrorMessage?: string;
+  isEditorValid = false;
 
   constructor(public bsModalRef: BsModalRef) {}
 
@@ -95,8 +94,6 @@ export class PopoverModalComponent {
       t.active = t.id === tabId;
     });
     this.currentTab = tabId;
-
-    delete this.jsonErrorMessage;
   }
 
   onChange(text: string): void {

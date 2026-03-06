@@ -39,7 +39,7 @@ export class PopUpService {
     return { html: popup, ref: popupComponentRef };
   }
 
-  getPopupComponent(marker: Marker<any>): PopupComponent {
+  getPopupComponent(marker: Marker): PopupComponent {
     const popup = get(marker.getPopup(), 'ref') as ComponentRef<PopupComponent>;
     return popup.instance;
   }

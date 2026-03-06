@@ -14,6 +14,7 @@ export class ActionIconPipe implements PipeTransform {
     } else if (value.type === 'operation') {
       return 'c8y-icon c8y-icon-device-control';
     }
+
     return 'add';
   }
 }

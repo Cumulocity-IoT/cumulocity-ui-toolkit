@@ -1,6 +1,11 @@
 import { Injectable } from '@angular/core';
 import { EventService, IManagedObject, InventoryService } from '@c8y/client';
-import { isQueryLayerConfig, MyLayer, PollingDelta, QueryLayerConfig } from '../layered-map-widget.model';
+import {
+  isQueryLayerConfig,
+  MyLayer,
+  PollingDelta,
+  QueryLayerConfig,
+} from '../layered-map-widget.model';
 import { Observable, Subscriber } from 'rxjs';
 import { QueryLayerService } from './query-layer.service';
 import { isEmpty } from 'lodash';
@@ -9,11 +14,15 @@ const FETCH_INTERVAL = 5000;
 
 @Injectable()
 export class EventPollingService {
-  constructor(private event: EventService, private queryLayerService: QueryLayerService, private inventory: InventoryService) {}
+  constructor(
+    private event: EventService,
+    private queryLayerService: QueryLayerService,
+    private inventory: InventoryService
+  ) {}
 
   createPolling$(layer: MyLayer, interval = FETCH_INTERVAL): Observable<PollingDelta> {
     if (!isQueryLayerConfig(layer.config) || layer.config.type !== 'Event') {
-      throw new Error(`Layer is not event layer! ${layer}`);
+      throw new Error('Layer is not event layer!');
     }
 
     return new Observable<PollingDelta>((observer) => {
@@ -52,11 +61,13 @@ export class EventPollingService {
     };
 
     const idsToAdd = [...sources].filter((source) => !layer.devices.includes(source));
+
     if (!isEmpty(idsToAdd)) {
       delta.add.push(...(await this.resolveManagedObjects(idsToAdd)));
     }
 
     const toRemoveIds = layer.devices.filter((id) => !sources.has(id));
+
     toRemoveIds.forEach((id) => delta.remove.push(id));
 
     return delta;
@@ -69,18 +80,22 @@ export class EventPollingService {
       withChildren: false,
       pageSize: 100,
     };
+
     if (ids.length <= 100) {
       return this.inventory.list({ ...filter, withTotalPages: false }).then((res) => res.data);
     } else {
       const mos: IManagedObject[] = [];
       let res = await this.inventory.list({ ...filter, withTotalPages: true });
+
       while (res.data.length) {
         mos.push(...res.data);
+
         if (!res.paging?.nextPage) {
           break;
         }
         res = await res.paging.next();
       }
+
       return mos;
     }
   }
@@ -94,8 +109,12 @@ export class EventPollingService {
     };
 
     let res = await this.event.list(filter);
+
     while (res.data.length) {
-      const ids = res.data.filter((event) => !result.has(event.source.id)).map((event) => event.source.id);
+      const ids = res.data
+        .filter((event) => !result.has(event.source.id))
+        .map((event) => event.source.id);
+
       ids.forEach((id) => result.add(id));
 
       if (!res.paging?.nextPage) {
@@ -103,6 +122,7 @@ export class EventPollingService {
       }
       res = await res.paging.next();
     }
+
     return result;
   }
 }

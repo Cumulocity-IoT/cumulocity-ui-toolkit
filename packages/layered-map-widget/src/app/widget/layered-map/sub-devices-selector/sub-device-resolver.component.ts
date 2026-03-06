@@ -3,16 +3,17 @@ import { IManagedObject } from '@c8y/client';
 import { InventoryService } from '@c8y/client';
 import { has } from 'lodash';
 
-@Component({ 
-  template: '', selector: 'sub-device-resolver', 
-  standalone: false
+@Component({
+  template: '',
+  selector: 'sub-device-resolver',
+  standalone: false,
 })
 export class SubDeviceResolverComponent {
   @Input() set device(mo: IManagedObject) {
     if (!mo) {
       return;
     }
-    this.resolveSubDevices(mo);
+    void this.resolveSubDevices(mo);
   }
 
   @Output() subDevices = new EventEmitter<IManagedObject[]>();
@@ -21,6 +22,7 @@ export class SubDeviceResolverComponent {
 
   private async resolveSubDevices(mo: IManagedObject) {
     let deviceMOs: IManagedObject[];
+
     if (has(mo, 'c8y_IsDeviceGroup')) {
       deviceMOs = await this.getDevicesOfGroup(mo);
     } else {

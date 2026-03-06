@@ -4,7 +4,7 @@ import { IManagedObject } from '@c8y/client';
 @Component({
   selector: 'alarm-display',
   templateUrl: './alarm-display.component.html',
-  standalone: false
+  standalone: false,
 })
 export class AlarmDisplayComponent {
   @Input() mo: IManagedObject | undefined;

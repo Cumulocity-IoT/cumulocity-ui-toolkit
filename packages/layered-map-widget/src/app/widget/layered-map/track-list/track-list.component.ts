@@ -4,7 +4,7 @@ import { ITrack } from '../layered-map-widget.model';
 @Component({
   selector: 'track-list',
   templateUrl: './track-list.component.html',
-  standalone: false
+  standalone: false,
 })
 export class TrackListComponent {
   @Input() title = '';

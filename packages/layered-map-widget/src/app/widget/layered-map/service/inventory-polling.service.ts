@@ -12,7 +12,10 @@ export type InventoryDelta = {
 };
 @Injectable()
 export class InventoryPollingService {
-  constructor(private inventory: InventoryService, private queryLayerService: QueryLayerService) {}
+  constructor(
+    private inventory: InventoryService,
+    private queryLayerService: QueryLayerService
+  ) {}
 
   createPolling$(
     filter: object,
@@ -22,6 +25,25 @@ export class InventoryPollingService {
     return new Observable<InventoryDelta>((observer) => {
       this.iterateAfter(observer, filter, layer, interval);
     });
+  }
+
+  toDelta(mos: Array<IManagedObject>, layer: MyLayer) {
+    const delta = {
+      add: new Array<IManagedObject>(),
+      remove: new Array<string>(),
+    };
+
+    for (const mo of mos) {
+      if (!layer.devices.includes(mo.id)) {
+        delta.add.push(mo);
+      }
+    }
+
+    const toRemoveIds = layer.devices.filter((id) => mos.find((m) => m.id === id) === undefined);
+
+    toRemoveIds.forEach((id) => delta.remove.push(id));
+
+    return delta;
   }
 
   private iterateAfter(
@@ -52,23 +74,6 @@ export class InventoryPollingService {
     return this.fetchMatchingManagedObjects(filter).then((sources) => this.toDelta(sources, layer));
   }
 
-  async toDelta(mos: Array<IManagedObject>, layer: MyLayer) {
-    const delta = {
-      add: new Array<IManagedObject>(),
-      remove: new Array<string>(),
-    };
-    for (const mo of mos) {
-      if (!layer.devices.includes(mo.id)) {
-        delta.add.push(mo);
-      }
-    }
-
-    const toRemoveIds = layer.devices.filter((id) => mos.find((m) => m.id === id) === undefined);
-    toRemoveIds.forEach((id) => delta.remove.push(id));
-
-    return delta;
-  }
-
   private async fetchMatchingManagedObjects(layerFilter: object) {
     const result = new Array<IManagedObject>();
     const filter = {
@@ -78,6 +83,7 @@ export class InventoryPollingService {
     };
 
     let res = await this.inventory.list(filter);
+
     while (res.data.length) {
       res.data.forEach((mo) => result.push(mo));
 
@@ -86,6 +92,7 @@ export class InventoryPollingService {
       }
       res = await res.paging.next();
     }
+
     return result;
   }
 }

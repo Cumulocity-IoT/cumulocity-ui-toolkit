@@ -53,7 +53,9 @@ export type WebMapServiceLayerConfig = BasicLayerConfig & {
   token?: string;
 };
 
-export function isWebMapServiceLayerConfig(config: BasicLayerConfig): config is WebMapServiceLayerConfig {
+export function isWebMapServiceLayerConfig(
+  config: BasicLayerConfig
+): config is WebMapServiceLayerConfig {
   return has(config, 'url') && has(config, 'wmsLayers');
 }
 
@@ -68,7 +70,7 @@ export type LayerAttributes = {
   active: boolean;
   devices: string[];
   coordinates: Map<string, LatLng>;
-  markerCache: Map<string, Marker<any>>;
+  markerCache: Map<string, Marker>;
   group: FeatureGroup;
 };
 
@@ -76,7 +78,7 @@ export class MyLayer implements LayerAttributes {
   config!: DeviceFragmentLayerConfig | QueryLayerConfig;
   devices: string[] = [];
   coordinates = new Map<string, LatLng>();
-  markerCache = new Map<string, Marker<any>>();
+  markerCache = new Map<string, Marker>();
   group = new FeatureGroup();
   initialLoad?: Promise<void>;
   active = true;
