@@ -78,7 +78,10 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
       modalRef.content?.setLayer(layer.config);
       const updated = await close;
 
-      if (!updated) {
+      if (updated) {
+        layer.config = updated;
+        this.config.layers = [...this.config.layers];
+      } else {
         layer.config = original;
       }
     }
