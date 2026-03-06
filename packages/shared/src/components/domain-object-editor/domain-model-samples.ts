@@ -1,4 +1,4 @@
-export const SAMPLE_TEMPLATES_C8Y = {
+export const DOMAIN_MODEL_TEMPLATES_C8Y = {
   ALARM: {
     type: 'c8y_TestAlarm',
     text: 'This is a new test alarm!',

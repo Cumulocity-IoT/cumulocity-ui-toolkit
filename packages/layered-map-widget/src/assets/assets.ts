@@ -9,6 +9,6 @@
 import previewImage from './layered-map-widget.png';
 
 // paths can be shared via this module if needed
-export const assetPaths = { previewImage };
+export const assetPaths = { previewImage: previewImage as string };
 
 import './example.css';

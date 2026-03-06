@@ -1,4 +1,5 @@
-<c8y-modal title="{{ title | translate }}" (onClose)="onClose()" (onDismiss)="onDismiss()" [labels]="labels" style="width: 100%">
+<c8y-modal title="{{ title | translate }}" (onClose)="onClose()" (onDismiss)="onDismiss()" [labels]="labels"
+  style="width: 100%">
   <div class="m-16">
     <div class="form-group">
       <formly-form [form]="form" [fields]="fields" [model]="config"></formly-form>
@@ -6,13 +7,15 @@
     <div class="form-group m-t-16">
       <label>Actions</label>
       <span *ngFor="let action of config.actions" class="row m-0">
-        <input class="form-control input-sm col-sm-10" type="text" [(ngModel)]="action.label" [tooltip]="action.body | json" />
+        <input class="form-control input-sm col-sm-10" type="text" [(ngModel)]="action.label"
+          [tooltip]="action.body | json" />
         <button class="btn btn-dot col m-l-8" (click)="removeAction(action)">
           <i c8yIcon="minus-circle" class="text-danger"></i>
         </button>
       </span>
     </div>
-    <button class="btn btn-default btn-sm" (click)="isActionsFormCollapsed = false; scroll(addActionBtn)" [disabled]="!isActionsFormCollapsed">
+    <button class="btn btn-default btn-sm" (click)="isActionsFormCollapsed = false; scroll(addActionBtn)"
+      [disabled]="!isActionsFormCollapsed">
       <i c8yIcon="plus-circle" class="m-r-4"></i>Add action
     </button>
 
@@ -32,7 +35,7 @@
 
           <!-- tab content -->
           <ng-container class="tab">
-            <mapping-json-editor [data]="jsonEditorData" (textChange)="onChange($event)"></mapping-json-editor>
+            <domain-model-editor [domainModel]="currentTab" (valueChange)="onChange($event)"></domain-model-editor>
             <small class="text-danger" *ngIf="jsonErrorMessage">{{ jsonErrorMessage }}</small>
           </ng-container>
 

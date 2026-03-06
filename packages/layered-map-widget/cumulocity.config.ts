@@ -44,11 +44,5 @@ export default {
       '@ngx-translate/core',
       '@ngx-formly/core',
     ],
-    copy: [
-      {
-        from: 'docs',
-        to: 'docs',
-      },
-    ],
   },
 } as const satisfies ConfigurationOptions;

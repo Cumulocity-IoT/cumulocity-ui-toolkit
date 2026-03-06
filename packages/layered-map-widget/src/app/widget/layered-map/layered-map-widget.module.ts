@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { CoreModule, CommonModule, hookComponent } from '@c8y/ngx-components';
-
+import { CoreModule, hookComponent } from '@c8y/ngx-components';
 import { ContextWidgetConfig } from '@c8y/ngx-components/context-dashboard';
 import { BsDatepickerModule } from 'ngx-bootstrap/datepicker';
 import { TimepickerModule } from 'ngx-bootstrap/timepicker';
@@ -28,11 +28,18 @@ import { ActionIconPipe } from './popup/action-icon.pipe';
 import { CenterMapModalComponent } from './center-map/center-map-modal.component';
 import { StringToBoolPipe } from './pipes/string-to-bool.pipe';
 import { assetPaths } from '../../../assets/assets';
-import { JsonEditorComponent } from './popover-config/editor/jsoneditor.component';
 
 const BOOSTRAP_MODULES = [BsDatepickerModule, TimepickerModule, CollapseModule, TooltipModule];
 @NgModule({
-  imports: [CommonModule, FormsModule, CoreModule, ...BOOSTRAP_MODULES, IconSelectorModule, AssetSelectorModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    CoreModule,
+    ...BOOSTRAP_MODULES,
+    IconSelectorModule,
+    AssetSelectorModule,
+    PopoverModalComponent,
+  ],
   declarations: [
     StringToBoolPipe,
     LayeredMapWidgetConfig,
@@ -42,8 +49,7 @@ const BOOSTRAP_MODULES = [BsDatepickerModule, TimepickerModule, CollapseModule, 
     DrawLineCreatorModalComponent,
     LayerModalComponent,
     CenterMapModalComponent,
-    PopoverModalComponent,
-    JsonEditorComponent,
+    ,
     LayerListComponent,
     TrackListComponent,
     DynamicQueryFormComponent,
@@ -58,7 +64,8 @@ const BOOSTRAP_MODULES = [BsDatepickerModule, TimepickerModule, CollapseModule, 
     hookComponent({
       id: 'iot.cumulocity.layered.map.widget',
       label: 'Layered Map',
-      description: 'Displays a map with position markers for selected devices. Support for configuration of additional layers and custom markers.',
+      description:
+        'Displays a map with position markers for selected devices. Support for configuration of additional layers and custom markers.',
       component: LayeredMapWidgetComponent,
       configComponent: LayeredMapWidgetConfig,
       previewImage: assetPaths.previewImage,

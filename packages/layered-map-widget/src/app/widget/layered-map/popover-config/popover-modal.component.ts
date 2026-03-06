@@ -1,12 +1,13 @@
 import { Component, Input } from '@angular/core';
-import { ModalLabels } from '@c8y/ngx-components';
+import { CommonModule, CoreModule, ModalLabels } from '@c8y/ngx-components';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Subject } from 'rxjs';
 import { PopoverConfig } from '../layered-map-widget.model';
 import { FormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { SAMPLE_TEMPLATES_C8Y } from './editor/jsoneditor-samples';
-import { clone, has } from 'lodash';
+import { DomainModelEditorComponent } from 'shared';
+import { CollapseModule } from 'ngx-bootstrap/collapse';
+import { TooltipModule } from 'ngx-bootstrap/tooltip';
 
 interface Tab {
   id: 'operation' | 'alarm' | 'event';
@@ -19,24 +20,28 @@ interface Tab {
 @Component({
   templateUrl: './popover-modal.component.html',
   styleUrls: ['./popover-modal.component.less'],
-  standalone: false
+  standalone: true,
+  imports: [CoreModule, CommonModule, DomainModelEditorComponent, CollapseModule, TooltipModule],
 })
 export class PopoverModalComponent {
   title = 'Popover config';
   closeSubject: Subject<PopoverConfig | null> = new Subject();
   labels: ModalLabels = { ok: 'Save', cancel: 'Cancel' };
+  json: Record<string, unknown>;
 
   @Input() set cfg(value: PopoverConfig) {
     if (value) {
       this.config = value;
       const [dateField, iconField] = this.fields;
+
       dateField.defaultValue = value.showDate;
       iconField.defaultValue = value.showAlarms;
     }
   }
-  config: PopoverConfig = { showAlarms: true, showDate: true, actions: [] };
 
-  SAMPLE_TEMPLATES_C8Y = SAMPLE_TEMPLATES_C8Y;
+  mode = 'operation';
+
+  config: PopoverConfig = { showAlarms: true, showDate: true, actions: [] };
 
   tabs: Tab[] = [
     {
@@ -80,7 +85,7 @@ export class PopoverModalComponent {
   ];
 
   isActionsFormCollapsed = true;
-  jsonEditorData: object = clone(SAMPLE_TEMPLATES_C8Y.OPERATION);
+
   jsonErrorMessage?: string;
 
   constructor(public bsModalRef: BsModalRef) {}
@@ -92,34 +97,10 @@ export class PopoverModalComponent {
     this.currentTab = tabId;
 
     delete this.jsonErrorMessage;
-    if (tabId === 'operation') {
-      this.jsonEditorData = clone(SAMPLE_TEMPLATES_C8Y.OPERATION);
-    } else if (tabId === 'alarm') {
-      this.jsonEditorData = clone(SAMPLE_TEMPLATES_C8Y.ALARM);
-    } else if (tabId === 'event') {
-      this.jsonEditorData = clone(SAMPLE_TEMPLATES_C8Y.EVENT);
-    }
   }
 
   onChange(text: string): void {
-    let requiredAttributes: string[] = [];
-    if (this.currentTab === 'event') {
-      requiredAttributes = ['type', 'text'];
-    } else if (this.currentTab === 'alarm') {
-      requiredAttributes = ['type', 'text', 'severity'];
-    }
-
-    try {
-      const json = JSON.parse(text);
-      this.jsonErrorMessage = '';
-      requiredAttributes.forEach((attribute) => {
-        if (!has(json, attribute)) {
-          this.jsonErrorMessage = this.jsonErrorMessage + `Parameter "${attribute}" required. `;
-        }
-      });
-    } catch (e) {
-      this.jsonErrorMessage = 'No valid JSON!';
-    }
+    this.json = JSON.parse(text) as Record<string, unknown>;
   }
 
   scroll(element: HTMLElement): void {
@@ -129,7 +110,7 @@ export class PopoverModalComponent {
   addAction(currentTab: Tab['id']) {
     this.config.actions.push({
       label: `Create ${currentTab}`,
-      body: this.jsonEditorData,
+      body: this.json,
       type: currentTab,
     });
     this.isActionsFormCollapsed = true;
