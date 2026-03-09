@@ -41,8 +41,10 @@
     "e2e:run:release-notes": "npm run e2e:run -- --config-file config/release-notes.config.ts",
     "e2e:run:operations-widget": "npm run e2e:run -- --config-file config/operations-widget.config.ts",
     "e2e:run:tenant-option-management": "npm run e2e:run -- --config-file config/tenant-option-management.config.ts",
+    "e2e:run:advanced-radial-gauge": "npm run e2e:run -- --config-file config/advanced-radial-gauge.config.ts",
     "e2e:open:favorites-manager": "npx --workspace=test -- cypress open --config-file config/favorites-manager.config.ts",
     "e2e:open:release-notes": "npx --workspace=test -- cypress open --config-file config/release-notes.config.ts",
+    "e2e:open:advanced-radial-gauge": "npx --workspace=test -- cypress open --config-file config/advanced-radial-gauge.config.ts",
     "--generated----------": "--------------------",
     "serve:reminder": "npm run _serve plugin.reminder",
     "build:reminder": "ng build plugin.reminder",
@@ -64,7 +66,10 @@
     "test:tenant-option-management": "npm run _test plugin.tenant-option-management",
     "serve:operations-widget": "npm run _serve plugin.operations-widget",
     "build:operations-widget": "ng build plugin.operations-widget",
-    "test:operations-widget": "npm run _test plugin.operations-widget"
+    "test:operations-widget": "npm run _test plugin.operations-widget",
+    "serve:advanced-radial-gauge": "npm run _serve plugin.advanced-radial-gauge",
+    "build:advanced-radial-gauge": "ng build plugin.advanced-radial-gauge",
+    "test:advanced-radial-gauge": "npm run _test plugin.advanced-radial-gauge"
   },
   "workspaces": [
     "packages/*",

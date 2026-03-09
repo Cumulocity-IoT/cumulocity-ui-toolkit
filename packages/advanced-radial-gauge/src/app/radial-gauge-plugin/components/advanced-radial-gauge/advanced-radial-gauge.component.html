@@ -1,0 +1,27 @@
+@if (loading) {
+  <c8y-loading></c8y-loading>
+} @else {
+  <ngx-gauge
+    [type]="'arch'"
+    [cap]="'round'"
+    [size]="248"
+    [duration]="450"
+    [thick]="10"
+    [margin]="20"
+    [value]="value"
+    [append]="config.datapoint.unit"
+    [label]="config.datapoint.label"
+    [min]="chartConfig.min"
+    [max]="chartConfig.max"
+    [thresholds]="chartConfig.thresholds"
+    [markers]="chartConfig.markers"
+  >
+  </ngx-gauge>
+
+  @if (lastUpdated) {
+    <small class="text-muted">
+      <i [c8yIcon]="'calendar'"></i>
+      {{ lastUpdated | c8yDate }}
+    </small>
+  }
+}

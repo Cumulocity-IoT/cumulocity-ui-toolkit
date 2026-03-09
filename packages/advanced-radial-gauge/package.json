@@ -1,0 +1,10 @@
+{
+  "name": "cumulocity-advanced-radial-gauge-plugin",
+  "version": "1.0.0",
+  "description": "Cumulocity Advanced Radial Gauge Widget shows the latest realtime measurement on a radial gauge.",
+  "author": "@vib-c8y",
+  "homepage": "___TODO___",
+  "dependencies": {
+    "ngx-gauge": "^10.0.0"
+  }
+}

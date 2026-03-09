@@ -686,6 +686,108 @@
           }
         }
       }
+    },
+    "plugin.advanced-radial-gauge": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "less"
+        }
+      },
+      "root": "packages/advanced-radial-gauge",
+      "sourceRoot": "packages/advanced-radial-gauge/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@c8y/devkit:build",
+          "options": {
+            "outputPath": "dist/advanced-radial-gauge-plugin",
+            "main": "packages/advanced-radial-gauge/src/main.ts",
+            "tsConfig": "packages/advanced-radial-gauge/tsconfig.app.json",
+            "polyfills": ["zone.js"],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "packages/advanced-radial-gauge/public"
+              },
+              "packages/advanced-radial-gauge/src/assets"
+            ],
+            "inlineStyleLanguage": "less",
+            "styles": ["packages/advanced-radial-gauge/src/styles.scss"],
+            "scripts": [],
+            "aot": false,
+            "buildOptimizer": false,
+            "allowedCommonJsDependencies": [
+              "regenerator-runtime/runtime",
+              "@cordobo/qrcode",
+              "zone.js/dist/zone",
+              "chroma-js",
+              "lodash"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "all",
+              "buildOptimizer": false
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@c8y/devkit:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.advanced-radial-gauge:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.advanced-radial-gauge:build:development"
+            }
+          },
+          "defaultConfiguration": "development",
+          "options": {
+            "port": 9001,
+            "publicHost": "localhost:9001"
+          }
+        },
+        "deploy": {
+          "builder": "@c8y/devkit:deploy",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.advanced-radial-gauge:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.advanced-radial-gauge:build:development"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "packages/advanced-radial-gauge/src/test.ts",
+            "polyfills": "packages/advanced-radial-gauge/src/polyfills.ts",
+            "tsConfig": "packages/advanced-radial-gauge/tsconfig.app.json",
+            "karmaConfig": "packages/advanced-radial-gauge/karma.conf.js"
+          }
+        }
+      }
     }
   }
 }
