@@ -42,22 +42,31 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'pnpm'
 
       - name: Install root dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Lint ${{ matrix.component }}
-        run: npx eslint ./packages/${{ matrix.component }} --quiet
+        run: pnpm exec eslint ./packages/${{ matrix.component }} --quiet
 
       - name: Test ${{ matrix.component }}
-        run: npm run test:${{ matrix.component }} --if-present
+        run: |
+          if [ -f "packages/${{ matrix.component }}/jest.config.ts" ]; then
+            pnpm exec jest --config packages/${{ matrix.component }}/jest.config.ts --passWithNoTests
+          else
+            echo "No jest config found for ${{ matrix.component }}, skipping tests."
+          fi
 
       - name: Build ${{ matrix.component }}
-        run: npm run build:${{ matrix.component }}
+        run: pnpm run build:${{ matrix.component }}
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4

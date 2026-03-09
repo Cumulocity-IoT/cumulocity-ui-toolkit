@@ -2,6 +2,8 @@
 
 # Compiled output
 /dist
+/shared/dist
+packages/shared/dist
 /tmp
 /out-tsc
 # Only exists if Bazel was run

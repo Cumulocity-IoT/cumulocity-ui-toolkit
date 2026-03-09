@@ -1,0 +1,6 @@
+packages:
+  - 'packages/*'
+  - 'test'
+
+overrides:
+  globals: '14.0.0'
