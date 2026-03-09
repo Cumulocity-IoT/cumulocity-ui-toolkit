@@ -1,5 +1,5 @@
 import { Component, inject, Input, OnDestroy, OnInit } from '@angular/core';
-import { IMeasurement, IMeasurementValue, MeasurementService } from '@c8y/client';
+import { IMeasurement, IMeasurementValue } from '@c8y/client';
 import { MeasurementRealtimeService } from '@c8y/ngx-components';
 import { cloneDeep, round } from 'lodash';
 import {
@@ -9,6 +9,7 @@ import {
   AdvancedRadialGaugeConfig,
 } from '../../models/advanced-radial-gauge.model';
 import { Subscription } from 'rxjs';
+import { RadialGaugeService } from '../../services/radial-gauge.service';
 
 @Component({
   selector: 'c8y-advanced-radial-gauge-widget',
@@ -17,8 +18,8 @@ import { Subscription } from 'rxjs';
   standalone: false,
 })
 export class AdvancedRadialGaugeWidget implements OnInit, OnDestroy {
-  private measurementService = inject(MeasurementService);
   private measurementRealtimeService = inject(MeasurementRealtimeService);
+  private radialGaugeService = inject(RadialGaugeService);
 
   @Input() config?: AdvancedRadialGaugeConfig;
 
@@ -58,13 +59,10 @@ export class AdvancedRadialGaugeWidget implements OnInit, OnDestroy {
   }
 
   private async fetchLatestMeasurement(): Promise<void> {
-    const response = await this.measurementService.list({
-      source: this.config.device.id,
-      type: this.config.datapoint.fragment,
-      dateFrom: '1970-01-01',
-      revert: true,
-      pageSize: 1,
-    });
+    const response = await this.radialGaugeService.fetchLatestMeasurement(
+      this.config.device.id,
+      this.config.datapoint.fragment
+    );
 
     if (!response.data.length) return;
 
