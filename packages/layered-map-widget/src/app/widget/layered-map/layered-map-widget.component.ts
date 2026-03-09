@@ -108,7 +108,7 @@ export class LayeredMapWidgetComponent implements AfterViewInit, OnDestroy {
       .subscribe((e) => this.onOverlayRemove(e));
 
     // this.map!.invalidateSize();
-    void this.draw(this.config);
+    this.draw(this.config);
   }
 
   onPopupOpen(event: L.PopupEvent): void {
@@ -151,7 +151,7 @@ export class LayeredMapWidgetComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private async draw(config: ILayeredMapWidgetConfig) {
+  private draw(config: ILayeredMapWidgetConfig) {
     const asBool = (v: unknown): boolean => v === true || v === 'true';
 
     if (config.autoCenter !== undefined) config.autoCenter = asBool(config.autoCenter);
