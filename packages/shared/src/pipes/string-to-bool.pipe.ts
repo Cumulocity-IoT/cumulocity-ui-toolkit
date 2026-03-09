@@ -6,6 +6,6 @@ import { Pipe, PipeTransform } from '@angular/core';
 })
 export class StringToBoolPipe implements PipeTransform {
   transform(value?: string) {
-    return value === 'true';
+    return value?.toLowerCase() === 'true';
   }
 }

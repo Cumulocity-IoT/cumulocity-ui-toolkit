@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import {
   BasicLayerConfig,
-  isDeviceFragmentLayerConfig,
   isQueryLayerConfig,
   isWebMapServiceLayerConfig,
   LayerConfig,
@@ -47,10 +46,6 @@ export class LayerListComponent {
 
   getContent(layer: LayerConfig<BasicLayerConfig>): string {
     const cfg = layer.config;
-
-    if (isDeviceFragmentLayerConfig(cfg)) {
-      return `Devices with ${cfg.fragment}=${cfg.value}`;
-    }
 
     if (isQueryLayerConfig(cfg)) {
       return `${cfg.type} with query ${JSON.stringify(cfg.filter)}`;

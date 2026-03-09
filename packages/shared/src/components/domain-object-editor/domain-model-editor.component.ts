@@ -96,11 +96,7 @@ export class DomainModelEditorComponent implements OnInit {
 
       if (previous !== current) {
         const json = this.getDefaultJSONForDomainModel();
-        const jsonStr = JSON.stringify(
-          json,
-          undefined,
-          2
-        );
+        const jsonStr = JSON.stringify(json, undefined, 2);
 
         this.form?.get('jsonEditor')?.setValue(jsonStr, { emitEvent: false });
 

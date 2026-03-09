@@ -1,0 +1,41 @@
+<div class="tabContainer" *ngIf="!hiddenAutoRun">
+    <!-- tabs -->
+    <ul class="nav nav-tabs nav-tabsc8y m-b-8">
+        @for(t of tabs; track t.name) {
+            <li [class.active]="t.active">
+                <button type="button" [title]="t.name" (click)="onTabClick(t.name)">
+                    @if (t.icon) {
+                        <i class="{{ t.icon }}"></i>
+                    }
+                    <span class="txt">{{ t.name }}</span>
+                </button>
+            </li>
+        }
+    </ul>
+
+    <div class="tab">
+        @switch(queryType) {
+            @case('Inventory') {
+                <ps-inventory-query-form [filter]="filter">
+                    <!-- <button class="btn btn-primary" [class.btn-pending]="isQuerying" [disabled]="isQuerying" (click)="performQuery()">
+                                <i c8yIcon="bolt" class="m-r-4"></i>{{ 'Perform query' | translate }}
+                            </button> -->
+                </ps-inventory-query-form>
+            }
+            @case('Alarm') {
+                <ps-alarm-query-form [filter]="filter">
+                    <!--  <button class="btn btn-primary" [class.btn-pending]="isQuerying" [disabled]="isQuerying" (click)="performQuery()">
+                                <i c8yIcon="bolt" class="m-r-4"></i>{{ 'Perform query' | translate }}
+                            </button> -->
+                </ps-alarm-query-form>
+            }
+            @case('Event') {
+                <ps-event-query-form [filter]="filter">
+                    <!-- <button class="btn btn-primary" [class.btn-pending]="isQuerying" [disabled]="isQuerying" (click)="performQuery()">
+                                <i c8yIcon="bolt" class="m-r-4"></i>{{ 'Perform query' | translate }}
+                            </button> -->
+                </ps-event-query-form>
+            }
+        }
+    </div>
+</div>

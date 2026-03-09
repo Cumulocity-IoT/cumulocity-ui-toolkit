@@ -8,8 +8,8 @@ import {
 } from '../layered-map-widget.model';
 import { Observable, timer } from 'rxjs';
 import { exhaustMap, filter } from 'rxjs/operators';
-import { QueryLayerService } from './query-layer.service';
 import { isEmpty } from 'lodash';
+import { normalizeQueryFilter } from 'shared';
 
 const FETCH_INTERVAL = 5000;
 
@@ -17,7 +17,6 @@ const FETCH_INTERVAL = 5000;
 export class AlarmPollingService {
   constructor(
     private alarm: AlarmService,
-    private queryLayerService: QueryLayerService,
     private inventory: InventoryService
   ) {}
 
@@ -33,7 +32,7 @@ export class AlarmPollingService {
   }
 
   private checkForUpdates(layer: MyLayer) {
-    const config = layer.config as QueryLayerConfig;
+    const config = layer.config;
     return this.fetchMatchingAlarms(config).then((sources) => this.toPollingDelta(sources, layer));
   }
 
@@ -88,7 +87,7 @@ export class AlarmPollingService {
     const filter = {
       withTotalPages: true,
       pageSize: 100,
-      ...this.queryLayerService.normalize(config.filter),
+      ...normalizeQueryFilter(config.filter),
     };
 
     let res = await this.alarm.list(filter);

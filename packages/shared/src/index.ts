@@ -3,10 +3,19 @@ export * from './components/alarm-icon/alarm-icon.component';
 export * from './components/auto-refresh/ps-auto-refresh.component';
 export * from './components/domain-object-editor/domain-model-editor.component';
 
+// Query forms and helpers
+export * from './components/_formly-fields/query-forms/formly-query-blocks';
+export * from './components/_formly-fields/query-forms/query-forms-tab.component';
+export * from './components/_formly-fields/query-forms/dynamic-query-form.component';
+export * from './components/_formly-fields/query-forms/inventory-query-form.component';
+export * from './components/_formly-fields/query-forms/alarm-query-form.component';
+export * from './components/_formly-fields/query-forms/event-query-form.component';
+
 // Helpers
 export * from './helpers/auto-mock.helper';
 export * from './helpers/domain-model-type.helper';
 export * from './helpers/extract-placeholders';
+export * from './helpers/reverse-queries-util';
 
 // Pipes
 export * from './pipes/c8y-measurement.pipe';
@@ -16,6 +25,7 @@ export * from './pipes/filter.pipe';
 export * from './pipes/nl2br.pipe';
 export * from './pipes/replace.pipe';
 export * from './pipes/sort.pipe';
+export * from './pipes/string-to-bool.pipe';
 
 // Services
 export * from './services/active-tab.service';

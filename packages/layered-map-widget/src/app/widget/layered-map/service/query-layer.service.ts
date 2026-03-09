@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AlarmService, EventService, IManagedObject, InventoryService } from '@c8y/client';
-import { get, set } from 'lodash';
+import { normalizeQueryFilter } from 'shared';
 
 @Injectable({
   providedIn: 'root',
@@ -17,7 +17,7 @@ export class QueryLayerService {
     const filter = {
       withTotalPages: true,
       pageSize: 200,
-      ...this.normalize(params),
+      ...normalizeQueryFilter(params),
     };
 
     const resolvers: Promise<void>[] = [];
@@ -52,7 +52,7 @@ export class QueryLayerService {
     const filter = {
       withTotalPages: true,
       pageSize: 2000,
-      ...this.normalize(params),
+      ...normalizeQueryFilter(params),
     };
 
     let res = await this.inventory.list(filter);
@@ -78,7 +78,7 @@ export class QueryLayerService {
     const filter = {
       withTotalPages: true,
       pageSize: 200,
-      ...this.normalize(params),
+      ...normalizeQueryFilter(params),
     };
     const resolvers: Promise<void>[] = [];
 
@@ -114,17 +114,5 @@ export class QueryLayerService {
       withChildren: false,
       pageSize: 200,
     });
-  }
-
-  normalize(params: object): object {
-    const result = { ...params };
-
-    for (const key of Object.keys(result)) {
-      if (get(result, key) instanceof Date) {
-        set(result, key, (get(result, key) as Date).toISOString());
-      }
-    }
-
-    return result;
   }
 }

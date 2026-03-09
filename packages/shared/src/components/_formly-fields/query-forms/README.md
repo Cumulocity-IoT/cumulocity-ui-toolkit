@@ -31,3 +31,17 @@ Gives the user the opportunity to create [query filters](https://cumulocity.com/
     [filter]="filter"
 ></ps-event-query-form>
 ```
+
+---
+
+## Tabbed query box
+
+If you need to switch between inventory, alarm and event queries in the same panel, use the helper component. It wraps the three forms and exposes a single `queryResult` output.
+
+```html
+<ps-query-forms-tab
+    [queryType]="'Inventory'"          <!-- optional: Inventory | Alarm | Event -->
+    [filter]="filter"
+    (queryResult)="onResult($event)"
+></ps-query-forms-tab>
+```

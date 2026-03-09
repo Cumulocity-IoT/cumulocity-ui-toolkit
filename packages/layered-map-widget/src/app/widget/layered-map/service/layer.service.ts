@@ -1,11 +1,9 @@
 import { Injectable } from '@angular/core';
 import { IManagedObject } from '@c8y/client';
 import { FeatureGroup, LatLng, latLng, Marker } from 'leaflet';
-import { flatten, get, has, isEmpty, set } from 'lodash';
+import { flatten, has, isEmpty, set } from 'lodash';
 import {
   BasicLayerConfig,
-  DeviceFragmentLayerConfig,
-  isDeviceFragmentLayerConfig,
   isQueryLayerConfig,
   isWebMapServiceLayerConfig,
   LayerConfig,
@@ -15,7 +13,6 @@ import {
 import { MarkerIconService } from './marker-icon.service';
 import { PopUpService } from './popup.service';
 import { QueryLayerService } from './query-layer.service';
-import { SelectedDevicesService } from './selected-devices.service';
 
 type Position = { lat: number; lng: number; alt?: number };
 type AlarmStatus = { critical?: number; major?: number; minor?: number; warning?: number };
@@ -25,8 +22,7 @@ export class LayerService {
   constructor(
     private popupService: PopUpService,
     private markerIconService: MarkerIconService,
-    private queryLayerService: QueryLayerService,
-    private selectedDevicesService: SelectedDevicesService
+    private queryLayerService: QueryLayerService
   ) {}
 
   createLayers(configs: LayerConfig<BasicLayerConfig>[]): Promise<MyLayer[]> {
@@ -39,48 +35,6 @@ export class LayerService {
     if (isQueryLayerConfig(cfg)) {
       layer.initialLoad = this.fechtRequestForType(cfg.type, cfg.filter).then((devices) =>
         this.responseHandlerForType(cfg.type, devices, layer)
-      );
-    } else if (isDeviceFragmentLayerConfig(cfg)) {
-      layer.initialLoad = this.selectedDevicesService.getDevices(cfg.device).then((devices) => {
-        const matches = this.getMatches(cfg, devices || []);
-
-        // assign devices mathcing the layer criteria
-        layer.devices = matches.map((d) => d.id);
-        // create coordinate cache for devices having the c8y_Position fragment
-        matches
-          .filter((d) => has(d, 'c8y_Position') && !isEmpty(d['c8y_Position']))
-          .forEach((d) => layer.coordinates.set(d.id, latLng(d['c8y_Position'] as Position)));
-
-        this.createLayerGroup(layer);
-      });
-    }
-  }
-
-  private fechtRequestForType(type: string, filter: object) {
-    switch (type) {
-      case 'Alarm':
-        return this.queryLayerService.fetchByAlarmQuery(filter);
-      case 'Inventory':
-        return this.queryLayerService.fetchByInventoryQuery(filter);
-      case 'Event':
-        return this.queryLayerService.fetchByEventQuery(filter);
-      default:
-        return Promise.reject(new Error(`Unknown type: ${type}`));
-    }
-  }
-
-  private responseHandlerForType(type: string, devices: IManagedObject[], layer: MyLayer) {
-    layer.devices = devices.map((d) => d.id);
-
-    if (type === 'Alarm') {
-      devices.forEach((d) => {
-        this.updatePosition(layer, d.id, d['c8y_Position'] as Position | undefined);
-        this.updateMarkerIcon(d.id, layer, d['c8y_ActiveAlarmsStatus'] as AlarmStatus);
-      });
-    } else {
-      layer.devices = devices.map((d) => d.id);
-      devices.forEach((d) =>
-        this.updatePosition(layer, d.id, d['c8y_Position'] as Position | undefined)
       );
     }
   }
@@ -181,6 +135,45 @@ export class LayerService {
     layer.group = new FeatureGroup(markers);
   }
 
+  extractMinMaxBounds(allLayers: MyLayer[]) {
+    const markers = flatten(allLayers.map((l) => [...l.markerCache.values()]));
+
+    if (isEmpty(markers)) {
+      return undefined;
+    }
+
+    return new FeatureGroup(markers).getBounds();
+  }
+
+  private fechtRequestForType(type: string, filter: object) {
+    switch (type) {
+      case 'Alarm':
+        return this.queryLayerService.fetchByAlarmQuery(filter);
+      case 'Inventory':
+        return this.queryLayerService.fetchByInventoryQuery(filter);
+      case 'Event':
+        return this.queryLayerService.fetchByEventQuery(filter);
+      default:
+        return Promise.reject(new Error(`Unknown type: ${type}`));
+    }
+  }
+
+  private responseHandlerForType(type: string, devices: IManagedObject[], layer: MyLayer) {
+    layer.devices = devices.map((d) => d.id);
+
+    if (type === 'Alarm') {
+      devices.forEach((d) => {
+        this.updatePosition(layer, d.id, d['c8y_Position'] as Position | undefined);
+        this.updateMarkerIcon(d.id, layer, d['c8y_ActiveAlarmsStatus'] as AlarmStatus);
+      });
+    } else {
+      layer.devices = devices.map((d) => d.id);
+      devices.forEach((d) =>
+        this.updatePosition(layer, d.id, d['c8y_Position'] as Position | undefined)
+      );
+    }
+  }
+
   private createMarker(deviceId: string, coordinate: LatLng, layer: MyLayer) {
     const color = layer.config.color?.length ? layer.config.color : '#ffffff';
     const icon = this.markerIconService.getIcon(layer.config.icon, 'text-primary', color);
@@ -194,14 +187,6 @@ export class LayerService {
     set(marker.getPopup(), 'ref', popup.ref);
 
     return marker;
-  }
-
-  private getMatches(c: DeviceFragmentLayerConfig, devices: IManagedObject[]) {
-    if (isDeviceFragmentLayerConfig(c)) {
-      return devices.filter((d) => has(d, c.fragment) && get(d, c.fragment) === c.value);
-    }
-
-    return devices;
   }
 
   private updatePosition(
@@ -241,15 +226,5 @@ export class LayerService {
     }
 
     return marker;
-  }
-
-  extractMinMaxBounds(allLayers: MyLayer[]) {
-    const markers = flatten(allLayers.map((l) => [...l.markerCache.values()]));
-
-    if (isEmpty(markers)) {
-      return undefined;
-    }
-
-    return new FeatureGroup(markers).getBounds();
   }
 }

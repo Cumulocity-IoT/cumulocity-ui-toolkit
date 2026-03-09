@@ -3,7 +3,7 @@ import { IManagedObject, InventoryService } from '@c8y/client';
 import { MyLayer } from '../layered-map-widget.model';
 import { Observable, timer } from 'rxjs';
 import { exhaustMap, filter } from 'rxjs/operators';
-import { QueryLayerService } from './query-layer.service';
+import { normalizeQueryFilter } from 'shared';
 
 const FETCH_INTERVAL = 5000;
 
@@ -13,10 +13,7 @@ export type InventoryDelta = {
 };
 @Injectable()
 export class InventoryPollingService {
-  constructor(
-    private inventory: InventoryService,
-    private queryLayerService: QueryLayerService
-  ) {}
+  constructor(private inventory: InventoryService) {}
 
   createPolling$(
     layerFilter: object,
@@ -59,7 +56,7 @@ export class InventoryPollingService {
     const filter = {
       withTotalPages: true,
       pageSize: 2000,
-      ...this.queryLayerService.normalize(layerFilter),
+      ...normalizeQueryFilter(layerFilter),
     };
 
     let res = await this.inventory.list(filter);

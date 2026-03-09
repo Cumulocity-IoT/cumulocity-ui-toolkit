@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { CoreModule, hookComponent } from '@c8y/ngx-components';
+import { CoreModule, hookWidget } from '@c8y/ngx-components';
 import { ContextWidgetConfig } from '@c8y/ngx-components/context-dashboard';
 import { BsDatepickerModule } from 'ngx-bootstrap/datepicker';
 import { TimepickerModule } from 'ngx-bootstrap/timepicker';
@@ -11,17 +11,12 @@ import { AssetSelectorModule } from '@c8y/ngx-components/assets-navigator';
 import { IconSelectorModule } from '@c8y/ngx-components/icon-selector';
 import { LayeredMapWidgetConfig } from './layered-map-widget-config.component';
 import { LayeredMapWidgetComponent } from './layered-map-widget.component';
-import { SubDeviceResolverComponent } from './sub-devices-selector/sub-device-resolver.component';
 import { EventLineCreatorModalComponent } from './event-line-creator/event-line-creator-modal.component';
 import { TrackListComponent } from './track-list/track-list.component';
 import { DrawLineCreatorModalComponent } from './draw-line-creator/draw-line-creator-modal.component';
 import { PopupComponent } from './popup/popup.component';
 import { LayerModalComponent } from './layer-config/layer-modal.component';
 import { LayerListComponent } from './layer-config/layer-list.component';
-import { AlarmQueryFormComponent } from './layer-config/query-forms/alarm-query-form-component';
-import { DynamicQueryFormComponent } from './layer-config/query-forms/dynamic-query-form.component';
-import { EventQueryFormComponent } from './layer-config/query-forms/event-query-form.component';
-import { InventoryQueryFormComponent } from './layer-config/query-forms/inventory-query-form.component';
 import { AlarmDisplayComponent } from './popup/alarm-display/alarm-display.component';
 import { PopoverModalComponent } from './popover-config/popover-modal.component';
 import { ActionIconPipe } from './popup/action-icon.pipe';
@@ -38,27 +33,22 @@ const BOOSTRAP_MODULES = [BsDatepickerModule, TimepickerModule, CollapseModule, 
     IconSelectorModule,
     AssetSelectorModule,
     PopoverModalComponent,
+    LayerModalComponent,
   ],
   declarations: [
     LayeredMapWidgetConfig,
     LayeredMapWidgetComponent,
-    SubDeviceResolverComponent,
     EventLineCreatorModalComponent,
     DrawLineCreatorModalComponent,
-    LayerModalComponent,
     CenterMapModalComponent,
     LayerListComponent,
     TrackListComponent,
-    DynamicQueryFormComponent,
-    AlarmQueryFormComponent,
-    EventQueryFormComponent,
-    InventoryQueryFormComponent,
     PopupComponent,
     ActionIconPipe,
     AlarmDisplayComponent,
   ],
   providers: [
-    hookComponent({
+    hookWidget({
       id: 'iot.cumulocity.layered.map.widget',
       label: 'Layered Map',
       description:

@@ -34,17 +34,8 @@
       <div class="c8y-select-wrapper" title="{{ 'Select type' | translate }}">
         <select id="layerType" #typeSelect class="btn btn-default dropdown-toggle c8y-dropdown" required="true" (change)="changeType(typeSelect.value)">
           <option value="" selected disabled>Select a type</option>
-          <option value="DeviceFragmentLayerConfig" [selected]="type === 'DeviceFragmentLayerConfig'">
-            {{ 'Device-Fragment' | translate }}
-          </option>
-          <option value="InventoryQueryLayerConfig" [selected]="type === 'QueryLayerConfig' && queryType === 'Inventory'">
-            {{ 'Inventory Query' | translate }}
-          </option>
-          <option value="AlarmQueryLayerConfig" [selected]="type === 'QueryLayerConfig' && queryType === 'Alarm'">
-            {{ 'Alarm Query' | translate }}
-          </option>
-          <option value="EventQueryLayerConfig" [selected]="type === 'QueryLayerConfig' && queryType === 'Event'">
-            {{ 'Event Query' | translate }}
+          <option value="QueryLayerConfig" [selected]="type === 'QueryLayerConfig'">
+            {{ 'Query' | translate }}
           </option>
           <option value="WebMapServiceLayer" [selected]="type === 'WebMapServiceLayer'">
             {{ 'Web Map Service (WMS)' | translate }}
@@ -53,50 +44,10 @@
       </div>
     </div>
 
-    @if (type === 'DeviceFragmentLayerConfig') {
-      <span>
-        <div class="legend form-block center">Device Fragment Configuration</div>
-        <div class="row">
-          <div class="col-sm-12">
-            <div class="card">
-              <div class="card-header separator"></div>
-              <div class="card-block d-flex d-col p-t-0 p-b-0 bg-level-1" style="height: 300px">
-                <c8y-asset-selector-miller
-                  [(ngModel)]="layer.device"
-                [config]="{
-                  groupsSelectable: true,
-                  singleColumn: true,
-                  columnHeaders: true,
-                  showFilter: true,
-                  search: true
-                }"
-                ></c8y-asset-selector-miller>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="fragment" translate>Fragment</label>
-          <input name="fragment" id="fragment" class="form-control" placeholder="type" [(ngModel)]="layer.fragment" />
-        </div>
-        <div class="form-group">
-          <label for="value" translate>Value</label>
-          <input name="value" id="value" class="form-control" placeholder="c8y_Event" [(ngModel)]="layer.value" />
-        </div>
-      </span>
-    }
     @if (type === 'QueryLayerConfig') {
       <span>
         <div class="legend form-block center">{{ queryType }} Query Configuration</div>
-        @if (queryType === 'Inventory') {
-          <inventory-query-form [filter]="layer.filter"></inventory-query-form>
-        }
-        @if (queryType === 'Alarm') {
-          <alarm-query-form [filter]="layer.filter"></alarm-query-form>
-        }
-        @if (queryType === 'Event') {
-          <event-query-form [filter]="layer.filter"></event-query-form>
-        }
+        <ps-query-forms-tab [filter]="layer.filter" [queryType]="queryType" (tabChange)="onQueryTypeChange($event)"></ps-query-forms-tab>
       </span>
     }
 

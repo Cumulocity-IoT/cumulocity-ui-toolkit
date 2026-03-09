@@ -2,59 +2,75 @@ import { Component, Input } from '@angular/core';
 import { Severity, AlarmStatus } from '@c8y/client';
 import { CoreModule } from '@c8y/ngx-components';
 import { DynamicQueryFormComponent } from './dynamic-query-form.component';
+import { FormlyFieldConfig } from '@ngx-formly/core';
+import { getDateFromBlock, getDateToBlock } from './formly-query-blocks';
 
 @Component({
   selector: 'ps-alarm-query-form',
-  template: `<ps-dynamic-query-form
-    [filter]="filter"
-    [params]="queryParams"
+  template: `<ps-dynamic-query-form [filter]="filter" [params]="queryParams"
+    ><ng-content></ng-content
   ></ps-dynamic-query-form>`,
   standalone: true,
   imports: [CoreModule, DynamicQueryFormComponent],
 })
 export class AlarmQueryFormComponent {
   @Input() filter = {};
-  queryParams = [
-    {
-      title: 'createdFrom',
-      type: 'date',
+  queryParams: FormlyFieldConfig[] = [
+    getDateFromBlock({
+      key: 'createdFrom',
+      label: 'Created from',
       description: 'Start date or date and time of the alarm creation.',
-    },
-    {
-      title: 'createdTo',
-      type: 'date',
+    }),
+    getDateToBlock({
+      key: 'createdTo',
+      label: 'Created to',
       description: 'End date or date and time of the alarm creation.',
-    },
-    {
-      title: 'dateFrom',
-      type: 'date',
+    }),
+    getDateFromBlock({
+      key: 'dateFrom',
+      label: 'Date from',
       description: 'Start date or date and time of the alarm occurrence.',
-    },
-    {
-      title: 'dateTo',
-      type: 'date',
+    }),
+    getDateToBlock({
+      key: 'dateTo',
+      label: 'Date to',
       description: 'End date or date and time of the alarm occurrence.',
+    }),
+    {
+      key: 'resolved',
+      type: 'checkbox',
+      templateOptions: {
+        label: 'Resolved',
+        description:
+          'When set to true, only alarms with status CLEARED will be fetched. When set to false, alarms with status ACTIVE or ACKNOWLEDGED will be fetched.',
+      },
     },
     {
-      title: 'resolved',
-      type: 'boolean',
-      description:
-        'When set to true only alarms with status CLEARED will be fetched, whereas false will fetch all alarms with status ACTIVE or ACKNOWLEDGED.',
+      key: 'type',
+      type: 'input',
+      templateOptions: {
+        label: 'Alarm Type(s)',
+        placeholder: 'Enter alarm types (comma separated)',
+        description: 'The type of alarm to search for (comma separated).',
+      },
     },
     {
-      title: 'type',
-      type: 'string',
-      description: 'The types of alarm to search for (comma separated).',
+      key: 'severity',
+      type: 'select',
+      defaultValue: Severity.CRITICAL,
+      templateOptions: {
+        label: 'Severity',
+        options: Object.keys(Severity).map((s) => ({ value: s, label: s })),
+      },
     },
     {
-      type: 'string',
-      enum: Object.keys(Severity),
-      title: 'severity',
-    },
-    {
-      type: 'string',
-      enum: Object.keys(AlarmStatus),
-      title: 'status',
+      key: 'status',
+      type: 'select',
+      defaultValue: AlarmStatus.ACTIVE,
+      templateOptions: {
+        label: 'Status',
+        options: Object.keys(AlarmStatus).map((s) => ({ value: s, label: s })),
+      },
     },
   ];
 }

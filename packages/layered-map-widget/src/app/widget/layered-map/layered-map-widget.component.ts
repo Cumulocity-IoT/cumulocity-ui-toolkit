@@ -2,12 +2,7 @@ import { AfterViewInit, Component, ElementRef, Input, OnDestroy, ViewChild } fro
 import type * as L from 'leaflet';
 import { isEmpty, isNil } from 'lodash';
 import { fromEvent, Subject, Subscription } from 'rxjs';
-import {
-  ILayeredMapWidgetConfig,
-  isDeviceFragmentLayerConfig,
-  isQueryLayerConfig,
-  MyLayer,
-} from './layered-map-widget.model';
+import { ILayeredMapWidgetConfig, isQueryLayerConfig, MyLayer } from './layered-map-widget.model';
 import { LayerService } from './service/layer.service';
 import { InventoryPollingService } from './service/inventory-polling.service';
 import { filter, takeUntil } from 'rxjs/operators';
@@ -194,9 +189,7 @@ export class LayeredMapWidgetComponent implements AfterViewInit, OnDestroy {
         });
       }, 2000);
 
-      const markerBasedLayers = config.layers.filter(
-        (l) => isDeviceFragmentLayerConfig(l.config) || isQueryLayerConfig(l.config)
-      );
+      const markerBasedLayers = config.layers.filter((l) => isQueryLayerConfig(l.config));
 
       this.allLayers = await this.layerService.createLayers(markerBasedLayers);
 
@@ -245,15 +238,6 @@ export class LayeredMapWidgetComponent implements AfterViewInit, OnDestroy {
 
     if (!cfg.enablePolling) {
       return;
-    }
-
-    if (isDeviceFragmentLayerConfig(cfg)) {
-      const query = `(bygroupid(${cfg.device.id}) or id eq '${cfg.device.id}') and has(c8y_Position) and ${cfg.fragment} eq '${cfg.value}'`;
-      const sub = this.inventoryPollingService
-        .createPolling$({ query }, layer, cfg.pollingInterval * 1000)
-        .subscribe((delta) => this.layerService.updatePollingDelta(delta, layer));
-
-      this.layerSubs.set(layer, sub);
     }
 
     if (isQueryLayerConfig(cfg)) {

@@ -28,16 +28,6 @@ export const DEFAULT_CONFIG: PopoverConfig = {
   actions: [],
 };
 
-export type DeviceFragmentLayerConfig = BasicLayerConfig & {
-  fragment: string;
-  value: string;
-  device: { id: string; name: string };
-};
-
-export function isDeviceFragmentLayerConfig(config: unknown): config is DeviceFragmentLayerConfig {
-  return has(config, 'fragment') && has(config, 'value');
-}
-
 export type QueryLayerConfig = BasicLayerConfig & {
   filter: object;
   type: 'Inventory' | 'Alarm' | 'Event';
@@ -59,7 +49,7 @@ export function isWebMapServiceLayerConfig(
   return has(config, 'url') && has(config, 'wmsLayers');
 }
 
-export type LayerType = DeviceFragmentLayerConfig | QueryLayerConfig | WebMapServiceLayerConfig;
+export type LayerType = QueryLayerConfig | WebMapServiceLayerConfig;
 
 export type LayerConfig<LayerType> = {
   config: LayerType;
@@ -75,7 +65,7 @@ export type LayerAttributes = {
 };
 
 export class MyLayer implements LayerAttributes {
-  config!: DeviceFragmentLayerConfig | QueryLayerConfig;
+  config!: QueryLayerConfig;
   devices: string[] = [];
   coordinates = new Map<string, LatLng>();
   markerCache = new Map<string, Marker>();
