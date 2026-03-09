@@ -25,8 +25,8 @@ export class LayerService {
     private queryLayerService: QueryLayerService
   ) {}
 
-  createLayers(configs: LayerConfig<BasicLayerConfig>[]): Promise<MyLayer[]> {
-    return Promise.resolve(configs.map((cfg) => this.createLayer(cfg)));
+  createLayers(configs: LayerConfig<BasicLayerConfig>[]): MyLayer[] {
+    return configs.map((cfg) => this.createLayer(cfg));
   }
 
   load(layer: MyLayer) {

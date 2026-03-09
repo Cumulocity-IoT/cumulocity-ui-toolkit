@@ -191,7 +191,7 @@ export class LayeredMapWidgetComponent implements AfterViewInit, OnDestroy {
 
       const markerBasedLayers = config.layers.filter((l) => isQueryLayerConfig(l.config));
 
-      this.allLayers = await this.layerService.createLayers(markerBasedLayers);
+      this.allLayers = this.layerService.createLayers(markerBasedLayers);
 
       for (const layer of this.allLayers) {
         layerControl.addOverlay(layer.group, layer.config.name);
