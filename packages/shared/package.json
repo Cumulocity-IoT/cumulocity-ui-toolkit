@@ -25,6 +25,7 @@
     "@angular/router": ">=18.0.0",
     "@c8y/client": ">=1021.0.0",
     "@c8y/ngx-components": ">=1021.0.0",
+    "date-fns": "4.1.0",
     "rxjs": ">=7.0.0"
   }
 }
