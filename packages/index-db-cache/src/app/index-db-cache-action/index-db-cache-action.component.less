@@ -1,0 +1,115 @@
+
+:host {
+  .c8y-help-drawer {
+    @media (min-width: 768px) {
+      // Sit above the navigator (z-index 1031) and action bar (1030)
+      z-index: 1032;
+      // Start below both the main header (48px) and the page toolbar (another 48px)
+      top: 171px;
+      left: 250px;
+      right: 10px;
+      // Smooth left transition for nav open/close at all breakpoints
+      transition: left 0.4s ease-in-out, top 0.2s ease;
+    }
+  }
+}
+
+// ─── Spinner animation ────────────────────────────────────────────────────────
+
+@keyframes idb-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.idb-spin {
+  display: inline-block;
+  animation: idb-spin 0.75s linear infinite;
+}
+
+// ─── Progress bar ─────────────────────────────────────────────────────────────
+
+.idb-progress {
+  height: 6px;
+  margin: 0;
+  border-radius: 3px;
+}
+
+// ─── Cache name badges ────────────────────────────────────────────────────────
+
+.idb-badge {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: bold;
+  white-space: nowrap;
+  line-height: 1.6;
+
+  &--new-series {
+    background: #e8f0fe;
+    color: #1a73e8;
+  }
+
+  &--old-series {
+    background: #e6f4f1;
+    color: #0f9d58;
+  }
+
+  &--measurement {
+    background: #fce8b2;
+    color: #f9ab00;
+  }
+}
+
+// ─── Live log ─────────────────────────────────────────────────────────────────
+
+.idb-log {
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 11px;
+
+  &__entry {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    border-left: 3px solid transparent;
+    border-bottom: 1px solid #f5f5f5;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &--cache-hit {
+      border-left-color: #5cb85c;
+    }
+
+    &--partial-cache {
+      border-left-color: #f0ad4e;
+    }
+
+    &--passthrough {
+      border-left-color: #d9d9d9;
+    }
+  }
+
+  &__time {
+    flex-shrink: 0;
+    color: #9e9e9e;
+  }
+
+  &__meta {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  &__timing {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}

@@ -30,7 +30,7 @@ jobs:
         id: set-matrix
         run: |
           git fetch origin main
-          components=$(git diff --name-only origin/main...HEAD | grep '^packages/' | cut -d '/' -f2 | sort -u || true)
+          components=$(git diff --name-only origin/main...HEAD | grep '^packages/' | cut -d '/' -f2 | sort -u | grep -v '^shared$' || true)
           if [ -z "$components" ]; then
             echo "matrix={\"component\": []}" >> $GITHUB_OUTPUT
           else
@@ -45,24 +45,40 @@ jobs:
     environment: e2e
     if: fromJson(needs.detect-changes.outputs.matrix).component != '[]'
     strategy:
+      fail-fast: false
       matrix: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
     name: E2E Test ${{ matrix.component }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'pnpm'
+
+      - name: Cache Cypress binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Cypress
+          key: cypress-${{ runner.os }}-${{ hashFiles('test/package.json') }}
+          restore-keys: |
+            cypress-${{ runner.os }}-
 
       - name: Install root dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Cypress binary
+        run: pnpm -C test exec cypress install
 
       - name: Start Angular Server (package ${{ matrix.component }})
         run: |
           echo "Starting Angular server for package ${{ matrix.component }}"
-          npm run serve:${{ matrix.component }} &
+          pnpm run serve:${{ matrix.component }} &
           npx wait-on http://localhost:9001 --timeout 120000
           sleep 10
           echo "Angular server is up!"
@@ -78,7 +94,7 @@ jobs:
           CYPRESS_C8Y_SHELL_TARGET: ${{ env.C8Y_SHELL_TARGET }}
         run: |
           echo "Running tests with test ${{ matrix.component }}"
-          npm run e2e:run:${{ matrix.component }}
+          pnpm run e2e:run:${{ matrix.component }}
         timeout-minutes: 10
 
       - name: Stop Angular Server
