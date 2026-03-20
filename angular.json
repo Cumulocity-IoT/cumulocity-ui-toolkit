@@ -675,6 +675,89 @@
           "defaultConfiguration": "production"
         }
       }
+    },
+    "plugin.index-db-cache": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "less"
+        }
+      },
+      "root": "packages/index-db-cache",
+      "sourceRoot": "packages/index-db-cache/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@c8y/devkit:build",
+          "options": {
+            "outputPath": "dist/cumulocity-index-db-cache-plugin",
+            "main": "packages/index-db-cache/src/main.ts",
+            "tsConfig": "packages/index-db-cache/tsconfig.app.json",
+            "polyfills": ["zone.js"],
+            "assets": [],
+            "inlineStyleLanguage": "less",
+            "scripts": [],
+            "aot": false,
+            "buildOptimizer": false,
+            "allowedCommonJsDependencies": [
+              "regenerator-runtime/runtime",
+              "zone.js/dist/zone"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "all",
+              "buildOptimizer": false
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@c8y/devkit:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.index-db-cache:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.index-db-cache:build:development"
+            }
+          },
+          "defaultConfiguration": "development",
+          "options": {
+            "port": 9001,
+            "publicHost": "localhost:9001"
+          }
+        },
+        "deploy": {
+          "builder": "@c8y/devkit:deploy",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.index-db-cache:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.index-db-cache:build:development"
+            }
+          },
+          "defaultConfiguration": "production"
+        }
+      }
     }
   }
 }

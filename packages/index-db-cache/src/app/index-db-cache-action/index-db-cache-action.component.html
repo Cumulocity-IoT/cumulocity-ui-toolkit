@@ -1,0 +1,199 @@
+@if (isVisible) {
+  <c8y-action-bar-item
+    [placement]="'right'"
+    itemClass="pull-right"
+    [priority]="priority"
+  >
+    <button
+      class="btn btn-link"
+      [attr.aria-label]="'IndexedDB cache' | translate"
+      tooltip="{{ 'IndexedDB cache' | translate }}"
+      placement="left"
+      container="body"
+      aria-controls="collapseCache"
+      [attr.aria-expanded]="!isCollapsed"
+      type="button"
+      (click)="toggle()"
+    >
+      <i c8yIcon="smartphone-ram"></i>
+    </button>
+  </c8y-action-bar-item>
+}
+
+<div
+  class="c8y-help-drawer"
+  id="collapseCache"
+  [collapse]="isCollapsed"
+  [isAnimated]="true"
+  (collapsed)="onCollapsed()"
+>
+  <div class="c8y-help-drawer-block">
+
+    <!-- ─── Drawer header ───────────────────────── -->
+    <div class="d-flex a-i-center m-b-24">
+      <i c8yIcon="database" class="icon-48 text-muted m-r-16 flex-shrink"></i>
+      <div class="flex-grow">
+        <h4 class="text-bold text-primary m-0" translate>IndexedDB Cache</h4>
+        <small class="text-muted" translate>Manage the browser-side IndexedDB cache.</small>
+      </div>
+    </div>
+
+    <!-- ─── Cache Control ─────────────────────── -->
+    <fieldset class="m-b-16">
+      <legend translate>Cache Control</legend>
+
+      <div class="d-flex a-i-center gap-default m-b-8">
+        <label class="c8y-switch m-b-0">
+          <input
+            type="checkbox"
+            [checked]="cachingActive"
+            (change)="onActiveToggle($event)"
+          />
+          <span></span>
+        </label>
+        <span [class]="cachingActive ? 'text-success' : 'text-muted'">
+          @if (cachingActive) {
+            <i c8yIcon="check-circle"></i>
+            <strong translate> Caching active</strong>
+          } @else {
+            <i c8yIcon="minus-circle"></i>
+            <strong translate> Caching disabled</strong>
+          }
+        </span>
+      </div>
+
+      <small class="text-muted" translate>State is persisted in localStorage.</small>
+    </fieldset>
+
+    <!-- ─── Statistics ───────────────────────── -->
+    <fieldset class="m-b-16">
+      <legend>
+        <div class="d-flex a-i-center j-c-between">
+          <span translate>Statistics</span>
+          <button
+            class="btn btn-xs btn-clean"
+            tooltip="{{ 'Refresh statistics' | translate }}"
+            (click)="refreshStats()"
+            [disabled]="loadingStats"
+            type="button"
+          >
+            <i [c8yIcon]="loadingStats ? 'circle-o-notch' : 'refresh'" [class.idb-spin]="loadingStats"></i>
+          </button>
+        </div>
+      </legend>
+
+      @if (statRows[0].stats !== undefined) {
+        <table class="table table-condensed m-b-8">
+          <thead>
+            <tr>
+              <th translate>Cache</th>
+              <th class="text-right" translate>Entries</th>
+              <th class="text-right" translate>Est. Size</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of statRows; track row.name) {
+              <tr>
+                <td>
+                  <span class="idb-badge" [class]="'idb-badge--' + row.name">{{ row.shortLabel }}</span>
+                </td>
+                <td class="text-right">
+                  @if (row.stats) { {{ row.stats.elementCount | number }} } @else { — }
+                </td>
+                <td class="text-right text-muted">
+                  @if (row.stats) { {{ row.stats.storageSizeMB | number:'1.1-1' }}&nbsp;MB } @else { — }
+                </td>
+                <td class="text-right">
+                  <button
+                    class="btn btn-xs btn-danger"
+                    tooltip="{{ 'Clear cache' | translate }}"
+                    (click)="clearCache(row.name)"
+                    [disabled]="clearingCache === row.name"
+                    type="button"
+                  >
+                    <i [c8yIcon]="clearingCache === row.name ? 'circle-o-notch' : 'trash'" [class.idb-spin]="clearingCache === row.name"></i>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        <!-- Bandwidth saved progress bar -->
+        <div class="d-flex j-c-between m-b-4">
+          <small class="text-muted" translate>Bandwidth saved (current log)</small>
+          <small class="text-success">
+            <strong>{{ logService.savedPercent | number:'1.0-0' }}%</strong>
+            &nbsp;~{{ logService.totalSavedKB | number:'1.0-0' }}&nbsp;KB
+          </small>
+        </div>
+        <div class="progress idb-progress">
+          <div
+            class="progress-bar progress-bar-success"
+            role="progressbar"
+            [style.width]="logService.savedPercent + '%'"
+          ></div>
+        </div>
+      } @else {
+        <p class="text-muted small m-0">
+          <i c8yIcon="info-circle"></i>
+          <span translate> Click refresh to load statistics.</span>
+        </p>
+      }
+    </fieldset>
+
+    <!-- ─── Live Log ──────────────────────────── -->
+    <fieldset>
+      <legend>
+        <div class="d-flex a-i-center j-c-between">
+          <span translate>Live Log</span>
+          <button
+            class="btn btn-xs btn-clean"
+            tooltip="{{ 'Clear log' | translate }}"
+            (click)="clearLog()"
+            type="button"
+          >
+            <i c8yIcon="trash"></i>
+          </button>
+        </div>
+      </legend>
+
+      <div class="idb-log">
+        @for (entry of logs$ | async; track entry.id) {
+          <div class="idb-log__entry" [class]="'idb-log__entry--' + entry.eventType">
+            <span class="idb-log__time">{{ entry.ts | date:'HH:mm:ss' }}</span>
+            <span class="idb-badge" [class]="'idb-badge--' + entry.cache">{{ entry.cache }}</span>
+            <i [c8yIcon]="logIcon(entry.eventType)" [class]="logIconClass(entry.eventType)"></i>
+            <span class="idb-log__meta flex-grow">
+              @if (entry.keys.length) { {{ entry.keys.join(', ') }} · }
+              <span class="text-muted">
+                {{ entry.dateFrom | date:'dd.MM HH:mm' }}–{{ entry.dateTo | date:'dd.MM HH:mm' }}
+              </span>
+            </span>
+            <span class="idb-log__timing text-muted">
+              {{ entry.idbReadMs }}ms
+              @if (entry.gapCount > 0) { · {{ entry.gapCount }} gaps }
+            </span>
+          </div>
+        } @empty {
+          <p class="text-muted small m-0 p-8" translate>No intercepted requests yet.</p>
+        }
+      </div>
+    </fieldset>
+
+  </div>
+
+  <div class="c8y-help-drawer-footer animated fadeIn text-center" style="animation-delay: 0.35s;">
+    <button
+      aria-controls="collapseCache"
+      type="button"
+      class="btn btn-default"
+      [attr.aria-expanded]="!isCollapsed"
+      (click)="toggle()"
+      translate
+    >
+      Close
+    </button>
+  </div>
+</div>

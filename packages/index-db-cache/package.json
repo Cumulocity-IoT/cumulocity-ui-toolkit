@@ -1,0 +1,13 @@
+{
+  "name": "cumulocity-index-db-cache-plugin",
+  "version": "1.0.0",
+  "description": "",
+  "author": "",
+  "homepage": "___TODO___",
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "shared": "workspace:*"
+  }
+}

@@ -64,7 +64,10 @@
     "test:tenant-option-management": "pnpm --filter cumulocity-tenant-option-management-plugin run test",
     "serve:operations-widget": "pnpm run _serve plugin.operations-widget",
     "build:operations-widget": "ng build plugin.operations-widget",
-    "test:operations-widget": "pnpm --filter cumulocity-operations-widget-plugin run test"
+    "test:operations-widget": "pnpm --filter cumulocity-operations-widget-plugin run test",
+    "serve:index-db-cache": "pnpm run _serve plugin.index-db-cache",
+    "build:index-db-cache": "ng build plugin.index-db-cache",
+    "test:index-db-cache": "pnpm --filter cumulocity-index-db-cache-plugin run test"
   },
   "dependencies": {
     "@angular/animations": "^18.2.0",
