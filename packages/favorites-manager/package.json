@@ -3,5 +3,11 @@
   "version": "1.0.1",
   "description": "",
   "author": "Christian Guether",
-  "homepage": "___TODO___"
+  "homepage": "___TODO___",
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "shared": "workspace:*"
+  }
 }

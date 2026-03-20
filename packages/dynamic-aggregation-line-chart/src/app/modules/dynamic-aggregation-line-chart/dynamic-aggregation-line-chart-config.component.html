@@ -1,0 +1,180 @@
+<!-- ── Asset selection ─────────────────────────────────────── -->
+@if (!selectedDevice) {
+<div class="col-sm-12">
+  <fieldset class="c8y-fieldset">
+    <legend>{{ 'Asset selection' | translate }}</legend>
+    <c8y-asset-selector
+      [config]="selectorConfig"
+      [asset]="rootAsset()"
+      [selectedDevice]="selectedDevice"
+      (onSelected)="onAssetSelected($event)"
+    ></c8y-asset-selector>
+  </fieldset>
+</div>
+}
+
+<!-- ── Datapoint selection ────────────────────────────────── -->
+@if (selectedDevice) {
+  <div class="col-sm-12">
+    <hr class="separator" />
+  </div>
+
+  <div class="col-sm-12">
+    <fieldset class="c8y-fieldset">
+      <legend>{{ 'Datapoint selection' | translate }}</legend>
+      <div class="row" style="max-height: 40vh; overflow: hidden;">
+        <div class="col-sm-6 d-flex d-col" style="min-height: 0; overflow: hidden;">
+          <c8y-datapoint-selector
+            class="d-flex d-col"
+            style="height: 40vh; overflow: hidden;"
+            [ngModel]="datapoints()"
+            (ngModelChange)="datapoints.set($event)"
+            [contextAsset]="selectedDevice"
+            [allowChangingContext]="false"
+            [allowSearch]="true"
+            [hideSelection]="true"
+          ></c8y-datapoint-selector>
+        </div>
+
+        <div class="col-sm-6 d-flex d-col" style="min-height: 0; overflow: hidden;">
+          <div class="p-l-16 p-r-16 p-t-8 p-b-8 bg-inherit separator-bottom" style="flex-shrink: 0;">
+            <p class="text-medium text-truncate" title="Selected data points">
+              {{ 'Selected data points' | translate }}
+            </p>
+          </div>
+          @if (datapoints().length) {
+            <div class="inner-scroll" style="max-height: calc(40vh - 50px);">
+              <c8y-list-group>
+              @for (dp of filteredDatapoints(); track dp['key']) {
+                <c8y-li>
+                  <div class="d-flex j-c-between a-i-center">
+                    @if (dp.color) {
+                      <div
+                        class="c8y-list__item__colorpicker p-t-0 p-b-0 p-l-0"
+                        [title]="'Color' | translate"
+                      >
+                        <div class="c8y-colorpicker">
+                          <input
+                            type="color"
+                            [value]="dp.color"
+                            [attr.aria-label]="'Color' | translate"
+                            readonly
+                          />
+                          <span [style.background-color]="dp.color"></span>
+                        </div>
+                      </div>
+                    }
+                    <span class="flex-grow text-truncate">
+                      {{ dp.label || dp.series }}
+                      <small class="text-muted d-block">{{ dp.fragment }}.{{ dp.series }}</small>
+                    </span>
+                    <button
+                      type="button"
+                      class="btn btn-dot btn-dot--danger"
+                      (click)="removeDatapoint(dp)"
+                      [title]="'Remove from selected datapoints' | translate"
+                      [attr.aria-label]="'Remove' | translate"
+                    >
+                      <i class="icon-20 dlt-c8y-icon-minus-circle"></i>
+                    </button>
+                  </div>
+                  <c8y-list-item-collapse>
+                    <div class="p-t-8 p-b-8">
+                      <label
+                        class="c8y-checkbox checkbox-inline"
+                        [class.disabled]="dp.min == null"
+                        [title]="'Min line' | translate"
+                        [attr.aria-label]="'Min line' | translate"
+                      >
+                        <input
+                          type="checkbox"
+                          [checked]="thresholdConfigs()[dp['key']]?.showMin"
+                          [disabled]="dp.min == null"
+                          (change)="updateThresholdConfig(dp['key'], { showMin: $any($event.target).checked })"
+                        />
+                        <span></span>
+                        <span translate>Min line</span>
+                      </label>
+                      @if (thresholdConfigs()[dp['key']]?.showMin && dp.min != null) {
+                        <input
+                          type="color"
+                          class="m-l-8 m-r-16"
+                          [value]="thresholdConfigs()[dp['key']]?.minColor || '#ff4444'"
+                          (change)="updateThresholdConfig(dp['key'], { minColor: $any($event.target).value })"
+                        />
+                      }
+                      <label
+                        class="c8y-checkbox checkbox-inline m-l-16"
+                        [class.disabled]="dp.max == null"
+                        [title]="'Max line' | translate"
+                        [attr.aria-label]="'Max line' | translate"
+                      >
+                        <input
+                          type="checkbox"
+                          [checked]="thresholdConfigs()[dp['key']]?.showMax"
+                          [disabled]="dp.max == null"
+                          (change)="updateThresholdConfig(dp['key'], { showMax: $any($event.target).checked })"
+                        />
+                        <span></span>
+                        <span translate>Max line</span>
+                      </label>
+                      @if (thresholdConfigs()[dp['key']]?.showMax && dp.max != null) {
+                        <input
+                          type="color"
+                          class="m-l-8"
+                          [value]="thresholdConfigs()[dp['key']]?.maxColor || '#4444ff'"
+                          (change)="updateThresholdConfig(dp['key'], { maxColor: $any($event.target).value })"
+                        />
+                      }
+                    </div>
+                  </c8y-list-item-collapse>
+                </c8y-li>
+              }
+              </c8y-list-group>
+            </div>
+          } @else {
+
+            <c8y-ui-empty-state
+              class="p-l-16"
+              [icon]="'c8y-data-points'"
+              [title]="'No datapoints selected.' | translate"
+              [subtitle]="'Select datapoints from the list below.' | translate"
+              [horizontal]="true"
+            ></c8y-ui-empty-state>
+          }
+        </div>
+      </div>
+    </fieldset>
+  </div>
+}
+
+<!-- ── Aggregation functions ──────────────────────────────── -->
+<div class="col-sm-12">
+  <hr class="separator" />
+</div>
+
+<div class="col-sm-12">
+  <fieldset class="c8y-fieldset">
+    <legend>{{ 'Aggregation functions' | translate }}</legend>
+
+    <div class="col-sm-12 m-b-16">
+      <p class="text-muted text-sm m-b-8">
+        {{
+          'Selects aggregation functions that are calculated for each selected aggregation interval. Providing this parameter requires also providing the aggregation interval parameter. By default min and max functions are calculated.'
+            | translate
+        }}
+      </p>
+    </div>
+
+    <div class="col-sm-6 col-md-12 m-b-16">
+      <c8y-select
+        [items]="aggregationOptions"
+        [ngModel]="aggregationFunctions()"
+        (ngModelChange)="aggregationFunctions.set($event)"
+        [multi]="true"
+        [placeholder]="'Select aggregation functions'"
+        aria-label="Aggregation functions select"
+      ></c8y-select>
+    </div>
+  </fieldset>
+</div>

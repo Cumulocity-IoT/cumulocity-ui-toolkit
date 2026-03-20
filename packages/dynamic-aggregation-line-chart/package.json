@@ -1,0 +1,15 @@
+{
+  "name": "cumulocity-dynamic-aggregation-line-chart-plugin",
+  "version": "1.0.0",
+  "description": "",
+  "author": "",
+  "homepage": "___TODO___",
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "echarts": "^5.6.0",
+    "ngx-echarts": "^19.0.0",
+    "shared": "workspace:*"
+  }
+}
