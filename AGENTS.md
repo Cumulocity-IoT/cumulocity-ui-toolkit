@@ -27,6 +27,17 @@ cumulocity-ui-toolkit/
 ├── packages/
 │   ├── shared/               # Internal library: components, pipes, services, helpers
 │   │   └── src/index.ts      # Barrel export – the public API of shared/
+│   ├── dynamic-aggregation-line-chart/  # Dynamic aggregation line chart plugin
+│   │   ├── cumulative.config.ts        # Plugin config + routing metadata
+│   │   ├── jest.config.ts              # Plugin-specific unit tests
+│   │   ├── package.json
+│   │   ├── tsconfig.*.json
+│   │   ├── public/                     # Static plugin assets
+│   │   └── src/
+│   │       ├── app/modules/dynamic-aggregation-line-chart/dynamic-aggregation-line-chart.component.ts
+│   │       ├── app/modules/dynamic-aggregation-line-chart/dynamic-aggregation-line-chart-config.component.ts
+│   │       ├── app/modules/dynamic-aggregation-line-chart/ps-line-chart.model.ts
+│   │       └── app/modules/shared/      # shared helper services + components for this plugin
 │   ├── energy-consumption-widget/
 │   ├── favorites-manager/
 │   ├── kpi-widget/

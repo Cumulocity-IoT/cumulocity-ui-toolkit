@@ -1,3 +1,3 @@
-export const assetPaths = {
-  previewImage: '' as string,
-};
+import previewImage from './preview.png';
+
+export const assetPaths = { previewImage: previewImage as string };

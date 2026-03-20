@@ -34,39 +34,55 @@ export class MicroserviceService {
     },
   };
 
-  defaultResponseHandler = async (response: IFetchResponse) => {
+  defaultResponseHandler = async (response: IFetchResponse): Promise<unknown> => {
     if (!response.ok) {
       try {
         const errorMessage = await response.text();
-        const parsed = JSON.parse(errorMessage);
-        throw new Error(parsed.message);
-      } catch (e) {
-        return Promise.reject(response);
+        const parsed = JSON.parse(errorMessage) as { message?: string };
+
+        throw new Error(parsed.message ?? 'Unexpected error response');
+      } catch {
+        return Promise.reject(new Error(`HTTP ${response.status}: ${response.statusText}`));
       }
     }
 
     if (response.status !== 204) {
       return response.json();
     }
+
+    return undefined;
   };
 
   constructor(private fetch: FetchClient) {}
 
-  async get(url: string, responseHandler: (response: IFetchResponse) => Promise<any> = this.defaultResponseHandler) {
+  async get(
+    url: string,
+    responseHandler: (response: IFetchResponse) => Promise<unknown> = this.defaultResponseHandler
+  ): Promise<unknown> {
     const response = await this.fetch.fetch(url, this.GET_OPTIONS);
     return responseHandler(response);
   }
 
-  async post(url: string, data: any, responseHandler: (response: IFetchResponse) => Promise<any> = this.defaultResponseHandler) {
+  async post(
+    url: string,
+    data: unknown,
+    responseHandler: (response: IFetchResponse) => Promise<unknown> = this.defaultResponseHandler
+  ): Promise<unknown> {
     const options = cloneDeep(this.POST_OPTIONS);
+
     options.body = JSON.stringify(data);
 
     const response = await this.fetch.fetch(url, options);
     return responseHandler(response);
   }
 
-  async put(url: string, data: any, responseHandler: (response: IFetchResponse) => Promise<any> = this.defaultResponseHandler) {
+  async put(
+    url: string,
+    data: unknown,
+    responseHandler: (response: IFetchResponse) => Promise<unknown> = this.defaultResponseHandler
+  ): Promise<unknown> {
     const options = cloneDeep(this.PUT_OPTIONS);
+
     options.body = JSON.stringify(data);
 
     const response = await this.fetch.fetch(url, options);
@@ -75,9 +91,11 @@ export class MicroserviceService {
 
   async delete(url: string) {
     const response = await this.fetch.fetch(url, this.DELETE_OPTIONS);
+
     if (!response.ok) {
-      return Promise.reject(response);
+      return Promise.reject(new Error(`HTTP ${response.status}: ${response.statusText}`));
     }
+
     return response;
   }
 }

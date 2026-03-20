@@ -27,14 +27,14 @@ const UNIT_DEFS: ReadonlyArray<{
   secondsPerUnit: number;
   multipliers: readonly number[];
 }> = [
-  { unit: 's', secondsPerUnit: 1,           multipliers: [2, 5, 10, 20, 30, 40, 50] },
-  { unit: 'm', secondsPerUnit: 60,          multipliers: [1, 2, 5, 10, 15, 20, 25, 30, 45] },
-  { unit: 'h', secondsPerUnit: 3_600,       multipliers: [1, 2, 3, 4, 6, 8, 12] },
-  { unit: 'd', secondsPerUnit: 86_400,      multipliers: [1, 2, 3, 4, 5, 6] },
-  { unit: 'w', secondsPerUnit: 604_800,     multipliers: [1, 2, 3] },
-  { unit: 'M', secondsPerUnit: 2_592_000,   multipliers: [1, 2] },
-  { unit: 'q', secondsPerUnit: 7_776_000,   multipliers: [1, 2, 3, 4] },
-  { unit: 'y', secondsPerUnit: 31_536_000,  multipliers: [1, 2, 3, 5] },
+  { unit: 's', secondsPerUnit: 1, multipliers: [2, 5, 10, 20, 30, 40, 50] },
+  { unit: 'm', secondsPerUnit: 60, multipliers: [1, 2, 5, 10, 15, 20, 25, 30, 45] },
+  { unit: 'h', secondsPerUnit: 3_600, multipliers: [1, 2, 3, 4, 6, 8, 12] },
+  { unit: 'd', secondsPerUnit: 86_400, multipliers: [1, 2, 3, 4, 5, 6] },
+  { unit: 'w', secondsPerUnit: 604_800, multipliers: [1, 2, 3] },
+  { unit: 'M', secondsPerUnit: 2_592_000, multipliers: [1, 2] },
+  { unit: 'q', secondsPerUnit: 7_776_000, multipliers: [1, 2, 3, 4] },
+  { unit: 'y', secondsPerUnit: 31_536_000, multipliers: [1, 2, 3, 5] },
 ];
 
 /**
@@ -42,11 +42,10 @@ const UNIT_DEFS: ReadonlyArray<{
  * `aggregationInterval` candidates derived from {@link UNIT_DEFS}.
  * Exported for use in unit tests.
  */
-export const AGGREGATION_CANDIDATES: readonly AggregationCandidate[] = UNIT_DEFS
-  .flatMap(({ unit, secondsPerUnit, multipliers }) =>
-    multipliers.map(n => ({ value: `${n}${unit}`, seconds: n * secondsPerUnit })),
-  )
-  .sort((a, b) => a.seconds - b.seconds);
+export const AGGREGATION_CANDIDATES: readonly AggregationCandidate[] = UNIT_DEFS.flatMap(
+  ({ unit, secondsPerUnit, multipliers }) =>
+    multipliers.map((n) => ({ value: `${n}${unit}`, seconds: n * secondsPerUnit }))
+).sort((a, b) => a.seconds - b.seconds);
 
 @Injectable()
 export class AggregationService {
@@ -61,6 +60,8 @@ export class AggregationService {
   computeAggregationInterval(dateFrom: Date, dateTo: Date, maxPoints = 5_000): string {
     const rangeSeconds = (dateTo.getTime() - dateFrom.getTime()) / 1_000;
     const minIntervalSeconds = rangeSeconds / maxPoints;
-    return AGGREGATION_CANDIDATES.find(({ seconds }) => seconds >= minIntervalSeconds)?.value ?? '5y';
+    return (
+      AGGREGATION_CANDIDATES.find(({ seconds }) => seconds >= minIntervalSeconds)?.value ?? '5y'
+    );
   }
 }

@@ -70,30 +70,41 @@ export class MeasurementCacheService {
    * Returns all cached data points for the given (deviceId, series, interval)
    * key within [dateFrom, dateTo], shaped as {@link AggregatedISeries}.
    */
-  async getRange(deviceId: string, series: string, agg: AggKey, dateFrom: Date, dateTo: Date): Promise<AggregatedISeries> {
+  async getRange(
+    deviceId: string,
+    series: string,
+    agg: AggKey,
+    dateFrom: Date,
+    dateTo: Date
+  ): Promise<AggregatedISeries> {
     const db = await this.openDb();
     const store = db.transaction(STORE_DATA, 'readonly').objectStore(STORE_DATA);
     const range = IDBKeyRange.bound(
       [deviceId, series, agg, dateFrom.toISOString()],
-      [deviceId, series, agg, dateTo.toISOString()],
+      [deviceId, series, agg, dateTo.toISOString()]
     );
 
     return new Promise<AggregatedISeries>((resolve, reject) => {
       const values: AggregatedISeries['values'] = {};
       const req = store.openCursor(range);
+
       req.onsuccess = () => {
         const cursor = req.result;
+
         if (cursor) {
           const entry = cursor.value as MeasurementEntry;
-          values[entry.ts] = [{
-            min: entry.min,
-            max: entry.max,
-            avg: entry.avg,
-            sum: entry.sum,
-            count: entry.count,
-            stdDevPop: entry.stdDevPop,
-            stdDevSamp: entry.stdDevSamp,
-          }];
+
+          values[entry.ts] = [
+            {
+              min: entry.min,
+              max: entry.max,
+              avg: entry.avg,
+              sum: entry.sum,
+              count: entry.count,
+              stdDevPop: entry.stdDevPop,
+              stdDevSamp: entry.stdDevSamp,
+            },
+          ];
           cursor.continue();
         } else {
           resolve({ values });
@@ -104,7 +115,11 @@ export class MeasurementCacheService {
   }
 
   /** Returns the list of fully-fetched intervals for a (deviceId, series, interval) key. */
-  async getCoverage(deviceId: string, series: string, agg: AggKey): Promise<{ from: string; to: string }[]> {
+  async getCoverage(
+    deviceId: string,
+    series: string,
+    agg: AggKey
+  ): Promise<{ from: string; to: string }[]> {
     const db = await this.openDb();
     const store = db.transaction(STORE_COVERAGE, 'readonly').objectStore(STORE_COVERAGE);
     // '' sorts before any ISO date; '\uffff' sorts after — bounds all 'from' values
@@ -114,10 +129,13 @@ export class MeasurementCacheService {
     return new Promise<{ from: string; to: string }[]>((resolve, reject) => {
       const records: { from: string; to: string }[] = [];
       const req = store.openCursor(range);
+
       req.onsuccess = () => {
         const cursor = req.result;
+
         if (cursor) {
           const rec = cursor.value as CoverageRecord;
+
           records.push({ from: rec.from, to: rec.to });
           cursor.continue();
         } else {
@@ -138,7 +156,11 @@ export class MeasurementCacheService {
    * 2. Merge overlapping/adjacent intervals.
    * 3. Walk the merged list and emit uncovered spans.
    */
-  computeGaps(coverage: { from: string; to: string }[], dateFrom: Date, dateTo: Date): { from: Date; to: Date }[] {
+  computeGaps(
+    coverage: { from: string; to: string }[],
+    dateFrom: Date,
+    dateTo: Date
+  ): { from: Date; to: Date }[] {
     const reqFrom = dateFrom.toISOString();
     const reqTo = dateTo.toISOString();
 
@@ -147,6 +169,7 @@ export class MeasurementCacheService {
       .sort((a, b) => a.from.localeCompare(b.from));
 
     const merged: { from: string; to: string }[] = [];
+
     for (const rec of overlapping) {
       if (!merged.length || rec.from > merged[merged.length - 1].to) {
         merged.push({ from: rec.from, to: rec.to });
@@ -157,14 +180,17 @@ export class MeasurementCacheService {
 
     const gaps: { from: Date; to: Date }[] = [];
     let cursor = reqFrom;
+
     for (const interval of merged) {
       if (cursor < interval.from) {
         gaps.push({ from: new Date(cursor), to: new Date(interval.from) });
       }
+
       if (interval.to > cursor) {
         cursor = interval.to;
       }
     }
+
     if (cursor < reqTo) {
       gaps.push({ from: new Date(cursor), to: dateTo });
     }
@@ -184,7 +210,7 @@ export class MeasurementCacheService {
     agg: AggKey,
     dateFrom: Date,
     dateTo: Date,
-    data: AggregatedISeries,
+    data: AggregatedISeries
   ): Promise<void> {
     const db = await this.openDb();
     const tx = db.transaction([STORE_DATA, STORE_COVERAGE], 'readwrite');
@@ -193,6 +219,7 @@ export class MeasurementCacheService {
 
     for (const [ts, entries] of Object.entries(data.values)) {
       const entry = entries[0];
+
       if (!entry) continue;
       dataStore.put({
         deviceId,
@@ -210,7 +237,13 @@ export class MeasurementCacheService {
       } as MeasurementEntry);
     }
 
-    coverageStore.put({ deviceId, series, aggKey: agg, from: dateFrom.toISOString(), to: dateTo.toISOString() } as CoverageRecord);
+    coverageStore.put({
+      deviceId,
+      series,
+      aggKey: agg,
+      from: dateFrom.toISOString(),
+      to: dateTo.toISOString(),
+    } as CoverageRecord);
 
     await new Promise<void>((resolve, reject) => {
       tx.oncomplete = () => resolve();
@@ -229,17 +262,22 @@ export class MeasurementCacheService {
 
     const elementCount = await new Promise<number>((resolve, reject) => {
       const req = db.transaction(STORE_DATA, 'readonly').objectStore(STORE_DATA).count();
+
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
     });
 
     let storageSizeMB = 0;
+
     try {
       if ('storage' in navigator && 'estimate' in navigator.storage) {
         const estimate = await navigator.storage.estimate();
+
         storageSizeMB = (estimate.usage ?? 0) / (1024 * 1024);
       }
-    } catch { /* unavailable in some contexts */ }
+    } catch {
+      /* unavailable in some contexts */
+    }
 
     return { elementCount, storageSizeMB };
   }
@@ -252,37 +290,46 @@ export class MeasurementCacheService {
   clearForDatapoints(deviceId: string, seriesKeys: string[]): Promise<void> {
     if (!seriesKeys.length) return Promise.resolve();
 
-    return this.openDb().then(db => new Promise<void>((resolve, reject) => {
-      const tx = db.transaction([STORE_DATA, STORE_COVERAGE], 'readwrite');
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
+    return this.openDb().then(
+      (db) =>
+        new Promise<void>((resolve, reject) => {
+          const tx = db.transaction([STORE_DATA, STORE_COVERAGE], 'readwrite');
 
-      const dataStore = tx.objectStore(STORE_DATA);
-      const coverageStore = tx.objectStore(STORE_COVERAGE);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
 
-      const deleteAll = (store: IDBObjectStore, series: string) => {
-        const range = IDBKeyRange.bound(
-          [deviceId, series, '', ''],
-          [deviceId, series, '\uffff', '\uffff'],
-        );
-        const req = store.openCursor(range);
-        req.onsuccess = () => {
-          const cursor = req.result;
-          if (cursor) { cursor.delete(); cursor.continue(); }
-        };
-      };
+          const dataStore = tx.objectStore(STORE_DATA);
+          const coverageStore = tx.objectStore(STORE_COVERAGE);
 
-      for (const series of seriesKeys) {
-        deleteAll(dataStore, series);
-        deleteAll(coverageStore, series);
-      }
-    }));
+          const deleteAll = (store: IDBObjectStore, series: string) => {
+            const range = IDBKeyRange.bound(
+              [deviceId, series, '', ''],
+              [deviceId, series, '\uffff', '\uffff']
+            );
+            const req = store.openCursor(range);
+
+            req.onsuccess = () => {
+              const cursor = req.result;
+
+              if (cursor) {
+                cursor.delete();
+                cursor.continue();
+              }
+            };
+          };
+
+          for (const series of seriesKeys) {
+            deleteAll(dataStore, series);
+            deleteAll(coverageStore, series);
+          }
+        })
+    );
   }
 
   // ─── DB lifecycle ─────────────────────────────────────────────────────────────
 
   private openDb(): Promise<IDBDatabase> {
-    if (this.dbPromise) return this.dbPromise;
+    if (this.dbPromise !== null) return this.dbPromise;
 
     this.dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
       const req = indexedDB.open(DB_NAME, DB_VERSION);
@@ -302,6 +349,7 @@ export class MeasurementCacheService {
       };
 
       req.onsuccess = () => resolve(req.result);
+
       req.onerror = () => {
         // If IndexedDB is unavailable (private browsing, CSP, etc.) callers
         // receive the rejection and can fall back to a direct API fetch.
@@ -313,4 +361,3 @@ export class MeasurementCacheService {
     return this.dbPromise;
   }
 }
-

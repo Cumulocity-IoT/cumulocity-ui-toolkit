@@ -47,31 +47,39 @@ export class ChartDataService {
     series: string,
     aggregationInterval: string,
     aggregationFunctions: string[],
-    accumulated?: AggregatedISeries,
+    accumulated?: AggregatedISeries
   ): Promise<AggregatedISeries> {
     // URLSearchParams serialises repeated keys correctly:
     // params.append('aggregationFunction', 'min') three times →
     // aggregationFunction=min&aggregationFunction=max&aggregationFunction=avg
     const params = new URLSearchParams();
+
     params.set('source', source);
     params.set('dateFrom', dateFrom.toISOString());
     params.set('dateTo', dateTo.toISOString());
     // 'series' must be repeated per occurrence when querying multiple series
     params.append('series', series);
     params.set('aggregationInterval', aggregationInterval);
+
     for (const fn of aggregationFunctions) {
       params.append('aggregationFunction', fn);
     }
 
-    const response = await this.fetchClient.fetch(`/measurement/measurements/series?${params.toString()}`);
-    if (!response.ok) {
-      throw new Error(`Measurement series request failed: ${response.status} ${response.statusText}`);
-    }
-    const body: AggregatedISeries = await response.json();
+    const response = await this.fetchClient.fetch(
+      `/measurement/measurements/series?${params.toString()}`
+    );
 
-    const merged = accumulated ?? ({ values: {} } as AggregatedISeries);
+    if (!response.ok) {
+      throw new Error(
+        `Measurement series request failed: ${response.status} ${response.statusText}`
+      );
+    }
+    const body = (await response.json()) as AggregatedISeries;
+
+    const merged: AggregatedISeries = accumulated ?? { values: {} };
+
     for (const [ts, entries] of Object.entries(body.values ?? {})) {
-      merged.values[ts] = entries as AggregatedSeriesEntry[];
+      merged.values[ts] = entries;
     }
 
     if (body.truncated) {
@@ -83,7 +91,7 @@ export class ChartDataService {
         series,
         aggregationInterval,
         aggregationFunctions,
-        merged,
+        merged
       );
     }
 

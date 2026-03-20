@@ -12,8 +12,8 @@ export class ChartLoadingService {
 
   constructor(
     private chartData: ChartDataService,
-    private cache: MeasurementCacheService,
-  ) { }
+    private cache: MeasurementCacheService
+  ) {}
 
   /**
    * Loads measurement series for the given device, date range and datapoint
@@ -35,9 +35,11 @@ export class ChartLoadingService {
     series: string,
     interval: string,
     aggregationFunctions: string[],
-    isZooming = false,
+    isZooming = false
   ): Promise<void> {
-    console.log(`Loading [${series}] interval=${interval} functions=${aggregationFunctions.join(',')}`);
+    console.warn(
+      `Loading [${series}] interval=${interval} functions=${aggregationFunctions.join(',')}`
+    );
 
     let coverage: { from: string; to: string }[] = [];
     let cached: AggregatedISeries = { values: {} };
@@ -63,8 +65,9 @@ export class ChartLoadingService {
           dateTo,
           series,
           interval,
-          aggregationFunctions,
+          aggregationFunctions
         );
+
         if (isZooming) {
           this.zoomChange.emit(data);
         } else {
@@ -77,6 +80,7 @@ export class ChartLoadingService {
           this.change.error(e);
         }
       }
+
       return;
     }
 
@@ -86,8 +90,10 @@ export class ChartLoadingService {
     }
 
     const gaps = this.cache.computeGaps(coverage, dateFrom, dateTo);
+
     for (const gap of gaps) {
-      console.log(`Cache miss [${interval}] ${gap.from.toISOString()} → ${gap.to.toISOString()}`);
+      console.warn(`Cache miss [${interval}] ${gap.from.toISOString()} → ${gap.to.toISOString()}`);
+
       try {
         const freshData = await this.chartData.fetchSeriesWithAggregation(
           id,
@@ -95,13 +101,19 @@ export class ChartLoadingService {
           gap.to,
           series,
           interval,
-          aggregationFunctions,
+          aggregationFunctions
         );
-        await this.cache.storeRange(id, series, interval, gap.from, gap.to, freshData).catch((e) =>
-          console.warn('Failed to persist cache entry:', e),
-        );
-      } catch (e) {
-        this.notifyObservers(e, true, isZooming);
+
+        await this.cache
+          .storeRange(id, series, interval, gap.from, gap.to, freshData)
+          .catch((e) => console.warn('Failed to persist cache entry:', e));
+      } catch (e: unknown) {
+        const message =
+          e instanceof Error ? e.message : typeof e === 'string' ? e : JSON.stringify(e);
+        const err = new Error(message ?? 'Unknown error');
+
+        this.notifyObservers(err, true, isZooming);
+
         return;
       }
     }
@@ -110,25 +122,34 @@ export class ChartLoadingService {
       // Re-read the full window (old + newly stored) before final emit.
       try {
         const fullData = await this.cache.getRange(id, series, interval, dateFrom, dateTo);
+
         this.notifyObservers(fullData, false, isZooming);
-      } catch (e) {
-        this.notifyObservers(e, true, isZooming);
+      } catch (e: unknown) {
+        const message =
+          e instanceof Error ? e.message : typeof e === 'string' ? e : JSON.stringify(e);
+        const err = new Error(message ?? 'Unknown error');
+
+        this.notifyObservers(err, true, isZooming);
       }
     }
   }
 
-  private notifyObservers(data: AggregatedISeries | any, isError: boolean, isZooming: boolean): void {
+  private notifyObservers(
+    data: AggregatedISeries | Error,
+    isError: boolean,
+    isZooming: boolean
+  ): void {
     if (isZooming) {
       if (isError) {
-        this.zoomChange.error(data);
+        this.zoomChange.error(data as Error);
       } else {
-        this.zoomChange.emit(data);
+        this.zoomChange.emit(data as AggregatedISeries);
       }
     } else {
       if (isError) {
-        this.change.error(data);
+        this.change.error(data as Error);
       } else {
-        this.change.emit(data);
+        this.change.emit(data as AggregatedISeries);
       }
     }
   }
