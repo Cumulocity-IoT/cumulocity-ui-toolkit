@@ -1,0 +1,114 @@
+<div class="row d-flex m-l-16 m-r-16" style="height:100%">
+  <div class="col-md-2 m-r-8 d-flex d-col" style="min-height:0; overflow:hidden;">
+    <fieldset class="c8y-fieldset d-flex d-col" style="min-height:0; overflow:hidden;">
+      <div class="inner-scroll" style="flex:1; min-height:0;">
+        <div class="m-l-16 m-r-16 m-t-16">
+          <button
+            type="button"
+            class="btn btn-clean p-l-0 d-flex a-i-center w-100"
+            [attr.aria-expanded]="statsExpanded"
+            aria-controls="statsPanel"
+            (click)="statsExpanded = !statsExpanded"
+          >
+            <i class="dlt-c8y-icon-area-chart m-r-4 text-muted"></i>
+            <span class="text-muted small flex-grow">Statistics</span>
+            <i class="m-l-4 text-muted small"
+               [ngClass]="statsExpanded ? 'dlt-c8y-icon-chevron-up' : 'dlt-c8y-icon-chevron-down'"></i>
+          </button>
+        </div>
+        <div
+          class="collapse"
+          id="statsPanel"
+          [collapse]="!statsExpanded"
+          [isAnimated]="true"
+          role="region"
+          aria-labelledby="statsPanel"
+        >
+          <dl class="m-l-16 m-r-16 m-b-8">
+            <div class="d-flex a-i-baseline j-c-between">
+              <dt class="text-muted small flex-grow">Interval</dt>
+              <dd class="font-weight-bold text-right">{{ overallInterval || '-' }}</dd>
+              @if (zoomedInterval) {
+                <dd class="font-weight-bold text-right text-muted m-l-8" title="Zoomed">({{ zoomedInterval }})</dd>
+              }
+            </div>
+            <div class="d-flex a-i-baseline j-c-between m-t-4">
+              <dt class="text-muted small flex-grow">Points</dt>
+              <dd class="font-weight-bold text-right">{{ baseDataPointCount }}</dd>
+              @if (zoomedInterval) {
+                <dd class="font-weight-bold text-right text-muted m-l-8" title="Zoomed">({{ zoomedDataPointCount }})</dd>
+              }
+            </div>
+            <hr class="separator m-t-8 m-b-8">
+            <div class="d-flex a-i-baseline j-c-between">
+              <dt class="text-muted small flex-grow">From</dt>
+              <dd class="font-weight-bold text-right">{{ dateFrom | c8yDate:'short' }}</dd>
+            </div>
+            <div class="d-flex a-i-baseline j-c-between m-t-4">
+              <dt class="text-muted small flex-grow">To</dt>
+              <dd class="font-weight-bold text-right">{{ dateTo | c8yDate:'short' }}</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="m-l-16 m-r-16 m-b-16">
+          <hr class="separator m-t-0 m-b-8">
+          <button
+            type="button"
+            class="btn btn-clean p-l-0 d-flex a-i-center"
+            [attr.aria-expanded]="cacheExpanded"
+            aria-controls="cachePanel"
+            (click)="toggleCache()"
+          >
+            <i class="dlt-c8y-icon-smartphone-ram m-r-4 text-muted"></i>
+            <span class="text-muted small">Cache</span>
+            <i class="m-l-4 text-muted small"
+               [ngClass]="cacheExpanded ? 'dlt-c8y-icon-chevron-up' : 'dlt-c8y-icon-chevron-down'"></i>
+          </button>
+          <div
+            class="collapse"
+            id="cachePanel"
+            [collapse]="!cacheExpanded"
+            [isAnimated]="true"
+            role="region"
+            aria-labelledby="cachePanel"
+          >
+            <div class="m-t-8">
+              @if (cacheStats) {
+                <div class="m-b-8">
+                  <div class="text-muted small">{{ cacheStats.storageSizeMB | number:'1.2-2' }} MB used</div>
+                  <div class="text-muted small">{{ cacheStats.elementCount }} elements</div>
+                </div>
+              }
+              @if (cacheLog.length) {
+                <div class="cache-log m-b-8">
+                  @for (entry of cacheLog; track $index) {
+                    <div class="cache-log-entry">{{ entry }}</div>
+                  }
+                </div>
+              }
+              <button
+                type="button"
+                class="btn btn-sm btn-danger"
+                [disabled]="clearingCache"
+                (click)="clearCache()"
+              >
+                <i class="dlt-c8y-icon-delete m-r-4"></i>
+                Clear cache
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+  </div>
+  <div class="col-md-10 p-0">
+    <ps-line-chart
+      [data]="data"
+      [loading]="loading"
+      [timeRange]="zoomedTimeRange"
+      [markLines]="thresholdLines"
+      (zoomChange)="onZoom($event)"
+    ></ps-line-chart>
+  </div>
+</div>

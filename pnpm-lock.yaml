@@ -142,6 +142,18 @@ importers:
         specifier: ^7.0.1
         version: 7.2.0
 
+  packages/dynamic-aggregation-line-chart:
+    dependencies:
+      echarts:
+        specifier: ^5.6.0
+        version: 5.6.0
+      ngx-echarts:
+        specifier: ^19.0.0
+        version: 19.0.0(echarts@5.6.0)
+      shared:
+        specifier: workspace:*
+        version: link:../shared
+
   packages/energy-consumption-widget:
     dependencies:
       ng2-charts:
@@ -3765,6 +3777,9 @@ packages:
   ecc-jsbn@0.1.2:
     resolution: {integrity: sha512-eh9O+hwRHNbG4BLTjEl3nw044CkGm5X6LoaCf7LPp7UU8Qrt47JYNi6nPX8xjW97TKGKm1ouctg0QSpZe9qrnw==}
 
+  echarts@5.6.0:
+    resolution: {integrity: sha512-oTbVTsXfKuEhxftHqL5xprgLoc0k7uScAwtryCgWF6hPYFLRwOUHiFmHGCBKP5NPFNkDVopOieyUqYGH8Fa3kA==}
+
   ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
 
@@ -5668,6 +5683,11 @@ packages:
       '@angular/forms': ^18.0.1
       rxjs: ^6.5.3 || ^7.4.0
 
+  ngx-echarts@19.0.0:
+    resolution: {integrity: sha512-CtW6RSNmUs5CENUDJqI9VSAVG9zqFjDLfzpJRLNn/HA35j10/D+sEuRH7RHB1/DLmojoD9rA6q0R57jlN0hqwg==}
+    peerDependencies:
+      echarts: '>=5.0.0'
+
   ngx-moment@6.0.2:
     resolution: {integrity: sha512-HUvDyoJPZKLA3tc+GMQqDpVyCVT2SPfEiV7/CGj2Dwwsn//JhhQ8eTr+RzKqBzLysrXkCwlzulVVJaJ5A0FJEA==}
     peerDependencies:
@@ -7019,6 +7039,9 @@ packages:
       '@swc/wasm':
         optional: true
 
+  tslib@2.3.0:
+    resolution: {integrity: sha512-N82ooyxVNm6h1riLCoyS9e3fuJ3AMG2zIZs2Gd1ATcSFjSA23Q0fzjjZeh0jbJvWVDZ0cJT8yaNNaaXHzueNjg==}
+
   tslib@2.6.3:
     resolution: {integrity: sha512-xNvxJEOUiWPGhUuUdQgAJPKOOJfGnIyKySOc09XkKsgdUV/3E2zvwZYdejjmRgPCgcym1juLH3226yA7sEFJKQ==}
 
@@ -7556,6 +7579,9 @@ packages:
 
   zone.js@0.14.10:
     resolution: {integrity: sha512-YGAhaO7J5ywOXW6InXNlLmfU194F8lVgu7bRntUF3TiG8Y3nBK0x1UJJuHUP/e8IyihkjCYqhCScpSwnlaSRkQ==}
+
+  zrender@5.6.1:
+    resolution: {integrity: sha512-OFXkDJKcrlx5su2XbzJvj/34Q3m6PvyCZkVPHGYpcCJ52ek4U/ymZyfuV1nKE23AyBJ51E/6Yr0mhZ7xGTO4ag==}
 
 snapshots:
 
@@ -12161,6 +12187,11 @@ snapshots:
       jsbn: 0.1.1
       safer-buffer: 2.1.2
 
+  echarts@5.6.0:
+    dependencies:
+      tslib: 2.3.0
+      zrender: 5.6.1
+
   ee-first@1.1.1: {}
 
   electron-to-chromium@1.5.307: {}
@@ -14501,6 +14532,11 @@ snapshots:
       rxjs: 7.8.2
       tslib: 2.8.1
 
+  ngx-echarts@19.0.0(echarts@5.6.0):
+    dependencies:
+      echarts: 5.6.0
+      tslib: 2.8.1
+
   ngx-moment@6.0.2(moment@2.30.1):
     dependencies:
       moment: 2.30.1
@@ -16019,6 +16055,8 @@ snapshots:
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
 
+  tslib@2.3.0: {}
+
   tslib@2.6.3: {}
 
   tslib@2.8.1: {}
@@ -16601,3 +16639,7 @@ snapshots:
       jszip: 3.10.1
 
   zone.js@0.14.10: {}
+
+  zrender@5.6.1:
+    dependencies:
+      tslib: 2.3.0

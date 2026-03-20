@@ -399,7 +399,7 @@
         }
       }
     },
-    "plugin.favorites": {
+    "plugin.favorites-manager": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -465,10 +465,10 @@
           "builder": "@c8y/devkit:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "plugin.favorites:build:production"
+              "buildTarget": "plugin.favorites-manager:build:production"
             },
             "development": {
-              "buildTarget": "plugin.favorites:build:development"
+              "buildTarget": "plugin.favorites-manager:build:development"
             }
           },
           "defaultConfiguration": "development",
@@ -481,10 +481,10 @@
           "builder": "@c8y/devkit:deploy",
           "configurations": {
             "production": {
-              "buildTarget": "plugin.favorites:build:production"
+              "buildTarget": "plugin.favorites-manager:build:production"
             },
             "development": {
-              "buildTarget": "plugin.favorites:build:development"
+              "buildTarget": "plugin.favorites-manager:build:development"
             }
           },
           "defaultConfiguration": "production"
@@ -670,6 +670,98 @@
             },
             "development": {
               "buildTarget": "plugin.operations-widget:build:development"
+            }
+          },
+          "defaultConfiguration": "production"
+        }
+      }
+    },
+    "plugin.dynamic-aggregation-line-chart": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "less"
+        }
+      },
+      "root": "packages/dynamic-aggregation-line-chart",
+      "sourceRoot": "packages/dynamic-aggregation-line-chart/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@c8y/devkit:build",
+          "options": {
+            "outputPath": "dist/cumulocity-dynamic-aggregation-line-chart-plugin",
+            "main": "packages/dynamic-aggregation-line-chart/src/main.ts",
+            "tsConfig": "packages/dynamic-aggregation-line-chart/tsconfig.app.json",
+            "polyfills": ["zone.js"],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "packages/dynamic-aggregation-line-chart/public"
+              },
+              "packages/dynamic-aggregation-line-chart/src/assets"
+            ],
+            "inlineStyleLanguage": "less",
+            "scripts": [],
+            "aot": false,
+            "buildOptimizer": false,
+            "allowedCommonJsDependencies": [
+              "regenerator-runtime/runtime",
+              "@cordobo/qrcode",
+              "zone.js/dist/zone",
+              "chroma-js",
+              "lodash"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "all",
+              "buildOptimizer": false
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@c8y/devkit:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.dynamic-aggregation-line-chart:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.dynamic-aggregation-line-chart:build:development"
+            }
+          },
+          "defaultConfiguration": "development",
+          "options": {
+            "port": 9001,
+            "publicHost": "localhost:9001"
+          }
+        },
+        "deploy": {
+          "builder": "@c8y/devkit:deploy",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.dynamic-aggregation-line-chart:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.dynamic-aggregation-line-chart:build:development"
             }
           },
           "defaultConfiguration": "production"

@@ -64,7 +64,10 @@
     "test:tenant-option-management": "pnpm --filter cumulocity-tenant-option-management-plugin run test",
     "serve:operations-widget": "pnpm run _serve plugin.operations-widget",
     "build:operations-widget": "ng build plugin.operations-widget",
-    "test:operations-widget": "pnpm --filter cumulocity-operations-widget-plugin run test"
+    "test:operations-widget": "pnpm --filter cumulocity-operations-widget-plugin run test",
+    "serve:dynamic-aggregation-line-chart": "pnpm run _serve plugin.dynamic-aggregation-line-chart",
+    "build:dynamic-aggregation-line-chart": "ng build plugin.dynamic-aggregation-line-chart",
+    "test:dynamic-aggregation-line-chart": "pnpm --filter cumulocity-dynamic-aggregation-line-chart-plugin run test"
   },
   "dependencies": {
     "@angular/animations": "^18.2.0",
