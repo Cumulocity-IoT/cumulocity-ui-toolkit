@@ -344,7 +344,7 @@ export class NewSeriesCacheService {
   // ─── DB lifecycle ─────────────────────────────────────────────────────────────
 
   private openDb(): Promise<IDBDatabase> {
-    if (this.dbPromise) return this.dbPromise;
+    if (this.dbPromise != null) return this.dbPromise;
 
     this.dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
       const req = indexedDB.open(DB_NAME, DB_VERSION);

@@ -214,7 +214,7 @@ export class OldSeriesInterceptorService implements HttpInterceptor {
       }
       if (!apiResp.ok) return apiResp;
 
-      const body: SeriesResponse = await apiResp.json();
+      const body = (await apiResp.json()) as SeriesResponse;
 
       if (body.truncated) return firstValueFrom(next.handle(req));
 
@@ -242,7 +242,7 @@ export class OldSeriesInterceptorService implements HttpInterceptor {
 
       for (const [ts, pts] of Object.entries(rangeData.values)) {
         if (!cachedValues[ts]) {
-          cachedValues[ts] = new Array(seriesKeys.length).fill(null);
+          cachedValues[ts] = new Array(seriesKeys.length).fill(null) as SeriesDataPoint[];
         }
         cachedValues[ts][i] = pts[0] ?? null;
       }

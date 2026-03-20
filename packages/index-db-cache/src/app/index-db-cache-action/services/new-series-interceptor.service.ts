@@ -16,14 +16,23 @@ const MIN_HISTORICAL_MS = 5 * 60_000;
  * milliseconds. Only the components used by the Cumulocity series API are
  * handled; any unrecognised format returns `0`.
  */
-function iso8601DurationMs(duration: string): number {
+export function iso8601DurationMs(duration: string): number {
   const m = duration.match(
     /^P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/
   );
 
   if (!m) return 0;
 
-  const [, years = '0', months = '0', weeks = '0', days = '0', hours = '0', minutes = '0', seconds = '0'] = m;
+  const [
+    ,
+    years = '0',
+    months = '0',
+    weeks = '0',
+    days = '0',
+    hours = '0',
+    minutes = '0',
+    seconds = '0',
+  ] = m;
 
   return (
     +years * 365.25 * 24 * 3_600_000 +
@@ -229,7 +238,7 @@ export class NewSeriesInterceptorService implements HttpInterceptor {
       }
       if (!apiResp.ok) return apiResp;
 
-      const body: SeriesResponse = await apiResp.json();
+      const body = (await apiResp.json()) as SeriesResponse;
 
       // Truncated response: the window is not fully covered — skip caching and
       // return the raw API response for the original date range.
@@ -260,7 +269,7 @@ export class NewSeriesInterceptorService implements HttpInterceptor {
 
       for (const [ts, pts] of Object.entries(rangeData.values)) {
         if (!cachedValues[ts]) {
-          cachedValues[ts] = new Array(seriesKeys.length).fill(null);
+          cachedValues[ts] = new Array(seriesKeys.length).fill(null) as SeriesDataPoint[];
         }
         cachedValues[ts][i] = pts[0] ?? null;
       }

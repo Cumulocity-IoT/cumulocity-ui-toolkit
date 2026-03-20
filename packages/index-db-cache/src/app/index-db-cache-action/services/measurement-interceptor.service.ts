@@ -164,7 +164,7 @@ export class MeasurementInterceptorService implements HttpInterceptor {
       }
       if (!apiResp.ok) return apiResp;
 
-      const body: MeasurementCollection = await apiResp.json();
+      const body = (await apiResp.json()) as MeasurementCollection;
 
       // Paginated response — cannot guarantee coverage of the full gap window
       if (body.next) {
