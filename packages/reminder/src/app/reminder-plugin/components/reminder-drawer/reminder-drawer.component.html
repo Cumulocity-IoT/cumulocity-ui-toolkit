@@ -29,7 +29,7 @@
             name="reminder-type"
             >
             <option value="">{{ 'Not filtered' | translate }}</option>
-            @for (type of types; track type.id) {
+            @for (type of types; track type) {
               <option [ngValue]="type.id">{{ type.name }}</option>
             }
           </select>
@@ -48,43 +48,44 @@
 
     <!-- list of reminders -->
     <ul class="reminder-group-list">
-      @for (group of reminderGroups; track group; let i = $index) {
+      @for (group of reminderGroups; track group) {
         <li class="reminder-group-item">
           <header>
             <button
               class="btn btn-clean"
-              [attr.aria-expanded]="groupIsExpanded[i]"
-              (click)="groupIsExpanded[i] = !groupIsExpanded[i]"
+              [attr.aria-expanded]="groupIsExpanded[$index]"
+              (click)="groupIsExpanded[$index] = !groupIsExpanded[$index]"
               type="button"
               aria-controls="collapseBasic"
-              >
+            >
               <span
                 class="count"
                 [class.text-danger]="group.status === reminderGroupStatus.due && group.count > 0"
-                >
+              >
                 {{ group.count || 0 }}
                 @if (group.total) {
-                  <small
-                    class="text-muted"
-                    title="{{ 'Number of reminders if not filtered' | translate }}"
-                    >
+                  <small class="text-muted" title="{{ 'Number of reminders if not filtered' | translate }}">
                     / {{ group.total }}
                   </small>
                 }
               </span>
               <em>{{ group.status | translate }}</em>
-              <i [c8yIcon]="'expand-arrow'" [class.expanded]="groupIsExpanded[i]"></i>
+              <i [c8yIcon]="'expand-arrow'" [class.expanded]="groupIsExpanded[$index]"></i>
             </button>
           </header>
+
           <ul
             class="reminder-list"
             id="collapseBasic"
-            [collapse]="!groupIsExpanded[i]"
+            [collapse]="!groupIsExpanded[$index]"
             [isAnimated]="true"
-            >
+          >
             <!-- TODO add empty info -->
             @for (reminder of group.reminders; track reminder) {
-              <ng-template [ngTemplateOutlet]="reminderItem" [ngTemplateOutletContext]="{ reminder }">
+              <ng-template
+                [ngTemplateOutlet]="reminderItem"
+                [ngTemplateOutletContext]="{ reminder }"
+              >
               </ng-template>
             }
           </ul>
@@ -131,7 +132,7 @@
   <li
     class="reminder-item"
     [ngClass]="{
-      'text-muted': reminder.status !== reminderStatus.active,
+      active: reminder.status !== reminderStatus.active,
       changed: reminder.changed,
     }"
     >
@@ -174,7 +175,7 @@
             (click)="updateReminder(reminder, reminderStatus.acknowledged)"
             type="button"
             title="{{ 'Acknowledge the reminder' | translate }}"
-            >
+          >
             <i [c8yIcon]="'bell-slash'"></i>
           </button>
         }
@@ -184,7 +185,7 @@
             (click)="updateReminder(reminder, reminderStatus.cleared)"
             type="button"
             title="{{ 'Clear the reminder' | translate }}"
-            >
+          >
             <i [c8yIcon]="'check-circle'"></i>
           </button>
         }
@@ -194,7 +195,7 @@
             (click)="updateReminder(reminder, reminderStatus.active)"
             type="button"
             title="{{ 'Reactivate the reminder' | translate }}"
-            >
+          >
             <i [c8yIcon]="'bell'"></i>
           </button>
         }
@@ -209,10 +210,11 @@
       <!-- type -->
       @if (types.length && reminder.reminderType) {
         <button
-          class="btn btn-clean"
+          class="btn btn-clean reminder-tag"
           (click)="setFilter(reminder.reminderType)"
           type="button"
-          >
+          title="{{ 'Filter by this Reminder Type' | translate }}"
+        >
           <i class="m-r-4" [c8yIcon]="'tag'"></i>
           <c8y-reminder-type [id]="reminder.reminderType"></c8y-reminder-type>
         </button>
