@@ -14,15 +14,16 @@ import { set } from 'lodash';
       <h4 class="card-title">Query filter</h4>
     </div>
     <div class="card-block">
-      <button
-        class="btn btn-default btn-icon btn-sm m-t-8 m-l-0 m-r-8"
-        *ngFor="let p of params"
-        [ngClass]="selectedFilters.includes(p) ? 'active' : ''"
-        (click)="queryParamClick(p)"
-      >
-        <i [c8yIcon]="getIcon(p)"></i>
-        {{ p.title }}
-      </button>
+      @for (p of params; track p) {
+        <button
+          class="btn btn-default btn-icon btn-sm m-t-8 m-l-0 m-r-8"
+          [ngClass]="selectedFilters.includes(p) ? 'active' : ''"
+          (click)="queryParamClick(p)"
+        >
+          <i [c8yIcon]="getIcon(p)"></i>
+          {{ p.title }}
+        </button>
+      }
 
       <div class="form-group m-t-16">
         <formly-form [form]="form" [fields]="fields" [model]="filter"></formly-form>

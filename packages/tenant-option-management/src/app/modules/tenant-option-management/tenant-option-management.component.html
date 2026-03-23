@@ -29,10 +29,14 @@
   [actionControls]="actionControls" (onReload)="reload()">
   <c8y-column name="content">
     <ng-container *c8yCellRendererDef="let context">
-      <span *ngIf="!context.value"><c8y-loading></c8y-loading></span>
-      <span *ngIf="context.value" title="{{ context.value }}" class="overflow-cell">{{
-        context.value
+      @if (!context.value) {
+        <span><c8y-loading></c8y-loading></span>
+      }
+      @if (context.value) {
+        <span title="{{ context.value }}" class="overflow-cell">{{
+          context.value
         }}</span>
+      }
     </ng-container>
   </c8y-column>
   @if (isLoading) {
