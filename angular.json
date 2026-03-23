@@ -3,6 +3,31 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
+    "shared": {
+      "projectType": "library",
+      "schematics": {},
+      "root": "packages/shared",
+      "sourceRoot": "packages/shared/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "tsConfig": "packages/shared/tsconfig.json",
+            "project": "packages/shared/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "packages/shared/tsconfig.json"
+            },
+            "development": {
+              "tsConfig": "packages/shared/tsconfig.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        }
+      }
+    },
     "plugin.reminder": {
       "projectType": "application",
       "schematics": {
@@ -92,15 +117,6 @@
             }
           },
           "defaultConfiguration": "production"
-        },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "main": "packages/reminder/src/test.ts",
-            "polyfills": "packages/reminder/src/polyfills.ts",
-            "tsConfig": "packages/reminder/tsconfig.app.json",
-            "karmaConfig": "packages/reminder/karma.conf.js"
-          }
         }
       }
     },
@@ -472,15 +488,6 @@
             }
           },
           "defaultConfiguration": "production"
-        },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "main": "packages/favorites-manager/src/test.ts",
-            "polyfills": "packages/favorites-manager/src/polyfills.ts",
-            "tsConfig": "packages/favorites-manager/tsconfig.app.json",
-            "karmaConfig": "packages/favorites-manager/karma.conf.js"
-          }
         }
       }
     },
@@ -573,15 +580,6 @@
             }
           },
           "defaultConfiguration": "production"
-        },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "main": "packages/tenant-option-management/src/test.ts",
-            "polyfills": "packages/tenant-option-management/src/polyfills.ts",
-            "tsConfig": "packages/tenant-option-management/tsconfig.app.json",
-            "karmaConfig": "packages/tenant-option-management/karma.conf.js"
-          }
         }
       }
     },
@@ -675,15 +673,6 @@
             }
           },
           "defaultConfiguration": "production"
-        },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "main": "packages/operations-widget/src/test.ts",
-            "polyfills": "packages/operations-widget/src/polyfills.ts",
-            "tsConfig": "packages/operations-widget/tsconfig.app.json",
-            "karmaConfig": "packages/operations-widget/karma.conf.js"
-          }
         }
       }
     }

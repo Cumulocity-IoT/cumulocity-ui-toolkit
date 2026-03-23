@@ -1,5 +1,11 @@
 {
   "compileOnSave": false,
+  "ts-node": {
+    "compilerOptions": {
+      "module": "CommonJS",
+      "moduleResolution": "node"
+    }
+  },
   "compilerOptions": {
     "outDir": "./dist/out-tsc",
     "allowJs": true,
@@ -29,11 +35,11 @@
     "target": "ES2022",
     "useDefineForClassFields": false,
     "paths": {
-      "~components/*": ["./libs/components/*"],
-      "~helpers/*": ["./libs/helpers/*"],
-      "~models/*": ["./libs/models/*"],
-      "~pipes/*": ["./libs/pipes/*"],
-      "~services/*": ["./libs/services/*"]
+      "~components/*": ["./packages/shared/src/components/*"],
+      "~helpers/*": ["./packages/shared/src/helpers/*"],
+      "~models/*": ["./packages/shared/src/models/*"],
+      "~pipes/*": ["./packages/shared/src/pipes/*"],
+      "~services/*": ["./packages/shared/src/services/*"]
     }
   },
   "angularCompilerOptions": {
