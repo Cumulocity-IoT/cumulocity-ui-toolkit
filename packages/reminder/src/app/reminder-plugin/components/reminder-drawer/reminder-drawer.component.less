@@ -18,10 +18,15 @@ aside {
   flex-direction: column;
   width: 240px;
   padding: 24px 0 0;
-  background-color: var(--navigator-bg-color, var(--c8y-navigator-bg-color));
-  border-left: 1px solid var(--navigator-separator-color, var(--c8y-navigator-separator-color));
+  background-color: var(--right-drawer-background-default, var(--navigator-bg-color, var(--c8y-right-drawer-background-default)));
+  color: var(--right-drawer-text-color-default, var(--navigator-text-color, var(--c8y-right-drawer-text-color-default)));
+  box-shadow: var(--c8y-elevation-md-right);
   transform: translateX(100%);
   transition: all .4s ease-in-out;
+
+  .text-muted {
+    color: var(--right-drawer-text-muted, var(--c8y-right-drawer-text-color-muted));
+  }
 
   > header {
     flex: 0 0 auto;
@@ -31,7 +36,6 @@ aside {
   > footer {
     flex: 0 0 auto;
     padding: 16px 16px 24px;
-    background: var(--c8y-global-odd);
   }
 
   > .drawer-actions {
@@ -45,7 +49,6 @@ aside {
     margin: 16px 0 0;
     display: flex;
     flex-direction: column;
-    box-shadow: inset 0 -1px 0 var(--c8y-component-border-color, var(--c8y-root-component-border-color));
 
     > div,
     > small {
@@ -93,8 +96,9 @@ aside {
   > header {
     font-size: var(--c8y-font-size-base);
     display: flex;
-    padding: 8px 16px;
-    box-shadow: inset 0 -1px 0 var(--c8y-component-border-color, var(--c8y-root-component-border-color));
+    padding-top: 8px;
+    padding-bottom: 8px;
+    box-shadow: inset 0 1px 0 var(--c8y-component-border-color, var(--c8y-root-component-border-color));
 
     > button {
       flex: 1;
@@ -132,7 +136,7 @@ aside {
   flex-direction: column;
   padding: 12px 16px;
   overflow: hidden;
-  box-shadow: inset 0 -1px 0 var(--c8y-component-border-color, var(--c8y-root-component-border-color));
+  box-shadow: inset 0 1px 0 var(--c8y-component-border-color, var(--c8y-root-component-border-color));
 
   &::after {
     content: '';
@@ -165,7 +169,7 @@ aside {
     bottom: -.5rem;
     font-size: 7rem;
     pointer-events: none;
-    opacity: .07;
+    opacity: .1;
   }
 
   .date {
@@ -192,6 +196,11 @@ aside {
     margin: 4px 0 0;
     display: flex;
     flex-direction: column;
+
+    .reminder-tag {
+      padding-left: 0;
+      padding-right: 0;
+    }
   }
 
   &.text-muted::before {
