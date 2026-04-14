@@ -1,8 +1,8 @@
 # Cumulocity UI Guild Toolkit
 
-<div style="text-align:center">
+<div align="center">
 
-![Logo of the Cumulocity UI Guild, showing an medival looking shield with the letters "U" and "I"](./public/ui-guild-logo.png)
+![Logo of the Cumulocity UI Guild, showing an medival looking shield with the letters "U" and "I"](./public/ui-guild-banner.png)
 
 </div>
 
@@ -89,11 +89,11 @@ All plugins are registered as **Angular projects** in the single root `angular.j
 
 Each plugin project defines three architect targets:
 
-| Target | Builder | Purpose |
-|---|---|---|
-| `build` | `@c8y/devkit:build` | Produces a deployable ZIP artifact in `dist/` |
-| `serve` | `@c8y/devkit:dev-server` | Local development server with live reload |
-| `deploy` | `@c8y/devkit:deploy` | Deploys the built plugin directly to a Cumulocity tenant |
+| Target   | Builder                  | Purpose                                                  |
+| -------- | ------------------------ | -------------------------------------------------------- |
+| `build`  | `@c8y/devkit:build`      | Produces a deployable ZIP artifact in `dist/`            |
+| `serve`  | `@c8y/devkit:dev-server` | Local development server with live reload                |
+| `deploy` | `@c8y/devkit:deploy`     | Deploys the built plugin directly to a Cumulocity tenant |
 
 **Default build configuration** is `production`. The `development` configuration disables optimization and enables source maps.
 
@@ -173,12 +173,12 @@ pnpm --filter shared run build
 - Output formats: ESM + CJS with TypeScript declarations
 - Angular/Cumulocity/rxjs packages are externalized (not bundled)
 
-| Folder | Contents |
-|---|---|
+| Folder            | Contents                                                                                |
+| ----------------- | --------------------------------------------------------------------------------------- |
 | `src/components/` | Reusable Angular components (alarm icon, heatmap, image gallery, device selector, etc.) |
-| `src/helpers/` | Type utilities, domain model helpers, test auto-mock helpers |
-| `src/pipes/` | Angular pipes (file size, filter, sort, nl2br, replace, etc.) |
-| `src/services/` | Angular services (data grid, local storage, measurements, operations, etc.) |
+| `src/helpers/`    | Type utilities, domain model helpers, test auto-mock helpers                            |
+| `src/pipes/`      | Angular pipes (file size, filter, sort, nl2br, replace, etc.)                           |
+| `src/services/`   | Angular services (data grid, local storage, measurements, operations, etc.)             |
 
 ---
 
@@ -198,6 +198,7 @@ pnpm run build
 ```
 
 Each `ng build <plugin>` invokes `@c8y/devkit:build`, which:
+
 1. Compiles the Angular application using the plugin's `tsconfig.app.json`.
 2. Applies Module Federation (via `buildTime.federation` in `cumulocity.config.ts`).
 3. Copies configured assets.
@@ -261,14 +262,14 @@ All unit tests — in Angular plugin packages and in the pure-TypeScript `shared
 
 #### Configuration Layout
 
-| File | Scope | Purpose |
-|---|---|---|
-| `jest.config.ts` | Root | Delegates to every package via `projects: ['<rootDir>/packages/*']` |
-| `setup-jest.ts` | Root | Calls `setupZoneTestEnv()` (Angular `TestBed` init) and polyfills Web Streams API for jsdom |
-| `packages/<name>/jest.config.ts` | Per Angular package | `jest-preset-angular` preset, `moduleNameMapper` for `~helpers/*` etc., `transformIgnorePatterns` for ESM deps |
-| `packages/<name>/tsconfig.spec.json` | Per package | Extends root tsconfig; overrides `module` to `CommonJS` for Jest compatibility |
-| `packages/shared/jest.config.cjs` | shared package | CJS format required because `shared/package.json` has `"type": "module"` |
-| `packages/shared/tsconfig.spec.json` | shared package | Same as Angular packages |
+| File                                 | Scope               | Purpose                                                                                                        |
+| ------------------------------------ | ------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `jest.config.ts`                     | Root                | Delegates to every package via `projects: ['<rootDir>/packages/*']`                                            |
+| `setup-jest.ts`                      | Root                | Calls `setupZoneTestEnv()` (Angular `TestBed` init) and polyfills Web Streams API for jsdom                    |
+| `packages/<name>/jest.config.ts`     | Per Angular package | `jest-preset-angular` preset, `moduleNameMapper` for `~helpers/*` etc., `transformIgnorePatterns` for ESM deps |
+| `packages/<name>/tsconfig.spec.json` | Per package         | Extends root tsconfig; overrides `module` to `CommonJS` for Jest compatibility                                 |
+| `packages/shared/jest.config.cjs`    | shared package      | CJS format required because `shared/package.json` has `"type": "module"`                                       |
+| `packages/shared/tsconfig.spec.json` | shared package      | Same as Angular packages                                                                                       |
 
 #### Key Configuration Details
 
@@ -336,7 +337,6 @@ Cypress is invoked via `pnpm -C test exec -- cypress ...` which runs commands in
 3. Run `node tools/generate-scripts.js` to regenerate `serve:*`, `build:*` (and `test:*` if applicable) scripts.
 4. Add `tsconfig.spec.json` and `jest.config.ts` (copy from an existing plugin and update `displayName`). Add `"test": "jest"` to the plugin's `package.json` to enable unit tests via the root orchestration.
 5. (Optional) Add a Cypress config to `test/config/` and an `e2e:run:<name>` script to the root `package.json`.
-
 
 ## Useful links
 
