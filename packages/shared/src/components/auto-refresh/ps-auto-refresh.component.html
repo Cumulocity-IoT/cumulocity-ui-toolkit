@@ -1,7 +1,7 @@
 <form
   class="d-flex a-i-center fit-w fit-h"
   [formGroup]="toggleIntervalForm"
->
+  >
   <label class="m-b-0 m-r-8 text-normal text-muted flex-no-shrink">
     {{ 'Auto refresh' | translate }}
   </label>
@@ -15,22 +15,24 @@
       placement="bottom"
       [adaptivePosition]="false"
       [delay]="500"
-    >
+      >
       <input
         type="checkbox"
         data-cy="c8y-alarms-interval-toggle"
         formControlName="intervalToggle"
         (click)="trackUserClickOnIntervalToggle($event.target)"
-      />
-      <c8y-countdown-interval
-        *ngIf="isIntervalToggleEnabled"
-        [countdownInterval]="toggleIntervalForm.value.refreshInterval"
-        (countdownEnded)="onCountdownEnded.emit()"
-      ></c8y-countdown-interval>
-      <i
-        c8yIcon="pause"
-        *ngIf="!isIntervalToggleEnabled"
-      ></i>
+        />
+      @if (isIntervalToggleEnabled) {
+        <c8y-countdown-interval
+          [countdownInterval]="toggleIntervalForm.value.refreshInterval"
+          (countdownEnded)="onCountdownEnded.emit()"
+        ></c8y-countdown-interval>
+      }
+      @if (!isIntervalToggleEnabled) {
+        <i
+          c8yIcon="pause"
+        ></i>
+      }
     </label>
     <div class="c8y-select-wrapper">
       <select
@@ -43,13 +45,14 @@
         [container]="'body'"
         formControlName="refreshInterval"
         data-cy="c8y-alarms-interval-selector"
-      >
-        <option
-          *ngFor="let refreshInterval of refreshIntervalsInMilliseconds"
-          [ngValue]="refreshInterval"
         >
-          {{ SECONDS_UNTIL_REFRESH | translate: { seconds: refreshInterval / 1000 } }}
-        </option>
+        @for (refreshInterval of refreshIntervalsInMilliseconds; track refreshInterval) {
+          <option
+            [ngValue]="refreshInterval"
+            >
+            {{ SECONDS_UNTIL_REFRESH | translate: { seconds: refreshInterval / 1000 } }}
+          </option>
+        }
       </select>
       <span></span>
     </div>
@@ -66,7 +69,7 @@
         [disabled]="isLoading$ | async"
         (click)="onCountdownEnded.emit()"
         data-cy="c8y-alarms-reload-button"
-      >
+        >
         <i
           c8yIcon="refresh"
           [ngClass]="{ 'icon-spin': isLoading$ | async }"

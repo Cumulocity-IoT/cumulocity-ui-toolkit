@@ -27,7 +27,7 @@
             [(ngModel)]="reminderTypeFilter"
             (change)="setFilter()"
             name="reminder-type"
-          >
+            >
             <option value="">{{ 'Not filtered' | translate }}</option>
             @for (type of types; track type) {
               <option [ngValue]="type.id">{{ type.name }}</option>
@@ -106,7 +106,7 @@
           (change)="setConfig('toast')"
           type="checkbox"
           name="toast-notifications-enabled"
-        />
+          />
         <span></span>
         {{ 'Toast Notifications' | translate }}
       </label>
@@ -119,7 +119,7 @@
           (change)="setConfig('browser')"
           type="checkbox"
           name="browser-notifications-enabled"
-        />
+          />
         <span></span>
         {{ 'Browser Notifications' | translate }}
       </label>
@@ -135,7 +135,7 @@
       active: reminder.status !== reminderStatus.active,
       changed: reminder.changed,
     }"
-  >
+    >
     <header>
       <i
         class="status-icon"
@@ -154,7 +154,7 @@
           class="date"
           [class.text-danger]="reminder.status === reminderStatus.active && reminder.diff > 0"
           title="{{ 'Due' | translate }}: {{ reminder.time | c8yDate }}"
-        >
+          >
           {{ reminder.time | amTimeAgo }}
         </small>
       } @else {
