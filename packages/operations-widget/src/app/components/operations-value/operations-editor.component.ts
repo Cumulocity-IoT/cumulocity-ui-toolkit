@@ -10,9 +10,10 @@ import {
   SimpleChanges,
   ViewChild,
 } from '@angular/core';
-import { EditorComponent, MonacoEditorMarkerValidatorDirective } from '@c8y/ngx-components/editor';
-import { FormGroupComponent, MessagesComponent } from '@c8y/ngx-components';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormGroupComponent, MessagesComponent } from '@c8y/ngx-components';
+import { EditorComponent, MonacoEditorMarkerValidatorDirective } from '@c8y/ngx-components/editor';
+
 @Component({
   selector: 'operations-editor',
   templateUrl: './operations-editor.component.html',
@@ -118,7 +119,7 @@ export class OperationsEditorComponent implements OnInit, OnChanges {
       additionalProperties: true,
     } as const;
 
-    this.editorComponent.monaco?.json?.jsonDefaults?.setDiagnosticsOptions({
+    this.editorComponent.monaco?.languages?.json?.jsonDefaults?.setDiagnosticsOptions({
       validate: true,
       schemas: [{ schema, fileMatch: ['*'], uri: 'editor-json-sample' }],
       enableSchemaRequest: false,
