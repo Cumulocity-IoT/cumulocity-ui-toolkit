@@ -6,11 +6,11 @@ import {
   ColumnDataType,
   CoreModule,
   FormsModule,
+  gettext,
   ModalService,
   Pagination,
   Row,
   Status,
-  _,
 } from '@c8y/ngx-components';
 import { TranslateService } from '@ngx-translate/core';
 import { take } from 'rxjs/operators';
@@ -183,15 +183,15 @@ export class TenantOptionManagementComponent {
 
   async onDeleteRow(row: TenantOptionRow) {
     await this.modal.confirm(
-      _('Delete Tenant Option') as string,
+      gettext('Delete Tenant Option') as string,
       this.translateService.instant(
-        _(
+        gettext(
           `You are about to delete Tenant Option with Category "{{ category }}" and Key "{{ key }}". Do you want to proceed?`
         ) as string,
         { category: row.category, key: row.key }
       ) as string,
       Status.DANGER,
-      { ok: _('Delete') as string, cancel: _('Cancel') as string }
+      { ok: gettext('Delete') as string, cancel: gettext('Cancel') as string }
     );
     await this.optionsManagement.deleteOption(row);
     this.rows = this.rows.filter((r) => r.category !== row.category || r.key !== row.key);
