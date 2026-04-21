@@ -1,5 +1,6 @@
 import type { ConfigurationOptions } from '@c8y/devkit';
 import { author, description, name, version } from './package.json';
+import { license } from '../../package.json';
 
 export default {
   runTime: {
@@ -26,6 +27,7 @@ export default {
           'Configurable action buttons with labels, icons, and input fields to send parameterized operation to device.',
       },
     ],
+    license,
   },
   buildTime: {
     federation: [

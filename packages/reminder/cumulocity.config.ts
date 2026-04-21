@@ -1,5 +1,6 @@
 import type { ConfigurationOptions } from '@c8y/devkit';
 import { author, name, description, version } from './package.json';
+import { license } from '../../package.json';
 
 export default {
   runTime: {
@@ -25,6 +26,7 @@ export default {
         description: 'Adds a simple manual reminder functionality to Cumulocity',
       },
     ],
+    license,
   },
   buildTime: {
     federation: [
