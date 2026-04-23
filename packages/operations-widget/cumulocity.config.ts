@@ -13,7 +13,7 @@ export default {
     dynamicOptionsUrl: true,
     remotes: {
       // 'plugin name from package.json': [ PluginModule ]
-      [name]: ['OperationsWidgetModule'],
+      [name]: ['OperationsWidgetPluginConfigProviders'],
     },
     package: 'plugin',
     isPackage: true,
@@ -21,8 +21,8 @@ export default {
     exports: [
       {
         name: 'Operations Widget',
-        module: 'OperationsWidgetModule',
-        path: './src/app/operations-widget/operations-widget.module.ts',
+        module: 'OperationsWidgetPluginConfigProviders',
+        path: './src/app/index.ts',
         description:
           'Configurable action buttons with labels, icons, and input fields to send parameterized operation to device.',
       },
