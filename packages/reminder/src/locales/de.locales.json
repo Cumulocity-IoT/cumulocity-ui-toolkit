@@ -1,0 +1,50 @@
+{
+  "reminder": {
+    "actions": {
+      "acknowledge": "Erinnerung bestätigen",
+      "add": "Erinnerung erstellen",
+      "add-short": "Erstellen",
+      "cancel": "Abbrechen",
+      "clear": "Erinnerung löschen",
+      "filter-by-context": "Nach Kontext filtern",
+      "filter-type": "Nach Erinnerungstyp filtern",
+      "reactivate": "Erinnerung erneut aktivieren"
+    },
+    "counter": {
+      "multiple": "{{counter}} Erinnerungen fällig",
+      "none": "Keine Erinnerung fällig",
+      "one": "Eine Erinnerung fällig"
+    },
+    "feedback": {
+      "created": "Die Erinnerung wurde erstellt.",
+      "not-created": "Die Erinnerung konnte nicht erstellt werden."
+    },
+    "info": {
+      "retention-rules": "Gelöschte Erinnerungen werden im Laufe der Zeit automatisch durch die Aufbewahrungsrichtlinien gelöscht."
+    },
+    "labels": {
+      "add": "Erinnerung erstellen",
+      "attach-to": "Anheften an",
+      "last-update": "Zuletzt aktualisiert",
+      "message": "Nachricht",
+      "not-filtered": "Nicht gefiltert",
+      "notification-browser": "Browser-Benachrichtigungen",
+      "notification-toast": "Toast-Benachrichtigungen",
+      "remind-me": "Erinnere mich am",
+      "status": "Status",
+      "type": "Erinnerungstyp (optional)"
+    },
+    "status": {
+      "CLEARED": "Gelöscht",
+      "DUE": "Fällig",
+      "UPCOMING": "Bevorstehend"
+    },
+    "title": "Erinnerungen",
+    "types": {
+      "ACKNOWLEDGED": "Bestätigt",
+      "ACTIVE": "Aktiv",
+      "CLEARED": "Gelöscht",
+      "UNKNOWN": "Unbekannt"
+    }
+  }
+}

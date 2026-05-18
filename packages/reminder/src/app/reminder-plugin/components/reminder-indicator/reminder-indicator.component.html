@@ -1,6 +1,8 @@
 <button
   class="{{ status }}"
-  [tooltip]="tooltipText"
+  [tooltip]="tooltipText | translate: { counter: counter }"
+  [container]="'body'"
+  [placement]="'bottom'"
   [class.open]="open"
   (click)="toggleDrawer()"
   type="button"
@@ -8,10 +10,10 @@
   <em>
     @if (open) {
       <i c8yIcon="close"></i>
-    } @else if (counter < maxCounter) {
+    } @else if (counter <= maxCounter) {
       {{ counter }}
     } @else {
-      <ng-template #maxCounterReached>{{ maxCounter }}+</ng-template>
+      {{ maxCounter }}+
     }
   </em>
 </button>

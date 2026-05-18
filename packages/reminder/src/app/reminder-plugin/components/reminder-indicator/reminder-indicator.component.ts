@@ -66,13 +66,13 @@ export class ReminderIndicatorComponent implements OnInit, OnDestroy {
 
     switch (counter) {
       case 0:
-        txt = 'No reminder is due';
+        txt = 'reminder.counter.none';
         break;
       case 1:
-        txt = 'One reminder is due';
+        txt = 'reminder.counter.one';
         break;
       default:
-        txt = '{{ counter }} reminders are due';
+        txt = 'reminder.counter.multiple';
     }
 
     this.tooltipText = this.translateService.instant(txt, { counter }) as string;

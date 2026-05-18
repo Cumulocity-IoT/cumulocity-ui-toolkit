@@ -121,7 +121,7 @@ export class ReminderService {
   getReminderTypeName(reminderTypeID: ReminderType['id']): ReminderType['name'] {
     const type = this.types.find((t) => t.id === reminderTypeID);
 
-    return type ? type.name : 'Unknown';
+    return type ? type.name : ReminderStatus.unknown;
   }
 
   /**
@@ -480,7 +480,7 @@ export class ReminderService {
     }
 
     const notification: Notification = new Notification(`${reminder.source.name}`, {
-      body: `[DUE] ${reminder.text}`,
+      body: `[${this.translateService.instant('reminder.status.DUE')}] ${this.translateService.instant(reminder.text)}`,
       data: reminder,
       tag: 'reminder.due',
     });
@@ -500,7 +500,7 @@ export class ReminderService {
     this.alertService.add({
       type: 'warning',
       text: `<a href="#${url}" class="full-click">${icon} ${reminder.source.name}</a><br />
-        <small>[DUE] ${reminder.text}</small>`,
+        <small>[${this.translateService.instant('reminder.status.DUE')}] ${this.translateService.instant(reminder.text)}</small>`,
       allowHtml: true,
     });
   }
