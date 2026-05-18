@@ -39,12 +39,13 @@ export class ImportOptionModalComponent {
 
     importPromise
       .then(
-        (result) => {
+        (result: TenantOptionRow | TenantOptionRow[]) => {
           this.closeSubject.next(result);
           this.modal.hide();
         },
         (error: unknown) => {
           const msg = error instanceof Error ? error.message : JSON.stringify(error);
+
           this.alert.danger('Option could not be imported', msg);
         }
       )

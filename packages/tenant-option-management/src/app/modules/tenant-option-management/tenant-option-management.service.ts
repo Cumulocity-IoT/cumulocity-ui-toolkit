@@ -107,6 +107,7 @@ export class TenantOptionManagementService {
         pageSize: this.MAX_PAGE_SIZE,
         currentPage,
       });
+
       tenantOptionsForCategory.push(...data.filter((o) => o.category === category));
     }
 
@@ -115,9 +116,11 @@ export class TenantOptionManagementService {
     }
 
     const rows: TenantOptionRow[] = [];
+
     for (const option of tenantOptionsForCategory) {
       try {
         const item = await this.addOptionToConfiguration(option);
+
         rows.push({ id: `${option.category}-${option.key}`, value: option.value, ...item });
       } catch {
         // skip options that are already tracked in the configuration
