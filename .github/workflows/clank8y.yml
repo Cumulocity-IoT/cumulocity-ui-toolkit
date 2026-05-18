@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run clank8y
-        uses: clank8y/clank8y@4730793198c7d36dffa286eefab8dbedd960c430
+        uses: clank8y/clank8y@48f44520b13f84d25f7c8fcc62938d798f42c62f
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_CLANK8Y_TOKEN }}
         with:
