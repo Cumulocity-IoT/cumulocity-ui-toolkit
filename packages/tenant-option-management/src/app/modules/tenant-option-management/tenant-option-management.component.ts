@@ -163,11 +163,17 @@ export class TenantOptionManagementComponent {
   openAllowListModal() {
     const modalRef = this.bsModalService.show(ImportOptionModalComponent, { class: 'modal-lg' });
 
-    modalRef.content.closeSubject.pipe(take(1)).subscribe((row) => {
-      if (row) {
-        this.rows.push(row);
-        this.rows = [...this.rows]; // trigger binding
+    modalRef.content.closeSubject.pipe(take(1)).subscribe((result) => {
+      if (!result) {
+        return;
       }
+      const newRows = Array.isArray(result) ? result : [result];
+      for (const row of newRows) {
+        if (!this.rows.some((r) => r.id === row.id)) {
+          this.rows.push(row);
+        }
+      }
+      this.rows = [...this.rows]; // trigger binding
     });
   }
 
