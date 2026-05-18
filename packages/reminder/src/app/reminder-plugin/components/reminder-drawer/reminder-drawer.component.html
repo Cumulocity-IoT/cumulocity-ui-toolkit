@@ -19,7 +19,9 @@
     <!-- filter: reminder type -->
     @if (types.length) {
       <div class="filter">
-        <label for="reminder-type-filter" class="text-truncate" translate>reminder.actions.filter-type</label>
+        <label class="text-truncate" for="reminder-type-filter" translate
+          >reminder.actions.filter-type</label
+        >
         <div class="c8y-select-wrapper">
           <select
             class="form-control"
@@ -72,7 +74,7 @@
                   </small>
                 }
               </span>
-              <em class="text-uppercase">{{ group.status | translate }}</em>
+              <em class="text-uppercase">{{ 'reminder.status.' + group.status | translate }}</em>
               <i [c8yIcon]="'expand-arrow'" [class.expanded]="groupIsExpanded[$index]"></i>
             </button>
           </header>
