@@ -6,7 +6,7 @@ import { provideMock } from '~helpers/auto-mock.helper';
 import { ActiveTabService } from '~services/active-tab.service';
 import { DomService } from '~services/dom.service';
 import { LocalStorageService } from '~services/local-storage.service';
-import { Reminder, REMINDER_TYPE } from '../models/reminder.model';
+import { Reminder, REMINDER__TYPE } from '../models/reminder.model';
 import { ReminderService } from './reminder.service';
 
 describe('ReminderService', () => {
@@ -62,7 +62,7 @@ describe('ReminderService', () => {
     const mockReminder: Reminder = {
       id: '1',
       source: { id: 'sourceId', name: 'sourceName' },
-      type: REMINDER_TYPE,
+      type: REMINDER__TYPE,
       time: new Date().toISOString(),
       text: 'text',
       status: 'CLEARED',

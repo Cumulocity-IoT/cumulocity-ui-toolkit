@@ -6,11 +6,11 @@ import { BsModalService } from 'ngx-bootstrap/modal';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import {
   Reminder,
-  REMINDER_ASSET_CONTEXT_ROOTS,
-  REMINDER_DRAWER_OPEN_CLASS,
-  REMINDER_HIGHLIGHT_DURATION_SECONDS,
-  REMINDER_LOCAL_STORAGE_DEFAULT_CONFIG,
-  REMINDER_MAIN_HEADER_CLASS,
+  REMINDER__ASSET_CONTEXT_ROOTS,
+  REMINDER__DRAWER_OPEN_CLASS,
+  REMINDER__HIGHLIGHT_DURATION_SECONDS,
+  REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG,
+  REMINDER__MAIN_HEADER_CLASS,
   ReminderConfig,
   ReminderGroup,
   ReminderGroupStatus,
@@ -40,10 +40,10 @@ export class ReminderDrawerComponent implements OnDestroy {
   types: ReminderType[] = [];
 
   // for template
-  reminderTypeFilter: string = REMINDER_LOCAL_STORAGE_DEFAULT_CONFIG.filter.reminderType;
-  toastNotificationsEnabled: ReminderConfig['toast'] = REMINDER_LOCAL_STORAGE_DEFAULT_CONFIG.toast;
+  reminderTypeFilter: string = REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG.filter.reminderType;
+  toastNotificationsEnabled: ReminderConfig['toast'] = REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG.toast;
   browserNotificationsEnabled: ReminderConfig['browser'] =
-    REMINDER_LOCAL_STORAGE_DEFAULT_CONFIG.browser;
+    REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG.browser;
 
   reminderStatus = ReminderStatus;
   reminderGroupStatus = ReminderGroupStatus;
@@ -74,7 +74,7 @@ export class ReminderDrawerComponent implements OnDestroy {
   private updateTimer?: NodeJS.Timeout;
   private _open = false;
   private _previousState: Reminder['id'][][] = [];
-  private _contextFilterEnabled = REMINDER_LOCAL_STORAGE_DEFAULT_CONFIG.useContext;
+  private _contextFilterEnabled = REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG.useContext;
 
   constructor() {
     this.getReminderTypes();
@@ -238,7 +238,7 @@ export class ReminderDrawerComponent implements OnDestroy {
     if (!pathElements.length) return;
 
     const newContext =
-      pathElements.length >= 2 && REMINDER_ASSET_CONTEXT_ROOTS.includes(pathElements[0])
+      pathElements.length >= 2 && REMINDER__ASSET_CONTEXT_ROOTS.includes(pathElements[0])
         ? pathElements[1]
         : '';
 
@@ -261,7 +261,7 @@ export class ReminderDrawerComponent implements OnDestroy {
         group.reminders.forEach((reminder) => {
           if (!this._previousState[index]?.includes(reminder.id)) {
             reminder.changed = true;
-            setTimeout(() => delete reminder.changed, REMINDER_HIGHLIGHT_DURATION_SECONDS * 1000);
+            setTimeout(() => delete reminder.changed, REMINDER__HIGHLIGHT_DURATION_SECONDS * 1000);
           }
         });
       });
@@ -316,17 +316,17 @@ export class ReminderDrawerComponent implements OnDestroy {
    * @returns void
    */
   private toggleRightDrawer(open: boolean): void {
-    const drawer = document.getElementsByClassName(REMINDER_MAIN_HEADER_CLASS)[0];
+    const drawer = document.getElementsByClassName(REMINDER__MAIN_HEADER_CLASS)[0];
 
-    if (open) drawer.classList.add(REMINDER_DRAWER_OPEN_CLASS);
-    else drawer.classList.remove(REMINDER_DRAWER_OPEN_CLASS);
+    if (open) drawer.classList.add(REMINDER__DRAWER_OPEN_CLASS);
+    else drawer.classList.remove(REMINDER__DRAWER_OPEN_CLASS);
 
     if (this.rightDrawerOpen) {
       // set user menu drawer status closed, if it is still open
       this.headerService.closeRightDrawer();
       setTimeout(() => {
         // minimal delay needed to override closing animation and keep drawer open
-        if (open) drawer.classList.add(REMINDER_DRAWER_OPEN_CLASS);
+        if (open) drawer.classList.add(REMINDER__DRAWER_OPEN_CLASS);
       }, 1);
     }
   }

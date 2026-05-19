@@ -10,9 +10,9 @@ import moment from 'moment';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import {
   Reminder,
-  REMINDER_TEXT_LENGTH,
-  REMINDER_TYPE,
-  REMINDER_TYPE_FRAGMENT,
+  REMINDER__TEXT_LENGTH,
+  REMINDER__TYPE,
+  REMINDER__TYPE_FRAGMENT,
   ReminderStatus,
   ReminderType,
 } from '../../models/reminder.model';
@@ -47,7 +47,7 @@ export class ReminderModalComponent implements OnInit {
     source: undefined,
     text: undefined,
     time: undefined,
-    type: REMINDER_TYPE,
+    type: REMINDER__TYPE,
   };
 
   fields: FormlyFieldConfig[] = [
@@ -68,7 +68,7 @@ export class ReminderModalComponent implements OnInit {
           props: {
             label: this.translateService.instant('reminder.labels.message') as string,
             required: true,
-            maxLength: REMINDER_TEXT_LENGTH,
+            maxLength: REMINDER__TEXT_LENGTH,
             // TODO show max length & used chars
           },
         },
@@ -124,7 +124,7 @@ export class ReminderModalComponent implements OnInit {
 
     const reminder: IEvent = {
       source: this.reminder.source,
-      type: REMINDER_TYPE,
+      type: REMINDER__TYPE,
       reminderType: this.reminder.reminderType || null,
       time: moment(this.reminder.time).seconds(0).toISOString(),
       text: this.reminder.text,
@@ -221,7 +221,7 @@ export class ReminderModalComponent implements OnInit {
     if (!this.typeOptions.length) return;
 
     this.fields.push({
-      key: REMINDER_TYPE_FRAGMENT,
+      key: REMINDER__TYPE_FRAGMENT,
       type: 'select',
       props: {
         label: this.translateService.instant('reminder.labels.type') as string,

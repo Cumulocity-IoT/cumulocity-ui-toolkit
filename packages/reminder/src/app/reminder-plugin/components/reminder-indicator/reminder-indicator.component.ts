@@ -1,7 +1,7 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
-import { REMINDER_COUNTER_DISPLAY_THRESHOLD } from '../../models/reminder.model';
+import { REMINDER__COUNTER_DISPLAY_THRESHOLD } from '../../models/reminder.model';
 import { ReminderService } from '../../services/reminder.service';
 
 const ReminderStatus = {
@@ -23,7 +23,7 @@ export class ReminderIndicatorComponent implements OnInit, OnDestroy {
   open = false;
   counter = 0;
   status = ReminderStatus.default;
-  maxCounter = REMINDER_COUNTER_DISPLAY_THRESHOLD;
+  maxCounter = REMINDER__COUNTER_DISPLAY_THRESHOLD;
   tooltipText!: string;
 
   private subscription = new Subscription();

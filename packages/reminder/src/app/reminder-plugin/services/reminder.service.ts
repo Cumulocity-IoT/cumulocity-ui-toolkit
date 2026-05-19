@@ -12,13 +12,13 @@ import { LocalStorageService } from '~services/local-storage.service';
 import { ReminderDrawerComponent } from '../components/reminder-drawer/reminder-drawer.component';
 import {
   Reminder,
-  REMINDER_INITIAL_QUERY_SIZE,
-  REMINDER_LOCAL_STORAGE_CONFIG,
-  REMINDER_LOCAL_STORAGE_DEFAULT_CONFIG,
-  REMINDER_TENANT_OPTION_CATEGORY,
-  REMINDER_TENANT_OPTION_TYPE_KEY,
-  REMINDER_TYPE,
-  REMINDER_TYPE_FRAGMENT,
+  REMINDER__INITIAL_QUERY_SIZE,
+  REMINDER__LOCAL_STORAGE__CONFIG,
+  REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG,
+  REMINDER__TENANT_OPTION__CATEGORY,
+  REMINDER__TENANT_OPTION__TYPE_KEY,
+  REMINDER__TYPE,
+  REMINDER__TYPE_FRAGMENT,
   ReminderConfig,
   ReminderGroup,
   ReminderGroupFilter,
@@ -107,7 +107,7 @@ export class ReminderService {
     void this.requestNotificationPermission();
     this._types = await this.fetchReminderTypes();
     this.createDrawer();
-    this.reminders = await this.fetchReminders(REMINDER_INITIAL_QUERY_SIZE);
+    this.reminders = await this.fetchReminders(REMINDER__INITIAL_QUERY_SIZE);
     void this.fetchActiveReminderCounter();
     this.setupReminderSubscription();
     this.setupConfigSubscription();
@@ -192,7 +192,7 @@ export class ReminderService {
 
     config[key] = value;
 
-    this.localStorageService.set(REMINDER_LOCAL_STORAGE_CONFIG, config);
+    this.localStorageService.set(REMINDER__LOCAL_STORAGE__CONFIG, config);
     this.config$.next(config);
   }
 
@@ -249,7 +249,7 @@ export class ReminderService {
 
     // populate filters
     if (has(config.filter, 'reminderType'))
-      filters[REMINDER_TYPE_FRAGMENT] = config.filter[REMINDER_TYPE_FRAGMENT];
+      filters[REMINDER__TYPE_FRAGMENT] = config.filter[REMINDER__TYPE_FRAGMENT];
 
     return Object.keys(filters).length > 0 ? filters : null;
   }
@@ -298,8 +298,8 @@ export class ReminderService {
 
     try {
       const response = await this.tenantOptionService.detail({
-        category: REMINDER_TENANT_OPTION_CATEGORY,
-        key: REMINDER_TENANT_OPTION_TYPE_KEY,
+        category: REMINDER__TENANT_OPTION__CATEGORY,
+        key: REMINDER__TENANT_OPTION__TYPE_KEY,
       });
 
       if (response.data)
@@ -364,7 +364,7 @@ export class ReminderService {
 
     try {
       const response = await this.eventService.list({
-        type: REMINDER_TYPE,
+        type: REMINDER__TYPE,
         pageSize: 1,
         fragmentType: 'status',
         fragmentValue: ReminderStatus.active,
@@ -388,7 +388,7 @@ export class ReminderService {
 
     try {
       const response = await this.eventService.list({
-        type: REMINDER_TYPE,
+        type: REMINDER__TYPE,
         withTotalPages: currentPage === 1,
         pageSize,
         currentPage,
@@ -413,7 +413,7 @@ export class ReminderService {
     groups = this.applyContextFilter(groups, context);
 
     // type filter
-    if (!has(config.filter, 'reminderType') || filter[REMINDER_TYPE_FRAGMENT] === '') return groups;
+    if (!has(config.filter, 'reminderType') || filter[REMINDER__TYPE_FRAGMENT] === '') return groups;
 
     const keys = Object.keys(filter);
 
@@ -433,8 +433,8 @@ export class ReminderService {
   private loadConfig(): void {
     this.config$.next(
       this.localStorageService.getOrDefault<ReminderConfig>(
-        REMINDER_LOCAL_STORAGE_CONFIG,
-        REMINDER_LOCAL_STORAGE_DEFAULT_CONFIG
+        REMINDER__LOCAL_STORAGE__CONFIG,
+        REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG
       )
     );
   }
@@ -522,9 +522,9 @@ export class ReminderService {
     this.localStorageService.storage$
       .pipe(
         map((config) => {
-          if (has(config, REMINDER_LOCAL_STORAGE_CONFIG))
+          if (has(config, REMINDER__LOCAL_STORAGE__CONFIG))
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            return JSON.parse(config[REMINDER_LOCAL_STORAGE_CONFIG] as string) as ReminderConfig;
+            return JSON.parse(config[REMINDER__LOCAL_STORAGE__CONFIG] as string) as ReminderConfig;
         }),
         filter((config): config is ReminderConfig => config !== undefined)
       )
@@ -539,7 +539,7 @@ export class ReminderService {
           filter(
             (message) =>
               message.realtimeAction === 'DELETE' ||
-              (has(message.data, 'type') && message.data['type'] === REMINDER_TYPE)
+              (has(message.data, 'type') && message.data['type'] === REMINDER__TYPE)
           ),
           map((message) => message as RealtimeMessage<Reminder>)
         )
