@@ -1,6 +1,6 @@
 <aside [class.open]="open">
   <header>
-    <h2 translate>reminder.title</h2>
+    <h2>{{'reminder.title' | translate }}</h2>
     <small class="text-muted" title="{{ lastUpdate | c8yDate }}">
       {{ 'reminder.labels.last-update' | translate }}: {{ lastUpdate | amTimeAgo }}
     </small>
@@ -74,7 +74,7 @@
                   </small>
                 }
               </span>
-              <em class="text-uppercase">{{ 'reminder.status.' + group.status | translate }}</em>
+              <em class="text-uppercase">{{ 'reminder.group-status.' + group.status | translate }}</em>
               <i [c8yIcon]="'expand-arrow'" [class.expanded]="groupIsExpanded[$index]"></i>
             </button>
           </header>

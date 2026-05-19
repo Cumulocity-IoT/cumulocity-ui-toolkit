@@ -5,8 +5,6 @@ msgstr ""
 "Content-Type: application/x-po; charset=UTF-8\n"
 "Language: de\n"
 "Project-Id-Version: \n"
-"PO-Revision-Date: 2026-05-19 07:17:41+0000\n"
-
 msgid "reminder.actions.acknowledge"
 msgstr "Erinnerung bestätigen"
 
@@ -46,6 +44,15 @@ msgstr "Die Erinnerung wurde erstellt."
 msgid "reminder.feedback.not-created"
 msgstr "Die Erinnerung konnte nicht erstellt werden."
 
+msgid "reminder.group-status.CLEARED"
+msgstr "Gelöscht"
+
+msgid "reminder.group-status.DUE"
+msgstr "Fällig"
+
+msgid "reminder.group-status.UPCOMING"
+msgstr "Bevorstehend"
+
 msgid "reminder.info.retention-rules"
 msgstr "Gelöschte Erinnerungen werden im Laufe der Zeit automatisch durch die Aufbewahrungsrichtlinien gelöscht."
 
@@ -82,26 +89,20 @@ msgstr "Status"
 msgid "reminder.labels.type"
 msgstr "Erinnerungstyp (optional)"
 
+msgid "reminder.status.ACKNOWLEDGED"
+msgstr "Bestätigt"
+
+msgid "reminder.status.ACTIVE"
+msgstr "Aktiv"
+
 msgid "reminder.status.CLEARED"
 msgstr "Gelöscht"
 
-msgid "reminder.status.DUE"
-msgstr "Fällig"
-
-msgid "reminder.status.UPCOMING"
-msgstr "Bevorstehend"
+msgid "reminder.status.UNKNOWN"
+msgstr "Unbekannt"
 
 msgid "reminder.title"
 msgstr "Erinnerungen"
-
-msgid "reminder.types.ACKNOWLEDGED"
-msgstr "Bestätigt"
-
-msgid "reminder.types.ACTIVE"
-msgstr "Aktiv"
-
-msgid "reminder.types.CLEARED"
-msgstr "Gelöscht"
 
 msgid "reminder.types.UNKNOWN"
 msgstr "Unbekannt"

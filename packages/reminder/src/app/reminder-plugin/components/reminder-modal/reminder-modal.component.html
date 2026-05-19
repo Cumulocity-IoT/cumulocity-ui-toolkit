@@ -1,5 +1,5 @@
 <div class="modal-header separator">
-  <h3 translate>reminder.labels.add</h3>
+  <h3>{{ 'reminder.labels.add' | translate }}</h3>
 </div>
 
 <form [formGroup]="form" (submit)="submit()">
@@ -8,8 +8,8 @@
   </div>
 
   <div class="modal-footer">
-    <button class="btn btn-default" (click)="close()" type="button" translate>
-      reminder.actions.cancel
+    <button class="btn btn-default" (click)="close()" type="button">
+      {{ 'reminder.actions.cancel' | translate }}
     </button>
 
     <button
@@ -17,9 +17,8 @@
       [disabled]="!form.valid || isLoading"
       [class.btn-pending]="isLoading"
       type="submit"
-      translate
     >
-      {{ 'reminder.actions.add-short' }}
+      {{ 'reminder.actions.add-short' | translate }}
     </button>
   </div>
 </form>

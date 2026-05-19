@@ -19,6 +19,11 @@
       "created": "Die Erinnerung wurde erstellt.",
       "not-created": "Die Erinnerung konnte nicht erstellt werden."
     },
+    "group-status": {
+      "CLEARED": "Gelöscht",
+      "DUE": "Fällig",
+      "UPCOMING": "Bevorstehend"
+    },
     "info": {
       "retention-rules": "Gelöschte Erinnerungen werden im Laufe der Zeit automatisch durch die Aufbewahrungsrichtlinien gelöscht.",
       "unfiltered-reminders": "Anzahl der Erinnerungen, wenn nicht gefiltert"
@@ -36,15 +41,13 @@
       "type": "Erinnerungstyp (optional)"
     },
     "status": {
-      "CLEARED": "Gelöscht",
-      "DUE": "Fällig",
-      "UPCOMING": "Bevorstehend"
-    },
-    "title": "Erinnerungen",
-    "types": {
       "ACKNOWLEDGED": "Bestätigt",
       "ACTIVE": "Aktiv",
       "CLEARED": "Gelöscht",
+      "UNKNOWN": "Unbekannt"
+    },
+    "title": "Erinnerungen",
+    "types": {
       "UNKNOWN": "Unbekannt"
     }
   }

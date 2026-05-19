@@ -19,6 +19,11 @@
       "created": "The reminder has been created.",
       "not-created": "Could not create the reminder."
     },
+    "group-status": {
+      "CLEARED": "Cleared",
+      "DUE": "Due",
+      "UPCOMING": "Upcoming"
+    },
     "info": {
       "retention-rules": "Cleared reminders are automatically deleted over time by the retention rules.",
       "unfiltered-reminders": "Number of reminders if not filtered"
@@ -36,15 +41,13 @@
       "type": "Reminder type (optional)"
     },
     "status": {
-      "CLEARED": "Cleared",
-      "DUE": "Due",
-      "UPCOMING": "Upcoming"
-    },
-    "title": "Reminder",
-    "types": {
       "ACKNOWLEDGED": "Acknowledged",
       "ACTIVE": "Active",
       "CLEARED": "Cleared",
+      "UNKNOWN": "Unknown"
+    },
+    "title": "Reminder",
+    "types": {
       "UNKNOWN": "Unknown"
     }
   }

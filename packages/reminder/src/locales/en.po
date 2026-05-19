@@ -5,8 +5,6 @@ msgstr ""
 "Content-Type: application/x-po; charset=UTF-8\n"
 "Language: en\n"
 "Project-Id-Version: \n"
-"PO-Revision-Date: 2026-05-19 07:17:41+0000\n"
-
 msgid "reminder.actions.acknowledge"
 msgstr "Acknowledge the Reminder"
 
@@ -46,6 +44,15 @@ msgstr "The reminder has been created."
 msgid "reminder.feedback.not-created"
 msgstr "Could not create the reminder."
 
+msgid "reminder.group-status.CLEARED"
+msgstr "Cleared"
+
+msgid "reminder.group-status.DUE"
+msgstr "Due"
+
+msgid "reminder.group-status.UPCOMING"
+msgstr "Upcoming"
+
 msgid "reminder.info.retention-rules"
 msgstr "Cleared reminders are automatically deleted over time by the retention rules."
 
@@ -82,26 +89,20 @@ msgstr "Status"
 msgid "reminder.labels.type"
 msgstr "Reminder type (optional)"
 
+msgid "reminder.status.ACKNOWLEDGED"
+msgstr "Acknowledged"
+
+msgid "reminder.status.ACTIVE"
+msgstr "Active"
+
 msgid "reminder.status.CLEARED"
 msgstr "Cleared"
 
-msgid "reminder.status.DUE"
-msgstr "Due"
-
-msgid "reminder.status.UPCOMING"
-msgstr "Upcoming"
+msgid "reminder.status.UNKNOWN"
+msgstr "Unknown"
 
 msgid "reminder.title"
 msgstr "Reminder"
-
-msgid "reminder.types.ACKNOWLEDGED"
-msgstr "Acknowledged"
-
-msgid "reminder.types.ACTIVE"
-msgstr "Active"
-
-msgid "reminder.types.CLEARED"
-msgstr "Cleared"
 
 msgid "reminder.types.UNKNOWN"
 msgstr "Unknown"
