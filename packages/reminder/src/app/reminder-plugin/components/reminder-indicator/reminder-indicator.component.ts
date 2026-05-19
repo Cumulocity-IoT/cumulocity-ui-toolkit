@@ -1,7 +1,7 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
-import { REMINDER_MAX_COUNTER } from '../../models/reminder.model';
+import { REMINDER_COUNTER_DISPLAY_THRESHOLD } from '../../models/reminder.model';
 import { ReminderService } from '../../services/reminder.service';
 
 const ReminderStatus = {
@@ -23,7 +23,7 @@ export class ReminderIndicatorComponent implements OnInit, OnDestroy {
   open = false;
   counter = 0;
   status = ReminderStatus.default;
-  maxCounter = REMINDER_MAX_COUNTER;
+  maxCounter = REMINDER_COUNTER_DISPLAY_THRESHOLD;
   tooltipText!: string;
 
   private subscription = new Subscription();
@@ -66,13 +66,13 @@ export class ReminderIndicatorComponent implements OnInit, OnDestroy {
 
     switch (counter) {
       case 0:
-        txt = 'No reminder is due';
+        txt = 'reminder.counter.none';
         break;
       case 1:
-        txt = 'One reminder is due';
+        txt = 'reminder.counter.one';
         break;
       default:
-        txt = '{{ counter }} reminders are due';
+        txt = 'reminder.counter.multiple';
     }
 
     this.tooltipText = this.translateService.instant(txt, { counter }) as string;

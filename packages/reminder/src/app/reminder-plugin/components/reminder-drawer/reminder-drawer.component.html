@@ -1,8 +1,8 @@
 <aside [class.open]="open">
   <header>
-    <h2 translate>Reminder</h2>
+    <h2>{{'reminder.title' | translate }}</h2>
     <small class="text-muted" title="{{ lastUpdate | c8yDate }}">
-      {{ 'Last updated' | translate }}: {{ lastUpdate | amTimeAgo }}
+      {{ 'reminder.labels.last-update' | translate }}: {{ lastUpdate | amTimeAgo }}
     </small>
   </header>
 
@@ -10,7 +10,7 @@
     <li>
       <button class="btn btn-primary" (click)="createReminder()" type="button">
         <i [c8yIcon]="'plus-circle'"></i>
-        {{ 'Create Reminder' | translate }}
+        {{ 'reminder.actions.add' | translate }}
       </button>
     </li>
   </ul>
@@ -19,7 +19,9 @@
     <!-- filter: reminder type -->
     @if (types.length) {
       <div class="filter">
-        <label for="reminder-type-filter" translate>Filter by Reminder Type</label>
+        <label class="text-truncate" for="reminder-type-filter" translate
+          >reminder.actions.filter-type</label
+        >
         <div class="c8y-select-wrapper">
           <select
             class="form-control"
@@ -28,9 +30,9 @@
             (change)="setFilter()"
             name="reminder-type"
           >
-            <option value="">{{ 'Not filtered' | translate }}</option>
+            <option value="">{{ 'reminder.labels.not-filtered' | translate }}</option>
             @for (type of types; track type) {
-              <option [ngValue]="type.id">{{ type.name }}</option>
+              <option [ngValue]="type.id">{{ type.name | translate }}</option>
             }
           </select>
         </div>
@@ -42,7 +44,7 @@
       <label class="c8y-switch">
         <input [(ngModel)]="contextFilterEnabled" type="checkbox" name="context-filter-enabled" />
         <span></span>
-        {{ 'Filter by Current Context' | translate }}
+        <span class="text-truncate">{{ 'reminder.actions.filter-by-context' | translate }}</span>
       </label>
     </div>
 
@@ -64,12 +66,15 @@
               >
                 {{ group.count || 0 }}
                 @if (group.total) {
-                  <small class="text-muted" title="{{ 'Number of reminders if not filtered' | translate }}">
+                  <small
+                    class="text-muted"
+                    title="{{ 'reminder.info.unfiltered-reminders' | translate }}"
+                  >
                     / {{ group.total }}
                   </small>
                 }
               </span>
-              <em>{{ group.status | translate }}</em>
+              <em class="text-uppercase">{{ 'reminder.group-status.' + group.status | translate }}</em>
               <i [c8yIcon]="'expand-arrow'" [class.expanded]="groupIsExpanded[$index]"></i>
             </button>
           </header>
@@ -93,9 +98,7 @@
       }
     </ul>
 
-    <small class="text-muted" translate>
-      Cleared reminders are automatically deleted over time by the retention rules.
-    </small>
+    <small class="text-muted" translate> reminder.info.retention-rules </small>
   </div>
 
   <footer>
@@ -108,7 +111,7 @@
           name="toast-notifications-enabled"
         />
         <span></span>
-        {{ 'Toast Notifications' | translate }}
+        <span class="text-truncate">{{ 'reminder.labels.notification-toast' | translate }}</span>
       </label>
     </div>
 
@@ -121,7 +124,7 @@
           name="browser-notifications-enabled"
         />
         <span></span>
-        {{ 'Browser Notifications' | translate }}
+        <span class="text-truncate">{{ 'reminder.labels.notification-browser' | translate }}</span>
       </label>
     </div>
   </footer>
@@ -146,23 +149,28 @@
               ? 'bell-slash'
               : 'check-circle'
         "
-        title="Status: {{ reminder.status }}"
       ></i>
 
       @if (reminder.status !== reminderStatus.cleared) {
         <small
           class="date"
           [class.text-danger]="reminder.status === reminderStatus.active && reminder.diff > 0"
-          title="{{ 'Due' | translate }}: {{ reminder.time | c8yDate }}"
+          title="{{ 'reminder.status.DUE' | translate }}: {{ reminder.time | c8yDate }}"
         >
           {{ reminder.time | amTimeAgo }}
         </small>
       } @else {
         <small class="date">
-          <span title="{{ 'Due' | translate }}: {{ reminder.lastUpdated | c8yDate }}">
+          <span
+            title="{{ 'reminder.status.DUE' | translate }}: {{ reminder.lastUpdated | c8yDate }}"
+          >
             {{ reminder.time | amTimeAgo }}
           </span>
-          <span title="{{ 'Last Updated' | translate }}: {{ reminder.lastUpdated | c8yDate }}">
+          <span
+            title="{{ 'reminder.labels.last-update' | translate }}: {{
+              reminder.lastUpdated | c8yDate
+            }}"
+          >
             {{ reminder.lastUpdated | amTimeAgo }}
           </span>
         </small>
@@ -174,7 +182,7 @@
             class="btn btn-xs btn-hollow btn-success"
             (click)="updateReminder(reminder, reminderStatus.acknowledged)"
             type="button"
-            title="{{ 'Acknowledge the reminder' | translate }}"
+            title="{{ 'reminder.actions.acknowledge' | translate }}"
           >
             <i [c8yIcon]="'bell-slash'"></i>
           </button>
@@ -184,7 +192,7 @@
             class="btn btn-xs btn-hollow btn-danger"
             (click)="updateReminder(reminder, reminderStatus.cleared)"
             type="button"
-            title="{{ 'Clear the reminder' | translate }}"
+            title="{{ 'reminder.actions.clear' | translate }}"
           >
             <i [c8yIcon]="'check-circle'"></i>
           </button>
@@ -194,7 +202,7 @@
             class="btn btn-xs btn-hollow btn-primary"
             (click)="updateReminder(reminder, reminderStatus.active)"
             type="button"
-            title="{{ 'Reactivate the reminder' | translate }}"
+            title="{{ 'reminder.actions.reactivate' | translate }}"
           >
             <i [c8yIcon]="'bell'"></i>
           </button>
@@ -203,7 +211,7 @@
     </header>
 
     <p>
-      {{ reminder.text }}
+      {{ reminder.text | translate }}
     </p>
 
     <footer>
@@ -213,7 +221,7 @@
           class="btn btn-clean reminder-tag"
           (click)="setFilter(reminder.reminderType)"
           type="button"
-          title="{{ 'Filter by this Reminder Type' | translate }}"
+          title="{{ 'reminder.actions.filter-type' | translate }}"
         >
           <i class="m-r-4" [c8yIcon]="'tag'"></i>
           <c8y-reminder-type [id]="reminder.reminderType"></c8y-reminder-type>
