@@ -37,6 +37,10 @@ export interface ReminderConfig {
   useContext?: boolean;
 }
 
+export interface ReminderTenantConfig {
+  useContext?: boolean;
+}
+
 export interface ReminderGroup {
   status: ReminderGroupStatus;
   reminders: Reminder[];

@@ -34,6 +34,7 @@ export class ReminderDrawerComponent implements OnDestroy {
   private router = inject(Router);
 
   open$ = new BehaviorSubject<boolean>(this.open);
+  contextFilterAvailable = false;
   reminders: Reminder[] = [];
   reminderGroups: ReminderGroup[] = [];
   lastUpdate?: Date;
@@ -79,6 +80,7 @@ export class ReminderDrawerComponent implements OnDestroy {
   private _contextFilterEnabled = REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG.useContext;
 
   constructor() {
+    this.contextFilterAvailable = this.reminderService.contextFilterAvailable;
     this.getReminderTypes();
     this.initSubscriptions();
   }

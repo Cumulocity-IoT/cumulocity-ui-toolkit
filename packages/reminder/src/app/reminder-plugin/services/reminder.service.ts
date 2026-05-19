@@ -16,6 +16,7 @@ import {
   REMINDER__LOCAL_STORAGE__CONFIG,
   REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG,
   REMINDER__TENANT_OPTION__CATEGORY,
+  REMINDER__TENANT_OPTION__CONFIG_KEY,
   REMINDER__TENANT_OPTION__TYPE_KEY,
   REMINDER__TYPE,
   REMINDER__TYPE_FRAGMENT,
@@ -24,12 +25,15 @@ import {
   ReminderGroupFilter,
   ReminderGroupStatus,
   ReminderStatus,
+  ReminderTenantConfig,
   ReminderType,
 } from '../models/reminder.model';
 
 @Injectable()
 export class ReminderService {
   readonly DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+  contextFilterAvailable = false;
 
   config$ = new BehaviorSubject<ReminderConfig>({});
   filters$ = new BehaviorSubject<ReminderGroupFilter>({});
@@ -105,7 +109,18 @@ export class ReminderService {
 
     this.loadConfig();
     void this.requestNotificationPermission();
-    this._types = await this.fetchReminderTypes();
+    const [tenantConfig, types] = await Promise.all([
+      this.fetchTenantConfig(),
+      this.fetchReminderTypes(),
+    ]);
+
+    this.contextFilterAvailable = tenantConfig.useContext ?? false;
+
+    if (!this.contextFilterAvailable && this.config$.getValue().useContext) {
+      this.setConfig('useContext', { useContext: false });
+    }
+
+    this._types = types;
     this.createDrawer();
     this.reminders = await this.fetchReminders(REMINDER__INITIAL_QUERY_SIZE);
     void this.fetchActiveReminderCounter();
@@ -291,6 +306,21 @@ export class ReminderService {
 
       return reminder;
     });
+  }
+
+  private async fetchTenantConfig(): Promise<ReminderTenantConfig> {
+    try {
+      const response = await this.tenantOptionService.detail({
+        category: REMINDER__TENANT_OPTION__CATEGORY,
+        key: REMINDER__TENANT_OPTION__CONFIG_KEY,
+      });
+
+      if (response.data) return JSON.parse(response.data.value) as ReminderTenantConfig;
+    } catch {
+      // tenant option not configured — context filter unavailable
+    }
+
+    return {};
   }
 
   private async fetchReminderTypes(): Promise<ReminderType[]> {
