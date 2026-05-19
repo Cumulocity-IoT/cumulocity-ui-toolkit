@@ -116,7 +116,11 @@ export class ReminderModalComponent implements OnInit {
   async submit(): Promise<void> {
     this.isLoading = true;
 
-    if (!this.reminder.source || !this.reminder.text) return;
+    if (!this.reminder.source || !this.reminder.text) {
+      this.isLoading = false;
+
+      return;
+    }
 
     const reminder: IEvent = {
       source: this.reminder.source,
@@ -147,7 +151,7 @@ export class ReminderModalComponent implements OnInit {
 
     if (!request) return;
 
-    if (request && request.res.status === 201) {
+    if (request.res.status === 201) {
       this.alertService.success(
         this.translateService.instant('reminder.feedback.created') as string
       );
