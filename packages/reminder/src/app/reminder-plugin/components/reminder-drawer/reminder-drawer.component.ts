@@ -190,7 +190,7 @@ export class ReminderDrawerComponent implements OnDestroy {
   private digestReminders(reminders: Reminder[]): void {
     this.reminders = reminders;
     this.lastUpdate = new Date();
-    this.reminderGroups = this.reminderService.groupReminders(reminders);
+    this.reminderGroups = this.reminderService.groupReminders(reminders, this.context);
 
     if (reminders.length) this.highlightChanges();
   }
@@ -231,20 +231,20 @@ export class ReminderDrawerComponent implements OnDestroy {
    * @returns void
    */
   private handleRouteChange(url: string): void {
-    if (isEmpty(url)) {
-      return undefined;
-    }
+    if (isEmpty(url)) return;
 
     const pathElements: string[] = url.split('/').filter((element) => !isEmpty(element));
 
-    if (pathElements === null || pathElements.length === 0) {
-      return undefined;
-    }
+    if (!pathElements.length) return;
 
-    this.context =
+    const newContext =
       pathElements.length >= 2 && REMINDER_ASSET_CONTEXT_ROOTS.includes(pathElements[0])
         ? pathElements[1]
         : '';
+
+    if (newContext === this.context) return;
+
+    this.context = newContext;
     this.reminderGroups = this.reminderService.groupReminders(this.reminders, this.context);
   }
 

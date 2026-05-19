@@ -224,33 +224,23 @@ export class ReminderService {
   private applyContextFilter(groups: ReminderGroup[], context?: string): ReminderGroup[] {
     const config = this.config$.getValue();
 
-    if (!has(config, 'useContext') || !config.useContext || !context) return groups;
+    if (!config.useContext || !context) return groups;
 
-    groups.map((group) => {
+    groups.forEach((group) => {
       group.total = group.reminders.length;
       group.reminders = group.reminders.filter((reminder) => reminder.source.id === context);
       group.count = group.reminders.length;
-
-      return group;
     });
 
     return groups;
   }
 
-  private applyReminderFilter(reminder: Reminder, filters: ReminderGroupFilter): Reminder {
+  private applyReminderFilter(reminder: Reminder, filters: ReminderGroupFilter): boolean {
     const keys = Object.keys(filters);
 
-    if (!keys.length) return reminder;
+    if (!keys.length) return true;
 
-    let check = true;
-
-    keys.forEach((key) => {
-      if (reminder[key] !== filters[key]) check = false;
-    });
-
-    if (!check) return;
-
-    return reminder;
+    return keys.every((key) => reminder[key] === filters[key]);
   }
 
   private buildTypeFilter(): ReminderGroupFilter {
@@ -270,7 +260,7 @@ export class ReminderService {
     this.open$ = this.drawer.open$;
   }
 
-  private deleteRminderFromList(
+  private deleteReminderFromList(
     message: Partial<RealtimeMessage<Reminder>>,
     reminders: Reminder[]
   ): Reminder {
@@ -342,7 +332,7 @@ export class ReminderService {
     let reminders = cloneDeep(this.reminders);
     const now = moment();
 
-    if (message.realtimeAction === 'DELETE') return this.deleteRminderFromList(message, reminders);
+    if (message.realtimeAction === 'DELETE') return this.deleteReminderFromList(message, reminders);
 
     const reminder = this.digestReminders([message.data as Reminder])[0];
 
@@ -429,14 +419,12 @@ export class ReminderService {
 
     if (!keys.length) return groups;
 
-    groups.map((group) => {
+    groups.forEach((group) => {
       group.reminders = group.reminders.filter((reminder) =>
         this.applyReminderFilter(reminder, filter)
       );
       if (!has(group, 'total') || group.total > group.count) group.total = group.count;
       group.count = group.reminders.length;
-
-      return group;
     });
 
     return groups;
@@ -537,7 +525,8 @@ export class ReminderService {
           if (has(config, REMINDER_LOCAL_STORAGE_CONFIG))
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             return JSON.parse(config[REMINDER_LOCAL_STORAGE_CONFIG] as string) as ReminderConfig;
-        })
+        }),
+        filter((config): config is ReminderConfig => config !== undefined)
       )
       .subscribe((config) => this.config$.next(config));
   }
