@@ -41,7 +41,9 @@ export class ReminderDrawerComponent implements OnDestroy {
 
   // for template
   reminderTypeFilter: string = REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG.filter.reminderType;
-  toastNotificationsEnabled: ReminderConfig['toast'] = REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG.toast;
+  toastNotificationsEnabled: ReminderConfig['toast'] =
+    REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG.toast;
+
   browserNotificationsEnabled: ReminderConfig['browser'] =
     REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG.browser;
 

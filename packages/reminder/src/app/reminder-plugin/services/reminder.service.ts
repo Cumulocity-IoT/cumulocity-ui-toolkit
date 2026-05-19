@@ -413,7 +413,8 @@ export class ReminderService {
     groups = this.applyContextFilter(groups, context);
 
     // type filter
-    if (!has(config.filter, 'reminderType') || filter[REMINDER__TYPE_FRAGMENT] === '') return groups;
+    if (!has(config.filter, 'reminderType') || filter[REMINDER__TYPE_FRAGMENT] === '')
+      return groups;
 
     const keys = Object.keys(filter);
 
