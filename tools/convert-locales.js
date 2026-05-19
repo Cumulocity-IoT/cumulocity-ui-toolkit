@@ -91,6 +91,7 @@ msgstr ""
 "Content-Type: application/x-po; charset=UTF-8\\n"
 "Language: ${language}\\n"
 "Project-Id-Version: \\n"
+
 `;
 
   for (const [key, value] of Object.entries(entries).sort()) {

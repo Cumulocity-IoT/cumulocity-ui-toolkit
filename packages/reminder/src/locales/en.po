@@ -5,6 +5,7 @@ msgstr ""
 "Content-Type: application/x-po; charset=UTF-8\n"
 "Language: en\n"
 "Project-Id-Version: \n"
+
 msgid "reminder.actions.acknowledge"
 msgstr "Acknowledge the Reminder"
 
