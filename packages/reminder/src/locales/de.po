@@ -5,7 +5,7 @@ msgstr ""
 "Content-Type: application/x-po; charset=UTF-8\n"
 "Language: de\n"
 "Project-Id-Version: \n"
-"PO-Revision-Date: 2026-05-18 11:46:17+0000\n"
+"PO-Revision-Date: 2026-05-19 07:17:41+0000\n"
 
 msgid "reminder.actions.acknowledge"
 msgstr "Erinnerung bestätigen"
@@ -48,6 +48,9 @@ msgstr "Die Erinnerung konnte nicht erstellt werden."
 
 msgid "reminder.info.retention-rules"
 msgstr "Gelöschte Erinnerungen werden im Laufe der Zeit automatisch durch die Aufbewahrungsrichtlinien gelöscht."
+
+msgid "reminder.info.unfiltered-reminders"
+msgstr "Anzahl der Erinnerungen, wenn nicht gefiltert"
 
 msgid "reminder.labels.add"
 msgstr "Erinnerung erstellen"

@@ -20,7 +20,8 @@
       "not-created": "Die Erinnerung konnte nicht erstellt werden."
     },
     "info": {
-      "retention-rules": "Gelöschte Erinnerungen werden im Laufe der Zeit automatisch durch die Aufbewahrungsrichtlinien gelöscht."
+      "retention-rules": "Gelöschte Erinnerungen werden im Laufe der Zeit automatisch durch die Aufbewahrungsrichtlinien gelöscht.",
+      "unfiltered-reminders": "Anzahl der Erinnerungen, wenn nicht gefiltert"
     },
     "labels": {
       "add": "Erinnerung erstellen",

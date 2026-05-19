@@ -5,13 +5,13 @@ msgstr ""
 "Content-Type: application/x-po; charset=UTF-8\n"
 "Language: en\n"
 "Project-Id-Version: \n"
-"PO-Revision-Date: 2026-05-18 11:46:17+0000\n"
+"PO-Revision-Date: 2026-05-19 07:17:41+0000\n"
 
 msgid "reminder.actions.acknowledge"
-msgstr "Acknowledge the reminder"
+msgstr "Acknowledge the Reminder"
 
 msgid "reminder.actions.add"
-msgstr "Create reminder"
+msgstr "Create Reminder"
 
 msgid "reminder.actions.add-short"
 msgstr "Create"
@@ -20,25 +20,25 @@ msgid "reminder.actions.cancel"
 msgstr "Cancel"
 
 msgid "reminder.actions.clear"
-msgstr "Clear the reminder"
+msgstr "Clear the Reminder"
 
 msgid "reminder.actions.filter-by-context"
-msgstr "Filter by current context"
+msgstr "Filter by current Context"
 
 msgid "reminder.actions.filter-type"
-msgstr "Filter by reminder type"
+msgstr "Filter by Reminder type"
 
 msgid "reminder.actions.reactivate"
-msgstr "Reactivate the reminder"
+msgstr "Reactivate the Reminder"
 
 msgid "reminder.counter.multiple"
-msgstr "{{counter}} reminders are due"
+msgstr "{{counter}} Reminders are due"
 
 msgid "reminder.counter.none"
-msgstr "No reminder is due"
+msgstr "No Reminder is due"
 
 msgid "reminder.counter.one"
-msgstr "One reminder is due"
+msgstr "One Reminder is due"
 
 msgid "reminder.feedback.created"
 msgstr "The reminder has been created."
@@ -48,6 +48,9 @@ msgstr "Could not create the reminder."
 
 msgid "reminder.info.retention-rules"
 msgstr "Cleared reminders are automatically deleted over time by the retention rules."
+
+msgid "reminder.info.unfiltered-reminders"
+msgstr "Number of reminders if not filtered"
 
 msgid "reminder.labels.add"
 msgstr "Create a Reminder"

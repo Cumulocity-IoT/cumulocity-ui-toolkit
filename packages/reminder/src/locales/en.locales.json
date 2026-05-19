@@ -1,26 +1,27 @@
 {
   "reminder": {
     "actions": {
-      "acknowledge": "Acknowledge the reminder",
-      "add": "Create reminder",
+      "acknowledge": "Acknowledge the Reminder",
+      "add": "Create Reminder",
       "add-short": "Create",
       "cancel": "Cancel",
-      "clear": "Clear the reminder",
-      "filter-by-context": "Filter by current context",
-      "filter-type": "Filter by reminder type",
-      "reactivate": "Reactivate the reminder"
+      "clear": "Clear the Reminder",
+      "filter-by-context": "Filter by current Context",
+      "filter-type": "Filter by Reminder type",
+      "reactivate": "Reactivate the Reminder"
     },
     "counter": {
-      "multiple": "{{counter}} reminders are due",
-      "none": "No reminder is due",
-      "one": "One reminder is due"
+      "multiple": "{{counter}} Reminders are due",
+      "none": "No Reminder is due",
+      "one": "One Reminder is due"
     },
     "feedback": {
       "created": "The reminder has been created.",
       "not-created": "Could not create the reminder."
     },
     "info": {
-      "retention-rules": "Cleared reminders are automatically deleted over time by the retention rules."
+      "retention-rules": "Cleared reminders are automatically deleted over time by the retention rules.",
+      "unfiltered-reminders": "Number of reminders if not filtered"
     },
     "labels": {
       "add": "Create a Reminder",

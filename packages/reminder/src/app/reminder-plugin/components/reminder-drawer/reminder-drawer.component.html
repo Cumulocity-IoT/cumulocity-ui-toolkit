@@ -68,7 +68,7 @@
                 @if (group.total) {
                   <small
                     class="text-muted"
-                    title="{{ 'Number of reminders if not filtered' | translate }}"
+                    title="{{ 'reminder.info.unfiltered-reminders' | translate }}"
                   >
                     / {{ group.total }}
                   </small>
@@ -149,7 +149,6 @@
               ? 'bell-slash'
               : 'check-circle'
         "
-        title="{{ 'reminder.labels.status' | translate }}: {{ reminder.status }}"
       ></i>
 
       @if (reminder.status !== reminderStatus.cleared) {
