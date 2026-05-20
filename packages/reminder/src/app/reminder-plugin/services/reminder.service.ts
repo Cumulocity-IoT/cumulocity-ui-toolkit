@@ -117,7 +117,7 @@ export class ReminderService {
     this.contextFilterAvailable = tenantConfig.useContext ?? false;
 
     if (!this.contextFilterAvailable && this.config$.getValue().useContext) {
-      this.setConfig('useContext', { useContext: false });
+      this.setConfig('useContext', false);
     }
 
     this._types = types;
@@ -199,10 +199,10 @@ export class ReminderService {
   /**
    * Updates the configuration with a new key-value pair.
    * @param {string} key - The configuration key to update.
-   * @param {object} value - The value to set for the configuration key.
+   * @param {object | boolean} value - The value to set for the configuration key.
    * @returns {void}
    */
-  setConfig(key: string, value: object): void {
+  setConfig(key: string, value: object | boolean): void {
     const config = this.config$.getValue();
 
     config[key] = value;
