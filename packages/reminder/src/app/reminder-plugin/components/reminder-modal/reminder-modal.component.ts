@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { ActivatedRoute, ActivatedRouteSnapshot } from '@angular/router';
 import { EventService, IEvent, IManagedObject, InventoryService, IResult } from '@c8y/client';
@@ -28,6 +28,7 @@ interface FormlySelectOptions {
   selector: 'c8y-reminder-modal',
   templateUrl: './reminder-modal.component.html',
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReminderModalComponent implements OnInit {
   private activatedRoute = inject(ActivatedRoute);

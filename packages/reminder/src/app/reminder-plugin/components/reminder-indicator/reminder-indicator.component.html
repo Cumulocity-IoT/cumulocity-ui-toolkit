@@ -3,15 +3,15 @@
   [tooltip]="tooltipText"
   [container]="'body'"
   [placement]="'bottom'"
-  [class.open]="open"
+  [class.open]="open()"
   (click)="toggleDrawer()"
   type="button"
 >
   <em>
-    @if (open) {
+    @if (open()) {
       <i c8yIcon="close"></i>
-    } @else if (counter <= maxCounter) {
-      {{ counter }}
+    } @else if (counter() <= maxCounter) {
+      {{ counter() }}
     } @else {
       {{ maxCounter }}+
     }

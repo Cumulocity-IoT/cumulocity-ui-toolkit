@@ -2,7 +2,7 @@
   <header>
     <h2>{{'reminder.title' | translate }}</h2>
     <small class="text-muted" title="{{ lastUpdate | c8yDate }}">
-      {{ 'reminder.labels.last-update' | translate }}: {{ lastUpdate | amTimeAgo }}
+      {{ 'reminder.labels.last-update' | translate }}: {{ lastUpdate | c8yDate: 'short' }} <!-- time ago -->
     </small>
   </header>
 
@@ -159,21 +159,21 @@
           [class.text-danger]="reminder.status === reminderStatus.active && reminder.diff > 0"
           title="{{ 'reminder.status.DUE' | translate }}: {{ reminder.time | c8yDate }}"
         >
-          {{ reminder.time | amTimeAgo }}
+          {{ reminder.time | c8yDate: 'short' }} <!-- time ago -->
         </small>
       } @else {
         <small class="date">
           <span
             title="{{ 'reminder.status.DUE' | translate }}: {{ reminder.lastUpdated | c8yDate }}"
           >
-            {{ reminder.time | amTimeAgo }}
+            {{ reminder.time | c8yDate: 'short' }} <!-- time ago -->
           </span>
           <span
             title="{{ 'reminder.labels.last-update' | translate }}: {{
               reminder.lastUpdated | c8yDate
             }}"
           >
-            {{ reminder.lastUpdated | amTimeAgo }}
+            {{ reminder.lastUpdated | c8yDate: 'short' }} <!-- time ago -->
           </span>
         </small>
       }
