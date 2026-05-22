@@ -33,7 +33,7 @@ export class ReminderIndicatorComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     // use open status from service
     this.subscription.add(
-      this.reminderService.open$?.subscribe((open) => {
+      this.reminderService.open$.subscribe((open) => {
         this.open.set(open);
       })
     );

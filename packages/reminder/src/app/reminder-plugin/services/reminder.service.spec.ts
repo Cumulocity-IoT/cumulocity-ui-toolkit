@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { EventService, IResult, TenantOptionsService } from '@c8y/client';
 import { AlertService, EventRealtimeService } from '@c8y/ngx-components';
 import { TranslateService } from '@ngx-translate/core';
+import { BehaviorSubject } from 'rxjs';
 import { provideMock } from '~helpers/auto-mock.helper';
 import { ActiveTabService } from '~services/active-tab.service';
 import { DomService } from '~services/dom.service';
@@ -12,6 +13,7 @@ import { ReminderService } from './reminder.service';
 describe('ReminderService', () => {
   let service: ReminderService;
   let eventService: EventService;
+  let domService: DomService;
   // let activeTabService: ActiveTabService;
   // let alertService: AlertService;
   // let domService: DomService;
@@ -37,6 +39,7 @@ describe('ReminderService', () => {
 
     service = TestBed.inject(ReminderService);
     eventService = TestBed.inject(EventService);
+    domService = TestBed.inject(DomService);
     // activeTabService = TestBed.inject(ActiveTabService);
     // alertService = TestBed.inject(AlertService);
     // domService = TestBed.inject(DomService);
@@ -58,7 +61,25 @@ describe('ReminderService', () => {
     expect(service['reminders']).toEqual([]);
   });
 
-  it('2 should update reminder status', async () => {
+  it('2 should initialize open$ with a default value', () => {
+    expect(service.open$.value).toBe(false);
+  });
+
+  it('3 should bridge drawer open state to open$', () => {
+    const drawerOpen$ = new BehaviorSubject<boolean>(false);
+
+    jest.spyOn(domService, 'appendComponentToBody').mockReturnValue({
+      instance: { open$: drawerOpen$ },
+    } as never);
+
+    service['createDrawer']();
+
+    drawerOpen$.next(true);
+
+    expect(service.open$.value).toBe(true);
+  });
+
+  it('4 should update reminder status', async () => {
     const mockReminder: Reminder = {
       id: '1',
       source: { id: 'sourceId', name: 'sourceName' },

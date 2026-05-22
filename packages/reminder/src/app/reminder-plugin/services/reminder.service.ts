@@ -37,7 +37,7 @@ export class ReminderService {
 
   config$ = new BehaviorSubject<ReminderConfig>({});
   filters$ = new BehaviorSubject<ReminderGroupFilter>({});
-  open$?: BehaviorSubject<boolean>;
+  open$ = new BehaviorSubject<boolean>(false);
   reminders$ = new BehaviorSubject<Reminder[]>([]);
   reminderCounter$ = new BehaviorSubject<number>(0);
 
@@ -272,7 +272,12 @@ export class ReminderService {
   private createDrawer() {
     this.drawerRef = this.domService.appendComponentToBody(ReminderDrawerComponent);
     this.drawer = this.drawerRef.instance as ReminderDrawerComponent;
-    this.open$ = this.drawer.open$;
+    this.open$.next(this.drawer.open$.value);
+    this.subscriptions.add(
+      this.drawer.open$.subscribe((open) => {
+        this.open$.next(open);
+      })
+    );
   }
 
   private deleteReminderFromList(
@@ -315,7 +320,7 @@ export class ReminderService {
         key: REMINDER__TENANT_OPTION__CONFIG_KEY,
       });
 
-      if (response.data) return JSON.parse(response.data.value) as ReminderTenantConfig;
+      if (response.data) return this.parseJSON<ReminderTenantConfig>(response.data.value);
     } catch {
       // tenant option not configured — context filter unavailable
     }
@@ -333,7 +338,7 @@ export class ReminderService {
       });
 
       if (response.data)
-        types = (JSON.parse(response.data.value) as ReminderType[]).map((type) => ({
+        types = this.parseJSON<ReminderType[]>(response.data.value).map((type) => ({
           id: type.id,
           name: this.translateService.instant(type.name) as string,
         }));
@@ -554,8 +559,10 @@ export class ReminderService {
       .pipe(
         map((config) => {
           if (has(config, REMINDER__LOCAL_STORAGE__CONFIG))
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            return JSON.parse(config[REMINDER__LOCAL_STORAGE__CONFIG] as string) as ReminderConfig;
+            return this.parseJSON<ReminderConfig>(
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+              config[REMINDER__LOCAL_STORAGE__CONFIG] as string
+            );
         }),
         filter((config): config is ReminderConfig => config !== undefined)
       )
@@ -601,5 +608,15 @@ export class ReminderService {
     });
 
     this.reminderCounter = count;
+  }
+
+  private parseJSON<T>(data: string): T {
+    try {
+      return JSON.parse(data) as T;
+    } catch (error) {
+      console.error('Failed to parse JSON:', error);
+
+      return undefined;
+    }
   }
 }
