@@ -105,6 +105,7 @@ describe('ReminderService', () => {
 
       await service['fetchTenantConfig']();
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(tenantOptionService.detail).toHaveBeenCalledWith(tenantOptionKey);
     });
 
@@ -147,9 +148,9 @@ describe('ReminderService', () => {
         .spyOn(service['eventService'], 'list')
         .mockResolvedValue({ data: [], paging: { totalPages: 0 } } as never);
       jest.spyOn(service['localStorageService'], 'getOrDefault').mockReturnValue({});
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
       (service['localStorageService'] as any).storage$ = EMPTY;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
       (service['eventRealtimeService'] as any).onAll$ = jest.fn().mockReturnValue(EMPTY);
 
       await service.init();
@@ -169,9 +170,9 @@ describe('ReminderService', () => {
         .spyOn(service['localStorageService'], 'getOrDefault')
         .mockReturnValue({ useContext: true });
       jest.spyOn(service['localStorageService'], 'set').mockReturnValue(undefined);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
       (service['localStorageService'] as any).storage$ = EMPTY;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
       (service['eventRealtimeService'] as any).onAll$ = jest.fn().mockReturnValue(EMPTY);
 
       await service.init();
