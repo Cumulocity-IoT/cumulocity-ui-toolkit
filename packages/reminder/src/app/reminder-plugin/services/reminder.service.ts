@@ -1,4 +1,4 @@
-import { ComponentRef, Injectable } from '@angular/core';
+import { ComponentRef, Injectable, signal } from '@angular/core';
 import { EventService, IEvent, IResult, TenantOptionsService } from '@c8y/client';
 import { AlertService, EventRealtimeService, RealtimeMessage } from '@c8y/ngx-components';
 import { TranslateService } from '@ngx-translate/core';
@@ -33,7 +33,7 @@ import {
 export class ReminderService {
   readonly DAY_IN_MS = 24 * 60 * 60 * 1000;
 
-  contextFilterAvailable = false;
+  contextFilterAvailable = signal<boolean>(false);
 
   config$ = new BehaviorSubject<ReminderConfig>({});
   filters$ = new BehaviorSubject<ReminderGroupFilter>({});
@@ -114,9 +114,9 @@ export class ReminderService {
       this.fetchReminderTypes(),
     ]);
 
-    this.contextFilterAvailable = tenantConfig.useContext ?? false;
+    this.contextFilterAvailable.set(tenantConfig.useContext ?? false);
 
-    if (!this.contextFilterAvailable && this.config$.getValue().useContext) {
+    if (!this.contextFilterAvailable() && this.config$.getValue().useContext) {
       this.setConfig('useContext', false);
     }
 

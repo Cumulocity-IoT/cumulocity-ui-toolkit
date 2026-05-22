@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy } from '@angular/core';
+import { Component, inject, OnDestroy, signal } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { AlertService, HeaderService } from '@c8y/ngx-components';
 import { has, isEmpty } from 'lodash';
@@ -35,7 +35,7 @@ export class ReminderDrawerComponent implements OnDestroy {
   private router = inject(Router);
 
   open$ = new BehaviorSubject<boolean>(this.open);
-  contextFilterAvailable = false;
+  contextFilterAvailable = signal<boolean>(false);
   reminders: Reminder[] = [];
   reminderGroups: ReminderGroup[] = [];
   lastUpdate?: Date;
@@ -81,7 +81,7 @@ export class ReminderDrawerComponent implements OnDestroy {
   private _contextFilterEnabled = REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG.useContext;
 
   constructor() {
-    this.contextFilterAvailable = this.reminderService.contextFilterAvailable;
+    this.contextFilterAvailable.set(this.reminderService.contextFilterAvailable());
     this.getReminderTypes();
     this.initSubscriptions();
   }
