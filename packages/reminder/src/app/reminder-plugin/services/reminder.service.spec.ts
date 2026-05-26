@@ -155,7 +155,7 @@ describe('ReminderService', () => {
 
       await service.init();
 
-      expect(service.contextFilterAvailable).toBe(true);
+      expect(service.contextFilterAvailable()).toBe(true);
     });
 
     it('10 should set contextFilterAvailable=false and reset useContext config when tenant option disallows it', async () => {
@@ -177,7 +177,7 @@ describe('ReminderService', () => {
 
       await service.init();
 
-      expect(service.contextFilterAvailable).toBe(false);
+      expect(service.contextFilterAvailable()).toBe(false);
       expect(service.config$.getValue().useContext).toBe(false);
     });
   });
