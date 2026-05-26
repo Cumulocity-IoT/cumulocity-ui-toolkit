@@ -1,5 +1,22 @@
 # Reminder Plugin Changelog
 
+## 1.4.5
+
+### Features
+
+- **Context Filter Refactoring**: Refactored context filter availability to use Angular signals for improved reactive state management
+  - Enhanced signal-based architecture for better performance and reactivity
+  - Improved state synchronization for context-filtered reminders
+
+### Changes
+
+- **Configuration**: Updated config setter to accept boolean values for improved flexibility
+- **State Management**: Synchronized open state and added robust JSON parsing for safer config handling
+
+### Fixes
+
+- **Tests**: Resolved linting issues in reminder service tests with proper ESLint disable comments
+
 ## 1.4.4
 
 ### Features
