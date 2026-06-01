@@ -4,3 +4,20 @@ packages:
 
 overrides:
   globals: '14.0.0'
+
+# Minimum age in minutes before a new version is added to the catalog (7 days)
+minimumReleaseAge: 10080
+# Exclude specific packages from the minimum release age requirement !!! ONLY ALLOWED FOR INTERNAL PACKAGES, DO NOT USE FOR PUBLIC PACKAGES !!!
+minimumReleaseAgeExclude:
+  - 'packages/shared/*'
+
+# Disable temporary workaround for exotic subdependencies, It needs to be clarified why this is required.
+blockExoticSubdeps: false
+
+# Allow building specific packages that are not yet published to the registry, It needs to be clarified why this is required.
+allowBuilds:
+  core-js: false
+  esbuild: false
+  lmdb: false
+  msgpackr-extract: false
+  nice-napi: false
