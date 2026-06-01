@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { InventoryService } from '@c8y/client';
 import { Column, DataSourceModifier, ServerSideDataResult } from '@c8y/ngx-components';
+import { QueryFilter } from '../models/query-utils.model';
 import { hasSearchableConfig, SearchColumn } from '../models/data-grid.model';
 import { isEmpty } from 'lodash';
 import { BaseInventoryDatasourceService } from './base-inventory-datasource.service';
@@ -13,7 +14,7 @@ export class InventoryDatasourceService extends BaseInventoryDatasourceService {
 
   async reload(
     dataSourceModifier: DataSourceModifier,
-    baseQuery: object
+    baseQuery: QueryFilter
   ): Promise<ServerSideDataResult> {
     const { columns, pagination, searchText } = dataSourceModifier;
     const filterQuery = this.createQueryJSON(columns, baseQuery)

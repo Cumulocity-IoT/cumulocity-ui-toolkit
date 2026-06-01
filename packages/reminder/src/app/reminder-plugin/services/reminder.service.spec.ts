@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { EventService, IResult, TenantOptionsService } from '@c8y/client';
+import { EventService, IFetchResponse, TenantOptionsService } from '@c8y/client';
 import { AlertService, EventRealtimeService } from '@c8y/ngx-components';
 import { TranslateService } from '@ngx-translate/core';
 import { provideMock } from '~helpers/auto-mock.helper';
@@ -68,9 +68,9 @@ describe('ReminderService', () => {
       status: 'CLEARED',
     };
 
-    const eventSpy = jest
-      .spyOn(eventService, 'update')
-      .mockResolvedValue({ data: mockReminder } as IResult<Reminder>);
+    const eventSpy = spyOn(eventService, 'update').and.returnValue(
+      Promise.resolve({ data: mockReminder, res: {} as IFetchResponse })
+    );
 
     await service.update(mockReminder);
 

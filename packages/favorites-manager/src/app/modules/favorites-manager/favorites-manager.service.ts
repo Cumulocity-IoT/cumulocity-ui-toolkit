@@ -7,7 +7,7 @@ import { UserService } from '@c8y/client';
 
 @Injectable()
 export class FavoritesManagerService {
-  serverSideDataCallback: Promise<ServerSideDataResult>;
+  serverSideDataCallback: (modifier: DataSourceModifier) => Promise<ServerSideDataResult>;
 
   private BASE_QUERY = {
     __and: [],

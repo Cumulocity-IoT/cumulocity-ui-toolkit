@@ -20,6 +20,7 @@ import { cloneDeep } from 'lodash';
   styleUrls: ['./operations-widget.component.scss'],
   standalone: true,
   imports: [CoreModule, ButtonInstanceComponent],
+  providers: [OperationsWidgetService],
 })
 export class OperationsWidgetComponent {
   private alertService = inject(AlertService);
@@ -37,7 +38,7 @@ export class OperationsWidgetComponent {
   previewPayload: string = '';
   payloadData: Record<string, unknown> = {};
 
-  generateFormlyFields(button: OperationButtonConfig) {
+  private generateFormlyFields(button: OperationButtonConfig) {
     if (!button.fields) return;
 
     this.formlyFields = button.fields.map((field: OperationParamConfig) => {
@@ -123,7 +124,7 @@ export class OperationsWidgetComponent {
 
   onFormModelChange() {
     this.previewPayload = JSON.stringify(
-      this.jsonArrayOrObject(this.operationValue, this.model) as unknown as string,
+      this.jsonArrayOrObject(this.operationValue, this.model) as unknown,
       undefined,
       2
     );
@@ -133,7 +134,7 @@ export class OperationsWidgetComponent {
     >;
   }
 
-  jsonArrayOrObject<T extends object>(existing: T | T[], newData: Partial<T>): T | T[] {
+  private jsonArrayOrObject<T extends object>(existing: T | T[], newData: Partial<T>): T | T[] {
     // If it's an array, push the new data
     if (Array.isArray(existing)) {
       return [...existing, newData] as T[];
@@ -141,7 +142,7 @@ export class OperationsWidgetComponent {
 
     // If it's an object, merge properties
     if (existing !== null && typeof existing === 'object') {
-      return { ...existing, ...newData } as T;
+      return { ...existing, ...newData };
     }
 
     return existing;

@@ -25,7 +25,7 @@ describe('Favorites Manager', () => {
 
   // login with the new user before each test
   beforeEach(() => {
-    cy.getAuth(testUser.userName, testUser.password).login().disableGainsight();
+    cy.getAuth(testUser.userName!, testUser.password!).login().disableGainsight();
   });
 
   // delete the user after the test suite runs

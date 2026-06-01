@@ -1,6 +1,8 @@
 import { Component, inject, Input } from '@angular/core';
-import { FormGroup } from '@angular/forms';
-import { AlertService } from '@c8y/ngx-components';
+import { FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { AlertService, CoreModule } from '@c8y/ngx-components';
+import { FormlyModule } from '@ngx-formly/core';
+import { CollapseModule } from 'ngx-bootstrap/collapse';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { TranslateService } from '@ngx-translate/core';
 import { BsModalRef } from 'ngx-bootstrap/modal';
@@ -10,7 +12,8 @@ import { ReleaseNotesService } from '../../services/release-notes.service';
 @Component({
   selector: 'c8y-release-notes-admin-modal',
   templateUrl: './admin-modal.component.html',
-  standalone: false,
+  standalone: true,
+  imports: [CoreModule, ReactiveFormsModule, FormlyModule, CollapseModule],
 })
 export class ReminderNotesAdminModalComponent {
   private releaseNoteServive = inject(ReleaseNotesService);

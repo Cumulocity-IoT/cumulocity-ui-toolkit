@@ -48,7 +48,7 @@
 
     <!-- list of reminders -->
     <ul class="reminder-group-list">
-      @for (group of reminderGroups; track group) {
+      @for (group of reminderGroups; track group.status) {
         <li class="reminder-group-item">
           <header>
             <button
@@ -81,7 +81,7 @@
             [isAnimated]="true"
           >
             <!-- TODO add empty info -->
-            @for (reminder of group.reminders; track reminder) {
+            @for (reminder of group.reminders; track reminder.id) {
               <ng-template
                 [ngTemplateOutlet]="reminderItem"
                 [ngTemplateOutletContext]="{ reminder }"

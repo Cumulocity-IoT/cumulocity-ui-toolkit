@@ -4,11 +4,8 @@
   "description": "",
   "author": "@dirk-peter-c8y",
   "homepage": "___TODO___",
-  "scripts": {
-    "test": "jest"
-  },
   "dependencies": {
-    "ng2-charts": "^4.1.1",
+    "ng2-charts": "^9.0.0",
     "shared": "workspace:*"
   }
 }

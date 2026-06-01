@@ -28,7 +28,7 @@
     <div class="col-sm-6">
       <c8y-form-group [hasWarning]="!item.operationFragment || item.operationFragment.length === 0">
         <label translate for="label_{{ $index }}">Supported Operation</label>
-        <input class="form-control" [(ngModel)]="item.operationFragment" [maxlength]="254" type="text"
+        <input class="form-control" [(ngModel)]="item.operationFragment" [ngModelOptions]="{ updateOn: 'blur' }" [maxlength]="254" type="text"
           autocomplete="off" placeholder="e.g. c8y_Command" required />
         <c8y-messages>
           @if (!item.operationFragment || item.operationFragment.length === 0) {

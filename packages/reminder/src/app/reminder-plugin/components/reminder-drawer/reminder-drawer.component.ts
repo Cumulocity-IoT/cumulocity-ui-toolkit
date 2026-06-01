@@ -1,6 +1,10 @@
 import { Component, inject, OnDestroy } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router } from '@angular/router';
-import { AlertService, HeaderService } from '@c8y/ngx-components';
+import { AlertService, CoreModule, HeaderService } from '@c8y/ngx-components';
+import { CollapseModule } from 'ngx-bootstrap/collapse';
+import { TooltipModule } from 'ngx-bootstrap/tooltip';
+import { MomentModule } from 'ngx-moment';
 import { has, isEmpty } from 'lodash';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { BehaviorSubject, Subscription } from 'rxjs';
@@ -19,12 +23,22 @@ import {
 } from '../../models/reminder.model';
 import { ReminderService } from '../../services/reminder.service';
 import { ReminderModalComponent } from '../reminder-modal/reminder-modal.component';
+import { ReminderTypeComponent } from '../reminder-type/reminder-type.component';
 
 @Component({
   selector: 'c8y-reminder-drawer',
   templateUrl: './reminder-drawer.component.html',
   styleUrl: './reminder-drawer.component.less',
-  standalone: false,
+  standalone: true,
+  imports: [
+    CoreModule,
+    FormsModule,
+    CollapseModule,
+    TooltipModule,
+    MomentModule,
+    ReminderTypeComponent,
+    ReminderModalComponent,
+  ],
 })
 export class ReminderDrawerComponent implements OnDestroy {
   private alertService = inject(AlertService);
@@ -173,13 +187,8 @@ export class ReminderDrawerComponent implements OnDestroy {
   async updateReminder(reminder: Reminder, status: Reminder['status']): Promise<void> {
     reminder.status = status;
 
-    const { res } = await this.reminderService.update(reminder);
-
-    if (res.status === 200) {
-      this.alertService.success(`Reminder ${String(status).toLowerCase()}`);
-    } else {
-      this.alertService.danger('Could not update reminder', res.statusText);
-    }
+    await this.reminderService.update(reminder);
+    this.alertService.success(`Reminder ${String(status).toLowerCase()}`);
   }
 
   /**

@@ -16,7 +16,8 @@
   },
   "scripts": {
     "build": "ng build shared",
-    "test": "jest"
+    "test": "ng test shared --watch=false --browsers=ChromeHeadless",
+    "test:watch": "ng test shared"
   },
   "peerDependencies": {
     "@angular/common": ">=18.0.0",
@@ -26,6 +27,6 @@
     "@c8y/client": ">=1021.0.0",
     "@c8y/ngx-components": ">=1021.0.0",
     "rxjs": ">=7.0.0",
-    "date-fns":"4.1.0"
+    "date-fns": "^4.4.0"
   }
 }

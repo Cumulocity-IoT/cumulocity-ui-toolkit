@@ -1,4 +1,5 @@
-import { BaseColumn, getBasicInputArrayFormFieldConfig, gettext } from '@c8y/ngx-components';
+import { BaseColumn, getBasicInputArrayFormFieldConfig } from '@c8y/ngx-components';
+import { gettext } from '@c8y/ngx-components/gettext';
 import { TypeCellRendererComponent } from './type.cell-renderer.component';
 
 export class TypeColumn extends BaseColumn {

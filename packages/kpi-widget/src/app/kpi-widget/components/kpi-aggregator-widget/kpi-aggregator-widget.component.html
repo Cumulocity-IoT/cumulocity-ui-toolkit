@@ -176,7 +176,7 @@
       </tr>
     </thead>
     <tbody>
-      @for (asset of assets; track asset) {
+      @for (asset of assets; track asset.id) {
         <tr>
           <td>
             @if (asset.c8y_IsDeviceGroup) {

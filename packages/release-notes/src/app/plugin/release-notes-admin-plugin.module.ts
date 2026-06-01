@@ -1,49 +1,50 @@
-import { CommonModule } from '@angular/common';
-import { NgModule } from '@angular/core';
-import { RouterModule } from '@angular/router';
-import { AlertModule, CoreModule, gettext, hookNavigator, hookRoute } from '@c8y/ngx-components';
+import { ENVIRONMENT_INITIALIZER, inject, importProvidersFrom } from '@angular/core';
+import { AlertModule, CoreModule, hookNavigator, hookRoute } from '@c8y/ngx-components';
+import { gettext } from '@c8y/ngx-components/gettext';
 import { AssetSelectorModule } from '@c8y/ngx-components/assets-navigator';
 import { FormlyModule } from '@ngx-formly/core';
 import { CollapseModule } from 'ngx-bootstrap/collapse';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { MomentModule } from 'ngx-moment';
 import { LocalStorageService } from '~services/local-storage.service';
-import { ReminderNotesAdminListComponent, ReminderNotesAdminModalComponent } from '../components';
 import { RELEASE_NOTES__ADMIN_PATH } from '../models/release-notes.model';
 import { ReleaseNotesService } from '../services/release-notes.service';
 
-@NgModule({
-  declarations: [ReminderNotesAdminModalComponent, ReminderNotesAdminListComponent],
-  imports: [
+export const ReleaseNotesAdminPluginProviders = [
+  LocalStorageService,
+  ReleaseNotesService,
+  importProvidersFrom(
     AssetSelectorModule,
     AlertModule,
     CollapseModule,
-    CommonModule,
     CoreModule,
     FormlyModule.forChild({}),
     MomentModule,
-    RouterModule,
-    TooltipModule,
-  ],
-  providers: [
-    LocalStorageService,
-    ReleaseNotesService,
-    hookRoute({
-      path: RELEASE_NOTES__ADMIN_PATH,
-      component: ReminderNotesAdminListComponent,
-    }),
-    hookNavigator({
-      label: gettext('Release Notes') as string,
-      icon: 'activity-history',
-      path: `/${RELEASE_NOTES__ADMIN_PATH}`,
-      parent: 'Settings',
-      priority: 0,
-      preventDuplicates: true,
-    }),
-  ],
-})
-export class ReleaseNotesAdminPluginModule {
-  constructor(private releaseNoteService: ReleaseNotesService) {
-    void this.releaseNoteService.checkForNewRelease();
-  }
-}
+    TooltipModule
+  ),
+  hookRoute({
+    path: RELEASE_NOTES__ADMIN_PATH,
+    loadComponent: () =>
+      import('../components/admin-list/admin-list.component').then(
+        (m) => m.ReminderNotesAdminListComponent
+      ),
+  }),
+  hookNavigator({
+    label: gettext('Release Notes'),
+    icon: 'activity-history',
+    path: `/${RELEASE_NOTES__ADMIN_PATH}`,
+    parent: 'Settings',
+    priority: 0,
+    preventDuplicates: true,
+  }),
+  {
+    provide: ENVIRONMENT_INITIALIZER,
+    multi: true,
+    useValue: () => {
+      void inject(ReleaseNotesService).checkForNewRelease();
+    },
+  },
+];
+
+/** @deprecated Use ReleaseNotesAdminPluginProviders instead */
+export const ReleaseNotesAdminPluginModule = ReleaseNotesAdminPluginProviders;

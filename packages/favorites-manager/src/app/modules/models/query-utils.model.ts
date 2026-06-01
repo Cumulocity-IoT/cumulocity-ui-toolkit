@@ -1,6 +1,7 @@
 export interface QueryFilter {
-  __and?: object[];
-  __or?: object[];
+  [key: string]: unknown;
+  __and?: Record<string, unknown>[];
+  __or?: Record<string, unknown>[];
   __eq?: { [key: string]: string | number | boolean };
   __has?: string;
 }

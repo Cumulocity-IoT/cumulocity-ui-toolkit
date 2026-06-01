@@ -1,6 +1,4 @@
-import { CommonModule } from '@angular/common';
-import { NgModule } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { ENVIRONMENT_INITIALIZER, inject, importProvidersFrom } from '@angular/core';
 import { AlertModule, CoreModule, EventRealtimeService, hookAction } from '@c8y/ngx-components';
 import { AssetSelectorModule } from '@c8y/ngx-components/assets-navigator';
 import { FormlyModule } from '@ngx-formly/core';
@@ -12,27 +10,20 @@ import { TimeFieldType } from '~components/_formly-fields/time.formly/time.forml
 import { ActiveTabService } from '~services/active-tab.service';
 import { DomService } from '~services/dom.service';
 import { LocalStorageService } from '~services/local-storage.service';
-import {
-  ReminderDrawerComponent,
-  ReminderIndicatorComponent,
-  ReminderModalComponent,
-} from './components';
-import { ReminderTypeComponent } from './components/reminder-type/reminder-type.component';
+import { ReminderIndicatorComponent } from './components/reminder-indicator/reminder-indicator.component';
 import { ReminderService } from './services/reminder.service';
 
-@NgModule({
-  declarations: [
-    ReminderIndicatorComponent,
-    ReminderDrawerComponent,
-    ReminderModalComponent,
-    ReminderTypeComponent,
-  ],
-  imports: [
-    CommonModule,
-    CoreModule,
+export const ReminderPluginProviders = [
+  ActiveTabService,
+  DomService,
+  EventRealtimeService,
+  LocalStorageService,
+  ReminderService,
+  importProvidersFrom(
     AssetSelectorModule,
     AlertModule,
     CollapseModule,
+    CoreModule,
     FormlyModule.forChild({
       types: [
         { name: 'time', component: TimeFieldType },
@@ -40,22 +31,19 @@ import { ReminderService } from './services/reminder.service';
       ],
     }),
     MomentModule,
-    RouterModule,
-    TooltipModule,
-  ],
-  providers: [
-    ActiveTabService,
-    DomService,
-    EventRealtimeService,
-    LocalStorageService,
-    ReminderService,
-    hookAction({
-      component: ReminderIndicatorComponent,
-    }),
-  ],
-})
-export class ReminderPluginModule {
-  constructor(private reminderService: ReminderService) {
-    void this.reminderService.init();
-  }
-}
+    TooltipModule
+  ),
+  hookAction({
+    component: ReminderIndicatorComponent,
+  }),
+  {
+    provide: ENVIRONMENT_INITIALIZER,
+    multi: true,
+    useValue: () => {
+      void inject(ReminderService).init();
+    },
+  },
+];
+
+/** @deprecated Use ReminderPluginProviders instead */
+export const ReminderPluginModule = ReminderPluginProviders;

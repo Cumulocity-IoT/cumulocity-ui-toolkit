@@ -1,6 +1,4 @@
-import { CommonModule } from '@angular/common';
-import { NgModule } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { ENVIRONMENT_INITIALIZER, inject, importProvidersFrom } from '@angular/core';
 import { AlertModule, CoreModule, hookDrawer } from '@c8y/ngx-components';
 import { AssetSelectorModule } from '@c8y/ngx-components/assets-navigator';
 import { FormlyModule } from '@ngx-formly/core';
@@ -8,38 +6,35 @@ import { CollapseModule } from 'ngx-bootstrap/collapse';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { MomentModule } from 'ngx-moment';
 import { LocalStorageService } from '~services/local-storage.service';
-import {
-  ReleaseNotesDisplayListModalComponent,
-  ReleaseNotesMenuItemComponent,
-} from '../components';
+import { ReleaseNotesMenuItemComponent } from '../components';
 import { ReleaseNotesService } from '../services/release-notes.service';
 
-@NgModule({
-  declarations: [ReleaseNotesMenuItemComponent, ReleaseNotesDisplayListModalComponent],
-  imports: [
+export const ReleaseNotesPluginProviders = [
+  LocalStorageService,
+  ReleaseNotesService,
+  importProvidersFrom(
     AssetSelectorModule,
     AlertModule,
     CollapseModule,
-    CommonModule,
     CoreModule,
     FormlyModule.forChild({}),
     MomentModule,
-    RouterModule,
-    TooltipModule,
-  ],
-  providers: [
-    LocalStorageService,
-    ReleaseNotesService,
-    hookDrawer({
-      id: 'c8y.release-notes',
-      priority: 100, // below UI settings
-      position: 'right',
-      component: ReleaseNotesMenuItemComponent,
-    }),
-  ],
-})
-export class ReleaseNotesPluginModule {
-  constructor(private releaseNoteService: ReleaseNotesService) {
-    void this.releaseNoteService.checkForNewRelease();
-  }
-}
+    TooltipModule
+  ),
+  hookDrawer({
+    id: 'c8y.release-notes',
+    priority: 100,
+    position: 'right',
+    component: ReleaseNotesMenuItemComponent,
+  }),
+  {
+    provide: ENVIRONMENT_INITIALIZER,
+    multi: true,
+    useValue: () => {
+      void inject(ReleaseNotesService).checkForNewRelease();
+    },
+  },
+];
+
+/** @deprecated Use ReleaseNotesPluginProviders instead */
+export const ReleaseNotesPluginModule = ReleaseNotesPluginProviders;

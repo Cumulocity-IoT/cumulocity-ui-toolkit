@@ -121,7 +121,6 @@ export class OperationsWidgetConfigComponent {
       const json = JSON.parse(operation) as Record<string, unknown>;
 
       this._config.buttons[buttonIndex].operationValue = operation;
-      console.warn(operation);
       const placeholders = extractPlaceholdersFromObject(json);
       const placeholderKeys = (placeholders ?? []).map((p) => p.key);
       const fields = this.config.buttons[buttonIndex].fields ?? [];

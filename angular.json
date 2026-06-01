@@ -25,6 +25,18 @@
             }
           },
           "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:karma",
+          "options": {
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
+            "tsConfig": "packages/shared/tsconfig.spec.json",
+            "inlineStyleLanguage": "less",
+            "karmaConfig": "karma.conf.js"
+          }
         }
       }
     },
@@ -45,7 +57,9 @@
             "outputPath": "dist/cumulocity-reminder-plugin",
             "main": "packages/reminder/src/main.ts",
             "tsConfig": "packages/reminder/tsconfig.app.json",
-            "polyfills": ["zone.js"],
+            "polyfills": [
+              "zone.js"
+            ],
             "assets": [
               {
                 "glob": "**/*",
@@ -117,6 +131,18 @@
             }
           },
           "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:karma",
+          "options": {
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
+            "tsConfig": "packages/reminder/tsconfig.spec.json",
+            "inlineStyleLanguage": "less",
+            "karmaConfig": "karma.conf.js"
+          }
         }
       }
     },
@@ -137,7 +163,9 @@
             "outputPath": "dist/cumulocity-kpi-aggregator-widget-plugin",
             "main": "packages/kpi-widget/src/main.ts",
             "tsConfig": "packages/kpi-widget/tsconfig.app.json",
-            "polyfills": ["zone.js"],
+            "polyfills": [
+              "zone.js"
+            ],
             "assets": [
               {
                 "glob": "**/*",
@@ -146,7 +174,9 @@
               "packages/kpi-widget/src/assets"
             ],
             "inlineStyleLanguage": "less",
-            "styles": ["packages/kpi-widget/src/styles.less"],
+            "styles": [
+              "packages/kpi-widget/src/styles.less"
+            ],
             "scripts": [],
             "aot": false,
             "buildOptimizer": false,
@@ -210,6 +240,18 @@
             }
           },
           "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:karma",
+          "options": {
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
+            "tsConfig": "packages/kpi-widget/tsconfig.spec.json",
+            "inlineStyleLanguage": "less",
+            "karmaConfig": "karma.conf.js"
+          }
         }
       }
     },
@@ -230,7 +272,9 @@
             "outputPath": "dist/cumulocity-release-notes-plugin",
             "main": "packages/release-notes/src/main.ts",
             "tsConfig": "packages/release-notes/tsconfig.app.json",
-            "polyfills": ["zone.js"],
+            "polyfills": [
+              "zone.js"
+            ],
             "assets": [
               {
                 "glob": "**/*",
@@ -239,7 +283,9 @@
               "packages/release-notes/src/assets"
             ],
             "inlineStyleLanguage": "less",
-            "styles": ["packages/release-notes/src/styles.less"],
+            "styles": [
+              "packages/release-notes/src/styles.less"
+            ],
             "scripts": [],
             "aot": false,
             "buildOptimizer": false,
@@ -303,6 +349,18 @@
             }
           },
           "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:karma",
+          "options": {
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
+            "tsConfig": "packages/release-notes/tsconfig.spec.json",
+            "inlineStyleLanguage": "less",
+            "karmaConfig": "karma.conf.js"
+          }
         }
       }
     },
@@ -323,7 +381,9 @@
             "outputPath": "dist/cumulocity-energy-consumption-widget-plugin",
             "main": "packages/energy-consumption-widget/src/main.ts",
             "tsConfig": "packages/energy-consumption-widget/tsconfig.app.json",
-            "polyfills": ["zone.js"],
+            "polyfills": [
+              "zone.js"
+            ],
             "assets": [
               {
                 "glob": "**/*",
@@ -332,7 +392,9 @@
               "packages/energy-consumption-widget/src/assets"
             ],
             "inlineStyleLanguage": "less",
-            "styles": ["packages/energy-consumption-widget/src/styles.less"],
+            "styles": [
+              "packages/energy-consumption-widget/src/styles.less"
+            ],
             "scripts": [],
             "aot": false,
             "buildOptimizer": false,
@@ -396,6 +458,18 @@
             }
           },
           "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:karma",
+          "options": {
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
+            "tsConfig": "packages/energy-consumption-widget/tsconfig.spec.json",
+            "inlineStyleLanguage": "less",
+            "karmaConfig": "karma.conf.js"
+          }
         }
       }
     },
@@ -416,7 +490,9 @@
             "outputPath": "dist/cumulocity-favorites-manager-plugin",
             "main": "packages/favorites-manager/src/main.ts",
             "tsConfig": "packages/favorites-manager/tsconfig.app.json",
-            "polyfills": ["zone.js"],
+            "polyfills": [
+              "zone.js"
+            ],
             "assets": [
               {
                 "glob": "**/*",
@@ -488,6 +564,18 @@
             }
           },
           "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:karma",
+          "options": {
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
+            "tsConfig": "packages/favorites-manager/tsconfig.spec.json",
+            "inlineStyleLanguage": "less",
+            "karmaConfig": "karma.conf.js"
+          }
         }
       }
     },
@@ -508,7 +596,9 @@
             "outputPath": "dist/cumulocity-tenant-option-management-plugin",
             "main": "packages/tenant-option-management/src/main.ts",
             "tsConfig": "packages/tenant-option-management/tsconfig.app.json",
-            "polyfills": ["zone.js"],
+            "polyfills": [
+              "zone.js"
+            ],
             "assets": [
               {
                 "glob": "**/*",
@@ -580,6 +670,18 @@
             }
           },
           "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:karma",
+          "options": {
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
+            "tsConfig": "packages/tenant-option-management/tsconfig.spec.json",
+            "inlineStyleLanguage": "less",
+            "karmaConfig": "karma.conf.js"
+          }
         }
       }
     },
@@ -600,7 +702,9 @@
             "outputPath": "dist/cumulocity-operations-widget-plugin",
             "main": "packages/operations-widget/src/main.ts",
             "tsConfig": "packages/operations-widget/tsconfig.app.json",
-            "polyfills": ["zone.js"],
+            "polyfills": [
+              "zone.js"
+            ],
             "assets": [
               {
                 "glob": "**/*",
@@ -609,7 +713,9 @@
               "packages/operations-widget/src/assets"
             ],
             "inlineStyleLanguage": "less",
-            "styles": ["packages/operations-widget/src/styles.less"],
+            "styles": [
+              "packages/operations-widget/src/styles.less"
+            ],
             "scripts": [],
             "aot": false,
             "buildOptimizer": false,
@@ -673,6 +779,18 @@
             }
           },
           "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:karma",
+          "options": {
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
+            "tsConfig": "packages/operations-widget/tsconfig.spec.json",
+            "inlineStyleLanguage": "less",
+            "karmaConfig": "karma.conf.js"
+          }
         }
       }
     }

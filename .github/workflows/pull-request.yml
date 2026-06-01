@@ -48,7 +48,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'pnpm'
 
       - name: Install root dependencies
@@ -59,11 +59,26 @@ jobs:
 
       - name: Test ${{ matrix.component }}
         run: |
-          if [ -f "packages/${{ matrix.component }}/jest.config.ts" ]; then
-            pnpm exec jest --config packages/${{ matrix.component }}/jest.config.ts --passWithNoTests
-          else
-            echo "No jest config found for ${{ matrix.component }}, skipping tests."
+          # Resolve the Angular project name from the package directory via angular.json
+          project=$(jq -r --arg root "packages/${{ matrix.component }}" \
+            '.projects | to_entries[] | select(.value.root == $root) | .key' angular.json)
+
+          if [ -z "$project" ]; then
+            echo "No Angular project found for packages/${{ matrix.component }} — skipping tests."
+            exit 0
           fi
+
+          # Check whether the project has a Karma test target
+          has_test=$(jq -r --arg p "$project" \
+            '.projects[$p].architect.test | if . then "yes" else empty end' angular.json)
+
+          if [ -z "$has_test" ]; then
+            echo "No test target configured for project '$project' — skipping tests."
+            exit 0
+          fi
+
+          echo "Running Karma/Jasmine tests for project '$project'..."
+          pnpm exec ng test "$project" --watch=false --browsers=ChromeHeadlessCI
 
       - name: Build ${{ matrix.component }}
         run: pnpm run build:${{ matrix.component }}

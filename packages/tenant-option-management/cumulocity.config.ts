@@ -15,7 +15,7 @@ export default {
       "base-uri 'none'; default-src 'self' 'unsafe-inline' http: https: ws: wss:; connect-src 'self' http: https: ws: wss:;  script-src 'self' *.bugherd.com *.twitter.com *.twimg.com *.aptrinsic.com 'unsafe-inline' 'unsafe-eval' data:; style-src * 'unsafe-inline' blob:; img-src * data: blob:; font-src * data:; frame-src *; worker-src 'self' blob:;",
     dynamicOptionsUrl: true,
     remotes: {
-      'widget-plugin': ['TenantOptionManagementModule'],
+      'widget-plugin': ['TenantOptionManagementProviders'],
     },
     package: 'plugin',
     isPackage: true,
@@ -24,8 +24,9 @@ export default {
     exports: [
       {
         name: 'Tenant option plugin',
-        module: 'TenantOptionManagementModule',
+        module: 'TenantOptionManagementProviders',
         path: './src/app/modules/tenant-option-management/tenant-option-management.module.ts',
+        readmePath: './src/README.md',
         description:
           'Easily create, edit and delete tenant options. You can configure an option as encrypted and can decided between text or JSON input.',
       },

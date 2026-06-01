@@ -1,7 +1,9 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { CoreModule } from '@c8y/ngx-components';
+import { FormlyModule } from '@ngx-formly/core';
 import { ActivatedRoute, ActivatedRouteSnapshot } from '@angular/router';
-import { EventService, IEvent, IManagedObject, InventoryService, IResult } from '@c8y/client';
+import { EventService, IEvent, IManagedObject, InventoryService } from '@c8y/client';
 import { AlertService } from '@c8y/ngx-components';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,7 +29,8 @@ interface FormlySelectOptions {
 @Component({
   selector: 'c8y-reminder-modal',
   templateUrl: './reminder-modal.component.html',
-  standalone: false,
+  standalone: true,
+  imports: [CoreModule, ReactiveFormsModule, FormlyModule],
 })
 export class ReminderModalComponent implements OnInit {
   private activatedRoute = inject(ActivatedRoute);
@@ -135,27 +138,18 @@ export class ReminderModalComponent implements OnInit {
 
     if (has(source, 'c8y_IsDeviceGroup')) reminder['isGroup'] = {};
 
-    let request: IResult<IEvent> | undefined;
-
     try {
-      request = await this.eventService.create(reminder);
-    } catch (error) {
-      console.error(error);
-    }
-
-    this.isLoading = false;
-
-    if (!request) return;
-
-    if (request && request.res.status === 201) {
+      await this.eventService.create(reminder);
+      this.isLoading = false;
       this.alertService.success(
         this.translateService.instant('reminder.feedback.created') as string
       );
       this.close();
-    } else {
+    } catch (error) {
+      console.error(error);
+      this.isLoading = false;
       this.alertService.danger(
-        this.translateService.instant('reminder.feedback.not-created') as string,
-        await request.res.text()
+        this.translateService.instant('reminder.feedback.not-created') as string
       );
     }
   }

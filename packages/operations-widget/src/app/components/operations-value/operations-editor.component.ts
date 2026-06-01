@@ -119,7 +119,14 @@ export class OperationsEditorComponent implements OnInit, OnChanges {
       additionalProperties: true,
     } as const;
 
-    this.editorComponent.monaco?.languages?.json?.jsonDefaults?.setDiagnosticsOptions({
+    // monaco 0.50+: json namespace moved from languages.json to top-level json
+    type JsonNs = { jsonDefaults?: { setDiagnosticsOptions: (o: unknown) => void } };
+    /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
+    const monacoAny = this.editorComponent.monaco as any;
+    const monacoJson = (monacoAny?.json ?? monacoAny?.languages?.json) as JsonNs | undefined;
+    /* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
+
+    monacoJson?.jsonDefaults?.setDiagnosticsOptions({
       validate: true,
       schemas: [{ schema, fileMatch: ['*'], uri: 'editor-json-sample' }],
       enableSchemaRequest: false,

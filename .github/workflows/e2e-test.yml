@@ -38,7 +38,7 @@ jobs:
             echo "matrix={\"component\": $components_json}" >> $GITHUB_OUTPUT
           fi
         shell: bash
-  
+
   test-components:
     needs: detect-changes
     runs-on: ubuntu-latest
@@ -58,7 +58,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'pnpm'
 
       - name: Cache Cypress binary
@@ -72,6 +72,9 @@ jobs:
       - name: Install root dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install test workspace dependencies
+        run: pnpm -C test install --frozen-lockfile
+
       - name: Install Cypress binary
         run: pnpm -C test exec cypress install
 
@@ -79,7 +82,7 @@ jobs:
         run: |
           echo "Starting Angular server for package ${{ matrix.component }}"
           pnpm run serve:${{ matrix.component }} &
-          npx wait-on http://localhost:9001 --timeout 120000
+          pnpm exec wait-on http://localhost:9001 --timeout 120000
           sleep 10
           echo "Angular server is up!"
         env:
@@ -93,7 +96,7 @@ jobs:
           CYPRESS_C8Y_CYPRESS_URL: ${{ env.C8Y_CYPRESS_URL }}
           CYPRESS_C8Y_SHELL_TARGET: ${{ env.C8Y_SHELL_TARGET }}
         run: |
-          echo "Running tests with test ${{ matrix.component }}"
+          echo "Running tests for ${{ matrix.component }}"
           pnpm run e2e:run:${{ matrix.component }}
         timeout-minutes: 10
 

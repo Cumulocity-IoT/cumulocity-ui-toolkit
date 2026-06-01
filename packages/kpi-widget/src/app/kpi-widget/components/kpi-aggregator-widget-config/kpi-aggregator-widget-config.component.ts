@@ -1,4 +1,6 @@
 import { Component, inject, Input, OnInit } from '@angular/core';
+import { CoreModule } from '@c8y/ngx-components';
+import { FormlyModule } from '@ngx-formly/core';
 import { FormGroup } from '@angular/forms';
 import { OptionsService } from '@c8y/ngx-components';
 import { FormlyFieldConfig } from '@ngx-formly/core';
@@ -16,7 +18,8 @@ import { KpiAggregatorWidgetConfig } from '../../models/kpi-aggregator-widget.mo
   selector: 'c8y-kpi-aggregator-widget-config',
   template: '<formly-form [form]="form" [fields]="fields" [model]="config"></formly-form>',
   styleUrl: 'kpi-aggregator-widget-config.component.less',
-  standalone: false,
+  standalone: true,
+  imports: [CoreModule, FormlyModule],
 })
 export class KpiAggregatorWidgetConfigComponent implements OnInit {
   private optionsService = inject(OptionsService);
@@ -276,8 +279,8 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
     }
   }
 
-  private setDefaultValues() {
-    // make sure alle defaults are present, eg after updates
-    return { ...this.defaultConfig, ...this.config };
+  private setDefaultValues(): void {
+    // make sure all defaults are present, e.g. after updates
+    this.config = { ...this.defaultConfig, ...this.config };
   }
 }

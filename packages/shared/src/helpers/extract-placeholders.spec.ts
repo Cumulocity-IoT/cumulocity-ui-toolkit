@@ -8,7 +8,7 @@ describe('extractPlaceholdersFromObject', () => {
       arr: ['no-template', '{{arr1}}', { deep: '{{deep_val}} and {{arr1}}' }],
     };
 
-    const result = extractPlaceholdersFromObject(obj as unknown);
+    const result = extractPlaceholdersFromObject(obj);
 
     expect(result).toEqual([
       { key: 'test', path: 'op.example' },

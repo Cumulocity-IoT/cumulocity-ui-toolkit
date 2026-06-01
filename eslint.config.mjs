@@ -21,6 +21,7 @@ export default [
   },
   {
     ignores: [
+      '.pnpmfile.cjs',
       '**/package.json',
       '**/package-lock.json',
       '**/node_modules',
@@ -32,7 +33,7 @@ export default [
       '**/src/index.html',
       '**/test/cypress',
       '**/*.html',
-      'setup-jest.ts',
+      'karma.conf.js',
     ],
   },
   {

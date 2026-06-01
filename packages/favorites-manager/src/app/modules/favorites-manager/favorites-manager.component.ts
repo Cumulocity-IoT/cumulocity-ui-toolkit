@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FavoritesManagerService } from './favorites-manager.service';
 import { IManagedObject } from '@c8y/client';
 import { Column, CoreModule, Pagination } from '@c8y/ngx-components';
@@ -35,7 +35,7 @@ export class FavoritesManagerComponent implements OnInit {
 
   managedObjects: IManagedObject[] = [];
 
-  constructor(protected favoritesManagerService: FavoritesManagerService) {}
+  protected favoritesManagerService = inject(FavoritesManagerService);
 
   ngOnInit() {
     void this.favoritesManagerService.initFavorites();

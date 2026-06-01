@@ -1,6 +1,5 @@
 import { hookActionBar, hookNavigator, hookRoute } from '@c8y/ngx-components';
 import { FavoritesManagerNavigationFactory } from './favorites-manager.factory';
-import { FavoritesManagerComponent } from './favorites-manager.component';
 import { FavoritesActionFactory } from './favorites-action.factory';
 
 export const favoritesManagerViewProviders = [
@@ -8,6 +7,7 @@ export const favoritesManagerViewProviders = [
   hookNavigator(FavoritesManagerNavigationFactory),
   hookRoute({
     path: 'favorites',
-    component: FavoritesManagerComponent,
+    loadComponent: () =>
+      import('./favorites-manager.component').then((m) => m.FavoritesManagerComponent),
   }),
 ];

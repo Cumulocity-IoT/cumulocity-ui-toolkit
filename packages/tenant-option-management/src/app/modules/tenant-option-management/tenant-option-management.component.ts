@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import {
   ActionControl,
   BuiltInActionType,
@@ -6,12 +6,12 @@ import {
   ColumnDataType,
   CoreModule,
   FormsModule,
-  gettext,
   ModalService,
   Pagination,
   Row,
   Status,
 } from '@c8y/ngx-components';
+import { gettext } from '@c8y/ngx-components/gettext';
 import { TranslateService } from '@ngx-translate/core';
 import { take } from 'rxjs/operators';
 import { BsModalService } from 'ngx-bootstrap/modal';
@@ -37,7 +37,7 @@ import { ButtonsModule } from 'ngx-bootstrap/buttons';
     ExportModalComponent,
   ],
 })
-export class TenantOptionManagementComponent {
+export class TenantOptionManagementComponent implements OnInit {
   columns: Column[];
   rows: (Row | TenantOptionRow)[];
 
@@ -66,6 +66,9 @@ export class TenantOptionManagementComponent {
 
   constructor() {
     this.columns = this.getDefaultColumns();
+  }
+
+  ngOnInit(): void {
     void this.reload();
   }
 
@@ -77,7 +80,7 @@ export class TenantOptionManagementComponent {
 
       const config = await this.optionsManagement.getConfiguration();
 
-      this.rows = config.options.map((o) => ({ id: `${o.category}-${o.key}`, ...o })) as Row[];
+      this.rows = config.options.map((o) => ({ id: `${o.category}-${o.key}`, ...o }));
       const options = await allOptions;
 
       for (const r of this.rows) {
@@ -183,15 +186,15 @@ export class TenantOptionManagementComponent {
 
   async onDeleteRow(row: TenantOptionRow) {
     await this.modal.confirm(
-      gettext('Delete Tenant Option') as string,
+      gettext('Delete Tenant Option'),
       this.translateService.instant(
         gettext(
           `You are about to delete Tenant Option with Category "{{ category }}" and Key "{{ key }}". Do you want to proceed?`
-        ) as string,
+        ),
         { category: row.category, key: row.key }
       ) as string,
       Status.DANGER,
-      { ok: gettext('Delete') as string, cancel: gettext('Cancel') as string }
+      { ok: gettext('Delete'), cancel: gettext('Cancel') }
     );
     await this.optionsManagement.deleteOption(row);
     this.rows = this.rows.filter((r) => r.category !== row.category || r.key !== row.key);

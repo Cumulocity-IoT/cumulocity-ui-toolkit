@@ -1,8 +1,11 @@
 import './polyfills';
+import '@angular/compiler';
 
 import { enableProdMode } from '@angular/core';
-import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
-import { AppModule } from './app/app.module';
+import { bootstrapApplication } from '@angular/platform-browser';
+import { BootstrapComponent, provideBootstrapMetadata } from '@c8y/ngx-components';
+import { BootstrapMetaData } from '@c8y/bootstrap';
+import { appConfig } from './app/app.config';
 
 import './locales/de.po';
 
@@ -11,8 +14,7 @@ if (__MODE__ === 'production') {
   enableProdMode();
 }
 
-export function bootstrap() {
-  return platformBrowserDynamic()
-    .bootstrapModule(AppModule)
-    .catch((err) => console.log(err));
+export function bootstrap(metadata: BootstrapMetaData) {
+  appConfig.providers.push(...provideBootstrapMetadata(metadata));
+  return bootstrapApplication(BootstrapComponent, appConfig).catch((err) => console.log(err));
 }

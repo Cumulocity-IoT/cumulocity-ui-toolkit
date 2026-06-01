@@ -86,10 +86,20 @@ export class ReleaseNotesService {
     });
   }
 
+  /**
+   * Maps a raw C8Y event list to the application's {@link ReleaseNote} shape
+   * by delegating each item to {@link convertEventToRelease}.
+   */
   private convertEventListToReleaseList(releaseEvents: IEvent[]): ReleaseNote[] {
     return releaseEvents.map((release) => this.convertEventToRelease(release));
   }
 
+  /**
+   * Extracts the structured {@link ReleaseNote} from the custom-event payload
+   * stored under the `c8y_ReleaseNotes` fragment key.  The `published` flag is
+   * derived from the presence of the top-level fragment (a C8Y convention for
+   * queryable boolean fragments).
+   */
   private convertEventToRelease(releaseEvent: IEvent | ReleaseNoteEvent): ReleaseNote {
     const eventData = releaseEvent[RELEASE_NOTES__EVENT_TYPE] as ReleaseNoteEventPayload;
 
@@ -102,6 +112,13 @@ export class ReleaseNotesService {
     };
   }
 
+  /**
+   * Converts a {@link ReleaseNote} back into a C8Y event payload suitable for
+   * `eventService.create()` or `eventService.update()`.  For new releases
+   * (`!release.id`) the source object is fetched/created lazily via
+   * {@link getSourceObjectID}.  The `published` fragment is set to `{}` when
+   * published and `null` when unpublished (C8Y fragment-existence convention).
+   */
   private async convertReleaseToEvent(release: Partial<ReleaseNote>): Promise<ReleaseNoteEvent> {
     const source = await this.getSourceObjectID();
 
@@ -132,6 +149,12 @@ export class ReleaseNotesService {
     return event;
   }
 
+  /**
+   * Returns only those events whose `publicationTime` is strictly after the
+   * ISO timestamp retrieved from local storage via
+   * {@link RELEASE_NOTES__LAST_CHECKED_KEY}.  When no timestamp is stored the
+   * full list is returned unchanged (handled by the caller).
+   */
   private filterByPublishDate(events: ReleaseNoteEvent[]): ReleaseNoteEvent[] {
     const lastChecked = this.localStorageService.get<string>(RELEASE_NOTES__LAST_CHECKED_KEY);
 
@@ -139,9 +162,14 @@ export class ReleaseNotesService {
   }
 
   private getSourceFromManagedObject(id: IManagedObject['id']): ISource {
-    return { id } as ISource;
+    return { id };
   }
 
+  /**
+   * Lazily fetches or creates the singleton managed-object that acts as the
+   * event source for all release notes.  The resolved `ISource` is cached in
+   * `this.source` so subsequent calls skip the inventory lookup.
+   */
   private async getSourceObjectID(): Promise<ISource> {
     if (this.source) return this.source;
 
@@ -166,6 +194,11 @@ export class ReleaseNotesService {
     return this.source;
   }
 
+  /**
+   * Returns `true` if the most recently published release note has a
+   * `publicationTime` strictly after `date` (ISO string).  Only fetches one
+   * event to keep the check lightweight.
+   */
   private async hasNewerReleases(date: string): Promise<boolean> {
     const response = await this.eventService.list({
       type: RELEASE_NOTES__EVENT_TYPE,

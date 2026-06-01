@@ -1,4 +1,6 @@
 import { Component, Input } from '@angular/core';
+import { CoreModule } from '@c8y/ngx-components';
+import { FormlyModule } from '@ngx-formly/core';
 import { FormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import {
@@ -17,7 +19,8 @@ import {
   selector: 'c8y-energy-consumption-widget-config',
   template: '<formly-form [form]="form" [fields]="fields" [model]="config"></formly-form>',
   styleUrl: './energy-consumption-widget-config.component.scss',
-  standalone: false,
+  standalone: true,
+  imports: [CoreModule, FormlyModule],
 })
 export class EnergyConsumptionWidgetConfigComponent {
   @Input() config!: EnergyConsumptionWidgetConfig;

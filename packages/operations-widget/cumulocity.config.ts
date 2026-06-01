@@ -1,6 +1,9 @@
 import type { ConfigurationOptions } from '@c8y/devkit';
-import { author, description, name, version } from './package.json';
-import { license } from '../../package.json';
+import pkg from './package.json';
+import rootPkg from '../../package.json';
+
+const { author, description, name, version } = pkg;
+const { license } = rootPkg;
 
 export default {
   runTime: {
@@ -12,7 +15,7 @@ export default {
       "base-uri 'none'; default-src 'self' 'unsafe-inline' http: https: ws: wss:; connect-src 'self' http: https: ws: wss:;  script-src 'self' *.bugherd.com *.twitter.com *.twimg.com *.aptrinsic.com 'unsafe-inline' 'unsafe-eval' data:; style-src * 'unsafe-inline' blob:; img-src * data: blob:; font-src * data:; frame-src *; worker-src 'self' blob:;",
     dynamicOptionsUrl: true,
     remotes: {
-      // 'plugin name from package.json': [ PluginModule ]
+      // 'plugin name from package.json': [ PluginProviders ]
       [name]: ['OperationsWidgetPluginConfigProviders'],
     },
     package: 'plugin',
@@ -23,6 +26,7 @@ export default {
         name: 'Operations Widget',
         module: 'OperationsWidgetPluginConfigProviders',
         path: './src/app/index.ts',
+        readmePath: './src/README.md',
         description:
           'Configurable action buttons with labels, icons, and input fields to send parameterized operation to device.',
       },

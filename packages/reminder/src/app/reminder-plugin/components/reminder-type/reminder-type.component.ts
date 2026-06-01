@@ -1,4 +1,5 @@
 import { Component, inject, Input } from '@angular/core';
+import { CoreModule } from '@c8y/ngx-components';
 import { Reminder, ReminderType } from '../../models/reminder.model';
 import { ReminderService } from '../../services/reminder.service';
 
@@ -6,7 +7,8 @@ import { ReminderService } from '../../services/reminder.service';
   selector: 'c8y-reminder-type',
   templateUrl: './reminder-type.component.html',
   styleUrl: './reminder-type.component.less',
-  standalone: false,
+  standalone: true,
+  imports: [CoreModule],
 })
 export class ReminderTypeComponent {
   private reminderService = inject(ReminderService);

@@ -5,15 +5,19 @@ import {
 } from '@c8y/ngx-components/widgets/import-export-config';
 import * as c8yConfig from '../../cumulocity.config';
 import { assetPaths } from '../assets/assets';
-import { OperationsWidgetComponent } from './components/operations-widget/operations-widget.component';
-import { OperationsWidgetConfigComponent } from './components/widget-config/operations-widget-config.component';
 
 export const OperationsWidgetPluginDefinition = {
   id: 'c8y.operations-widget.plugin',
   label: 'Operations',
   description: c8yConfig.default.runTime.description,
-  component: OperationsWidgetComponent,
-  configComponent: OperationsWidgetConfigComponent,
+  loadComponent: () =>
+    import('./components/operations-widget/operations-widget.component').then(
+      (m) => m.OperationsWidgetComponent
+    ),
+  loadConfigComponent: () =>
+    import('./components/widget-config/operations-widget-config.component').then(
+      (m) => m.OperationsWidgetConfigComponent
+    ),
   previewImage: assetPaths.previewImage,
   data: {
     schema: () =>

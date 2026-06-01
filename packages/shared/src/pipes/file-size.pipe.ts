@@ -14,7 +14,7 @@ const FILE_SIZE_UNITS_LONG = [
 
 @Pipe({
   name: 'formatFileSize',
-  standalone: false,
+  standalone: true,
 })
 export class FormatFileSizePipe implements PipeTransform {
   /**
