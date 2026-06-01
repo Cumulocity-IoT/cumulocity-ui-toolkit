@@ -32,6 +32,7 @@ export default [
       '**/i18n.ts',
       '**/src/index.html',
       '**/test/cypress',
+      '**/*.spec.ts',
       '**/*.html',
       'karma.conf.js',
     ],

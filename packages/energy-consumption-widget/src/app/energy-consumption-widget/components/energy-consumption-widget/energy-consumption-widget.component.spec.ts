@@ -39,6 +39,7 @@ describe('EnergyConsumptionWidgetComponent', () => {
     });
 
     const fixture = TestBed.createComponent(EnergyConsumptionWidgetComponent);
+
     component = fixture.componentInstance;
     component.config = { ...BASE_CONFIG };
   });
@@ -52,22 +53,34 @@ describe('EnergyConsumptionWidgetComponent', () => {
   describe('getDurationFromRange()', () => {
     it('parses "7 days"', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((component as any)['getDurationFromRange']('7 days')).toEqual({ amount: 7, unit: 'days' });
+      expect((component as any)['getDurationFromRange']('7 days')).toEqual({
+        amount: 7,
+        unit: 'days',
+      });
     });
 
     it('parses "12 hours"', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((component as any)['getDurationFromRange']('12 hours')).toEqual({ amount: 12, unit: 'hours' });
+      expect((component as any)['getDurationFromRange']('12 hours')).toEqual({
+        amount: 12,
+        unit: 'hours',
+      });
     });
 
     it('parses "4 weeks"', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((component as any)['getDurationFromRange']('4 weeks')).toEqual({ amount: 4, unit: 'weeks' });
+      expect((component as any)['getDurationFromRange']('4 weeks')).toEqual({
+        amount: 4,
+        unit: 'weeks',
+      });
     });
 
     it('parses "12 months"', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((component as any)['getDurationFromRange']('12 months')).toEqual({ amount: 12, unit: 'months' });
+      expect((component as any)['getDurationFromRange']('12 months')).toEqual({
+        amount: 12,
+        unit: 'months',
+      });
     });
   });
 
@@ -97,32 +110,38 @@ describe('EnergyConsumptionWidgetComponent', () => {
   describe('generateMilestones()', () => {
     it('returns amount + 1 milestones for a day range', () => {
       const milestones: string[] = (component as any)['generateMilestones']('7 days');
+
       // 7 period boundaries + 1 "now" timestamp
       expect(milestones.length).toBe(8);
     });
 
     it('returns amount + 1 milestones for a month range', () => {
       const milestones: string[] = (component as any)['generateMilestones']('12 months');
+
       expect(milestones.length).toBe(13);
     });
 
     it('returns amount + 1 milestones for an hour range', () => {
       const milestones: string[] = (component as any)['generateMilestones']('12 hours');
+
       expect(milestones.length).toBe(13);
     });
 
     it('returns amount + 1 milestones for a week range', () => {
       const milestones: string[] = (component as any)['generateMilestones']('4 weeks');
+
       expect(milestones.length).toBe(5);
     });
 
     it('all entries are valid ISO strings', () => {
       const milestones: string[] = (component as any)['generateMilestones']('3 days');
+
       milestones.forEach((m) => expect(new Date(m).toString()).not.toBe('Invalid Date'));
     });
 
     it('returns milestones in ascending chronological order', () => {
       const milestones: string[] = (component as any)['generateMilestones']('7 days');
+
       for (let i = 1; i < milestones.length; i++) {
         expect(new Date(milestones[i]).getTime()).toBeGreaterThanOrEqual(
           new Date(milestones[i - 1]).getTime()
@@ -147,6 +166,7 @@ describe('EnergyConsumptionWidgetComponent', () => {
     it('returns the raw rounded reading in TOTAL mode', () => {
       component.config.displayMode = EnergyWidgetDateDisplayMode.TOTAL;
       const m = makeMeasurement(5.555);
+
       component['measurements'] = [m] as never;
 
       expect((component as any)['calcValue'](m, 0)).toBe(5.56);
@@ -155,6 +175,7 @@ describe('EnergyConsumptionWidgetComponent', () => {
     it('returns raw reading at index 0 even in DELTA mode (no predecessor)', () => {
       component.config.displayMode = EnergyWidgetDateDisplayMode.DELTA;
       const m = makeMeasurement(100);
+
       component['measurements'] = [m] as never;
 
       expect((component as any)['calcValue'](m, 0)).toBe(100);
@@ -165,6 +186,7 @@ describe('EnergyConsumptionWidgetComponent', () => {
       // Use integers to avoid IEEE-754 rounding surprises in the subtraction
       const m0 = makeMeasurement(100);
       const m1 = makeMeasurement(125);
+
       component['measurements'] = [m0, m1] as never;
 
       expect((component as any)['calcValue'](m1, 1)).toBe(25);
@@ -175,6 +197,7 @@ describe('EnergyConsumptionWidgetComponent', () => {
       component.config.digits = 1;
       const m0 = makeMeasurement(0);
       const m1 = makeMeasurement(1.2);
+
       component['measurements'] = [m0, m1] as never;
 
       // delta 1.2 - 0 = 1.2 → rounded to 1 decimal place = 1.2

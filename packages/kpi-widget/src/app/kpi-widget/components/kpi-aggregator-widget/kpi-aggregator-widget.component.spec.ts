@@ -17,10 +17,7 @@ describe('KpiAggregatorWidgetComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [KpiAggregatorWidgetComponent],
-      providers: [
-        provideMock(InventoryService),
-        { provide: ActivatedRoute, useValue: ROUTE_STUB },
-      ],
+      providers: [provideMock(InventoryService), { provide: ActivatedRoute, useValue: ROUTE_STUB }],
       schemas: [NO_ERRORS_SCHEMA],
     }).overrideComponent(KpiAggregatorWidgetComponent, {
       // Strip heavy module imports so we can test private methods without
@@ -29,6 +26,7 @@ describe('KpiAggregatorWidgetComponent', () => {
     });
 
     const fixture = TestBed.createComponent(KpiAggregatorWidgetComponent);
+
     component = fixture.componentInstance;
     // Use default config — no detectChanges() so ngOnInit is not triggered.
   });
@@ -46,6 +44,7 @@ describe('KpiAggregatorWidgetComponent', () => {
 
     it('traverses a nested dot-separated path', () => {
       const obj = { c8y_Hardware: { serialNumber: 'SN-42' } };
+
       expect((component as any)['getPathData'](obj, 'c8y_Hardware.serialNumber')).toBe('SN-42');
     });
 
@@ -55,6 +54,7 @@ describe('KpiAggregatorWidgetComponent', () => {
 
     it('returns null when the resolved value is an object (ambiguous KPI)', () => {
       const obj = { fragment: { nested: {} } };
+
       expect((component as any)['getPathData'](obj, 'fragment.nested')).toBeNull();
     });
 
@@ -100,6 +100,7 @@ describe('KpiAggregatorWidgetComponent', () => {
 
     it('formats zero duration', () => {
       const now = new Date();
+
       component.timestampStart = now;
       component.timestampEnd = now;
       expect((component as any)['calcQueryDuration']()).toBe('00:00.000');
@@ -118,6 +119,7 @@ describe('KpiAggregatorWidgetComponent', () => {
       component.config = { ...KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG, query: 'type = "[type]"' };
       component.asset = { type: 'Sensor' } as never;
       const query: string = (component as any)['buildQuery']();
+
       expect(query).toBe('$filter=type = "Sensor"');
     });
 
@@ -125,6 +127,7 @@ describe('KpiAggregatorWidgetComponent', () => {
       component.config = { ...KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG, query: 'type = "[type]"' };
       component.asset = undefined;
       const query: string = (component as any)['buildQuery']();
+
       expect(query).toBe('$filter=type = "[type]"');
     });
   });
@@ -139,12 +142,14 @@ describe('KpiAggregatorWidgetComponent', () => {
     it('returns the percentage string when config.percent is true', () => {
       component.config = { ...KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG, percent: true };
       const ctx = { parsed: 50, formattedValue: '50' } as never;
+
       expect((component as any)['generatePieChartLabel'](ctx)).toBe('25% (50)');
     });
 
     it('returns the raw formattedValue when config.percent is false', () => {
       component.config = { ...KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG, percent: false };
       const ctx = { parsed: 50, formattedValue: '50' } as never;
+
       expect((component as any)['generatePieChartLabel'](ctx)).toBe('50');
     });
 
@@ -152,6 +157,7 @@ describe('KpiAggregatorWidgetComponent', () => {
       component['aggreagtedValue'] = 300;
       component.config = { ...KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG, percent: true };
       const ctx = { parsed: 100, formattedValue: '100' } as never;
+
       // 100/300 = 33.333… → rounded to 33.3%
       expect((component as any)['generatePieChartLabel'](ctx)).toBe('33.3% (100)');
     });

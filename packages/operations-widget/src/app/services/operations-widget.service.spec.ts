@@ -45,7 +45,7 @@ describe('OperationsWidgetService', () => {
         Promise.resolve({ data: {} as any, res: {} as IFetchResponse })
       );
 
-      await service.createOperation(mockButton, mockPayload as never);
+      await service.createOperation(mockButton, mockPayload);
 
       expect(operationService.create).toHaveBeenCalledWith({
         ...mockPayload,
@@ -59,7 +59,7 @@ describe('OperationsWidgetService', () => {
         Promise.resolve({ data: {} as any, res: {} as IFetchResponse })
       );
 
-      await service.createOperation(mockButton, mockPayload as never);
+      await service.createOperation(mockButton, mockPayload);
 
       expect(alertService.success).toHaveBeenCalledWith(
         `Operation '${mockButton.label}' successfully created.`
@@ -69,7 +69,7 @@ describe('OperationsWidgetService', () => {
     it('shows a danger alert when the API call rejects', async () => {
       operationService.create.and.returnValue(Promise.reject(new Error('Network error')));
 
-      await service.createOperation(mockButton, mockPayload as never);
+      await service.createOperation(mockButton, mockPayload);
 
       expect(alertService.danger).toHaveBeenCalledWith(
         `Failed to create '${mockButton.label}' operation.`
@@ -79,9 +79,7 @@ describe('OperationsWidgetService', () => {
     it('does not propagate the rejection (swallows the error)', async () => {
       operationService.create.and.returnValue(Promise.reject(new Error('Network error')));
 
-      await expectAsync(
-        service.createOperation(mockButton, mockPayload as never)
-      ).toBeResolved();
+      await expectAsync(service.createOperation(mockButton, mockPayload as never)).toBeResolved();
     });
   });
 });

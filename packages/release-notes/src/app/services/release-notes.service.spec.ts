@@ -17,7 +17,9 @@ const FETCH_RES = {} as IFetchResponse;
 
 /** Builds a minimal raw release-note event for use in tests. */
 function makeEvent(
-  overrides: Partial<ReleaseNoteEvent> & { payload?: Partial<ReleaseNoteEvent['c8y_ReleaseNotes']> } = {}
+  overrides: Partial<ReleaseNoteEvent> & {
+    payload?: Partial<ReleaseNoteEvent['c8y_ReleaseNotes']>;
+  } = {}
 ): ReleaseNoteEvent {
   const { payload = {}, ...rest } = overrides;
   return {
@@ -37,7 +39,7 @@ function makeEvent(
     },
     [RELEASE_NOTES__PUBLISHED_FRAGMENT]: {},
     ...rest,
-  } as unknown as ReleaseNoteEvent;
+  };
 }
 
 describe('ReleaseNotesService', () => {
@@ -58,7 +60,9 @@ describe('ReleaseNotesService', () => {
 
     service = TestBed.inject(ReleaseNotesService);
     eventService = TestBed.inject(EventService) as jasmine.SpyObj<EventService>;
-    localStorageService = TestBed.inject(LocalStorageService) as jasmine.SpyObj<LocalStorageService>;
+    localStorageService = TestBed.inject(
+      LocalStorageService
+    ) as jasmine.SpyObj<LocalStorageService>;
 
     // Pre-populate the cached source to skip inventory lookups in most tests.
     service['source'] = { id: 'src-1' };
@@ -73,6 +77,7 @@ describe('ReleaseNotesService', () => {
   describe('list()', () => {
     it('converts raw events to ReleaseNote objects', async () => {
       const evt = makeEvent();
+
       eventService.list.and.returnValue(Promise.resolve({ data: [evt], res: FETCH_RES }));
 
       const notes = await service.list();
@@ -87,16 +92,18 @@ describe('ReleaseNotesService', () => {
 
     it('maps publicationTime string to a Date instance', async () => {
       const evt = makeEvent({ payload: { publicationTime: '2024-06-01T00:00:00.000Z' } });
+
       eventService.list.and.returnValue(Promise.resolve({ data: [evt], res: FETCH_RES }));
 
       const notes = await service.list();
 
       expect(notes[0].publicationTime).toBeInstanceOf(Date);
-      expect((notes[0].publicationTime as Date).getFullYear()).toBe(2024);
+      expect(notes[0].publicationTime.getFullYear()).toBe(2024);
     });
 
     it('sets published=false when the published fragment is absent', async () => {
       const evt = makeEvent();
+
       delete (evt as Record<string, unknown>)[RELEASE_NOTES__PUBLISHED_FRAGMENT];
       // The convertEventToRelease reads `releaseEvent.published`, not the key
       (evt as Record<string, unknown>)['published'] = false;
@@ -113,6 +120,7 @@ describe('ReleaseNotesService', () => {
       await service.list();
 
       const callArgs = eventService.list.calls.mostRecent().args[0] as Record<string, unknown>;
+
       expect(callArgs['fragmentType']).toBe(RELEASE_NOTES__PUBLISHED_FRAGMENT);
     });
 
@@ -122,15 +130,24 @@ describe('ReleaseNotesService', () => {
       await service.list(false, false);
 
       const callArgs = eventService.list.calls.mostRecent().args[0] as Record<string, unknown>;
+
       expect(callArgs['fragmentType']).toBeUndefined();
     });
 
     it('filters to only newer events when showNewOnly=true', async () => {
       const lastChecked = '2024-01-10T00:00:00.000Z';
+
       localStorageService.get.and.returnValue(lastChecked);
 
-      const newer = makeEvent({ id: 'new', payload: { publicationTime: '2024-01-20T00:00:00.000Z' } });
-      const older = makeEvent({ id: 'old', payload: { publicationTime: '2024-01-05T00:00:00.000Z' } });
+      const newer = makeEvent({
+        id: 'new',
+        payload: { publicationTime: '2024-01-20T00:00:00.000Z' },
+      });
+      const older = makeEvent({
+        id: 'old',
+        payload: { publicationTime: '2024-01-05T00:00:00.000Z' },
+      });
+
       eventService.list.and.returnValue(Promise.resolve({ data: [newer, older], res: FETCH_RES }));
 
       const notes = await service.list(true);
@@ -157,7 +174,13 @@ describe('ReleaseNotesService', () => {
 
   describe('publish()', () => {
     it('sets published=true on the release before delegating to update()', async () => {
-      const note: ReleaseNote = { id: '1', version: '1.0.0', published: false, publicationTime: null };
+      const note: ReleaseNote = {
+        id: '1',
+        version: '1.0.0',
+        published: false,
+        publicationTime: null,
+      };
+
       spyOn(service, 'update').and.returnValue(Promise.resolve({ ...note, published: true }));
 
       await service.publish(note, true);
@@ -167,7 +190,13 @@ describe('ReleaseNotesService', () => {
     });
 
     it('clears publicationTime when unpublishing', async () => {
-      const note: ReleaseNote = { id: '1', version: '1.0.0', published: true, publicationTime: new Date() };
+      const note: ReleaseNote = {
+        id: '1',
+        version: '1.0.0',
+        published: true,
+        publicationTime: new Date(),
+      };
+
       spyOn(service, 'update').and.returnValue(Promise.resolve({ ...note, published: false }));
 
       await service.publish(note, false);
@@ -177,7 +206,13 @@ describe('ReleaseNotesService', () => {
     });
 
     it('sets publicationTime to a Date when publishing', async () => {
-      const note: ReleaseNote = { id: '1', version: '1.0.0', published: false, publicationTime: null };
+      const note: ReleaseNote = {
+        id: '1',
+        version: '1.0.0',
+        published: false,
+        publicationTime: null,
+      };
+
       spyOn(service, 'update').and.returnValue(Promise.resolve({ ...note, published: true }));
 
       await service.publish(note, true);

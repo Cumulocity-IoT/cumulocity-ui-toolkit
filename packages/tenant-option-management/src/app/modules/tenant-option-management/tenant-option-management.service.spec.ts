@@ -1,5 +1,11 @@
 import { TestBed } from '@angular/core/testing';
-import { IFetchResponse, InventoryService, ITenantOption, TenantOptionsService, UserService } from '@c8y/client';
+import {
+  IFetchResponse,
+  InventoryService,
+  ITenantOption,
+  TenantOptionsService,
+  UserService,
+} from '@c8y/client';
 import { AlertService } from '@c8y/ngx-components';
 import { provideMock } from '~helpers/auto-mock.helper';
 import { TenantOptionConfiguration, TenantOptionRow } from './model';
@@ -32,14 +38,24 @@ describe('TenantOptionManagementService', () => {
 
     service = TestBed.inject(TenantOptionManagementService);
     inventoryService = TestBed.inject(InventoryService) as jasmine.SpyObj<InventoryService>;
-    tenantOptionsService = TestBed.inject(TenantOptionsService) as jasmine.SpyObj<TenantOptionsService>;
+    tenantOptionsService = TestBed.inject(
+      TenantOptionsService
+    ) as jasmine.SpyObj<TenantOptionsService>;
     alertService = TestBed.inject(AlertService) as jasmine.SpyObj<AlertService>;
     userService = TestBed.inject(UserService) as jasmine.SpyObj<UserService>;
 
     // Default user stub used by addOptionToConfiguration / updateOptionForConfiguration.
     userService.current.and.returnValue(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      Promise.resolve({ data: { id: 'user-1', email: 'user@example.com', userName: 'user-1', displayName: 'User' } as any, res: FETCH_RES })
+      Promise.resolve({
+        data: {
+          id: 'user-1',
+          email: 'user@example.com',
+          userName: 'user-1',
+          displayName: 'User',
+        } as any,
+        res: FETCH_RES,
+      })
     );
   });
 
@@ -52,6 +68,7 @@ describe('TenantOptionManagementService', () => {
   describe('getConfiguration()', () => {
     it('returns the existing config managed object when found', async () => {
       const cfg = makeConfig();
+
       inventoryService.list.and.returnValue(Promise.resolve({ data: [cfg], res: FETCH_RES }));
 
       const result = await service.getConfiguration();
@@ -62,6 +79,7 @@ describe('TenantOptionManagementService', () => {
 
     it('creates and returns a new config when none exists', async () => {
       const newCfg = makeConfig();
+
       inventoryService.list.and.returnValue(Promise.resolve({ data: [], res: FETCH_RES }));
       inventoryService.create.and.returnValue(Promise.resolve({ data: newCfg, res: FETCH_RES }));
 
@@ -79,6 +97,7 @@ describe('TenantOptionManagementService', () => {
   describe('addOptionToConfiguration()', () => {
     it('rejects with an error when the category+key already exists', async () => {
       const existing = { category: 'my-cat', key: 'my-key', lastUpdated: '', user: '' };
+
       spyOn(service, 'getConfiguration').and.returnValue(Promise.resolve(makeConfig([existing])));
 
       await expectAsync(
@@ -88,6 +107,7 @@ describe('TenantOptionManagementService', () => {
 
     it('appends the new item and calls inventoryService.update', async () => {
       const cfg = makeConfig();
+
       spyOn(service, 'getConfiguration').and.returnValue(Promise.resolve(cfg));
       inventoryService.update.and.returnValue(Promise.resolve({ data: cfg, res: FETCH_RES }));
 
@@ -125,8 +145,14 @@ describe('TenantOptionManagementService', () => {
     });
 
     it('updates lastUpdated and user on the existing item', async () => {
-      const existing = { category: 'cat', key: 'key', lastUpdated: '2023-01-01T00:00:00.000Z', user: 'old-user' };
+      const existing = {
+        category: 'cat',
+        key: 'key',
+        lastUpdated: '2023-01-01T00:00:00.000Z',
+        user: 'old-user',
+      };
       const cfg = makeConfig([existing]);
+
       spyOn(service, 'getConfiguration').and.returnValue(Promise.resolve(cfg));
       inventoryService.update.and.returnValue(Promise.resolve({ data: cfg, res: FETCH_RES }));
 
@@ -145,6 +171,7 @@ describe('TenantOptionManagementService', () => {
         { category: 'a', key: '1', value: 'val-1' },
         { category: 'b', key: '2', value: 'val-2' },
       ];
+
       tenantOptionsService.list.and.returnValue(
         Promise.resolve({
           data: options,
@@ -165,8 +192,16 @@ describe('TenantOptionManagementService', () => {
       const page2: ITenantOption[] = [{ category: 'b', key: '2', value: 'v2' }];
 
       tenantOptionsService.list.and.returnValues(
-        Promise.resolve({ data: page1, paging: { currentPage: 1, totalPages: 2 } as never, res: FETCH_RES }),
-        Promise.resolve({ data: page2, paging: { currentPage: 2, totalPages: 2 } as never, res: FETCH_RES })
+        Promise.resolve({
+          data: page1,
+          paging: { currentPage: 1, totalPages: 2 } as never,
+          res: FETCH_RES,
+        }),
+        Promise.resolve({
+          data: page2,
+          paging: { currentPage: 2, totalPages: 2 } as never,
+          res: FETCH_RES,
+        })
       );
 
       const result = await service.getAllOptions();
@@ -194,25 +229,35 @@ describe('TenantOptionManagementService', () => {
       const cfg = makeConfig([existing, other]);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      tenantOptionsService.delete.and.returnValue(Promise.resolve({ data: null as any, res: FETCH_RES }));
+      tenantOptionsService.delete.and.returnValue(
+        Promise.resolve({ data: null as any, res: FETCH_RES })
+      );
       spyOn(service, 'getConfiguration').and.returnValue(Promise.resolve(cfg));
       inventoryService.update.and.returnValue(Promise.resolve({ data: cfg, res: FETCH_RES }));
 
       const row = { ...existing } as TenantOptionRow;
+
       await service.deleteOption(row);
 
-      const updateCall = inventoryService.update.calls.mostRecent().args[0] as { options: unknown[] };
+      const updateCall = inventoryService.update.calls.mostRecent().args[0] as {
+        options: unknown[];
+      };
+
       expect(updateCall.options).toHaveSize(1);
     });
 
     it('calls tenantOptionsService.delete with the correct category+key', async () => {
       const cfg = makeConfig([]);
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      tenantOptionsService.delete.and.returnValue(Promise.resolve({ data: null as any, res: FETCH_RES }));
+      tenantOptionsService.delete.and.returnValue(
+        Promise.resolve({ data: null as any, res: FETCH_RES })
+      );
       spyOn(service, 'getConfiguration').and.returnValue(Promise.resolve(cfg));
       inventoryService.update.and.returnValue(Promise.resolve({ data: cfg, res: FETCH_RES }));
 
       const row = { category: 'cat', key: 'key' } as TenantOptionRow;
+
       await service.deleteOption(row);
 
       expect(tenantOptionsService.delete).toHaveBeenCalledWith({ category: 'cat', key: 'key' });

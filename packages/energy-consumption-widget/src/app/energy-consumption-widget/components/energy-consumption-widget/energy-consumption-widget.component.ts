@@ -231,6 +231,7 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
     }
 
     milestones.reverse();
+
     return milestones;
   }
 
