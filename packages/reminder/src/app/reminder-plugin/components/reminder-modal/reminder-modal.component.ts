@@ -57,7 +57,7 @@ export class ReminderModalComponent implements OnInit {
           key: 'source',
           type: 'asset',
           props: {
-            label: this.translateService.instant('Attach to') as string,
+            label: this.translateService.instant('reminder.labels.attach-to') as string,
             required: true,
             asset: this.asset,
           },
@@ -66,7 +66,7 @@ export class ReminderModalComponent implements OnInit {
           key: 'text',
           type: 'input',
           props: {
-            label: this.translateService.instant('Message') as string,
+            label: this.translateService.instant('reminder.labels.message') as string,
             required: true,
             maxLength: REMINDER_TEXT_LENGTH,
             // TODO show max length & used chars
@@ -77,7 +77,7 @@ export class ReminderModalComponent implements OnInit {
           type: 'time',
           defaultValue: moment().add(1, 'minute').toISOString(),
           props: {
-            label: this.translateService.instant('Remind me on') as string,
+            label: this.translateService.instant('reminder.labels.remind-me') as string,
             required: true,
             minDate: moment(),
           },
@@ -148,11 +148,13 @@ export class ReminderModalComponent implements OnInit {
     if (!request) return;
 
     if (request && request.res.status === 201) {
-      this.alertService.success(this.translateService.instant('Reminder created') as string);
+      this.alertService.success(
+        this.translateService.instant('reminder.feedback.created') as string
+      );
       this.close();
     } else {
       this.alertService.danger(
-        this.translateService.instant('Could not create reminder') as string,
+        this.translateService.instant('reminder.feedback.not-created') as string,
         await request.res.text()
       );
     }
@@ -191,7 +193,8 @@ export class ReminderModalComponent implements OnInit {
    * @returns {IManagedObject} The managed object representing the asset, if found.
    */
   private getAssetFromRoute(route: ActivatedRouteSnapshot): IManagedObject {
-    if (!route) console.error('No Route provided');
+    if (!route)
+      console.error('No Route provided'); // dev feedback, not translated on purpose
     else {
       const mo = this.recursiveContextSearch(route);
 
@@ -217,8 +220,8 @@ export class ReminderModalComponent implements OnInit {
       key: REMINDER_TYPE_FRAGMENT,
       type: 'select',
       props: {
-        label: this.translateService.instant('Reminder type (optional)') as string,
-        hidden: this.typeOptions?.length > 0,
+        label: this.translateService.instant('reminder.labels.type') as string,
+        hidden: this.typeOptions?.length === 0,
         options: this.typeOptions,
       },
     });

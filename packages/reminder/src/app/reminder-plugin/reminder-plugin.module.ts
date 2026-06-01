@@ -28,11 +28,11 @@ import { ReminderService } from './services/reminder.service';
     ReminderTypeComponent,
   ],
   imports: [
+    CommonModule,
+    CoreModule,
     AssetSelectorModule,
     AlertModule,
     CollapseModule,
-    CommonModule,
-    CoreModule,
     FormlyModule.forChild({
       types: [
         { name: 'time', component: TimeFieldType },

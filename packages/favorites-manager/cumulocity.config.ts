@@ -1,5 +1,6 @@
 import type { ConfigurationOptions } from '@c8y/devkit';
 import { author, version } from './package.json';
+import { license } from '../../package.json';
 
 export default {
   runTime: {
@@ -29,6 +30,7 @@ export default {
     package: 'plugin',
     isPackage: true,
     noAppSwitcher: true,
+    license,
   },
   buildTime: {
     federation: [

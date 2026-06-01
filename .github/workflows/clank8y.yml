@@ -1,0 +1,23 @@
+name: clank8y
+
+on:
+  workflow_dispatch:
+    inputs:
+      prompt:
+        type: string
+        required: false
+
+permissions:
+  id-token: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run clank8y
+        uses: clank8y/clank8y@48f44520b13f84d25f7c8fcc62938d798f42c62f
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_CLANK8Y_TOKEN }}
+        with:
+          prompt: ${{ inputs.prompt }}
+          model: anthropic:claude-sonnet-4-6

@@ -1,0 +1,54 @@
+{
+  "reminder": {
+    "actions": {
+      "acknowledge": "Acknowledge the Reminder",
+      "add": "Create Reminder",
+      "add-short": "Create",
+      "cancel": "Cancel",
+      "clear": "Clear the Reminder",
+      "filter-by-context": "Filter by current Context",
+      "filter-type": "Filter by Reminder type",
+      "reactivate": "Reactivate the Reminder"
+    },
+    "counter": {
+      "multiple": "{{counter}} Reminders are due",
+      "none": "No Reminder is due",
+      "one": "One Reminder is due"
+    },
+    "feedback": {
+      "created": "The reminder has been created.",
+      "not-created": "Could not create the reminder."
+    },
+    "group-status": {
+      "CLEARED": "Cleared",
+      "DUE": "Due",
+      "UPCOMING": "Upcoming"
+    },
+    "info": {
+      "retention-rules": "Cleared reminders are automatically deleted over time by the retention rules.",
+      "unfiltered-reminders": "Number of reminders if not filtered"
+    },
+    "labels": {
+      "add": "Create a Reminder",
+      "attach-to": "Attach to",
+      "last-update": "Last updated",
+      "message": "Message",
+      "not-filtered": "Not filtered",
+      "notification-browser": "Browser Notifications",
+      "notification-toast": "Toast Notifications",
+      "remind-me": "Remind me on",
+      "status": "Status",
+      "type": "Reminder type (optional)"
+    },
+    "status": {
+      "ACKNOWLEDGED": "Acknowledged",
+      "ACTIVE": "Active",
+      "CLEARED": "Cleared",
+      "UNKNOWN": "Unknown"
+    },
+    "title": "Reminder",
+    "types": {
+      "UNKNOWN": "Unknown"
+    }
+  }
+}

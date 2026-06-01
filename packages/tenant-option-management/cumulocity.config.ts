@@ -1,5 +1,6 @@
 import type { ConfigurationOptions } from '@c8y/devkit';
 import { author, description, version } from './package.json';
+import { license } from '../../package.json';
 
 export default {
   runTime: {
@@ -29,6 +30,7 @@ export default {
           'Easily create, edit and delete tenant options. You can configure an option as encrypted and can decided between text or JSON input.',
       },
     ],
+    license,
   },
   buildTime: {
     federation: [
