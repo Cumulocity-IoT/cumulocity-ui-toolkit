@@ -19,6 +19,7 @@ export * from './pipes/sort.pipe';
 // Services
 export * from './services/active-tab.service';
 export * from './services/data-grid-patch.service';
+export * from './services/grid-column-width.service';
 export * from './services/dom.service';
 export * from './services/hierarchy-aggregate.service';
 export * from './services/inventory-delta-polling.service';
