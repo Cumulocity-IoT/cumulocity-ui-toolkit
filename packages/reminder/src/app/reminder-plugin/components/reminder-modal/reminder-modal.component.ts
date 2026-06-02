@@ -136,7 +136,7 @@ export class ReminderModalComponent implements OnInit {
         ? this.asset
         : (await this.inventoryService.detail(this.reminder.source.id)).data;
 
-    if (has(source, 'c8y_IsDeviceGroup')) reminder['isGroup'] = {};
+    if (Object.hasOwn(source, 'c8y_IsDeviceGroup')) reminder['isGroup'] = {};
 
     try {
       await this.eventService.create(reminder);
@@ -192,7 +192,7 @@ export class ReminderModalComponent implements OnInit {
     else {
       const mo = this.recursiveContextSearch(route);
 
-      if (has(mo, 'c8y_IsDevice') || has(mo, 'c8y_IsDeviceGroup')) return mo;
+      if (Object.hasOwn(mo, 'c8y_IsDevice') || has(mo, 'c8y_IsDeviceGroup')) return mo;
     }
 
     return undefined;

@@ -24,7 +24,7 @@ export class WidgetConfigurationService {
     const { data: mo } = await this.inventoryService.detail(dashboardId);
     const dashboard = mo['c8y_Dashboard'] as C8yDashboard;
 
-    if (!has(dashboard.children, widgetId)) {
+    if (!Object.hasOwn(dashboard.children, widgetId)) {
       throw new Error(widgetId + ' doesn not exist in Dashboard ' + dashboardId);
     }
     dashboard.children[widgetId].config = newConfig;
@@ -41,7 +41,7 @@ export class WidgetConfigurationService {
     return this.inventoryService.detail(dashboardId).then((res) => {
       const dashboard = res.data['c8y_Dashboard'] as C8yDashboard;
 
-      if (!has(dashboard.children, widgetId)) {
+      if (!Object.hasOwn(dashboard.children, widgetId)) {
         throw new Error(widgetId + ' doesn not exist in Dashboard ' + dashboardId);
       }
 

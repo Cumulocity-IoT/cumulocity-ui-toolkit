@@ -4,7 +4,7 @@ import { FormlyModule } from '@ngx-formly/core';
 import { FormGroup } from '@angular/forms';
 import { OptionsService } from '@c8y/ngx-components';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { cloneDeep, has } from 'lodash';
+import { cloneDeep } from 'lodash';
 import {
   KPI_AGGREGAOR_WIDGET__CHART_LEGEND_POSITION_OPTIONS,
   KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG,
@@ -274,7 +274,7 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
 
   private setTenantConfigs() {
     // override default with branding
-    if (has(this.optionsService.brandingCssVars, 'brand-primary')) {
+    if (Object.hasOwn(this.optionsService.brandingCssVars, 'brand-primary')) {
       this.defaultConfig.color = this.optionsService.brandingCssVars['brand-primary'];
     }
   }

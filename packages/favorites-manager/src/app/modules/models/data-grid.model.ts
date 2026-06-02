@@ -1,12 +1,11 @@
 import { Column } from '@c8y/ngx-components';
-import { has } from 'lodash';
 
 export interface SearchColumn extends Column {
   searchable?: boolean;
 }
 
 export function hasSearchableConfig(column: Column): column is SearchColumn {
-  return has(column, 'searchable');
+  return Object.hasOwn(column, 'searchable');
 }
 
 export type ColumnSortingConfig = {

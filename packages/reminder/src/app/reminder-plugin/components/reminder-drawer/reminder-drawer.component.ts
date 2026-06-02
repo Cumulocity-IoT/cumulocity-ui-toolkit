@@ -5,7 +5,6 @@ import { AlertService, CoreModule, HeaderService } from '@c8y/ngx-components';
 import { CollapseModule } from 'ngx-bootstrap/collapse';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { MomentModule } from 'ngx-moment';
-import { has, isEmpty } from 'lodash';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import {
@@ -187,8 +186,12 @@ export class ReminderDrawerComponent implements OnDestroy {
   async updateReminder(reminder: Reminder, status: Reminder['status']): Promise<void> {
     reminder.status = status;
 
-    await this.reminderService.update(reminder);
-    this.alertService.success(`Reminder ${String(status).toLowerCase()}`);
+    try {
+      await this.reminderService.update(reminder);
+      this.alertService.success(`Reminder ${String(status).toLowerCase()}`);
+    } catch (error) {
+      this.alertService.danger('Failed to update reminder', `${JSON.stringify(error)}`);
+    }
   }
 
   /**
@@ -222,7 +225,7 @@ export class ReminderDrawerComponent implements OnDestroy {
    */
   private handleConfigChange(config: ReminderConfig): void {
     if (
-      has(config.filter, 'reminderType') &&
+      Object.hasOwn(config.filter, 'reminderType') &&
       this.reminderTypeFilter !== config.filter?.reminderType
     ) {
       this.reminderTypeFilter = config.filter.reminderType;
@@ -240,11 +243,13 @@ export class ReminderDrawerComponent implements OnDestroy {
    * @returns void
    */
   private handleRouteChange(url: string): void {
-    if (isEmpty(url)) {
+    if (!url || url.length === 0) {
       return undefined;
     }
 
-    const pathElements: string[] = url.split('/').filter((element) => !isEmpty(element));
+    const pathElements: string[] = url
+      .split('/')
+      .filter((element) => element && element.length > 0);
 
     if (pathElements === null || pathElements.length === 0) {
       return undefined;

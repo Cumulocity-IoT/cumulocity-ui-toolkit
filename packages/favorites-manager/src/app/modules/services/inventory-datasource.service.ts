@@ -3,7 +3,6 @@ import { InventoryService } from '@c8y/client';
 import { Column, DataSourceModifier, ServerSideDataResult } from '@c8y/ngx-components';
 import { QueryFilter } from '../models/query-utils.model';
 import { hasSearchableConfig, SearchColumn } from '../models/data-grid.model';
-import { isEmpty } from 'lodash';
 import { BaseInventoryDatasourceService } from './base-inventory-datasource.service';
 
 @Injectable({ providedIn: 'root' })
@@ -41,7 +40,7 @@ export class InventoryDatasourceService extends BaseInventoryDatasourceService {
     const orderBys: { [key: string]: 1 | -1 }[] = [];
 
     const customColumns: Column[] = columns.filter(
-      (column) => column.sortingConfig && !isEmpty(column.sortingConfig?.pathSortingConfigs)
+      (column) => column.sortingConfig && column.sortingConfig?.pathSortingConfigs?.length
     );
 
     for (const c of customColumns) {

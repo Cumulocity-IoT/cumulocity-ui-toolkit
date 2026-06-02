@@ -1,6 +1,5 @@
 import { inject, Injectable } from '@angular/core';
 import { EventService, IEvent, IManagedObject, InventoryService, ISource } from '@c8y/client';
-import { has } from 'lodash';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { LocalStorageService } from '~services/local-storage.service';
 import { ReleaseNotesDisplayListModalComponent } from '../components';
@@ -211,7 +210,7 @@ export class ReleaseNotesService {
 
     return (
       eventList.length &&
-      has(eventList[0][RELEASE_NOTES__EVENT_TYPE], 'publicationTime') &&
+      Object.hasOwn(eventList[0][RELEASE_NOTES__EVENT_TYPE], 'publicationTime') &&
       eventList[0][RELEASE_NOTES__EVENT_TYPE].publicationTime > date
     );
   }

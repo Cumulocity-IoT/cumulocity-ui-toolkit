@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { IMeasurement } from '@c8y/client';
-import { get, has } from 'lodash';
+import { get } from 'lodash';
 import { NumberPipe } from '@c8y/ngx-components';
 
 @Pipe({
@@ -44,7 +44,7 @@ export class C8yMeasurementPipe implements PipeTransform {
       const nestedKeys = Object.keys(fragment);
 
       for (const nestedKey of nestedKeys) {
-        if (has(fragment, `${nestedKey}.value`)) {
+        if (Object.hasOwn(fragment, `${nestedKey}.value`)) {
           result.push(`${key}.${nestedKey}`);
         }
       }

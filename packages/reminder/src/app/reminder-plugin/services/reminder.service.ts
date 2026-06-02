@@ -224,7 +224,7 @@ export class ReminderService {
   private applyContextFilter(groups: ReminderGroup[], context?: string): ReminderGroup[] {
     const config = this.config$.getValue();
 
-    if (!has(config, 'useContext') || !config.useContext || !context) return groups;
+    if (!Object.hasOwn(config, 'useContext') || !config.useContext || !context) return groups;
 
     groups.map((group) => {
       group.total = group.reminders.length;
@@ -258,7 +258,7 @@ export class ReminderService {
     const config = this.config$.getValue();
 
     // populate filters
-    if (has(config.filter, 'reminderType'))
+    if (Object.hasOwn(config.filter, 'reminderType'))
       filters[REMINDER_TYPE_FRAGMENT] = config.filter[REMINDER_TYPE_FRAGMENT];
 
     return Object.keys(filters).length > 0 ? filters : null;
@@ -423,7 +423,8 @@ export class ReminderService {
     groups = this.applyContextFilter(groups, context);
 
     // type filter
-    if (!has(config.filter, 'reminderType') || filter[REMINDER_TYPE_FRAGMENT] === '') return groups;
+    if (!Object.hasOwn(config.filter, 'reminderType') || filter[REMINDER_TYPE_FRAGMENT] === '')
+      return groups;
 
     const keys = Object.keys(filter);
 
@@ -433,7 +434,7 @@ export class ReminderService {
       group.reminders = group.reminders.filter((reminder) =>
         this.applyReminderFilter(reminder, filter)
       );
-      if (!has(group, 'total') || group.total > group.count) group.total = group.count;
+      if (!Object.hasOwn(group, 'total') || group.total > group.count) group.total = group.count;
       group.count = group.reminders.length;
 
       return group;

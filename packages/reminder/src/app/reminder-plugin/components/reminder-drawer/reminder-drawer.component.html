@@ -30,7 +30,7 @@
             >
             <option value="">{{ 'Not filtered' | translate }}</option>
             @for (type of types; track type) {
-              <option [ngValue]="type.id">{{ type.name }}</option>
+              <option [ngValue]="type.id">{{ type.name | translate }}</option>
             }
           </select>
         </div>

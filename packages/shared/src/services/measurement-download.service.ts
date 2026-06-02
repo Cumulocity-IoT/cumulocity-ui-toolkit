@@ -88,7 +88,7 @@ export class MeasurementDownloadService {
       const nestedKeys = Object.keys(fragment);
 
       for (const nestedKey of nestedKeys) {
-        if (has(fragment, `${nestedKey}.value`)) {
+        if (Object.hasOwn(fragment, `${nestedKey}.value`)) {
           result.push(`${key}.${nestedKey}`);
         }
       }

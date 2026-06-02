@@ -8,7 +8,7 @@ import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
 import { ActivatedRoute, ActivatedRouteSnapshot } from '@angular/router';
 import { IManagedObject, InventoryService, IResultList, Paging } from '@c8y/client';
 import { ChartConfiguration, ChartData, ChartTypeRegistry, TooltipItem } from 'chart.js';
-import { cloneDeep, flatMap, has, orderBy } from 'lodash';
+import { cloneDeep, flatMap, orderBy } from 'lodash';
 import { KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG } from '../../models/kpi-aggregator-widget.const';
 import {
   KpiAggregatorWidgetConfig,
@@ -427,7 +427,7 @@ export class KpiAggregatorWidgetComponent implements OnInit {
     let data: unknown = o;
 
     for (const p of pathPartials) {
-      if (has(data as object, p)) {
+      if (Object.hasOwn(data as object, p)) {
         data = (data as Record<string, unknown>)[p];
       } else {
         return null;

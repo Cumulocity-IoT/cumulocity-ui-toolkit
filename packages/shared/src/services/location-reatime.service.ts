@@ -82,6 +82,6 @@ export class LocationRealtimeService extends RealtimeService<IEvent> {
   }
 
   private isLocationUpdateEvent(event: IEvent): event is ILocationUpdateEvent {
-    return event.type === 'c8y_LocationUpdate' && has(event, 'c8y_Position');
+    return event.type === 'c8y_LocationUpdate' && Object.hasOwn(event, 'c8y_Position');
   }
 }
