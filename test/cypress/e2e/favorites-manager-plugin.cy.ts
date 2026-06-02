@@ -15,7 +15,6 @@ describe('Favorites Manager', () => {
   // create a new user before the test suite runs, who has the necessary roles
   // and permissions to access the Cockpit application extended with the Favorites Manager module
   before(() => {
-    Cypress.session.clearAllSavedSessions();
     cy.getAuth()
       .login()
       .then(() => {

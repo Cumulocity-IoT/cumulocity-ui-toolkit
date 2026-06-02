@@ -1,10 +1,6 @@
 /// <reference types="cypress" />
 
 describe('Reminder', () => {
-  before(() => {
-    Cypress.session.clearAllSavedSessions();
-  });
-
   beforeEach(() => {
     cy.getAuth().login().disableGainsight();
   });

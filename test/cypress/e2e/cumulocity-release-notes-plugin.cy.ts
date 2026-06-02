@@ -1,10 +1,6 @@
 /// <reference types="cypress" />
 
 describe('Release notes', () => {
-  before(() => {
-    Cypress.session.clearAllSavedSessions();
-  });
-
   beforeEach(() => {
     cy.getAuth().login().disableGainsight();
   });

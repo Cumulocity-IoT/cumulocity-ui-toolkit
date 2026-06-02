@@ -1,10 +1,6 @@
 /// <reference types="cypress" />
 
-describe('Tenant Option Management', () => {
-  before(() => {
-    Cypress.session.clearAllSavedSessions();
-  });
-  
+describe('Tenant Option Management', () => {  
   beforeEach(() => {
     cy.getAuth().login().disableGainsight();
   });
