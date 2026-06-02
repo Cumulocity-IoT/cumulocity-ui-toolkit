@@ -258,7 +258,7 @@ export class ReminderService {
     const config = this.config$.getValue();
 
     // populate filters
-    if (Object.hasOwn(config.filter, 'reminderType'))
+    if (config.filter && Object.hasOwn(config.filter, 'reminderType'))
       filters[REMINDER_TYPE_FRAGMENT] = config.filter[REMINDER_TYPE_FRAGMENT];
 
     return Object.keys(filters).length > 0 ? filters : null;
@@ -423,7 +423,11 @@ export class ReminderService {
     groups = this.applyContextFilter(groups, context);
 
     // type filter
-    if (!Object.hasOwn(config.filter, 'reminderType') || filter[REMINDER_TYPE_FRAGMENT] === '')
+    if (
+      !config?.filter ||
+      !Object.hasOwn(config.filter, 'reminderType') ||
+      filter[REMINDER_TYPE_FRAGMENT] === ''
+    )
       return groups;
 
     const keys = Object.keys(filter);

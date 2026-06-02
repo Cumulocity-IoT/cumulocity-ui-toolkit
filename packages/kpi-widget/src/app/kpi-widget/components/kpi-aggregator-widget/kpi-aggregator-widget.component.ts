@@ -427,7 +427,7 @@ export class KpiAggregatorWidgetComponent implements OnInit {
     let data: unknown = o;
 
     for (const p of pathPartials) {
-      if (Object.hasOwn(data as object, p)) {
+      if (data && Object.hasOwn(data as object, p)) {
         data = (data as Record<string, unknown>)[p];
       } else {
         return null;

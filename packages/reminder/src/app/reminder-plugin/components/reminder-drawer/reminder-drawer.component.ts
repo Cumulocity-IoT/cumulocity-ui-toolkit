@@ -225,6 +225,7 @@ export class ReminderDrawerComponent implements OnDestroy {
    */
   private handleConfigChange(config: ReminderConfig): void {
     if (
+      config?.filter &&
       Object.hasOwn(config.filter, 'reminderType') &&
       this.reminderTypeFilter !== config.filter?.reminderType
     ) {

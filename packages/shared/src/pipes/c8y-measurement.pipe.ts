@@ -44,7 +44,7 @@ export class C8yMeasurementPipe implements PipeTransform {
       const nestedKeys = Object.keys(fragment);
 
       for (const nestedKey of nestedKeys) {
-        if (Object.hasOwn(fragment, `${nestedKey}.value`)) {
+        if (fragment && Object.hasOwn(fragment, `${nestedKey}.value`)) {
           result.push(`${key}.${nestedKey}`);
         }
       }

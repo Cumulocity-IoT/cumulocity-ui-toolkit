@@ -10,6 +10,8 @@ describe('Tenant Option Management', () => {
   });
 
   it('Verify proper setup', () => {
-    cy.visitShellAndWaitForSelector('', 'en', 'c8y-navigator-node button[data-cy="Options"]');
+    cy.visitShellAndWaitForSelector('', 'en', '#navigator');
+    cy.get('c8y-navigator-node button[data-cy="Settings"]').click();
+    cy.get('c8y-navigator-node button[data-cy="Options"]')
   });
 });

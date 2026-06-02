@@ -5,7 +5,7 @@ export interface SearchColumn extends Column {
 }
 
 export function hasSearchableConfig(column: Column): column is SearchColumn {
-  return Object.hasOwn(column, 'searchable');
+  return column && Object.hasOwn(column, 'searchable');
 }
 
 export type ColumnSortingConfig = {
