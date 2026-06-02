@@ -1,8 +1,6 @@
 import './polyfills';
 import '@angular/compiler';
 
-import './locales/de.po';
-
 import { enableProdMode } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { BootstrapComponent, provideBootstrapMetadata } from '@c8y/ngx-components';

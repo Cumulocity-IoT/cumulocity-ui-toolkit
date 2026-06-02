@@ -1,5 +1,5 @@
 // Third-party Cypress plugins
-import 'cumulocity-cypress/lib/commands';
+import 'cumulocity-cypress/commands';
 import installLogsCollector from 'cypress-terminal-report/src/installLogsCollector';
 
 // Custom commands and support library

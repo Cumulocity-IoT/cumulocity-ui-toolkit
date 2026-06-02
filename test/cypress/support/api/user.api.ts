@@ -45,13 +45,13 @@ export function deleteUsers(users: IUser[]): Cypress.Chainable {
  */
 export function cleanupCypressUsers(): Cypress.Chainable {
   return cy
-    .c8yclient((c) => c.user.list({ pageSize: 10000, withTotalPages: false }))
+    .c8yclient((c) => c.user.list({ pageSize: 2000, withTotalPages: false }))
     .c8yclient((c, res) => {
       const body = res.body as IUser[] | { users?: IUser[] };
       const users = Array.isArray(body) ? body : body.users ?? [];
 
       return users
-        .filter((u) => u.userName?.toLowerCase().startsWith('cypress'))
+        .filter((u) => u.userName?.toLowerCase() !== 'cypress' &&  u.userName?.toLowerCase().startsWith('cypress'))
         .map((u) => c.user.delete(u.id!));
     });
 }

@@ -7,8 +7,6 @@ import { BootstrapComponent, provideBootstrapMetadata } from '@c8y/ngx-component
 import { BootstrapMetaData } from '@c8y/bootstrap';
 import { appConfig } from './app/app.config';
 
-import './locales/de.po';
-
 declare const __MODE__: string;
 if (__MODE__ === 'production') {
   enableProdMode();

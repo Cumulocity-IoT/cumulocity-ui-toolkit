@@ -1,36 +1,43 @@
-import { IUser } from '@c8y/client';
+import { IManagedObject } from '@c8y/client';
+import {
+  stubGroupDashboard,
+  cleanupCypressUsers,
+  clearAllManagedObjectsOfTest,
+  generateUser,
+} from '../support';
 
 describe('Favorites Manager', () => {
   // define a user, which should be used for the test instead
   // of technical users, which are only used for the test setup
-  const testUser = {
-    userName: 'testuser',
-    password: 'ZVfJbDXuN!3t',
-    displayName: 'Test User',
-    email: 'test.user@softwareag.com',
-  } as IUser;
-
-  const assetId = '6916200';
+  const testUser = generateUser('favorites-manager-e2e');
+  let group: IManagedObject;
 
   // create a new user before the test suite runs, who has the necessary roles
   // and permissions to access the Cockpit application extended with the Favorites Manager module
   before(() => {
     Cypress.session.clearAllSavedSessions();
-
-    console.log('environment variables', Cypress.env());
-
-    cy.getAuth().login();
-    cy.createUser(testUser, ['business'], ['cockpit']);
+    cy.getAuth()
+      .login()
+      .then(() => {
+        cleanupCypressUsers();
+        clearAllManagedObjectsOfTest('favorites-manager-e2e');
+      });
+    cy.createUserWithGlobalRoles(testUser, ['Cockpit User', 'Business User']);
+    cy.createGroup({ name: 'Favorites Group', cy_testId: 'favorites-manager-e2e' }).then((g) => {
+      group = g;
+    });
   });
 
-  // login with the new user before each test
+  // login with the new user before each test and mock the device inventory
   beforeEach(() => {
     cy.getAuth(testUser.userName!, testUser.password!).login().disableGainsight();
   });
 
   // delete the user after the test suite runs
   after(() => {
-    cy.getAuth().login().deleteUser(testUser);
+    cy.getAuth().login();
+    clearAllManagedObjectsOfTest('favorites-manager-e2e');
+    cy.deleteUser(testUser);
   });
 
   it('should load favorites list when clicking on favorites menu item', () => {
@@ -39,7 +46,7 @@ describe('Favorites Manager', () => {
     cy.visitShellAndWaitForSelector('', 'en', '#navigator');
 
     // check for the favorites menu item and click on it
-    cy.get('#navigator [data-cy="Favorites"]', { timeout: 60000 })
+    cy.get('c8y-navigator-node button[data-cy="favorites.title"]', { timeout: 60000 })
       .should('exist')
       .should('be.visible')
       .contains('Favorites')
@@ -54,7 +61,7 @@ describe('Favorites Manager', () => {
     cy.visitShellAndWaitForSelector('', 'en', '#navigator');
 
     // check for the favorites menu item and click on it to navigate to the favorites list
-    cy.get('#navigator [data-cy="Favorites"]', { timeout: 60000 })
+    cy.get('c8y-navigator-node button[data-cy="favorites.title"]', { timeout: 60000 })
       .should('exist')
       .should('be.visible')
       .contains('Favorites')
@@ -67,17 +74,16 @@ describe('Favorites Manager', () => {
       .should('exist')
       .should('be.visible');
 
-    cy.visitShellAndWaitForSelector(`group/${assetId}`, 'en', '#navigator');
-
     // listen for the request to update the favorite list in the user object
     cy.intercept('PUT', '/user/currentUser').as('addFavoriteForUser');
     cy.intercept('GET', '/user/currentUser').as('getFavoritesForUser');
 
-    // check for the favorites action button its state and click on it
-    // asset isn't a favorite yet and the button should contain the text "Add to favorites"
-    cy.get('[data-cy="favorites-action-button"]', { timeout: 60000 })
-      .should('exist')
-      .should('be.visible')
+    stubGroupDashboard(group, []);
+    cy.visitShellAndWaitForSelector(
+      `group/${group.id}`,
+      'en',
+      '[data-cy="favorites-action-button"]'
+    )
       .contains('Add to favorites')
       .click();
 
@@ -91,7 +97,7 @@ describe('Favorites Manager', () => {
       .contains('Remove from favorites');
 
     // navigate back to the favorites list and expect the list to contain the favorite
-    cy.get('#navigator [data-cy="Favorites"]')
+    cy.get('c8y-navigator-node button[data-cy="favorites.title"]', { timeout: 60000 })
       .should('exist')
       .should('be.visible')
       .contains('Favorites')
@@ -110,7 +116,7 @@ describe('Favorites Manager', () => {
     )
       .should('have.length', 1)
       .within((favoriteRow) => {
-        cy.wrap(favoriteRow).get('[data-cy="data-grid--System ID"]').contains(assetId);
+        cy.wrap(favoriteRow).get('[data-cy="data-grid--System ID"]').contains(group.id!);
 
         // navigate to the device detail page by clicking on the favorite
         cy.wrap(favoriteRow).get('[data-cy="data-grid--Name"] a').should('exist').click();
@@ -134,7 +140,7 @@ describe('Favorites Manager', () => {
       .contains('Add to favorites');
 
     // navigate back to the favorites list and expect the list to be empty
-    cy.get('#navigator [data-cy="Favorites"]')
+    cy.get('c8y-navigator-node button[data-cy="favorites.title"]')
       .should('exist')
       .should('be.visible')
       .contains('Favorites')

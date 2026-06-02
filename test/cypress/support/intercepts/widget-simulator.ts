@@ -111,6 +111,11 @@ export function stubGroupDashboard(
     `inventory/managedObjects?*c8y_Dashboard!group!${group.id}*`,
     { ...mockListResponse([dashboard]) }
   );
+  cy.intercept(
+    'GET',
+    `inventory/managedObjects/${dashboard.id}`,
+    { ...dashboard }
+  );
   return dashboard;
 }
 
@@ -175,10 +180,10 @@ export function visitGroupWithWidget(
   widgets: Widget[],
   waitForSelector: string,
   language: C8yLanguage = 'en'
-): IManagedObject {
+): Cypress.Chainable<IManagedObject> {
   const dashboard = stubGroupDashboard(group, children, widgets);
   cy.visitShellAndWaitForSelector(`group/${group.id}`, language, waitForSelector);
-  return dashboard;
+  return cy.wrap(dashboard);
 }
 
 /**
@@ -189,7 +194,7 @@ export function visitGroupWithEmptyDashboard(
   group: Partial<IManagedObject>,
   children: IManagedObject[] = [],
   language: C8yLanguage = 'en'
-): IManagedObject {
+): Cypress.Chainable<IManagedObject> {
   return visitGroupWithWidget(group, children, [], DashboardSelectors.WIDGET_EDIT_READY, language);
 }
 

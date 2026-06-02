@@ -2,6 +2,7 @@
   "name": "cypress-tests",
   "version": "0.0.0",
   "description": "Contains end-to-end tests for the packages.",
+  "packageManager": "pnpm@11.0.9",
   "keywords": [],
   "author": "UI Guild, @hnaether-c8y",
   "license": "Apache-2.0",
