@@ -8,7 +8,7 @@ env:
   C8Y_USERNAME: ${{ vars.C8Y_USERNAME }}
   C8Y_PASSWORD: ${{ secrets.C8Y_PASSWORD }}
   C8Y_BASEURL: ${{ vars.C8Y_BASEURL }}
-  C8Y_SHELL_TARGET: 'cockpit'
+  C8Y_SHELL_TARGET: 'cockpit-test-1023'
   C8Y_CYPRESS_URL: 'http://localhost:9001'
 
 permissions:
