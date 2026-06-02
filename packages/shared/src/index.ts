@@ -31,3 +31,4 @@ export * from './services/microservice.service';
 export * from './services/operation-toast.service';
 export * from './services/tenant-option-credentials.service';
 export * from './services/widget-configuration.service';
+export * from './services/asset-access.service';
