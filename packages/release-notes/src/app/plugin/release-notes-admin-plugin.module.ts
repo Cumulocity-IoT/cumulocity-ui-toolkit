@@ -1,5 +1,11 @@
 import { ENVIRONMENT_INITIALIZER, inject, importProvidersFrom } from '@angular/core';
-import { AlertModule, CoreModule, hookNavigator, hookRoute } from '@c8y/ngx-components';
+import {
+  AlertModule,
+  CoreModule,
+  hookNavigator,
+  hookRoute,
+  NavigatorNode,
+} from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { AssetSelectorModule } from '@c8y/ngx-components/assets-navigator';
 import { FormlyModule } from '@ngx-formly/core';
@@ -29,14 +35,15 @@ export const ReleaseNotesAdminPluginProviders = [
         (m) => m.ReminderNotesAdminListComponent
       ),
   }),
-  hookNavigator({
-    label: gettext('Release Notes'),
-    icon: 'activity-history',
-    path: `/${RELEASE_NOTES__ADMIN_PATH}`,
-    parent: 'Settings',
-    priority: 0,
-    preventDuplicates: true,
-  }),
+  hookNavigator(
+    new NavigatorNode({
+      label: gettext('Release Notes'),
+      icon: 'activity-history',
+      path: `/${RELEASE_NOTES__ADMIN_PATH}`,
+      parent: 'Settings',
+      priority: 0,
+    })
+  ),
   {
     provide: ENVIRONMENT_INITIALIZER,
     multi: true,
