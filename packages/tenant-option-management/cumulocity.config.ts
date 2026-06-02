@@ -15,7 +15,7 @@ export default {
       "base-uri 'none'; default-src 'self' 'unsafe-inline' http: https: ws: wss:; connect-src 'self' http: https: ws: wss:;  script-src 'self' *.bugherd.com *.twitter.com *.twimg.com *.aptrinsic.com 'unsafe-inline' 'unsafe-eval' data:; style-src * 'unsafe-inline' blob:; img-src * data: blob:; font-src * data:; frame-src *; worker-src 'self' blob:;",
     dynamicOptionsUrl: true,
     remotes: {
-      'widget-plugin': ['TenantOptionManagementProviders'],
+      'sag-ps-iot-pkg-tenant-option-management-plugin': ['TenantOptionManagementProviders'],
     },
     package: 'plugin',
     isPackage: true,
