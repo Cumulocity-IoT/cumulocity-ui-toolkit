@@ -117,6 +117,7 @@
     "@c8y/devkit": "1023.14.132",
     "@c8y/options": "1023.14.132",
     "@types/jasmine": "~5.1.15",
+    "@types/node": "^22.15.0",
     "@types/lodash": "^4.17.13",
     "@typescript-eslint/eslint-plugin": "^8.60.1",
     "@typescript-eslint/parser": "^8.60.1",
@@ -140,6 +141,7 @@
   },
   "overrides": {
     "globals": "14.0.0",
-    "typescript": "~5.9.2"
+    "typescript": "~5.9.2",
+    "@types/node": "^22.15.0"
   }
 }
