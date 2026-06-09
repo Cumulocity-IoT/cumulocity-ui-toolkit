@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AlertService, CoreModule } from '@c8y/ngx-components';
+import { IconSelectorService } from '@c8y/ngx-components/icon-selector';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { AssetDefinition, SmartViewColumn, SmartViewConfiguration } from '../../smart-views.model';
@@ -21,6 +22,7 @@ export class CreateSmartViewConfigurationModalComponent implements OnInit {
   private readonly bsModalRef = inject(BsModalRef);
   private readonly alertService = inject(AlertService);
   private readonly configurationService = inject(SmartViewConfigurationService);
+  private readonly iconSelectorService = inject(IconSelectorService);
 
   /** Existing configuration to edit. When unset, the modal creates a new one. */
   configuration?: SmartViewConfiguration;
@@ -50,6 +52,7 @@ export class CreateSmartViewConfigurationModalComponent implements OnInit {
     name: gettext('Name'),
     namePlaceholder: gettext('e.g. Pumps overview'),
     icon: gettext('Icon'),
+    selectIcon: gettext('Select icon'),
     assetDefinition: gettext('Asset definition'),
     assetDefinitionPlaceholder: gettext('Select an asset definition'),
     noDefinitions: gettext('No asset definitions found.'),
@@ -91,6 +94,34 @@ export class CreateSmartViewConfigurationModalComponent implements OnInit {
       !!this.assetDefinitionId &&
       this.columns.some((column) => column.name.trim() && column.path.trim())
     );
+  }
+
+  /** Defaults the icon to the selected asset definition's configured icon. */
+  onAssetDefinitionChange(): void {
+    const assetDefinition = this.assetDefinitions().find(
+      (definition) => definition.id === this.assetDefinitionId
+    );
+    const iconName = assetDefinition?.icon?.name;
+
+    if (iconName) {
+      this.icon = iconName;
+    }
+  }
+
+  /** Opens the icon selector modal and stores the chosen icon. */
+  async selectIcon(): Promise<void> {
+    try {
+      const selected = await this.iconSelectorService.selectIcon({
+        title: this.labels.selectIcon,
+        currentSelection: this.icon,
+      });
+
+      if (selected) {
+        this.icon = selected;
+      }
+    } catch {
+      // Selection dismissed — keep the current icon.
+    }
   }
 
   addColumn(): void {
