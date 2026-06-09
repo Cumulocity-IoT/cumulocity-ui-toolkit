@@ -1,6 +1,7 @@
-import { hookNavigator, hookRoute, NavigatorNode } from '@c8y/ngx-components';
+import { hookActionBar, hookNavigator, hookRoute, NavigatorNode } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { SmartViewFactory } from './components/smart-view/smart-view.factory';
+import { CreateSmartViewConfigurationActionFactory } from './components/create-smart-view-configuration/create-smart-view-configuration-action.factory';
 
 // Plugin 1 — Smart view device page
 export const SmartViewsPluginProviders = [
@@ -30,4 +31,5 @@ export const SmartViewsConfigurationPluginProviders = [
         (m) => m.SmartViewConfigurationComponent
       ),
   }),
+  hookActionBar(CreateSmartViewConfigurationActionFactory),
 ];

@@ -1,0 +1,126 @@
+<c8y-modal [title]="labels.title" [customFooter]="true">
+  <div class="p-16">
+    <c8y-form-group>
+      <label for="configName">{{ labels.name }}</label>
+      <input
+        id="configName"
+        class="form-control"
+        type="text"
+        name="configName"
+        autocomplete="off"
+        [placeholder]="labels.namePlaceholder"
+        [(ngModel)]="name"
+        required
+        [attr.aria-label]="labels.name"
+      />
+    </c8y-form-group>
+
+    <c8y-form-group>
+      <label for="assetDefinition">{{ labels.assetDefinition }}</label>
+      @if (loadingDefinitions()) {
+        <c8y-loading></c8y-loading>
+      } @else if (assetDefinitions().length === 0) {
+        <p class="text-muted">{{ labels.noDefinitions }}</p>
+      } @else {
+        <div class="c8y-select-wrapper">
+          <select
+            id="assetDefinition"
+            name="assetDefinition"
+            class="form-control"
+            required
+            [(ngModel)]="assetDefinitionId"
+            [attr.aria-label]="labels.assetDefinition"
+          >
+            <option value="" disabled selected>{{ labels.assetDefinitionPlaceholder }}</option>
+            @for (definition of assetDefinitions(); track definition.id) {
+              <option [value]="definition.id">{{ definition.name }}</option>
+            }
+          </select>
+        </div>
+      }
+    </c8y-form-group>
+
+    <c8y-form-group>
+      <label for="configIcon">{{ labels.icon }}</label>
+      <input
+        id="configIcon"
+        class="form-control"
+        type="text"
+        name="configIcon"
+        autocomplete="off"
+        placeholder="e.g. telescope"
+        [(ngModel)]="icon"
+        [attr.aria-label]="labels.icon"
+      />
+    </c8y-form-group>
+
+    <c8y-form-group>
+      <label>{{ labels.columns }}</label>
+      @for (column of columns; track $index) {
+        <div class="input-group m-b-8">
+          <input
+            class="form-control"
+            type="text"
+            [placeholder]="labels.columnName"
+            [(ngModel)]="column.name"
+            [name]="'columnName' + $index"
+            [attr.aria-label]="labels.columnName"
+          />
+          <input
+            class="form-control"
+            type="text"
+            [placeholder]="labels.columnPath"
+            [(ngModel)]="column.path"
+            [name]="'columnPath' + $index"
+            [attr.aria-label]="labels.columnPath"
+          />
+          <input
+            class="form-control"
+            type="text"
+            [placeholder]="labels.columnHeader"
+            [(ngModel)]="column.header"
+            [name]="'columnHeader' + $index"
+            [attr.aria-label]="labels.columnHeader"
+          />
+          <span class="input-group-btn">
+            <button
+              type="button"
+              class="btn btn-default"
+              [title]="labels.removeColumn"
+              [attr.aria-label]="labels.removeColumn"
+              [disabled]="columns.length === 1"
+              (click)="removeColumn($index)"
+            >
+              <i c8yIcon="minus-circle"></i>
+            </button>
+            @if ($last) {
+              <button
+                type="button"
+                class="btn btn-default"
+                [title]="labels.addColumn"
+                [attr.aria-label]="labels.addColumn"
+                (click)="addColumn()"
+              >
+                <i c8yIcon="plus-circle"></i>
+              </button>
+            }
+          </span>
+        </div>
+      }
+    </c8y-form-group>
+  </div>
+
+  <div c8y-modal-footer-custom class="modal-footer">
+    <button type="button" class="btn btn-default" (click)="onDismiss()">
+      {{ labels.cancel }}
+    </button>
+    <button
+      type="button"
+      class="btn btn-primary"
+      [disabled]="!isValid || saving()"
+      (click)="onClose()"
+    >
+      {{ labels.ok }}
+    </button>
+  </div>
+</c8y-modal>

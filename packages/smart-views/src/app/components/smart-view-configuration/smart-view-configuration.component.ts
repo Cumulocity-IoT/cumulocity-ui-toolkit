@@ -1,9 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { InventoryService } from '@c8y/client';
 import { Column, CoreModule, DisplayOptions, Pagination } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { SmartViewConfiguration } from '../../smart-views.model';
+import { SmartViewConfigurationService } from '../../services/smart-view-configuration.service';
 
 @Component({
   standalone: true,
@@ -13,7 +14,8 @@ import { SmartViewConfiguration } from '../../smart-views.model';
   imports: [CommonModule, CoreModule],
 })
 export class SmartViewConfigurationComponent implements OnInit {
-  private readonly inventoryService = inject(InventoryService);
+  private readonly configurationService = inject(SmartViewConfigurationService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly configurations = signal<SmartViewConfiguration[]>([]);
   readonly loading = signal(true);
@@ -71,17 +73,20 @@ export class SmartViewConfigurationComponent implements OnInit {
 
   ngOnInit(): void {
     void this.loadConfigurations();
+
+    // Reload the grid whenever a configuration is created elsewhere
+    // (e.g. via the action-bar "Add configuration" modal).
+    this.configurationService.configurationsChanged$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => void this.loadConfigurations());
   }
 
   private async loadConfigurations(): Promise<void> {
-    try {
-      const { data } = await this.inventoryService.list({
-        type: 'c8y_SmartViewConfiguration',
-        pageSize: 2000,
-        withTotalPages: true,
-      });
+    this.loading.set(true);
+    this.errorMessage.set(null);
 
-      this.configurations.set(data as SmartViewConfiguration[]);
+    try {
+      this.configurations.set(await this.configurationService.listConfigurations());
     } catch {
       this.errorMessage.set(gettext('Could not load smart view configurations.'));
     } finally {
