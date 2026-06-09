@@ -82,7 +82,7 @@ export class SmartViewConfigurationService {
     return {
       icon: draft.icon,
       // Best-effort inventory query selecting assets of the chosen definition.
-      query: `(type eq '${draft.assetDefinitionName}')`,
+      query: `(type eq '${draft.assetDefinitionName}') and has(c8y_IsAsset)`,
       columns: draft.columns,
       assetDefinitionId: draft.assetDefinitionId,
       assetDefinitionName: draft.assetDefinitionName,
