@@ -29,6 +29,7 @@
             class="form-control"
             required
             [(ngModel)]="assetDefinitionId"
+            (ngModelChange)="onAssetDefinitionChange()"
             [attr.aria-label]="labels.assetDefinition"
           >
             <option value="" disabled selected>{{ labels.assetDefinitionPlaceholder }}</option>
@@ -41,17 +42,19 @@
     </c8y-form-group>
 
     <c8y-form-group>
-      <label for="configIcon">{{ labels.icon }}</label>
-      <input
-        id="configIcon"
-        class="form-control"
-        type="text"
-        name="configIcon"
-        autocomplete="off"
-        placeholder="e.g. telescope"
-        [(ngModel)]="icon"
-        [attr.aria-label]="labels.icon"
-      />
+      <label>{{ labels.icon }}</label>
+      <div class="d-flex a-i-center gap-8">
+        <button
+          type="button"
+          class="btn btn-default"
+          [title]="labels.selectIcon"
+          [attr.aria-label]="labels.selectIcon"
+          (click)="selectIcon()"
+        >
+          <i [c8yIcon]="icon" class="text-24"></i>
+          {{ labels.selectIcon }}
+        </button>
+      </div>
     </c8y-form-group>
 
     <c8y-form-group>

@@ -19,7 +19,7 @@ export const SmartViewsConfigurationPluginProviders = [
     new NavigatorNode({
       label: gettext('Smart views'),
       path: 'smart-views-configuration',
-      icon: 'telescope',
+      icon: 'search-in-list',
       parent: 'settings',
       priority: 100,
     })

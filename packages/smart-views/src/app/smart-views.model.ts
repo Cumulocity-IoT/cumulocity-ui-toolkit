@@ -38,11 +38,20 @@ export interface SmartViewConfiguration extends IManagedObject {
 }
 
 /**
+ * Icon configured on an asset definition.
+ */
+export interface AssetDefinitionIcon {
+  name: string;
+  category?: string;
+}
+
+/**
  * An asset definition managed object (type `c8y_AssetDefinition`) that can be
  * used as the data source for a smart view.
  */
 export interface AssetDefinition extends IManagedObject {
   name: string;
+  icon?: AssetDefinitionIcon;
 }
 
 /**
