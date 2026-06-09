@@ -3,9 +3,14 @@ import { FormsModule } from '@angular/forms';
 import { AlertService, CoreModule } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { BsModalRef } from 'ngx-bootstrap/modal';
-import { AssetDefinition, SmartViewColumn } from '../../smart-views.model';
+import { AssetDefinition, SmartViewColumn, SmartViewConfiguration } from '../../smart-views.model';
 import { SmartViewConfigurationService } from '../../services/smart-view-configuration.service';
 
+/**
+ * Modal used to create a new smart view configuration or edit an existing one.
+ * In edit mode, the existing configuration is passed via the modal's
+ * `initialState.configuration`.
+ */
 @Component({
   standalone: true,
   selector: 'app-create-smart-view-configuration-modal',
@@ -16,6 +21,9 @@ export class CreateSmartViewConfigurationModalComponent implements OnInit {
   private readonly bsModalRef = inject(BsModalRef);
   private readonly alertService = inject(AlertService);
   private readonly configurationService = inject(SmartViewConfigurationService);
+
+  /** Existing configuration to edit. When unset, the modal creates a new one. */
+  configuration?: SmartViewConfiguration;
 
   readonly assetDefinitions = signal<AssetDefinition[]>([]);
   readonly loadingDefinitions = signal(true);
@@ -28,7 +36,8 @@ export class CreateSmartViewConfigurationModalComponent implements OnInit {
   columns: SmartViewColumn[] = [{ name: '', path: '', header: '' }];
 
   readonly labels = {
-    title: gettext('Create smart view configuration'),
+    createTitle: gettext('Create smart view configuration'),
+    editTitle: gettext('Edit smart view configuration'),
     name: gettext('Name'),
     namePlaceholder: gettext('e.g. Pumps overview'),
     icon: gettext('Icon'),
@@ -41,15 +50,32 @@ export class CreateSmartViewConfigurationModalComponent implements OnInit {
     columnHeader: gettext('Header'),
     addColumn: gettext('Add column'),
     removeColumn: gettext('Remove column'),
-    ok: gettext('Create'),
+    create: gettext('Create'),
+    save: gettext('Save'),
     cancel: gettext('Cancel'),
   };
 
+  get isEditMode(): boolean {
+    return !!this.configuration;
+  }
+
+  get title(): string {
+    return this.isEditMode ? this.labels.editTitle : this.labels.createTitle;
+  }
+
+  get okLabel(): string {
+    return this.isEditMode ? this.labels.save : this.labels.create;
+  }
+
   ngOnInit(): void {
+    if (this.configuration) {
+      this.applyConfiguration(this.configuration);
+    }
+
     void this.loadAssetDefinitions();
   }
 
-  /** True when the form has the minimum data required to create a configuration. */
+  /** True when the form has the minimum data required to save a configuration. */
   get isValid(): boolean {
     return (
       !!this.name.trim() &&
@@ -75,26 +101,33 @@ export class CreateSmartViewConfigurationModalComponent implements OnInit {
       (definition) => definition.id === this.assetDefinitionId
     );
 
+    const draft = {
+      name: this.name.trim(),
+      icon: this.icon?.trim() || 'telescope',
+      assetDefinitionId: this.assetDefinitionId,
+      assetDefinitionName: assetDefinition?.name ?? '',
+      columns: this.columns
+        .filter((column) => column.name.trim() && column.path.trim())
+        .map((column) => ({
+          name: column.name.trim(),
+          path: column.path.trim(),
+          header: column.header.trim() || column.name.trim(),
+        })),
+    };
+
     this.saving.set(true);
 
     try {
-      await this.configurationService.create({
-        name: this.name.trim(),
-        icon: this.icon?.trim() || 'telescope',
-        assetDefinitionId: this.assetDefinitionId,
-        assetDefinitionName: assetDefinition?.name ?? '',
-        columns: this.columns
-          .filter((column) => column.name.trim() && column.path.trim())
-          .map((column) => ({
-            name: column.name.trim(),
-            path: column.path.trim(),
-            header: column.header.trim() || column.name.trim(),
-          })),
-      });
-      this.alertService.success(gettext('Smart view configuration created.'));
+      if (this.configuration) {
+        await this.configurationService.update(this.configuration.id, draft);
+        this.alertService.success(gettext('Smart view configuration updated.'));
+      } else {
+        await this.configurationService.create(draft);
+        this.alertService.success(gettext('Smart view configuration created.'));
+      }
       this.bsModalRef.hide();
     } catch {
-      this.alertService.danger(gettext('Could not create smart view configuration.'));
+      this.alertService.danger(gettext('Could not save smart view configuration.'));
     } finally {
       this.saving.set(false);
     }
@@ -102,6 +135,19 @@ export class CreateSmartViewConfigurationModalComponent implements OnInit {
 
   onDismiss(): void {
     this.bsModalRef.hide();
+  }
+
+  /** Pre-fills the form fields from an existing configuration (edit mode). */
+  private applyConfiguration(configuration: SmartViewConfiguration): void {
+    const data = configuration.c8y_SmartViewConfiguration;
+
+    this.name = configuration.name ?? '';
+    this.icon = data?.icon ?? 'telescope';
+    this.assetDefinitionId = data?.assetDefinitionId ?? '';
+    this.columns =
+      data?.columns?.length > 0
+        ? data.columns.map((column) => ({ ...column }))
+        : [{ name: '', path: '', header: '' }];
   }
 
   private async loadAssetDefinitions(): Promise<void> {

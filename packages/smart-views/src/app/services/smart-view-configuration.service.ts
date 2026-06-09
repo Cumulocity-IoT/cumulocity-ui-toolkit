@@ -6,6 +6,7 @@ import {
   AssetDefinition,
   SMART_VIEW_CONFIGURATION_TYPE,
   SmartViewConfiguration,
+  SmartViewConfigurationData,
   SmartViewConfigurationDraft,
 } from '../smart-views.model';
 
@@ -46,18 +47,45 @@ export class SmartViewConfigurationService {
     const { data } = await this.inventoryService.create({
       type: SMART_VIEW_CONFIGURATION_TYPE,
       name: draft.name,
-      c8y_SmartViewConfiguration: {
-        icon: draft.icon,
-        // Best-effort inventory query selecting assets of the chosen definition.
-        query: `(type eq '${draft.assetDefinitionName}')`,
-        columns: draft.columns,
-        assetDefinitionId: draft.assetDefinitionId,
-        assetDefinitionName: draft.assetDefinitionName,
-      },
+      c8y_SmartViewConfiguration: this.buildConfigurationData(draft),
     });
 
     this.configurationsChangedSubject.next();
 
     return data as SmartViewConfiguration;
+  }
+
+  /** Updates an existing smart view configuration with the modal draft. */
+  async update(
+    id: SmartViewConfiguration['id'],
+    draft: SmartViewConfigurationDraft
+  ): Promise<SmartViewConfiguration> {
+    const { data } = await this.inventoryService.update({
+      id,
+      name: draft.name,
+      c8y_SmartViewConfiguration: this.buildConfigurationData(draft),
+    });
+
+    this.configurationsChangedSubject.next();
+
+    return data as SmartViewConfiguration;
+  }
+
+  /** Deletes a smart view configuration. */
+  async delete(id: SmartViewConfiguration['id']): Promise<void> {
+    await this.inventoryService.delete(id);
+
+    this.configurationsChangedSubject.next();
+  }
+
+  private buildConfigurationData(draft: SmartViewConfigurationDraft): SmartViewConfigurationData {
+    return {
+      icon: draft.icon,
+      // Best-effort inventory query selecting assets of the chosen definition.
+      query: `(type eq '${draft.assetDefinitionName}')`,
+      columns: draft.columns,
+      assetDefinitionId: draft.assetDefinitionId,
+      assetDefinitionName: draft.assetDefinitionName,
+    };
   }
 }

@@ -4,7 +4,7 @@ import { ActionBarItem, ExtensionFactory } from '@c8y/ngx-components';
 import { CreateSmartViewConfigurationActionComponent } from './create-smart-view-configuration-action.component';
 
 /** Route on which the "Add configuration" action should be displayed. */
-const CONFIGURATION_ROUTE = 'smart-views/configuration';
+const CONFIGURATION_ROUTE = 'smart-views-configuration';
 
 /**
  * Adds the "Add configuration" action to the action bar, but only while the

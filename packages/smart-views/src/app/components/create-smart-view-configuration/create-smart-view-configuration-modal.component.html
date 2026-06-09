@@ -1,4 +1,4 @@
-<c8y-modal [title]="labels.title" [customFooter]="true">
+<c8y-modal [title]="title" [customFooter]="true">
   <div class="p-16">
     <c8y-form-group>
       <label for="configName">{{ labels.name }}</label>
@@ -120,7 +120,7 @@
       [disabled]="!isValid || saving()"
       (click)="onClose()"
     >
-      {{ labels.ok }}
+      {{ okLabel }}
     </button>
   </div>
 </c8y-modal>
