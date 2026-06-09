@@ -12,5 +12,13 @@
   [displayOptions]="displayOptions"
   [actionControls]="actionControls"
 >
+  <c8y-column name="icon">
+    <ng-template c8yCellRendererDef let-context>
+      @if (context.value) {
+        <i [c8yIcon]="context.value" class="text-16"></i>
+      }
+    </ng-template>
+  </c8y-column>
+
   <c8y-ui-empty-state [title]="labels.empty" icon="cog"></c8y-ui-empty-state>
 </c8y-data-grid>
