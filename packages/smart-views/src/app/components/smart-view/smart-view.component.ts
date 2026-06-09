@@ -1,6 +1,6 @@
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { InventoryService } from '@c8y/client';
 import { Column, CoreModule, Pagination } from '@c8y/ngx-components';
 import { isSmartViewManagedObject } from '../../models/smart-view-configuration.model';
@@ -16,7 +16,7 @@ import { SmartViewDatasourceService } from '../../services/smart-view-datasource
   selector: 'app-smart-view',
   templateUrl: './smart-view.component.html',
   styleUrls: ['./smart-view.component.less'],
-  imports: [CoreModule],
+  imports: [CoreModule, RouterModule],
   providers: [SmartViewDatasourceService],
 })
 export class SmartViewComponent implements OnInit {
@@ -87,7 +87,8 @@ export class SmartViewComponent implements OnInit {
       path: col.path,
       header: col.header,
       sortable: col.path !== 'id',
-      filterable: false,
+      filterable: col.path !== 'id',
+      searchable: col.path !== 'id',
     }));
   }
 }
