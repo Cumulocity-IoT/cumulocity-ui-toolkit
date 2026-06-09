@@ -1,4 +1,5 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { InventoryService } from '@c8y/client';
 import { Column, CoreModule, Pagination } from '@c8y/ngx-components';
@@ -41,11 +42,16 @@ export class SmartViewComponent implements OnInit {
   };
 
   ngOnInit(): void {
-    void this.loadDevice();
+    this.activatedRoute.paramMap
+      .pipe(takeUntilDestroyed(inject(DestroyRef)))
+      .subscribe((params) => void this.loadDevice(params.get('id')));
   }
 
-  private async loadDevice(): Promise<void> {
-    const deviceId = this.activatedRoute.snapshot.paramMap.get('id');
+  private async loadDevice(deviceId: string | null): Promise<void> {
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    this.managedObject.set(null);
+    this.columns.set([]);
 
     if (!deviceId) {
       this.errorMessage.set('No device ID provided in the route.');
