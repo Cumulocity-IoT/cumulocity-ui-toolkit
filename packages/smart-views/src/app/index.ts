@@ -1,15 +1,15 @@
 import { hookNavigator, hookRoute, NavigatorNode } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
+import { SmartViewFactory } from './components/smart-view/smart-view.factory';
 
 // Plugin 1 — Smart view device page
 export const SmartViewsPluginProviders = [
   hookRoute({
-    path: 'smart-view/:deviceId',
+    path: 'smart-view/:id',
     loadComponent: () =>
-      import('./components/smart-view/smart-view.component').then(
-        (m) => m.SmartViewComponent
-      ),
+      import('./components/smart-view/smart-view.component').then((m) => m.SmartViewComponent),
   }),
+  hookNavigator(SmartViewFactory),
 ];
 
 // Plugin 2 — Smart views configuration (navigator entry + configuration route)
@@ -19,14 +19,15 @@ export const SmartViewsConfigurationPluginProviders = [
       label: gettext('Smart views'),
       path: 'smart-views/configuration',
       icon: 'telescope',
+      parent: 'settings',
       priority: 100,
     })
   ),
   hookRoute({
     path: 'smart-views/configuration',
     loadComponent: () =>
-      import(
-        './components/smart-view-configuration/smart-view-configuration.component'
-      ).then((m) => m.SmartViewConfigurationComponent),
+      import('./components/smart-view-configuration/smart-view-configuration.component').then(
+        (m) => m.SmartViewConfigurationComponent
+      ),
   }),
 ];
