@@ -23,6 +23,7 @@ export class SmartViewComponent implements OnInit {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly inventoryService = inject(InventoryService);
   readonly datasource = inject(SmartViewDatasourceService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly managedObject = signal<ISmartViewManagedObject | null>(null);
   readonly loading = signal(true);
@@ -43,7 +44,7 @@ export class SmartViewComponent implements OnInit {
 
   ngOnInit(): void {
     this.activatedRoute.paramMap
-      .pipe(takeUntilDestroyed(inject(DestroyRef)))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => void this.loadDevice(params.get('id')));
   }
 
