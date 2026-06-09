@@ -7,6 +7,7 @@ import moment from 'moment';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { ActiveTabService } from '~services/active-tab.service';
+import { AssetAccessService } from '~services/asset-access.service';
 import { DomService } from '~services/dom.service';
 import { LocalStorageService } from '~services/local-storage.service';
 import { ReminderDrawerComponent } from '../components/reminder-drawer/reminder-drawer.component';
@@ -15,6 +16,7 @@ import {
   REMINDER__INITIAL_QUERY_SIZE,
   REMINDER__LOCAL_STORAGE__CONFIG,
   REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG,
+  REMINDER__TENANT_OPTION__ASSET_ACCESS_KEY,
   REMINDER__TENANT_OPTION__CATEGORY,
   REMINDER__TENANT_OPTION__CONFIG_KEY,
   REMINDER__TENANT_OPTION__TYPE_KEY,
@@ -27,6 +29,7 @@ import {
   ReminderStatus,
   ReminderTenantConfig,
   ReminderType,
+  ResponsibilityFilter,
 } from '../models/reminder.model';
 
 @Injectable()
@@ -40,6 +43,7 @@ export class ReminderService {
   open$ = new BehaviorSubject<boolean>(false);
   reminders$ = new BehaviorSubject<Reminder[]>([]);
   reminderCounter$ = new BehaviorSubject<number>(0);
+  responsibilityFilterEnabled$ = new BehaviorSubject<boolean>(false);
 
   get types(): ReminderType[] {
     return this._types;
@@ -50,6 +54,8 @@ export class ReminderService {
   private drawer?: ReminderDrawerComponent;
   private drawerRef?: ComponentRef<unknown>;
   private updateTimer?: NodeJS.Timeout;
+  private responsibilityIds: Set<string> = new Set();
+  private responsibilityFilter: ResponsibilityFilter = { enabled: false };
 
   private _reminderCounter = 0;
   private _reminders: Reminder[] = [];
@@ -79,14 +85,15 @@ export class ReminderService {
   }
 
   constructor(
-    private activeTabService: ActiveTabService,
     private alertService: AlertService,
-    private domService: DomService,
     private eventService: EventService,
     private eventRealtimeService: EventRealtimeService,
-    private localStorageService: LocalStorageService,
     private tenantOptionService: TenantOptionsService,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    private localStorageService: LocalStorageService,
+    private activeTabService: ActiveTabService,
+    private domService: DomService,
+    private assetAccessService: AssetAccessService
   ) {
     this.activeTabService.init();
   }
@@ -118,6 +125,13 @@ export class ReminderService {
 
     if (!this.contextFilterAvailable() && this.config$.getValue().useContext) {
       this.setConfig('useContext', false);
+    }
+
+    // Initialize responsibility filter
+    if (tenantConfig.responsibilityFilter?.enabled) {
+      this.responsibilityFilter = tenantConfig.responsibilityFilter;
+      this.responsibilityFilterEnabled$.next(true);
+      await this.loadResponsibilityIds();
     }
 
     this._types = types;
@@ -250,6 +264,26 @@ export class ReminderService {
     return groups;
   }
 
+  private applyResponsibilityFilter(reminders: Reminder[]): Reminder[] {
+    if (!this.responsibilityFilter.enabled || this.responsibilityIds.size === 0) {
+      return reminders;
+    }
+
+    const fragment: string = this.responsibilityFilter.fragment ?? 'c8y_Hierarchy';
+
+    return reminders.filter((reminder) => {
+      const hierarchyValue = reminder[fragment] as unknown;
+
+      // Show reminders without the fragment
+      if (!hierarchyValue || !Array.isArray(hierarchyValue) || hierarchyValue.length === 0) {
+        return true;
+      }
+
+      // Check if any responsibility ID matches any ID in the hierarchy
+      return hierarchyValue.some((id) => this.responsibilityIds.has(id as string));
+    });
+  }
+
   private applyReminderFilter(reminder: Reminder, filters: ReminderGroupFilter): boolean {
     const keys = Object.keys(filters);
 
@@ -320,7 +354,20 @@ export class ReminderService {
         key: REMINDER__TENANT_OPTION__CONFIG_KEY,
       });
 
-      if (response.data) return this.parseJSON<ReminderTenantConfig>(response.data.value);
+      if (response.data) {
+        try {
+          return this.parseJSON<ReminderTenantConfig>(response.data.value);
+        } catch (parseError) {
+          console.error('[R.S:5] Failed to parse tenant config JSON.', parseError);
+          this.alertService.add({
+            type: 'danger',
+            text: this.translateService.instant('reminder.error.invalidConfig') as string,
+            timeout: 5000,
+          });
+
+          return {};
+        }
+      }
     } catch {
       // tenant option not configured — context filter unavailable
     }
@@ -347,6 +394,17 @@ export class ReminderService {
     }
 
     return orderBy(types, 'name');
+  }
+
+  private async loadResponsibilityIds(): Promise<void> {
+    this.responsibilityIds.clear();
+
+    const ids = await this.assetAccessService.getAssetIdsAsync(
+      REMINDER__TENANT_OPTION__CATEGORY,
+      REMINDER__TENANT_OPTION__ASSET_ACCESS_KEY
+    );
+
+    ids.map((id) => this.responsibilityIds.add(id));
   }
 
   private getAssetUrlFromReminder(reminder: Reminder, absoluteUrl = false): string {
@@ -378,11 +436,21 @@ export class ReminderService {
 
           return r;
         });
+        // Apply responsibility filter before digest & counting
+        reminders = this.applyResponsibilityFilter(reminders);
         void this.fetchActiveReminderCounter();
         break;
       case 'CREATE':
         reminders = [...reminders, reminder];
-        if (reminder.status === ReminderStatus.active && moment(reminder.time) <= now)
+        // Apply responsibility filter before digest & counting
+        reminders = this.applyResponsibilityFilter(reminders);
+        // Only increment counter if reminder passed the responsibility filter
+        if (
+          reminders.some(
+            (r) =>
+              r.id === reminder.id && r.status === ReminderStatus.active && moment(r.time) <= now
+          )
+        )
           this.reminderCounter++;
         break;
     }
@@ -433,6 +501,9 @@ export class ReminderService {
     } catch (error) {
       console.error(error); // TODO better error handling
     }
+
+    // Apply responsibility filter before digest & grouping
+    reminders = this.applyResponsibilityFilter(reminders);
 
     return this.digestReminders(reminders);
   }
@@ -560,7 +631,6 @@ export class ReminderService {
         map((config) => {
           if (has(config, REMINDER__LOCAL_STORAGE__CONFIG))
             return this.parseJSON<ReminderConfig>(
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
               config[REMINDER__LOCAL_STORAGE__CONFIG] as string
             );
         }),

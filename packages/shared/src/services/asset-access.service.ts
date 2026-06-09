@@ -10,6 +10,7 @@ export interface AssetFilterConfig {
   method: AssetFilterMethod;
   endpoint?: string;
   managedObjectId?: string;
+  fragment?: string;
   query?: string;
   cacheTtl?: number;
 }
@@ -88,12 +89,10 @@ export class AssetAccessService {
           const option = result.data;
 
           try {
-            const config = {
+            observer.next({
               cacheTtl: this.DEFAULT_CACHE_TTL,
               ...(option?.value ? JSON.parse(option.value) : {}),
-            } as AssetFilterConfig;
-
-            observer.next(config);
+            } as AssetFilterConfig);
           } catch (parseErr) {
             console.error(
               '[AssetAccessService] Failed to parse config JSON',
@@ -157,7 +156,7 @@ export class AssetAccessService {
 
       case 'managed-object':
         return config.managedObjectId
-          ? this.fetchFromManagedObject(config.managedObjectId)
+          ? this.fetchFromManagedObject(config.managedObjectId, config.fragment)
           : of([] as string[]);
 
       case 'inventory-query':
@@ -195,14 +194,17 @@ export class AssetAccessService {
   }
 
   /**
-   * Fetches asset IDs from a managed object's assetIds property
+   * Fetches asset IDs from a managed object using an optional fragment path
    * @param managedObjectId - The ID of the managed object to fetch from
+   * @param fragment - Optional dot-notation path to the asset IDs property (e.g., 'custom.assetIds'). Defaults to 'assetIds' if not provided.
    * @returns Observable of asset ID strings from the managed object
    * @private
    */
-  private fetchFromManagedObject(managedObjectId: string): Observable<string[]> {
+  private fetchFromManagedObject(managedObjectId: string, fragment?: string): Observable<string[]> {
+    const fragmentPath = fragment || 'assetIds';
+
     return from(this.inventoryService.detail(managedObjectId)).pipe(
-      map((result) => (result.data?.assetIds as string[]) || []),
+      map((result) => this.getNestedValue<string[]>(result.data, fragmentPath) || []),
       catchError((err) => {
         console.error(
           '[AssetAccessService] Failed to fetch from managed object',
@@ -244,7 +246,7 @@ export class AssetAccessService {
         return `endpoint:${config.endpoint || ''}`;
 
       case 'managed-object':
-        return `mo:${config.managedObjectId || ''}`;
+        return `mo:${config.managedObjectId || ''}:${config.fragment || 'assetIds'}`;
 
       case 'inventory-query':
         return `query:${config.query || ''}`;
@@ -288,5 +290,21 @@ export class AssetAccessService {
    */
   private setCache(key: string, data: string[]): void {
     this.cache.set(key, { data, timestamp: Date.now() });
+  }
+
+  /**
+   * Retrieves a nested value from an object using dot-notation path
+   * @template T - The type of the value to retrieve
+   * @param obj - The object to traverse
+   * @param path - The dot-notation path to the value (e.g., 'custom.nested.assetIds')
+   * @returns The value at the specified path or undefined if not found
+   * @private
+   */
+  private getNestedValue<T>(obj: unknown, path: string): T | undefined {
+    return path.split('.').reduce<unknown>((current, key) => {
+      return current && typeof current === 'object' && key in current
+        ? (current as Record<string, unknown>)[key]
+        : undefined;
+    }, obj) as T | undefined;
   }
 }
