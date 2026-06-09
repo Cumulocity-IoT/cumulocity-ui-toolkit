@@ -3,15 +3,15 @@ import { ActivatedRoute } from '@angular/router';
 import { InventoryService } from '@c8y/client';
 import { IManagedObject } from '@c8y/client';
 import { inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { gettext } from '@c8y/ngx-components/gettext';
+import { CoreModule } from '@c8y/ngx-components';
 
 @Component({
   standalone: true,
   selector: 'app-smart-view',
   templateUrl: './smart-view.component.html',
   styleUrls: ['./smart-view.component.less'],
-  imports: [CommonModule],
+  imports: [CoreModule],
 })
 export class SmartViewComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);

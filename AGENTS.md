@@ -136,6 +136,7 @@ All commands run from the **repository root** unless noted.
 - **Locale imports in `bootstrap.ts`:** The `./locales/de.po` import must appear after `@angular/compiler` and before other Angular imports.
 - **Dependency injection:** Prefer `inject()` over constructor injection in new code.
 - **Constructor side-effects:** Never perform async work or call services in a constructor. Use `ngOnInit()`.
+- **Template control flow:** Always use Angular's built-in control flow syntax (`@if`, `@else if`, `@else`, `@for`, `@switch`). Never use the legacy structural directives `*ngIf`, `*ngFor`, `*ngSwitch`, or bare `<ng-container *ngIf=…>` wrappers. `CommonModule` must not be imported solely to enable those directives.
 - **Style:** LESS (`.less`) for component styles.
 - **Linting:** Flat ESLint config (`eslint.config.mjs`) covers TypeScript and Angular templates.
 - **No cross-package relative imports** — always use the path aliases, never `../../shared/src/...`.

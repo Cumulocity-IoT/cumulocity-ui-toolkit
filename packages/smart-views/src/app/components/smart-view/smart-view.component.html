@@ -1,18 +1,14 @@
 <div class="container-fluid p-24">
-  <ng-container *ngIf="loading()">
+  @if (loading()) {
     <div class="text-center p-24">
       <c8y-loading></c8y-loading>
       <p class="text-muted m-t-8">{{ labels.loading }}</p>
     </div>
-  </ng-container>
-
-  <ng-container *ngIf="!loading() && errorMessage()">
+  } @else if (errorMessage(); as error) {
     <div class="alert alert-danger" role="alert">
-      {{ errorMessage() }}
+      {{ error }}
     </div>
-  </ng-container>
-
-  <ng-container *ngIf="!loading() && managedObject() as mo">
+  } @else if (managedObject(); as mo) {
     <div class="card">
       <div class="card-header">
         <h4 class="card-title">{{ mo.name || mo.id }}</h4>
@@ -33,5 +29,5 @@
         </dl>
       </div>
     </div>
-  </ng-container>
+  }
 </div>
