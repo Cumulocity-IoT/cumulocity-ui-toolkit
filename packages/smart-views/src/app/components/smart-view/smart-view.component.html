@@ -1,33 +1,40 @@
-<div class="container-fluid p-24">
-  @if (loading()) {
-    <div class="text-center p-24">
-      <c8y-loading></c8y-loading>
-      <p class="text-muted m-t-8">{{ labels.loading }}</p>
-    </div>
-  } @else if (errorMessage(); as error) {
-    <div class="alert alert-danger" role="alert">
-      {{ error }}
-    </div>
-  } @else if (managedObject(); as mo) {
-    <div class="card">
-      <div class="card-header">
-        <h4 class="card-title">{{ mo.name || mo.id }}</h4>
-      </div>
-      <div class="card-block">
-        <dl class="dl-horizontal">
-          <dt>{{ labels.id }}</dt>
-          <dd>{{ mo.id }}</dd>
+@if (loading()) {
+  <div class="text-center p-24">
+    <c8y-loading></c8y-loading>
+    <p class="text-muted m-t-8">{{ labels.loading }}</p>
+  </div>
+} @else if (errorMessage(); as error) {
+  <div class="alert alert-danger m-16" role="alert">
+    {{ error }}
+  </div>
+} @else if (managedObject(); as mo) {
+  @if (mo.c8y_SmartViewConfiguration) {
+    <c8y-data-grid
+      [title]="mo.name || mo.id"
+      [columns]="columns()"
+      [pagination]="pagination"
+      [serverSideDataCallback]="datasource.serverSideDataCallback"
+      class="scroll-column fit-h">
 
-          <dt>{{ labels.name }}</dt>
-          <dd>{{ mo.name || '—' }}</dd>
+      <c8y-column name="id">
+        <ng-container *c8yCellRendererDef="let context">
+          @if (isAsset()) {
+            <a
+              [routerLink]="['/asset', context.value]"
+              [title]="context.item.name ?? context.value"
+              class="label text-12 btn-default m-r-4 label-info no-link">
+              {{ context.item.name ?? context.value }}
+            </a>
+          } @else {
+            <span [title]="context.value">{{ context.value }}</span>
+          }
+        </ng-container>
+      </c8y-column>
 
-          <dt>{{ labels.type }}</dt>
-          <dd>{{ mo.type || '—' }}</dd>
-
-          <dt>{{ labels.lastUpdated }}</dt>
-          <dd>{{ mo.lastUpdated | date: 'medium' }}</dd>
-        </dl>
-      </div>
+    </c8y-data-grid>
+  } @else {
+    <div class="alert alert-warning m-16" role="alert">
+      {{ labels.noConfig }}
     </div>
   }
-</div>
+}

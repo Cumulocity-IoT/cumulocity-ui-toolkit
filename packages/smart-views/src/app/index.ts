@@ -5,7 +5,7 @@ import { SmartViewFactory } from './components/smart-view/smart-view.factory';
 // Plugin 1 — Smart view device page
 export const SmartViewsPluginProviders = [
   hookRoute({
-    path: 'smart-view/:id',
+    path: 'smart-views/:id',
     loadComponent: () =>
       import('./components/smart-view/smart-view.component').then((m) => m.SmartViewComponent),
   }),
@@ -17,14 +17,14 @@ export const SmartViewsConfigurationPluginProviders = [
   hookNavigator(
     new NavigatorNode({
       label: gettext('Smart views'),
-      path: 'smart-views/configuration',
+      path: 'smart-views-configuration',
       icon: 'telescope',
       parent: 'settings',
       priority: 100,
     })
   ),
   hookRoute({
-    path: 'smart-views/configuration',
+    path: 'smart-views-configuration',
     loadComponent: () =>
       import('./components/smart-view-configuration/smart-view-configuration.component').then(
         (m) => m.SmartViewConfigurationComponent

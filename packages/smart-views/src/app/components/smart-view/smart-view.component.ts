@@ -1,10 +1,14 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { InventoryService } from '@c8y/client';
-import { IManagedObject } from '@c8y/client';
-import { inject } from '@angular/core';
+import { Column, CoreModule, Pagination } from '@c8y/ngx-components';
+import { isSmartViewManagedObject } from '../../models/smart-view-configuration.model';
 import { gettext } from '@c8y/ngx-components/gettext';
-import { CoreModule } from '@c8y/ngx-components';
+import {
+  ISmartViewManagedObject,
+  SmartViewColumn,
+} from '../../models/smart-view-configuration.model';
+import { SmartViewDatasourceService } from '../../services/smart-view-datasource.service';
 
 @Component({
   standalone: true,
@@ -12,39 +16,71 @@ import { CoreModule } from '@c8y/ngx-components';
   templateUrl: './smart-view.component.html',
   styleUrls: ['./smart-view.component.less'],
   imports: [CoreModule],
+  providers: [SmartViewDatasourceService],
 })
 export class SmartViewComponent implements OnInit {
-  private readonly route = inject(ActivatedRoute);
+  private readonly activatedRoute = inject(ActivatedRoute);
   private readonly inventoryService = inject(InventoryService);
+  readonly datasource = inject(SmartViewDatasourceService);
 
-  readonly managedObject = signal<IManagedObject | null>(null);
+  readonly managedObject = signal<ISmartViewManagedObject | null>(null);
   readonly loading = signal(true);
   readonly errorMessage = signal<string | null>(null);
+  readonly columns = signal<Column[]>([]);
+  readonly isAsset = signal(false);
+
+  readonly pagination: Pagination = { pageSize: 30, currentPage: 1 };
 
   readonly labels = {
-    loading: gettext('Loading device…'),
-    notFound: gettext('Device not found.'),
+    loading: gettext('Loading smart view…'),
     id: gettext('ID'),
     name: gettext('Name'),
     type: gettext('Type'),
     lastUpdated: gettext('Last updated'),
+    noConfig: gettext('This managed object has no smart-view configuration.'),
   };
 
-  async ngOnInit(): Promise<void> {
-    const deviceId = this.route.snapshot.paramMap.get('deviceId');
+  ngOnInit(): void {
+    void this.loadDevice();
+  }
+
+  private async loadDevice(): Promise<void> {
+    const deviceId = this.activatedRoute.snapshot.paramMap.get('id');
+
     if (!deviceId) {
-      this.errorMessage.set('No device ID provided.');
+      this.errorMessage.set('No device ID provided in the route.');
       this.loading.set(false);
+
       return;
     }
 
     try {
       const { data } = await this.inventoryService.detail(deviceId);
+
       this.managedObject.set(data);
+      this.isAsset.set('c8y_IsAsset' in data);
+
+      // data carries [key: string]: any — read through unknown to stay type-safe.
+      if (isSmartViewManagedObject(data)) {
+        const config = data.c8y_SmartViewConfiguration;
+
+        this.datasource.configure(config);
+        this.columns.set(this.buildColumns(config.columns));
+      }
     } catch {
       this.errorMessage.set(`Could not load managed object with ID "${deviceId}".`);
     } finally {
       this.loading.set(false);
     }
+  }
+
+  private buildColumns(smartViewColumns: SmartViewColumn[]): Column[] {
+    return smartViewColumns.map((col) => ({
+      name: col.name,
+      path: col.path,
+      header: col.header,
+      sortable: col.path !== 'id',
+      filterable: false,
+    }));
   }
 }
