@@ -50,18 +50,18 @@ export class ReminderService {
   }
 
   private hasNotificationPermission = false;
-  private subscriptions = new Subscription();
+  private responsibilityIds: Set<string> = new Set();
+  private responsibilityFilter: ResponsibilityFilter = { enabled: false };
   private drawer?: ReminderDrawerComponent;
   private drawerRef?: ComponentRef<unknown>;
   private updateTimer?: NodeJS.Timeout;
-  private responsibilityIds: Set<string> = new Set();
-  private responsibilityFilter: ResponsibilityFilter = { enabled: false };
+
+  private subscriptions = new Subscription();
+  private debouncedSetUpdateTimer = debounce(() => this.setUpdateTimer(), 300);
 
   private _reminderCounter = 0;
   private _reminders: Reminder[] = [];
   private _types: ReminderType[] = [];
-
-  private debouncedSetUpdateTimer = debounce(() => this.setUpdateTimer(), 300);
 
   private get reminderCounter(): number {
     return this._reminderCounter;
@@ -69,7 +69,6 @@ export class ReminderService {
 
   private set reminderCounter(count: number) {
     this._reminderCounter = count;
-
     this.reminderCounter$.next(this._reminderCounter);
   }
 

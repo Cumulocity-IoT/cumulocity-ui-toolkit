@@ -20,6 +20,18 @@ interface CacheEntry {
   timestamp: number;
 }
 
+interface InventoryRoleAssignment {
+  id?: number;
+  managedObject: string;
+  roles: InventoryRole[];
+}
+
+export interface InventoryRole {
+  id: number;
+  name: string;
+  description?: string;
+}
+
 @Injectable()
 export class AssetAccessService {
   private readonly DEFAULT_CACHE_TTL = 5 * 60 * 1000;
@@ -176,21 +188,31 @@ export class AssetAccessService {
    * @private
    */
   private fetchFromEndpoint(endpoint: string): Observable<string[]> {
-    return this.http.get<{ assetIds: string[] } | string[]>(endpoint).pipe(
-      retry(1),
-      map((res) => {
-        if (Array.isArray(res)) {
-          return res;
-        }
+    return this.http
+      .get<{ assetIds: string[] } | string[] | InventoryRoleAssignment[]>(endpoint)
+      .pipe(
+        retry(1),
+        map((res) => {
+          if (!Array.isArray(res)) return (res as { assetIds?: string[] }).assetIds || [];
 
-        return res.assetIds || [];
-      }),
-      catchError((err) => {
-        console.error('[AssetAccessService] HTTP endpoint failed', endpoint, err);
+          // Check if array contains InventoryRoleAssignment objects
+          if (
+            res.length > 0 &&
+            typeof res[0] === 'object' &&
+            res[0] !== null &&
+            'managedObject' in res[0]
+          ) {
+            return this.digestInventory(res as InventoryRoleAssignment[]);
+          }
 
-        return of([] as string[]);
-      })
-    );
+          return res as string[];
+        }),
+        catchError((err) => {
+          console.error('[AssetAccessService] HTTP endpoint failed', endpoint, err);
+
+          return of([] as string[]);
+        })
+      );
   }
 
   /**
@@ -202,9 +224,16 @@ export class AssetAccessService {
    */
   private fetchFromManagedObject(managedObjectId: string, fragment?: string): Observable<string[]> {
     const fragmentPath = fragment || 'assetIds';
+    let value: string[] | InventoryRoleAssignment;
 
     return from(this.inventoryService.detail(managedObjectId)).pipe(
-      map((result) => this.getNestedValue<string[]>(result.data, fragmentPath) || []),
+      map((result) => {
+        value = this.getNestedValue<string[]>(result.data, fragmentPath);
+
+        return typeof value === 'object'
+          ? this.digestInventory(value as unknown as InventoryRoleAssignment[])
+          : value || [];
+      }),
       catchError((err) => {
         console.error(
           '[AssetAccessService] Failed to fetch from managed object',
@@ -225,7 +254,19 @@ export class AssetAccessService {
    */
   private fetchFromInventoryQuery(query: string): Observable<string[]> {
     return from(this.inventoryService.list({ query })).pipe(
-      map((result) => result.data?.map((item) => item.id) || []),
+      map((result) => {
+        const data = result.data;
+
+        if (!data || data.length === 0) return [];
+
+        // Check if data contains InventoryRoleAssignment objects
+        if (typeof data[0] === 'object' && data[0] !== null && 'managedObject' in data[0]) {
+          return this.digestInventory(data as unknown as InventoryRoleAssignment[]);
+        }
+
+        // Default: extract id from managed objects
+        return data.map((item) => item.id) || [];
+      }),
       catchError((err) => {
         console.error('[AssetAccessService] Failed to fetch from inventory query', query, err);
 
@@ -306,5 +347,9 @@ export class AssetAccessService {
         ? (current as Record<string, unknown>)[key]
         : undefined;
     }, obj) as T | undefined;
+  }
+
+  private digestInventory(response: InventoryRoleAssignment[]): string[] {
+    return response.map((role) => role.managedObject) || [];
   }
 }
