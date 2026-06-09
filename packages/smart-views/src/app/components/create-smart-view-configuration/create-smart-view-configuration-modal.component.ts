@@ -29,11 +29,20 @@ export class CreateSmartViewConfigurationModalComponent implements OnInit {
   readonly loadingDefinitions = signal(true);
   readonly saving = signal(false);
 
+  /** Columns pre-configured for every new configuration. */
+  private static readonly DEFAULT_COLUMNS: SmartViewColumn[] = [
+    { name: 'id', path: 'id', header: 'ID' },
+    { name: 'name', path: 'name', header: 'Name' },
+    { name: 'description', path: 'description', header: 'Description' },
+  ];
+
   /** Form model bound to the template. */
   name = '';
   icon = 'telescope';
   assetDefinitionId = '';
-  columns: SmartViewColumn[] = [{ name: '', path: '', header: '' }];
+  columns: SmartViewColumn[] = CreateSmartViewConfigurationModalComponent.DEFAULT_COLUMNS.map(
+    (column) => ({ ...column })
+  );
 
   readonly labels = {
     createTitle: gettext('Create smart view configuration'),
