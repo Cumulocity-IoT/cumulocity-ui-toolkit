@@ -22,16 +22,13 @@
 
       <c8y-column name="id">
         <ng-container *c8yCellRendererDef="let context">
-          @if (isAsset()) {
             <a
               [routerLink]="['/asset', context.value]"
               [title]="context.item.name ?? context.value"
               class="label text-12 btn-default m-r-4 label-info no-link">
               {{ context.item.name ?? context.value }}
             </a>
-          } @else {
-            <span [title]="context.value">{{ context.value }}</span>
-          }
+          
         </ng-container>
       </c8y-column>
 

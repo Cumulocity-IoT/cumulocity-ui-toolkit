@@ -65,7 +65,6 @@ export class SmartViewComponent implements OnInit {
       const { data } = await this.inventoryService.detail(deviceId);
 
       this.managedObject.set(data);
-      this.isAsset.set('c8y_IsAsset' in data);
 
       // data carries [key: string]: any — read through unknown to stay type-safe.
       if (isSmartViewManagedObject(data)) {
