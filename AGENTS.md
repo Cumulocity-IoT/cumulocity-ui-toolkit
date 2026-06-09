@@ -37,6 +37,7 @@ cumulocity-ui-toolkit/
 │   ├── operations-widget/
 │   ├── release-notes/
 │   ├── reminder/
+│   ├── smart-views/
 │   └── tenant-option-management/
 │
 ├── test/                     # Cypress e2e suite (own pnpm workspace)
@@ -102,7 +103,7 @@ All commands run from the **repository root** unless noted.
 - Test files: `**/*.spec.ts` inside `packages/`.
 - The root `karma.conf.js` is shared by all projects.
 - Each package has a `tsconfig.spec.json` with `"types": ["jasmine", "node"]`.
-- All 8 Angular projects in `angular.json` have a `test` architect target.
+- All 9 Angular projects in `angular.json` have a `test` architect target.
 - Run a single project: `pnpm exec ng test <project> --watch=false --browsers=ChromeHeadlessCI`
 - `ChromeHeadlessCI` custom launcher (defined in `karma.conf.js`) adds `--no-sandbox --disable-gpu --disable-dev-shm-usage` — required in CI.
 - Test helper for creating Jasmine spies: `packages/shared/src/helpers/auto-mock.helper.ts`.
@@ -127,7 +128,9 @@ All commands run from the **repository root** unless noted.
 - **Provider arrays replace NgModules:** Plugin entrypoints export named provider arrays (e.g. `EnergyConsumptionWidgetPluginProviders`). Deprecated `*Module` aliases may be kept for backward compatibility but must alias the provider array, not a real NgModule class.
 - **`cumulocity.config.ts`:** `exports[].module` and `remotes` entries must reference the provider array name. `exports[].path` must point to the file that exports it.
 - **Widget hooks:** Use `hookWidget` with `loadComponent` / `loadConfigComponent` (lazy). Never use the static `component` / `configComponent` fields on widget definitions.
-- **Route hooks:** Use `hookRoute` with `loadComponent` (lazy).
+- **Route hooks:** Use `hookRoute` with `loadComponent` (lazy). A plugin may export only a `hookRoute` provider array (no `hookWidget`) when it registers a standalone page rather than a dashboard widget.
+- **Multiple plugins per package:** A single `cumulocity.config.ts` can declare multiple `exports` entries (each with its own `module` name) and list all of them in `remotes`. Each export maps to a separate named provider array in `src/app/index.ts`. Example: `packages/smart-views` exports both `SmartViewsPluginProviders` (device route) and `SmartViewsConfigurationPluginProviders` (navigator entry + configuration route).
+- **Navigator + route pair:** When registering a navigator menu entry, always pair `hookNavigator(new NavigatorNode({ path, label, icon }))` with a matching `hookRoute({ path, loadComponent })` using the same `path` string. Both can live in the same provider array.
 - **Drawer / action hooks:** `hookDrawer` and `hookAction` accept only a static `component` reference — SDK types have no lazy option. This is correct and expected.
 - **`gettext` import:** Always import from `@c8y/ngx-components/gettext`, never from the main `@c8y/ngx-components` barrel.
 - **Locale imports in `bootstrap.ts`:** The `./locales/de.po` import must appear after `@angular/compiler` and before other Angular imports.
@@ -146,7 +149,7 @@ All commands run from the **repository root** unless noted.
 
 The `tools/generate-scripts.mts` file is an **ESM TypeScript** script (`.mts` extension — run with `node --experimental-strip-types`). It reads all projects from `angular.json` and regenerates the `build:*`, `serve:*`, `test:*`, and `test:watch:*` entries in `package.json`. The source of truth for which projects get test scripts is whether the project has a `@angular/build:karma` test target in `angular.json`.
 
-The root `test` script (which chains all 8 suites sequentially) is also regenerated. Do **not** hand-edit anything after the `--generated----------` marker in `package.json`.
+The root `test` script (which chains all 9 suites sequentially) is also regenerated. Do **not** hand-edit anything after the `--generated----------` marker in `package.json`.
 
 ---
 

@@ -16,7 +16,7 @@
   ],
   "scripts": {
     "build": "run-s build:*",
-    "test": "ng test shared --watch=false --browsers=ChromeHeadlessCI && ng test plugin.energy-consumption-widget --watch=false --browsers=ChromeHeadlessCI && ng test plugin.favorites-manager --watch=false --browsers=ChromeHeadlessCI && ng test plugin.kpi-widget --watch=false --browsers=ChromeHeadlessCI && ng test plugin.operations-widget --watch=false --browsers=ChromeHeadlessCI && ng test plugin.release-notes --watch=false --browsers=ChromeHeadlessCI && ng test plugin.reminder --watch=false --browsers=ChromeHeadlessCI && ng test plugin.tenant-option-management --watch=false --browsers=ChromeHeadlessCI",
+    "test": "ng test shared --watch=false --browsers=ChromeHeadlessCI && ng test plugin.energy-consumption-widget --watch=false --browsers=ChromeHeadlessCI && ng test plugin.favorites-manager --watch=false --browsers=ChromeHeadlessCI && ng test plugin.kpi-widget --watch=false --browsers=ChromeHeadlessCI && ng test plugin.operations-widget --watch=false --browsers=ChromeHeadlessCI && ng test plugin.release-notes --watch=false --browsers=ChromeHeadlessCI && ng test plugin.reminder --watch=false --browsers=ChromeHeadlessCI && ng test plugin.smart-views --watch=false --browsers=ChromeHeadlessCI && ng test plugin.tenant-option-management --watch=false --browsers=ChromeHeadlessCI",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --quiet --fix",
     "--pre/post-----------": "--------------------",
@@ -60,6 +60,8 @@
     "build:release-notes": "ng build plugin.release-notes",
     "serve:reminder": "pnpm run _serve plugin.reminder",
     "build:reminder": "ng build plugin.reminder",
+    "serve:smart-views": "pnpm run _serve plugin.smart-views",
+    "build:smart-views": "ng build plugin.smart-views",
     "serve:tenant-option-management": "pnpm run _serve plugin.tenant-option-management",
     "build:tenant-option-management": "ng build plugin.tenant-option-management",
     "test:shared": "ng test shared --watch=false --browsers=ChromeHeadlessCI",
@@ -76,6 +78,8 @@
     "test:watch:release-notes": "ng test plugin.release-notes --browsers=ChromeHeadless",
     "test:reminder": "ng test plugin.reminder --watch=false --browsers=ChromeHeadlessCI",
     "test:watch:reminder": "ng test plugin.reminder --browsers=ChromeHeadless",
+    "test:smart-views": "ng test plugin.smart-views --watch=false --browsers=ChromeHeadlessCI",
+    "test:watch:smart-views": "ng test plugin.smart-views --browsers=ChromeHeadless",
     "test:tenant-option-management": "ng test plugin.tenant-option-management --watch=false --browsers=ChromeHeadlessCI",
     "test:watch:tenant-option-management": "ng test plugin.tenant-option-management --browsers=ChromeHeadless"
   },
