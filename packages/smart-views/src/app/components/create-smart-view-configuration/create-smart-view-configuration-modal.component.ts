@@ -4,6 +4,8 @@ import { AlertService, CoreModule } from '@c8y/ngx-components';
 import { IconSelectorService } from '@c8y/ngx-components/icon-selector';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { BsModalRef } from 'ngx-bootstrap/modal';
+import { DtmService } from '~services/dtm.service';
+import { DtmPropertyDefinition } from '~models/dtm.model';
 import { AssetDefinition, SmartViewColumn, SmartViewConfiguration } from '../../smart-views.model';
 import { SmartViewConfigurationService } from '../../services/smart-view-configuration.service';
 
@@ -23,12 +25,15 @@ export class CreateSmartViewConfigurationModalComponent implements OnInit {
   private readonly alertService = inject(AlertService);
   private readonly configurationService = inject(SmartViewConfigurationService);
   private readonly iconSelectorService = inject(IconSelectorService);
+  private readonly dtmService = inject(DtmService);
 
   /** Existing configuration to edit. When unset, the modal creates a new one. */
   configuration?: SmartViewConfiguration;
 
   readonly assetDefinitions = signal<AssetDefinition[]>([]);
   readonly loadingDefinitions = signal(true);
+  readonly loadingProperties = signal(false);
+  readonly columnsFromDefinition = signal(false);
   readonly saving = signal(false);
 
   /** Columns pre-configured for every new configuration. */
@@ -65,6 +70,8 @@ export class CreateSmartViewConfigurationModalComponent implements OnInit {
       'Determines the position in the navigator menu. Higher values appear first.'
     ),
     columns: gettext('Columns'),
+    columnsFromDefinition: gettext('Auto-populated from the asset definition. You can still edit, add, or remove columns.'),
+    loadingProperties: gettext('Loading property definitions…'),
     columnName: gettext('Name'),
     columnPath: gettext('Path'),
     columnHeader: gettext('Header'),
@@ -104,16 +111,24 @@ export class CreateSmartViewConfigurationModalComponent implements OnInit {
     );
   }
 
-  /** Defaults the icon to the selected asset definition's configured icon. */
+  /** Defaults the icon and eagerly loads property-derived columns on definition change. */
   onAssetDefinitionChange(): void {
     const assetDefinition = this.assetDefinitions().find(
       (definition) => definition.id === this.assetDefinitionId
     );
-    const iconName = assetDefinition?.icon?.name;
+
+    if (!assetDefinition) {
+      return;
+    }
+
+    const iconName = assetDefinition.icon?.name;
 
     if (iconName) {
       this.icon = iconName;
     }
+
+    this.columnsFromDefinition.set(false);
+    void this.loadColumnsFromDefinition(assetDefinition);
   }
 
   /** Opens the icon selector modal and stores the chosen icon. */
@@ -184,6 +199,66 @@ export class CreateSmartViewConfigurationModalComponent implements OnInit {
 
   onDismiss(): void {
     this.bsModalRef.hide();
+  }
+
+  /**
+   * Fetches the DTM Asset Definition for the selected definition, then loads
+   * its allowed properties and converts them to columns.
+   *
+   * The default columns (ID, Name, Description) are always prepended and
+   * deduplicated against the DTM-derived ones. Fails silently when the DTM
+   * microservice is unavailable so the user can still edit columns manually.
+   */
+  private async loadColumnsFromDefinition(assetDefinition: AssetDefinition): Promise<void> {
+    this.loadingProperties.set(true);
+
+    try {
+      const dtmDefinition = await this.dtmService.getAssetDefinition(assetDefinition.name);
+      const allowedProperties = dtmDefinition.composition?.allowedProperties ?? [];
+
+      if (!allowedProperties.length) {
+        return;
+      }
+
+      const identifiers = allowedProperties.map((p) => p.identifier);
+      const propertyDefinitions = await this.dtmService.getPropertyDefinitions(identifiers);
+
+      this.columns = this.buildColumnsFromProperties(identifiers, propertyDefinitions);
+      this.columnsFromDefinition.set(true);
+    } catch {
+      // DTM unavailable or definition not found — keep the current columns.
+      this.columnsFromDefinition.set(false);
+    } finally {
+      this.loadingProperties.set(false);
+    }
+  }
+
+  /**
+   * Merges default columns with DTM-derived property columns, preserving the
+   * order of `allowedProperties` from the asset definition and deduplicating
+   * against the defaults.
+   */
+  private buildColumnsFromProperties(
+    orderedIdentifiers: string[],
+    propertyDefinitions: DtmPropertyDefinition[]
+  ): SmartViewColumn[] {
+    const propMap = new Map(propertyDefinitions.map((p) => [p.identifier, p]));
+
+    const dtmColumns: SmartViewColumn[] = orderedIdentifiers
+      .map((id) => propMap.get(id))
+      .filter((p): p is DtmPropertyDefinition => p != null)
+      .map((p) => ({
+        name: p.identifier,
+        path: p.identifier,
+        header: p.jsonSchema.title,
+      }));
+
+    const dtmKeys = new Set(dtmColumns.map((c) => c.name));
+    const defaults = CreateSmartViewConfigurationModalComponent.DEFAULT_COLUMNS
+      .filter((c) => !dtmKeys.has(c.name))
+      .map((c) => ({ ...c }));
+
+    return [...defaults, ...dtmColumns];
   }
 
   /** Pre-fills the form fields from an existing configuration (edit mode). */

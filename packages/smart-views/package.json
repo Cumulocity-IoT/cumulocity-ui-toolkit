@@ -1,6 +1,6 @@
 {
   "name": "cumulocity-smart-views-plugin",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Smart views for Cumulocity IoT devices.",
   "author": "Cumulocity UI Guild",
   "homepage": "___TODO___",

@@ -75,7 +75,20 @@
 
     <c8y-form-group>
       <label>{{ labels.columns }}</label>
-      @for (column of columns; track $index) {
+
+      @if (loadingProperties()) {
+        <div class="text-center p-8" aria-live="polite">
+          <c8y-loading></c8y-loading>
+          <p class="text-muted small m-t-4">{{ labels.loadingProperties }}</p>
+        </div>
+      } @else {
+        @if (columnsFromDefinition()) {
+          <p class="text-muted small m-b-8">
+            <i c8yIcon="info-circle"></i>
+            {{ labels.columnsFromDefinition }}
+          </p>
+        }
+        @for (column of columns; track $index) {
         <div class="input-group m-b-8">
           <input
             class="form-control"
@@ -125,6 +138,7 @@
             }
           </span>
         </div>
+      }
       }
     </c8y-form-group>
   </div>

@@ -1,3 +1,6 @@
+// Models
+export * from './models/dtm.model';
+
 // Components
 export * from './components/alarm-icon/alarm-icon.component';
 export * from './components/auto-refresh/ps-auto-refresh.component';
@@ -18,6 +21,7 @@ export * from './pipes/sort.pipe';
 
 // Services
 export * from './services/csv-export.service';
+export * from './services/dtm.service';
 export * from './services/active-tab.service';
 export * from './services/data-grid-patch.service';
 export * from './services/dom.service';
