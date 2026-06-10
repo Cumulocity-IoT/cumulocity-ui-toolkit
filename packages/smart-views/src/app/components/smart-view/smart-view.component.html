@@ -1,3 +1,5 @@
+<c8y-title>{{ title() }}</c8y-title>
+
 @if (loading()) {
   <div class="text-center p-24">
     <c8y-loading></c8y-loading>
@@ -17,21 +19,26 @@
           [columns]="columns()"
           [pagination]="pagination"
           [showSearch]="true"
-          [displayOptions]="{ striped: true, bordered: true, gridHeader: true, filter: true, hover: true }"
-          [serverSideDataCallback]="datasource.serverSideDataCallback">
-
-      <c8y-column name="id">
-        <ng-container *c8yCellRendererDef="let context">
-            <a
-              [routerLink]="['/group', context.value]"
-              [title]="context.item.name ?? context.value"
-              class="label text-12 btn-default m-r-4 label-info no-link">
-              {{ context.item.name ?? context.value }}
-            </a>
-          
-        </ng-container>
-      </c8y-column>
-
+          [displayOptions]="{
+            striped: true,
+            bordered: true,
+            gridHeader: true,
+            filter: true,
+            hover: true,
+          }"
+          [serverSideDataCallback]="datasource.serverSideDataCallback"
+        >
+          <c8y-column name="id">
+            <ng-container *c8yCellRendererDef="let context">
+              <a
+                class="label text-12 btn-default m-r-4 label-info no-link"
+                [routerLink]="['/group', context.value]"
+                [title]="context.item.name ?? context.value"
+              >
+                {{ context.item.name ?? context.value }}
+              </a>
+            </ng-container>
+          </c8y-column>
         </c8y-data-grid>
       </div>
     </div>
