@@ -86,6 +86,7 @@ export class SmartViewConfigurationService {
       columns: draft.columns,
       assetDefinitionId: draft.assetDefinitionId,
       assetDefinitionName: draft.assetDefinitionName,
+      priority: draft.priority,
     };
   }
 }

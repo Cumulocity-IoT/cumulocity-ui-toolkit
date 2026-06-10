@@ -42,6 +42,22 @@
     </c8y-form-group>
 
     <c8y-form-group>
+      <label for="configPriority">{{ labels.priority }}</label>
+      <input
+        id="configPriority"
+        class="form-control"
+        type="number"
+        name="configPriority"
+        autocomplete="off"
+        min="0"
+        step="1"
+        [(ngModel)]="priority"
+        [attr.aria-label]="labels.priority"
+      />
+      <p class="text-muted small m-t-4">{{ labels.priorityHint }}</p>
+    </c8y-form-group>
+
+    <c8y-form-group>
       <label>{{ labels.icon }}</label>
       <div class="d-flex a-i-center gap-8">
         <button

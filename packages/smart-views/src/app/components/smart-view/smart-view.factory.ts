@@ -23,7 +23,7 @@ export class SmartViewFactory implements NavigatorNodeFactory {
         label: config.name,
         path: `smart-views/${config.id}`,
         icon: config.c8y_SmartViewConfiguration.icon,
-        priority: 100,
+        priority: config.c8y_SmartViewConfiguration.priority ?? 500,
       } as NavigatorNode);
     });
 
