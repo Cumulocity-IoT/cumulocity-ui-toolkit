@@ -17,6 +17,7 @@ export * from './pipes/replace.pipe';
 export * from './pipes/sort.pipe';
 
 // Services
+export * from './services/csv-export.service';
 export * from './services/active-tab.service';
 export * from './services/data-grid-patch.service';
 export * from './services/dom.service';

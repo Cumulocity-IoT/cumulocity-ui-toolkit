@@ -9,11 +9,12 @@
   </div>
 } @else if (managedObject(); as mo) {
   @if (mo.c8y_SmartViewConfiguration) {
+    <c8y-title>{{ mo.name }}</c8y-title>
     <div class="card">
       <div class="content-fullpage d-flex d-col">
         <c8y-data-grid
           class="flex-grow col-xs-12 no-gutter"
-          [title]="mo.name || mo.id"
+          [title]="'Smart View'"
           [columns]="columns()"
           [pagination]="pagination"
           [showSearch]="true"

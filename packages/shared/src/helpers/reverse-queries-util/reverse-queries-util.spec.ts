@@ -1,5 +1,5 @@
 import { QueriesUtil } from '@c8y/client';
-import { ReverseQueriesUtil } from '../helpers/reverse-queries-util/reverse-queries-util';
+import { ReverseQueriesUtil } from './reverse-queries-util';
 
 describe('ReverseQueriesUtil.toQueryJSON roundtrip with QueriesUtil', () => {
   const queriesUtil = new QueriesUtil();
