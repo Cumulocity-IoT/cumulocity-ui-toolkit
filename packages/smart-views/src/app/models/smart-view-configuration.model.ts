@@ -25,6 +25,7 @@ export interface ISmartViewManagedObject extends IManagedObject {
   c8y_SmartViewConfiguration?: SmartViewConfiguration;
   /** Present (as an empty object `{}`) when the MO is an asset. */
   c8y_IsAsset?: Record<string, never>;
+  name?: string;
 }
 
 export function isSmartViewManagedObject(mo: IManagedObject): mo is ISmartViewManagedObject {

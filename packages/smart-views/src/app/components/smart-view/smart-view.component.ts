@@ -30,6 +30,7 @@ export class SmartViewComponent implements OnInit {
   readonly errorMessage = signal<string | null>(null);
   readonly columns = signal<Column[]>([]);
   readonly isAsset = signal(false);
+  readonly title = signal('');
 
   readonly pagination: Pagination = { pageSize: 30, currentPage: 1 };
 
@@ -70,6 +71,7 @@ export class SmartViewComponent implements OnInit {
       if (isSmartViewManagedObject(data)) {
         const config = data.c8y_SmartViewConfiguration;
 
+        this.title.set(data.name);
         this.datasource.configure(config);
         this.columns.set(this.buildColumns(config.columns));
       }

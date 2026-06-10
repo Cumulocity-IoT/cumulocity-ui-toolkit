@@ -38,10 +38,14 @@ export class CreateSmartViewConfigurationModalComponent implements OnInit {
     { name: 'description', path: 'description', header: 'Description' },
   ];
 
+  /** Default navigator menu priority for a new configuration. */
+  private static readonly DEFAULT_PRIORITY = 500;
+
   /** Form model bound to the template. */
   name = '';
   icon = 'telescope';
   assetDefinitionId = '';
+  priority = CreateSmartViewConfigurationModalComponent.DEFAULT_PRIORITY;
   columns: SmartViewColumn[] = CreateSmartViewConfigurationModalComponent.DEFAULT_COLUMNS.map(
     (column) => ({ ...column })
   );
@@ -56,6 +60,10 @@ export class CreateSmartViewConfigurationModalComponent implements OnInit {
     assetDefinition: gettext('Asset definition'),
     assetDefinitionPlaceholder: gettext('Select an asset definition'),
     noDefinitions: gettext('No asset definitions found.'),
+    priority: gettext('Priority'),
+    priorityHint: gettext(
+      'Determines the position in the navigator menu. Higher values appear first.'
+    ),
     columns: gettext('Columns'),
     columnName: gettext('Name'),
     columnPath: gettext('Path'),
@@ -146,6 +154,7 @@ export class CreateSmartViewConfigurationModalComponent implements OnInit {
       icon: this.icon?.trim() || 'telescope',
       assetDefinitionId: this.assetDefinitionId,
       assetDefinitionName: assetDefinition?.name ?? '',
+      priority: this.priority ?? CreateSmartViewConfigurationModalComponent.DEFAULT_PRIORITY,
       columns: this.columns
         .filter((column) => column.name.trim() && column.path.trim())
         .map((column) => ({
@@ -184,6 +193,7 @@ export class CreateSmartViewConfigurationModalComponent implements OnInit {
     this.name = configuration.name ?? '';
     this.icon = data?.icon ?? 'telescope';
     this.assetDefinitionId = data?.assetDefinitionId ?? '';
+    this.priority = data?.priority ?? CreateSmartViewConfigurationModalComponent.DEFAULT_PRIORITY;
     this.columns =
       data?.columns?.length > 0
         ? data.columns.map((column) => ({ ...column }))

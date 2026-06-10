@@ -24,7 +24,7 @@ export const SmartViewsConfigurationPluginProviders = [
       label: gettext('Smart views'),
       path: 'smart-views-configuration',
       icon: 'search-in-list',
-      parent: 'settings',
+      parent: 'Settings',
       priority: 100,
     })
   ),

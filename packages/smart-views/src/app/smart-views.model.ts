@@ -26,6 +26,8 @@ export interface SmartViewConfigurationData {
   assetDefinitionId?: string;
   /** Name of the asset definition this view is based on (kept for display). */
   assetDefinitionName?: string;
+  /** Priority used to order the view's entry in the navigator menu. */
+  priority?: number;
 }
 
 /**
@@ -63,4 +65,5 @@ export interface SmartViewConfigurationDraft {
   assetDefinitionId: string;
   assetDefinitionName: string;
   columns: SmartViewColumn[];
+  priority: number;
 }
