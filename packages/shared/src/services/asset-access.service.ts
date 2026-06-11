@@ -370,6 +370,6 @@ export class AssetAccessService {
   }
 
   private digestInventory(roles: InventoryRoleAssignment[]): string[] {
-    return roles.map((role) => role.managedObject) || [];
+    return roles.map((role) => role.managedObject);
   }
 }
