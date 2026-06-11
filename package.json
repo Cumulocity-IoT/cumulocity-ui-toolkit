@@ -116,10 +116,5 @@
   },
   "overrides": {
     "globals": "14.0.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "globals": "14.0.0"
-    }
   }
 }
