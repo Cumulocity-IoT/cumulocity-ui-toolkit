@@ -5,6 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, EMPTY } from 'rxjs';
 import { provideMock } from '~helpers/auto-mock.helper';
 import { ActiveTabService } from '~services/active-tab.service';
+import { AssetAccessService } from '~services/asset-access.service';
 import { DomService } from '~services/dom.service';
 import { LocalStorageService } from '~services/local-storage.service';
 import {
@@ -36,6 +37,7 @@ describe('ReminderService', () => {
         EventService,
         provideMock(ActiveTabService),
         provideMock(AlertService),
+        provideMock(AssetAccessService),
         provideMock(DomService),
         provideMock(EventRealtimeService),
         provideMock(LocalStorageService),
