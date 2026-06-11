@@ -216,13 +216,14 @@ export class AssetAccessService {
         >;
       })
       .then((res) => {
-        if (!res || !res['inventoryAssignments']) return [];
+        if (Array.isArray(res)) return res as string[];
+        if ('assetIds' in res) return (res as { assetIds: string[] }).assetIds;
+        if ('inventoryAssignments' in res)
+          return this.digestInventory(
+            (res as { inventoryAssignments: InventoryRoleAssignment[] }).inventoryAssignments
+          );
 
-        const roles = res['inventoryAssignments'] as InventoryRoleAssignment[];
-
-        if (roles.length === 0) return [];
-
-        return this.digestInventory(roles);
+        return [];
       });
 
     return from(request).pipe(
