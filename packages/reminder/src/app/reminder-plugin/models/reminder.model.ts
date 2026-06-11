@@ -1,4 +1,5 @@
 import { IEvent, ITenantOption } from '@c8y/client';
+import { AssetFilterConfig } from '~models/asset-access.model';
 
 export const REMINDER__ASSET_CONTEXT_ROOTS = ['group', 'device'];
 export const REMINDER__TYPE = 'c8y_Reminder';
@@ -38,9 +39,8 @@ export interface ReminderConfig {
   useContext?: boolean;
 }
 
-export interface ResponsibilityFilter {
+export interface ResponsibilityFilter extends Partial<AssetFilterConfig> {
   enabled: boolean;
-  fragment?: string;
 }
 
 export interface ReminderTenantConfig {

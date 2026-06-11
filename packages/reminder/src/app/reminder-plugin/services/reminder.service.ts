@@ -7,7 +7,7 @@ import moment from 'moment';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { ActiveTabService } from '~services/active-tab.service';
-import { AssetAccessService } from '~services/asset-access.service';
+import { AssetAccessService, AssetFilterConfig } from '~services/asset-access.service';
 import { DomService } from '~services/dom.service';
 import { LocalStorageService } from '~services/local-storage.service';
 import { ReminderDrawerComponent } from '../components/reminder-drawer/reminder-drawer.component';
@@ -16,7 +16,6 @@ import {
   REMINDER__INITIAL_QUERY_SIZE,
   REMINDER__LOCAL_STORAGE__CONFIG,
   REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG,
-  REMINDER__TENANT_OPTION__ASSET_ACCESS_KEY,
   REMINDER__TENANT_OPTION__CATEGORY,
   REMINDER__TENANT_OPTION__CONFIG_KEY,
   REMINDER__TENANT_OPTION__TYPE_KEY,
@@ -264,9 +263,7 @@ export class ReminderService {
   }
 
   private applyResponsibilityFilter(reminders: Reminder[]): Reminder[] {
-    if (!this.responsibilityFilter.enabled || this.responsibilityIds.size === 0) {
-      return reminders;
-    }
+    if (!this.responsibilityFilter.enabled || this.responsibilityIds.size === 0) return reminders;
 
     const fragment: string = this.responsibilityFilter.fragment ?? 'c8y_Hierarchy';
 
@@ -398,12 +395,22 @@ export class ReminderService {
   private async loadResponsibilityIds(): Promise<void> {
     this.responsibilityIds.clear();
 
-    const ids = await this.assetAccessService.getAssetIdsAsync(
-      REMINDER__TENANT_OPTION__CATEGORY,
-      REMINDER__TENANT_OPTION__ASSET_ACCESS_KEY
-    );
+    if (!this.responsibilityFilter.method) return;
 
-    ids.map((id) => this.responsibilityIds.add(id));
+    const { method, endpoint, managedObjectId, fragment, query, cacheTtl } =
+      this.responsibilityFilter;
+    const assetFilterConfig: AssetFilterConfig = {
+      method,
+      endpoint,
+      managedObjectId,
+      fragment,
+      query,
+      cacheTtl,
+    };
+
+    const ids = await this.assetAccessService.getAssetIdsFromConfigAsync(assetFilterConfig);
+
+    ids.forEach((id) => this.responsibilityIds.add(id));
   }
 
   private getAssetUrlFromReminder(reminder: Reminder, absoluteUrl = false): string {

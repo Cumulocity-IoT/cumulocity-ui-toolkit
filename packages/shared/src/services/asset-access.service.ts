@@ -1,19 +1,11 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { InventoryService, TenantOptionsService } from '@c8y/client';
+import { FetchClient, InventoryService, TenantOptionsService } from '@c8y/client';
 import { firstValueFrom, from, Observable, of } from 'rxjs';
 import { catchError, map, retry, switchMap, tap } from 'rxjs/operators';
+import { AssetFilterConfig, AssetFilterMethod } from '../models/asset-access.model';
 
-export type AssetFilterMethod = 'custom-endpoint' | 'managed-object' | 'inventory-query';
-
-export interface AssetFilterConfig {
-  method: AssetFilterMethod;
-  endpoint?: string;
-  managedObjectId?: string;
-  fragment?: string;
-  query?: string;
-  cacheTtl?: number;
-}
+export type { AssetFilterMethod };
+export type { AssetFilterConfig };
 
 interface CacheEntry {
   data: string[];
@@ -39,10 +31,25 @@ export class AssetAccessService {
   private cache = new Map<string, CacheEntry>();
 
   constructor(
-    private http: HttpClient,
+    private fetchClient: FetchClient,
     private tenantOptionsService: TenantOptionsService,
     private inventoryService: InventoryService
   ) {}
+
+  /**
+   * Fetches asset IDs using a pre-loaded configuration object
+   * @param config - The asset filter configuration to use
+   * @returns Observable of asset ID strings array
+   */
+  getAssetIdsFromConfig(config: AssetFilterConfig): Observable<string[]> {
+    return this.fetchAssetIds(config).pipe(
+      catchError((err) => {
+        console.error('[AssetAccessService] Failed to fetch asset IDs from config', err);
+
+        return of([] as string[]);
+      })
+    );
+  }
 
   /**
    * Fetches asset IDs as an Observable
@@ -59,6 +66,15 @@ export class AssetAccessService {
         return of([] as string[]);
       })
     );
+  }
+
+  /**
+   * Fetches asset IDs using a pre-loaded configuration object as a Promise
+   * @param config - The asset filter configuration to use
+   * @returns Promise resolving to asset ID strings array
+   */
+  async getAssetIdsFromConfigAsync(config: AssetFilterConfig): Promise<string[]> {
+    return firstValueFrom(this.getAssetIdsFromConfig(config));
   }
 
   /**
@@ -164,7 +180,7 @@ export class AssetAccessService {
   private resolveAssetIds(config: AssetFilterConfig): Observable<string[]> {
     switch (config.method) {
       case 'custom-endpoint':
-        return config.endpoint ? this.fetchFromEndpoint(config.endpoint) : of([] as string[]);
+        return config.endpoint ? this.fetchFromEndpoint(config) : of([] as string[]);
 
       case 'managed-object':
         return config.managedObjectId
@@ -187,32 +203,36 @@ export class AssetAccessService {
    * @returns Observable of asset ID strings with automatic retry on failure
    * @private
    */
-  private fetchFromEndpoint(endpoint: string): Observable<string[]> {
-    return this.http
-      .get<{ assetIds: string[] } | string[] | InventoryRoleAssignment[]>(endpoint)
-      .pipe(
-        retry(1),
-        map((res) => {
-          if (!Array.isArray(res)) return (res as { assetIds?: string[] }).assetIds || [];
+  private fetchFromEndpoint(config: AssetFilterConfig): Observable<string[]> {
+    const request = this.fetchClient
+      .fetch(config.endpoint, { method: 'GET', headers: { 'Content-Type': 'application/json' } })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
 
-          // Check if array contains InventoryRoleAssignment objects
-          if (
-            res.length > 0 &&
-            typeof res[0] === 'object' &&
-            res[0] !== null &&
-            'managedObject' in res[0]
-          ) {
-            return this.digestInventory(res as InventoryRoleAssignment[]);
-          }
+        return response.json() as Promise<
+          { assetIds: string[] } | string[] | InventoryRoleAssignment[]
+        >;
+      })
+      .then((res) => {
+        if (!res || !res['inventoryAssignments']) return [];
 
-          return res as string[];
-        }),
-        catchError((err) => {
-          console.error('[AssetAccessService] HTTP endpoint failed', endpoint, err);
+        const roles = res['inventoryAssignments'] as InventoryRoleAssignment[];
 
-          return of([] as string[]);
-        })
-      );
+        if (roles.length === 0) return [];
+
+        return this.digestInventory(roles);
+      });
+
+    return from(request).pipe(
+      retry(1),
+      catchError((err) => {
+        console.error('[AssetAccessService] HTTP endpoint failed', config, err);
+
+        return of([] as string[]);
+      })
+    );
   }
 
   /**
@@ -349,7 +369,7 @@ export class AssetAccessService {
     }, obj) as T | undefined;
   }
 
-  private digestInventory(response: InventoryRoleAssignment[]): string[] {
-    return response.map((role) => role.managedObject) || [];
+  private digestInventory(roles: InventoryRoleAssignment[]): string[] {
+    return roles.map((role) => role.managedObject) || [];
   }
 }
