@@ -117,6 +117,9 @@ export class LocalStorageService {
    * @param debounceTime - The debounce delay in milliseconds
    */
   private setStorageDebounce(debounceTime = this.debounceTime): void {
-    this.storageUpdateDebounce = debounce((ls) => this.storage$.next(ls), debounceTime);
+    this.storageUpdateDebounce = debounce(
+      (ls) => this.storage$.next(ls as unknown as Storage),
+      debounceTime
+    );
   }
 }
