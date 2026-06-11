@@ -110,41 +110,41 @@ export class AssetAccessService {
    * @private
    */
   private loadConfig(configCategory: string, configKey: string): Observable<AssetFilterConfig> {
-    return new Observable((observer) => {
-      this.tenantOptionsService
-        .detail({ category: configCategory, key: configKey })
-        .then((result) => {
-          const option = result.data;
+    return from(
+      this.tenantOptionsService.detail({ category: configCategory, key: configKey })
+    ).pipe(
+      map((result) => {
+        const option = result.data;
 
-          try {
-            observer.next({
-              cacheTtl: this.DEFAULT_CACHE_TTL,
-              ...(option?.value ? JSON.parse(option.value) : {}),
-            } as AssetFilterConfig);
-          } catch (parseErr) {
-            console.error(
-              '[AssetAccessService] Failed to parse config JSON',
-              parseErr,
-              option?.value
-            );
-            observer.next({
-              method: 'custom-endpoint',
-              endpoint: '',
-              cacheTtl: this.DEFAULT_CACHE_TTL,
-            } as AssetFilterConfig);
-          }
-          observer.complete();
-        })
-        .catch((err) => {
-          console.warn('[AssetAccessService] Failed to load config from tenant options', err);
-          observer.next({
+        try {
+          return {
+            cacheTtl: this.DEFAULT_CACHE_TTL,
+            ...(option?.value ? (JSON.parse(option.value) as Partial<AssetFilterConfig>) : {}),
+          } as AssetFilterConfig;
+        } catch (parseErr) {
+          console.error(
+            '[AssetAccessService] Failed to parse config JSON',
+            parseErr,
+            option?.value
+          );
+
+          return {
             method: 'custom-endpoint',
             endpoint: '',
             cacheTtl: this.DEFAULT_CACHE_TTL,
-          } as AssetFilterConfig);
-          observer.complete();
-        });
-    });
+          } as AssetFilterConfig;
+        }
+      }),
+      catchError((err) => {
+        console.warn('[AssetAccessService] Failed to load config from tenant options', err);
+
+        return of({
+          method: 'custom-endpoint',
+          endpoint: '',
+          cacheTtl: this.DEFAULT_CACHE_TTL,
+        } as AssetFilterConfig);
+      })
+    );
   }
 
   /**
