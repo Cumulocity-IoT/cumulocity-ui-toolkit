@@ -40,7 +40,7 @@
     }
 
     <!-- context filter -->
-    @if (contextFilterAvailable()) {
+    @if (reminderService.contextFilterAvailable()) {
       <div class="filter">
         <label class="c8y-switch">
           <input [(ngModel)]="contextFilterEnabled" type="checkbox" name="context-filter-enabled" />
