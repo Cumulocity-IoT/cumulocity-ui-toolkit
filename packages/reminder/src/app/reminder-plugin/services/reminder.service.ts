@@ -469,6 +469,19 @@ export class ReminderService {
 
   // all reminders whos `time` is in the past and are still active
   private async fetchActiveReminderCounter(): Promise<number> {
+    // When the responsibility filter is active the API total would include reminders outside the
+    // user's responsibility scope. Count from the already-filtered in-memory list instead.
+    if (this.responsibilityFilter.enabled) {
+      const now = new Date().getTime();
+      const counter = this._reminders.filter(
+        (r) => r.status === ReminderStatus.active && new Date(r.time).getTime() <= now
+      ).length;
+
+      this.reminderCounter = counter;
+
+      return counter;
+    }
+
     let counter = 0;
 
     try {
