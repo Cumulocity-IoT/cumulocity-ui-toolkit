@@ -66,13 +66,13 @@
         type="button"
         [adaptivePosition]="false"
         [delay]="500"
-        [disabled]="isLoading$ | async"
+        [disabled]="isLoading$() | async"
         (click)="onCountdownEnded.emit()"
         data-cy="c8y-alarms-reload-button"
         >
         <i
           c8yIcon="refresh"
-          [ngClass]="{ 'icon-spin': isLoading$ | async }"
+          [ngClass]="{ 'icon-spin': isLoading$() | async }"
         ></i>
       </button>
     </div>

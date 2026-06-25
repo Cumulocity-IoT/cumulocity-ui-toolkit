@@ -1,0 +1,31 @@
+@if (!hiddenAutoRun()) {
+  <div class="tabContainer">
+    <!-- tabs -->
+    <ul class="nav nav-tabs nav-tabsc8y m-b-8">
+      @for (t of tabs; track t.name) {
+        <li [class.active]="t.active" [class.disabled]="disabledTabs().includes(t.name)">
+          <button type="button" [title]="t.name" [disabled]="disabledTabs().includes(t.name)" (click)="onTabClick(t.name)">
+            @if (t.icon) {
+              <i class="{{ t.icon }}"></i>
+            }
+            <span class="txt">{{ t.name }}</span>
+          </button>
+        </li>
+      }
+    </ul>
+
+    <div class="tab">
+      @switch (queryType()) {
+        @case ('Inventory') {
+          <ps-inventory-query-form [filter]="filter()"></ps-inventory-query-form>
+        }
+        @case ('Alarm') {
+          <ps-alarm-query-form [filter]="filter()"></ps-alarm-query-form>
+        }
+        @case ('Event') {
+          <ps-event-query-form [filter]="filter()"></ps-event-query-form>
+        }
+      }
+    </div>
+  </div>
+}

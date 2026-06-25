@@ -1,0 +1,131 @@
+<!-- ── Wrapper ──────────────────────────────────────────────────────────── -->
+<div class="ql-wrapper">
+
+  <!-- Toolbar -->
+  <div class="d-flex a-i-center j-c-between m-b-8">
+    <span class="text-uppercase text-bold text-10 text-muted">
+      {{ (showRaw ? 'Raw Query' : 'Query Rail') | translate }}
+    </span>
+    <button class="btn btn-default btn-sm" type="button" (click)="toggleView()">
+      <i [c8yIcon]="showRaw ? 'process' : 'code'" class="m-r-4"></i>
+      <span>{{ (showRaw ? 'Show Rail' : 'Show Raw') | translate }}</span>
+    </button>
+  </div>
+
+  <!-- ── Rail view ──────────────────────────────────────────────────────── -->
+  @if (!showRaw) {
+    <div class="ql-scroll animated fadeIn">
+      <div class="ql-rail d-flex a-i-center">
+
+        @for (clause of clauses; track $index) {
+
+          <!-- AND power-line connector (between every pair of stations) -->
+          @if ($index > 0) {
+            <div class="d-flex d-col a-i-center" style="padding: 0 5px; flex-shrink: 0;">
+              <div class="ql-wire"></div>
+              <span class="text-uppercase text-bold text-10 text-muted">and</span>
+            </div>
+          }
+
+          <!-- ── Station ─────────────────────────────────────────────────── -->
+          <div
+            class="ql-station"
+            [ngClass]="'ql-station--' + clause.clauseType"
+          >
+            <!-- Type label -->
+            <span
+              class="text-uppercase text-bold text-10 m-b-4"
+              style="display: block; opacity: 0.75;"
+              [ngClass]="{
+                'text-danger': clause.clauseType === 'exclusion',
+                'text-info':   clause.clauseType === 'filter' || clause.clauseType === 'inclusion'
+              }"
+            >{{ getStationTypeLabel(clause.clauseType) | translate }}</span>
+
+            <!-- Inclusion clause → vertical OR stack -->
+            @if (clause.clauseType === 'inclusion') {
+              <div class="d-flex d-col">
+                @for (group of getOrGroups(clause); track $index; let isLast = $last) {
+                  <div>
+                    @for (token of group; track $index) {
+                      @switch (token.kind) {
+                        @case ('field') {
+                          <span class="text-12">{{ token.text }}</span>
+                        }
+                        @case ('operator') {
+                          <span class="badge badge-warning m-l-4 m-r-4">{{ token.text }}</span>
+                        }
+                        @case ('string') {
+                          <span class="text-12 text-success">'{{ token.text }}'</span>
+                        }
+                        @case ('number') {
+                          <span class="text-12 text-bold text-info">{{ token.text }}</span>
+                        }
+                        @default {
+                          <span class="text-12">{{ token.text }}</span>
+                        }
+                      }
+                    }
+                  </div>
+                  @if (!isLast) {
+                    <div class="d-flex a-i-center p-t-4 p-b-4">
+                      <span class="badge badge-info m-l-4 m-r-4">or</span>
+                    </div>
+                  }
+                }
+              </div>
+
+            <!-- All other clauses → inline token stream -->
+            } @else {
+              <div class="ql-content">
+                @for (token of clause.tokens; track $index) {
+                  @switch (token.kind) {
+                    @case ('negation') {
+                      <span class="badge badge-danger m-l-4 m-r-4">{{ token.text }}</span>
+                    }
+                    @case ('function') {
+                      <span class="badge badge-info m-l-4 m-r-4">{{ token.text }}</span>
+                    }
+                    @case ('operator') {
+                      <span class="badge badge-warning m-l-4 m-r-4">{{ token.text }}</span>
+                    }
+                    @case ('logical') {
+                      <span class="badge badge-default m-l-4 m-r-4">{{ token.text }}</span>
+                    }
+                    @case ('field') {
+                      <span class="text-12">{{ token.text }}</span>
+                    }
+                    @case ('string') {
+                      <span class="text-12 text-success">'{{ token.text }}'</span>
+                    }
+                    @case ('number') {
+                      <span class="text-12 text-bold text-info">{{ token.text }}</span>
+                    }
+                    @case ('paren') {
+                      <span class="text-12 text-muted">{{ token.text }}</span>
+                    }
+                    @case ('comma') {
+                      <span class="text-12 text-muted">, </span>
+                    }
+                    @default {
+                      <span class="text-12">{{ token.text }}</span>
+                    }
+                  }
+                }
+              </div>
+            }
+
+          </div>
+          <!-- ── /Station ─────────────────────────────────────────────────── -->
+
+        }
+
+      </div>
+    </div>
+
+  <!-- ── Raw query view ──────────────────────────────────────────────────── -->
+  } @else {
+    <pre class="ql-raw animated fadeIn">{{ query }}</pre>
+  }
+
+</div>

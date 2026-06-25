@@ -4,6 +4,14 @@
 
 Provides a service to track the currently active tab. **Depends on the `LocalStorageService`.**
 
+## ApplicationAvailabilityService
+
+Checks (and caches) whether an application/microservice is installed in the current tenant, matched by name or context path. Use it to gate features that depend on an optional microservice.
+
+## DtmService
+
+Thin client for the Digital Twin Manager microservice (`service/dtm`), extending `MicroserviceService`. Exposes DTM endpoints such as `getAssetTypes()` (asset definitions). See https://cumulocity.com/api/dtm/.
+
 ## DataGridPatchService
 
 If you dont want the c8y-data-grid to use its multi column sort standard, use this hack to force it to use single sort.

@@ -1,18 +1,18 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { CoreModule } from '@c8y/ngx-components';
 import { DynamicQueryFormComponent } from './dynamic-query-form.component';
 
 @Component({
   selector: 'ps-inventory-query-form',
   template: `<ps-dynamic-query-form
-    [filter]="filter"
+    [filter]="filter()"
     [params]="queryParams"
   ></ps-dynamic-query-form>`,
   standalone: true,
   imports: [CoreModule, DynamicQueryFormComponent],
 })
 export class InventoryQueryFormComponent {
-  @Input() filter = {};
+  filter = input<Record<string, unknown>>({});
   queryParams = [
     {
       title: 'fragmentType',
@@ -32,13 +32,8 @@ export class InventoryQueryFormComponent {
     },
     {
       title: 'query',
-      type: 'string',
-      examples: [
-        '$filter=(has(c8y_Position) and c8y_ActiveAlarmsStatus.critical gt 0)',
-        `$filter=(has(c8y_Position) and type eq 'c8y_MqttDevice')`,
-      ],
-      description:
-        'Use query language to perform operations and/or filter the results. See: https://cumulocity.com/api/core/#tag/Query-language',
+      type: 'query-builder',
+      description: 'Build a structured OData query using has() and comparison clauses.',
     },
     {
       title: 'text',

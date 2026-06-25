@@ -1,18 +1,18 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { CoreModule } from '@c8y/ngx-components';
 import { DynamicQueryFormComponent } from './dynamic-query-form.component';
 
 @Component({
   selector: 'ps-event-query-form',
   template: `<ps-dynamic-query-form
-    [filter]="filter"
+    [filter]="filter()"
     [params]="queryParams"
   ></ps-dynamic-query-form>`,
   standalone: true,
   imports: [CoreModule, DynamicQueryFormComponent],
 })
 export class EventQueryFormComponent {
-  @Input() filter = {};
+  filter = input<Record<string, unknown>>({});
   queryParams = [
     {
       title: 'createdFrom',
