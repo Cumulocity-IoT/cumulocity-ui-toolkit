@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-misused-promises */
-import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-misused-promises */
+import { Component, effect, ElementRef, input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CoreModule, FormsModule } from '@c8y/ngx-components';
 import { MapService } from '@c8y/ngx-components/map';
 import * as L from 'leaflet';
@@ -18,15 +18,38 @@ import { set } from 'lodash';
 export class HeatmapComponent implements OnInit, OnDestroy {
   private map!: L.Map;
 
-  @Input() options!: L.MapOptions;
-  @Input() blurRadius = 18;
+  options = input.required<L.MapOptions>();
+  blurRadius = input(18);
 
-  @ViewChild('heatMap', { read: ElementRef, static: true }) mapReference!: ElementRef;
+  @ViewChild('heatMap', { read: ElementRef, static: true }) mapReference!: ElementRef<HTMLElement>;
 
   /**
    * An array containing lat and lng coordinates and the value for each coordinate which needs to be between 0 (green) and 100 (red).
    */
-  @Input() set data(value: { lat: number; lng: number; value: number }[]) {
+  data = input<{ lat: number; lng: number; value: number }[]>();
+
+  private destroy$ = new Subject<void>();
+  heatLayer!: L.GridLayer;
+  l!: typeof L;
+
+  constructor(private mapService: MapService) {
+    effect(() => this.renderData());
+  }
+
+  async ngOnInit(): Promise<void> {
+    this.l = await this.mapService.getLeaflet();
+    this.initMap();
+    this.renderData();
+  }
+
+  private renderData(): void {
+    // Read the input first so the effect tracks it even before the map is ready.
+    const value = this.data();
+
+    if (!this.map) {
+      return;
+    }
+
     if (this.heatLayer) {
       this.map.removeLayer(this.heatLayer);
     }
@@ -36,25 +59,14 @@ export class HeatmapComponent implements OnInit, OnDestroy {
     }
   }
 
-  private destroy$ = new Subject<void>();
-  heatLayer!: L.GridLayer;
-  l!: typeof L;
-
-  constructor(private mapService: MapService) {}
-
-  async ngOnInit(): Promise<void> {
-    this.l = await this.mapService.getLeaflet();
-    this.initMap();
-  }
-
   private initMap(): void {
     const baseLayer = this.l.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      ...this.options,
+      ...this.options(),
       className: 'bw-layer',
     });
 
     this.map = this.l.map(this.mapReference.nativeElement, {
-      ...this.options,
+      ...this.options(),
       layers: [baseLayer],
     });
 
@@ -102,8 +114,8 @@ export class HeatmapComponent implements OnInit, OnDestroy {
               posInSubTile.reduce((sum, pos) => sum + pos.value, 0) / posInSubTile.length;
             const rgb = this.getRGBForValue(averageValue);
 
-            ctx!.fillStyle = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.9)`;
-            ctx!.fillRect(x, y, subTileSize, subTileSize);
+            ctx.fillStyle = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.9)`;
+            ctx.fillRect(x, y, subTileSize, subTileSize);
           }
         }
       }
@@ -118,7 +130,7 @@ export class HeatmapComponent implements OnInit, OnDestroy {
       const bwLayerElement = document.querySelector('div.leaflet-layer.heat-layer');
 
       if (bwLayerElement) {
-        bwLayerElement.style.filter = `blur(${this.blurRadius}px)`;
+        bwLayerElement.style.filter = `blur(${this.blurRadius()}px)`;
       }
     }, 100);
 

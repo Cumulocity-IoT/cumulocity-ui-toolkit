@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, effect, EventEmitter, input, Output } from '@angular/core';
 import { IIdentified, IManagedObject, InventoryService, IResultList } from '@c8y/client';
 import { CoreModule } from '@c8y/ngx-components';
 import { map, Observable, pipe, UnaryFunction } from 'rxjs';
@@ -10,16 +10,14 @@ import { map, Observable, pipe, UnaryFunction } from 'rxjs';
   imports: [CoreModule],
 })
 export class ActionBarSearchComponent {
-  @Input() placement: 'left' | 'right' = 'left';
+  placement = input<'left' | 'right'>('left');
 
   devices?: IResultList<IManagedObject>;
   filterPipe?: UnaryFunction<Observable<IManagedObject[]>, Observable<IManagedObject[]>>;
   pattern = '';
   selected: IIdentified = { id: undefined, name: '' };
 
-  @Input() set filter(value: object) {
-    this._filter = { ...value, withTotalPages: true, pageSize: 10 };
-  }
+  filter = input<object>();
 
   private _filter: object = {
     fragmentType: 'c8y_IsDevice',
@@ -31,6 +29,13 @@ export class ActionBarSearchComponent {
   @Output() selectionChange = new EventEmitter<IManagedObject>();
 
   constructor(private inventory: InventoryService) {
+    effect(() => {
+      const value = this.filter();
+
+      if (value) {
+        this._filter = { ...value, withTotalPages: true, pageSize: 10 };
+      }
+    });
     this.loadDevices();
   }
 

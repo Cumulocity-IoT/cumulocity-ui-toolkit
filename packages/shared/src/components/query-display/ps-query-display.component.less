@@ -1,0 +1,363 @@
+// ── Accent colours used for token badges (fixed, readable on both themes) ──
+
+@ql-string:  #16a34a; // green-600  — visible on light AND dark surfaces
+@ql-number:  #0369a1; // sky-700    — visible on light AND dark surfaces
+
+// ── Host ───────────────────────────────────────────────────────────────────
+
+:host {
+  display: block;
+}
+
+// ── Wrapper ────────────────────────────────────────────────────────────────
+// Uses --c8y-root-component-background-expanded which resolves to a subtle
+// off-white in the light theme and a deep dark in the dark theme.
+
+.ql-wrapper {
+  position: relative;
+  background: var(--c8y-root-component-background-expanded, var(--c8y-body-background-color, #f5f5f5));
+  border-radius: 8px;
+  border: 1px solid var(--c8y-separator-color, #e5e5e5);
+  padding: 16px 16px 12px;
+  overflow: hidden;
+}
+
+// ── Toolbar ────────────────────────────────────────────────────────────────
+
+.ql-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.ql-rail-label {
+  font-family: monospace;
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--c8y-root-component-color-text-muted, var(--c8y-text-muted, #6c757d));
+  opacity: 0.8;
+}
+
+.ql-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 1px solid var(--c8y-separator-color, #e5e5e5);
+  color: var(--c8y-brand-primary, #1776bf);
+  border-radius: 4px;
+  padding: 3px 10px;
+  font-family: monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.18s ease, box-shadow 0.18s ease;
+
+  &:hover {
+    background: ~"color-mix(in srgb, var(--c8y-brand-primary, #1776bf) 8%, transparent)";
+    box-shadow: 0 0 8px ~"color-mix(in srgb, var(--c8y-brand-primary, #1776bf) 20%, transparent)";
+  }
+
+  &:active {
+    background: ~"color-mix(in srgb, var(--c8y-brand-primary, #1776bf) 14%, transparent)";
+  }
+}
+
+// ── Scroll container ───────────────────────────────────────────────────────
+
+.ql-scroll {
+  overflow-x: auto;
+  padding-bottom: 6px;
+
+  &::-webkit-scrollbar {
+    height: 3px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--c8y-root-component-scrollbar-track, transparent);
+    border-radius: 2px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--c8y-root-component-scrollbar-thumb-default, rgba(57, 72, 82, 0.2));
+    border-radius: 2px;
+  }
+}
+
+// ── Rail ───────────────────────────────────────────────────────────────────
+
+.ql-rail {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: max-content;
+}
+
+// ── AND connector ──────────────────────────────────────────────────────────
+
+.ql-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 0 5px;
+  flex-shrink: 0;
+}
+
+.ql-wire {
+  position: relative;
+  width: 38px;
+  height: 2px;
+  background: ~"color-mix(in srgb, var(--c8y-brand-primary, #1776bf) 22%, transparent)";
+  border-radius: 1px;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -65%;
+    width: 65%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--c8y-brand-primary, #1776bf) 50%,
+      transparent 100%
+    );
+    animation: ql-flow 1.8s linear infinite;
+  }
+}
+
+@keyframes ql-flow {
+  0%   { left: -65%; }
+  100% { left: 105%; }
+}
+
+.ql-wire-label {
+  font-family: monospace;
+  font-size: 0.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--c8y-brand-primary, #1776bf);
+  opacity: 0.65;
+}
+
+// ── Station ────────────────────────────────────────────────────────────────
+// Background uses --c8y-root-component-background-default which is white in
+// the light theme and the deepest card surface in the dark theme.
+
+.ql-station {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 11px;
+  border-radius: 6px;
+  background: var(--c8y-root-component-background-default, #fff);
+  border: 1px solid var(--c8y-separator-color, #e5e5e5);
+  min-width: 68px;
+  max-width: 210px;
+  position: relative;
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
+  animation: ql-glow-brand 4.5s ease-in-out infinite;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px ~"color-mix(in srgb, var(--c8y-brand-primary, #1776bf) 15%, transparent)";
+    animation: none;
+  }
+
+  // Exclusion — danger-tinted border + glow
+  &--exclusion {
+    border-color: ~"color-mix(in srgb, var(--c8y-danger, #e74c3c) 35%, var(--c8y-separator-color, #e5e5e5))";
+    animation: ql-glow-danger 4.5s ease-in-out infinite;
+
+    &:hover {
+      box-shadow: 0 6px 16px ~"color-mix(in srgb, var(--c8y-danger, #e74c3c) 18%, transparent)";
+      animation: none;
+    }
+  }
+
+  // Filter — brand-tinted border (default glow already uses brand)
+  &--filter {
+    border-color: ~"color-mix(in srgb, var(--c8y-brand-primary, #1776bf) 35%, var(--c8y-separator-color, #e5e5e5))";
+  }
+
+  // Inclusion — info-tinted border + glow
+  &--inclusion {
+    border-color: ~"color-mix(in srgb, var(--c8y-info, #17a2b8) 35%, var(--c8y-separator-color, #e5e5e5))";
+    max-width: 240px;
+    animation: ql-glow-info 4.5s ease-in-out infinite;
+
+    &:hover {
+      box-shadow: 0 6px 16px ~"color-mix(in srgb, var(--c8y-info, #17a2b8) 18%, transparent)";
+      animation: none;
+    }
+  }
+}
+
+@keyframes ql-glow-brand {
+  0%, 100% { box-shadow: 0 0 4px ~"color-mix(in srgb, var(--c8y-brand-primary, #1776bf) 10%, transparent)"; }
+  50%       { box-shadow: 0 0 10px ~"color-mix(in srgb, var(--c8y-brand-primary, #1776bf) 22%, transparent)"; }
+}
+
+@keyframes ql-glow-danger {
+  0%, 100% { box-shadow: 0 0 4px ~"color-mix(in srgb, var(--c8y-danger, #e74c3c) 10%, transparent)"; }
+  50%       { box-shadow: 0 0 10px ~"color-mix(in srgb, var(--c8y-danger, #e74c3c) 22%, transparent)"; }
+}
+
+@keyframes ql-glow-info {
+  0%, 100% { box-shadow: 0 0 4px ~"color-mix(in srgb, var(--c8y-info, #17a2b8) 10%, transparent)"; }
+  50%       { box-shadow: 0 0 10px ~"color-mix(in srgb, var(--c8y-info, #17a2b8) 22%, transparent)"; }
+}
+
+// ── Type label ─────────────────────────────────────────────────────────────
+
+.ql-type-label {
+  font-family: monospace;
+  font-size: 0.48rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  margin-bottom: 6px;
+
+  .ql-station--exclusion & { color: var(--c8y-danger, #e74c3c);      opacity: 0.75; }
+  .ql-station--filter &    { color: var(--c8y-brand-primary, #1776bf); opacity: 0.75; }
+  .ql-station--inclusion & { color: var(--c8y-info, #17a2b8);         opacity: 0.75; }
+}
+
+// ── Station content ────────────────────────────────────────────────────────
+
+.ql-content {
+  line-height: 2;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+// ── OR stack (inside inclusion station) ────────────────────────────────────
+
+.ql-or-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.ql-or-row {
+  line-height: 1.9;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  padding: 1px 0;
+}
+
+.ql-or-divider {
+  display: flex;
+  align-items: center;
+  padding: 2px 0;
+}
+
+.ql-or-badge {
+  font-family: monospace;
+  font-size: 0.48rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--c8y-info, #17a2b8);
+  background: ~"color-mix(in srgb, var(--c8y-info, #17a2b8) 10%, transparent)";
+  border: 1px solid ~"color-mix(in srgb, var(--c8y-info, #17a2b8) 25%, transparent)";
+  border-radius: 3px;
+  padding: 0 4px;
+  line-height: 1.6;
+}
+
+// ── Token atoms ────────────────────────────────────────────────────────────
+
+.ql-tok {
+  display: inline;
+  font-family: monospace;
+  font-size: 0.72rem;
+
+  // Field — inherits the ambient text colour so it is always legible
+  &--field {
+    color: var(--c8y-root-component-color-default, inherit);
+  }
+
+  // String — fixed green that passes contrast on both light and dark surfaces
+  &--string {
+    color: @ql-string;
+  }
+
+  // Number — fixed dark sky-blue that passes contrast on both surfaces
+  &--number {
+    color: @ql-number;
+    font-weight: 700;
+  }
+
+  // Parentheses — visually de-emphasised structural punctuation
+  &--paren {
+    color: var(--c8y-root-component-color-text-muted, #6c757d);
+    opacity: 0.5;
+    font-size: 0.8rem;
+  }
+}
+
+// Badge-style tokens share a base shape; each variant gets its own colour pair
+
+.ql-tok--negation,
+.ql-tok--function,
+.ql-tok--operator,
+.ql-tok--logical {
+  display: inline-block;
+  padding: 0 4px;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1.65;
+  vertical-align: baseline;
+  margin: 0 1px;
+}
+
+.ql-tok--negation {
+  color: var(--c8y-danger, #e74c3c);
+  background: ~"color-mix(in srgb, var(--c8y-danger, #e74c3c) 12%, transparent)";
+  border: 1px solid ~"color-mix(in srgb, var(--c8y-danger, #e74c3c) 30%, transparent)";
+}
+
+.ql-tok--function {
+  color: var(--c8y-brand-primary, #1776bf);
+  background: ~"color-mix(in srgb, var(--c8y-brand-primary, #1776bf) 12%, transparent)";
+  border: 1px solid ~"color-mix(in srgb, var(--c8y-brand-primary, #1776bf) 30%, transparent)";
+}
+
+.ql-tok--operator {
+  color: var(--c8y-warning, #f0ad4e);
+  background: ~"color-mix(in srgb, var(--c8y-warning, #f0ad4e) 12%, transparent)";
+  border: 1px solid ~"color-mix(in srgb, var(--c8y-warning, #f0ad4e) 30%, transparent)";
+}
+
+.ql-tok--logical {
+  color: var(--c8y-root-component-color-text-muted, #6c757d);
+  background: ~"color-mix(in srgb, var(--c8y-root-component-color-text-muted, #6c757d) 10%, transparent)";
+  border: 1px solid ~"color-mix(in srgb, var(--c8y-root-component-color-text-muted, #6c757d) 25%, transparent)";
+}
+
+// ── Raw query view ─────────────────────────────────────────────────────────
+// Delegates all colours to the platform's own pre/code token set so the view
+// automatically matches the active C8Y theme without any custom overrides.
+
+.ql-wrapper .ql-raw {
+  margin: 0 !important;
+  padding: 8px 10px !important;
+  background: var(--c8y-pre-background, var(--c8y-root-component-background-expanded, #f5f5f5)) !important;
+  background-color: var(--c8y-pre-background, var(--c8y-root-component-background-expanded, #f5f5f5)) !important;
+  color: var(--c8y-pre-color, var(--c8y-root-component-color-default, #333)) !important;
+  line-height: 1.75 !important;
+  border: 1px solid var(--c8y-pre-border-color, var(--c8y-separator-color, #e5e5e5)) !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  white-space: pre-wrap !important;
+  word-break: break-all !important;
+}

@@ -1,0 +1,110 @@
+<c8y-modal title="{{ title | translate }}" (onClose)="onClose()" (onDismiss)="onDismiss()" [labels]="labels" [disabled]="!canSave" style="width: 100%">
+  <div class="m-16">
+
+    <div class="form-group">
+      <label translate for="layerType">Layer Type</label>
+      <div class="c8y-select-wrapper" title="{{ 'Select type' | translate }}">
+        <select id="layerType" #typeSelect class="btn btn-default dropdown-toggle c8y-dropdown" required="true" (change)="changeType(typeSelect.value)">
+          <option value="" selected disabled>Select a type</option>
+          <option value="QueryLayerConfig" [selected]="type === 'QueryLayerConfig' && !isAssetLayer">
+            {{ 'Query' | translate }}
+          </option>
+          @if (dtmInstalled) {
+            <option value="Assets" [selected]="isAssetLayer">
+              {{ 'Assets' | translate }}
+            </option>
+          }
+        </select>
+      </div>
+    </div>
+
+    @if (isAssetLayer) {
+      <div class="form-group">
+        <label translate for="assetType">Asset type</label>
+        <div class="c8y-select-wrapper" title="{{ 'Select an asset type' | translate }}">
+          <select id="assetType" class="form-control" [ngModel]="selectedAssetType" (ngModelChange)="onAssetTypeSelect($event)" [disabled]="loadingAssetTypes">
+            <option [ngValue]="undefined" disabled>
+              {{ (loadingAssetTypes ? 'Loading asset types…' : 'Select an asset type') | translate }}
+            </option>
+            @for (assetType of assetTypes; track assetType.identifier) {
+              <option [ngValue]="assetType.identifier">{{ assetType.label }}</option>
+            }
+          </select>
+        </div>
+        @if (!loadingAssetTypes && !assetTypes.length) {
+          <p class="text-muted small m-t-4" translate>No asset types found in this tenant.</p>
+        }
+      </div>
+    }
+
+    <div class="form-group">
+      <label translate for="layerName">Name</label>
+      <input id="layerName" class="form-control" type="text" name="layerName" [maxlength]="254" [(ngModel)]="layer.name" />
+    </div>
+
+    <div class="legend form-block center">Marker</div>
+    <div class="form-group">
+      <label translate for="iconInput">Icon</label>
+      <div class="input-group">
+        <div class="input-group-btn">
+          <button class="btn btn-primary" (click)="openIconModal()">Pick icon</button>
+        </div>
+        <input id="iconInput" class="form-control" type="text" name="iconInput" [(ngModel)]="layer.icon" />
+        @if (layer.icon) {
+          <span class="input-group-addon"><i [c8yIcon]="layer.icon"></i></span>
+        }
+      </div>
+    </div>
+    @if (!(type === 'QueryLayerConfig' && queryType === 'Alarm')) {
+      <div class="form-group">
+        <label translate for="iconColorInput">Icon Color</label>
+        <div class="form-control" style="width: 36px; cursor: pointer" title="Click to select a marker color.">
+          <div class="c8y-colorpicker">
+            <input id="iconColorInput" type="color" [attr.aria-label]="'Color' | translate" [(ngModel)]="layer.color" (click)="$event.stopPropagation()" />
+            <span [style.background-color]="layer.color"></span>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (type === 'QueryLayerConfig' && (!isAssetLayer || (selectedAssetType && queryFormVisible))) {
+      <span>
+        <div class="legend form-block center">{{ queryType }} Query Configuration</div>
+        <ps-query-forms-tab
+          [(filter)]="layer.filter"
+          [queryType]="queryType"
+          [disabledTabs]="isAssetLayer ? ['Alarm', 'Event'] : []"
+          (tabChange)="onQueryTypeChange($event)"
+        ></ps-query-forms-tab>
+      </span>
+    }
+
+    @if (type === 'QueryLayerConfig' && (!isAssetLayer || selectedAssetType)) {
+      <div class="legend form-block center">Polling</div>
+    }
+
+    @if (type === 'QueryLayerConfig' && (!isAssetLayer || selectedAssetType)) {
+      <div class="row d-flex a-i-center">
+        <div class="col-xs-6">
+          <div class="form-group m-b-0 form-group-sm">
+            <label for="positionPolling" class="control-label">{{ 'Polling' | translate }}</label>
+            <div class="c8y-select-wrapper">
+              <select class="form-control" id="positionPolling" [(ngModel)]="layer.enablePolling">
+                <option [ngValue]="false" title="Only refreshing on interaction">No automatic polling</option>
+                <option [ngValue]="true" title="Refreshing after a give interval and on interaction">Activate polling</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="col-xs-6">
+          <div class="form-group form-group-sm m-b-0">
+            <label for="pollingSlider" class="control-label">{{ 'Polling interval in seconds' | translate }}</label>
+            <c8y-range [(ngModel)]="layer.pollingInterval" [disabled]="!layer.enablePolling" class="label-bottom">
+              <input id="pollingSlider" type="range" min="1" max="180" step="1" [disabled]="!layer.enablePolling" />
+            </c8y-range>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</c8y-modal>

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { CoreModule } from '@c8y/ngx-components';
 
 @Component({
@@ -9,15 +9,15 @@ import { CoreModule } from '@c8y/ngx-components';
 })
 export class ActionBarReloadButton {
   requestInProgress = false;
-  @Input() refreshCallBack: () => Promise<void>;
+  refreshCallBack = input.required<() => Promise<void>>();
 
-  @Input() placement: 'left' | 'right' = 'left';
+  placement = input<'left' | 'right'>('left');
 
   protected async refresh() {
     this.requestInProgress = true;
 
     try {
-      await this.refreshCallBack();
+      await this.refreshCallBack()();
       this.requestInProgress = false;
     } finally {
       this.requestInProgress = false;
