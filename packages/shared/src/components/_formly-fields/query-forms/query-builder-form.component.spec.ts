@@ -20,7 +20,7 @@ describe('QueryBuilderFormComponent', () => {
   function create(filter: Record<string, unknown>): void {
     fixture = TestBed.createComponent(QueryBuilderFormComponent);
     component = fixture.componentInstance;
-    component.filter = filter;
+    fixture.componentRef.setInput('filter', filter);
     fixture.detectChanges();
   }
 
@@ -51,14 +51,14 @@ describe('QueryBuilderFormComponent', () => {
     cmp.field = 'type';
     cmp.value = 'Pump';
     component.emit();
-    expect(component.filter['query']).toBe("type eq 'Pump'");
+    expect(component.filter()['query']).toBe("type eq 'Pump'");
   });
 
   it('removes the query key when the tree is empty', () => {
     create({ query: "type eq 'Pump'" });
     component.root.children = [];
     component.emit();
-    expect(component.filter['query']).toBeUndefined();
+    expect(component.filter()['query']).toBeUndefined();
   });
 
   it('switches to raw and back preserving the query', () => {

@@ -21,7 +21,7 @@ export class HeatmapComponent implements OnInit, OnDestroy {
   options = input.required<L.MapOptions>();
   blurRadius = input(18);
 
-  @ViewChild('heatMap', { read: ElementRef, static: true }) mapReference!: ElementRef;
+  @ViewChild('heatMap', { read: ElementRef, static: true }) mapReference!: ElementRef<HTMLElement>;
 
   /**
    * An array containing lat and lng coordinates and the value for each coordinate which needs to be between 0 (green) and 100 (red).

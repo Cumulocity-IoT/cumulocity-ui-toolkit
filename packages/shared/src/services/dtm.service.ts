@@ -81,7 +81,7 @@ export class DtmService extends MicroserviceService {
     }));
   }
 
-  private toAssetType(definition: Record<string, any>): DtmAssetType | undefined {
+  private toAssetType(definition: Record<string, unknown>): DtmAssetType | undefined {
     const identifier = (definition?.identifier ?? definition?.type ?? definition?.name) as
       | string
       | undefined;

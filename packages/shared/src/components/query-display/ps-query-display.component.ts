@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { CoreModule, IconDirective } from '@c8y/ngx-components';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { Tokenizer } from './string-tokenizer';
@@ -48,21 +48,18 @@ const QUERY_FUNCTIONS = new Set(['has', 'hasany', 'bygroupid', 'isinhierarchyof'
   templateUrl: './ps-query-display.component.html',
   styleUrls: ['./ps-query-display.component.less'],
 })
-export class PSQueryDisplayComponent implements OnChanges {
+export class PSQueryDisplayComponent {
   /** The raw Cumulocity inventory query string to visualise. */
-  @Input({ required: true }) query!: string;
+  query = input.required<string>();
 
-  /** Pre-computed clauses produced from the current `query` input. */
-  clauses: QueryClause[] = [];
+  /** Clauses derived from the current `query` input. */
+  clauses = computed<QueryClause[]>(() => {
+    const query = this.query();
+    return query ? this.buildClauses(query) : [];
+  });
 
   /** When `true` the raw query string is shown instead of the rail. */
   showRaw = false;
-
-  // ── Lifecycle ────────────────────────────────────────────────────────────
-
-  ngOnChanges(): void {
-    this.clauses = this.query ? this.buildClauses(this.query) : [];
-  }
 
   // ── Public actions ───────────────────────────────────────────────────────
 

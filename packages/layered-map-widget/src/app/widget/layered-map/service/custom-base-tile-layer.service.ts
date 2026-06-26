@@ -3,6 +3,7 @@ import { InventoryService } from '@c8y/client';
 import { CustomBaseTileLayerEntry } from '../base-tile-layers';
 
 export const CUSTOM_BASE_LAYER_MO_TYPE = 'ps_layeredMapBaseLayerConfig';
+
 const FRAGMENT = 'ps_layeredMapBaseLayers';
 
 @Injectable({ providedIn: 'root' })
@@ -22,12 +23,12 @@ export class CustomBaseTileLayerService {
 
     if (!mo) {
       this.cache = [];
+
       return this.cache;
     }
 
     this.moId = mo.id;
-    this.cache =
-      (mo[FRAGMENT] as { layers: CustomBaseTileLayerEntry[] } | undefined)?.layers ?? [];
+    this.cache = (mo[FRAGMENT] as { layers: CustomBaseTileLayerEntry[] } | undefined)?.layers ?? [];
 
     return this.cache;
   }
@@ -43,6 +44,7 @@ export class CustomBaseTileLayerService {
         name: 'Layered Map Base Layer Configuration',
         ...fragment,
       });
+
       this.moId = res.data.id;
     }
 

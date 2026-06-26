@@ -17,7 +17,7 @@
     <div class="ql-scroll animated fadeIn">
       <div class="ql-rail d-flex a-i-center">
 
-        @for (clause of clauses; track $index) {
+        @for (clause of clauses(); track $index) {
 
           <!-- AND power-line connector (between every pair of stations) -->
           @if ($index > 0) {
@@ -125,7 +125,7 @@
 
   <!-- ── Raw query view ──────────────────────────────────────────────────── -->
   } @else {
-    <pre class="ql-raw animated fadeIn">{{ query }}</pre>
+    <pre class="ql-raw animated fadeIn">{{ query() }}</pre>
   }
 
 </div>

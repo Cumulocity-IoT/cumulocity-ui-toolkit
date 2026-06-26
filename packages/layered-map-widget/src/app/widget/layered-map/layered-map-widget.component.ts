@@ -11,11 +11,7 @@ import type * as L from 'leaflet';
 import { isEmpty, isNil } from 'lodash';
 import { fromEvent, Subject, Subscription } from 'rxjs';
 import { ILayeredMapWidgetConfig, isQueryLayerConfig, MyLayer } from './layered-map-widget.model';
-import {
-  BASE_TILE_LAYERS,
-  customEntryToDef,
-  DEFAULT_BASE_TILE_LAYER_ID,
-} from './base-tile-layers';
+import { BASE_TILE_LAYERS, customEntryToDef, DEFAULT_BASE_TILE_LAYER_ID } from './base-tile-layers';
 import { CustomBaseTileLayerService } from './service/custom-base-tile-layer.service';
 import { LayerService } from './service/layer.service';
 import { InventoryPollingService } from './service/inventory-polling.service';
@@ -207,7 +203,7 @@ export class LayeredMapWidgetComponent implements AfterViewInit, OnDestroy {
     const tileLayerDef =
       (customEntry ? customEntryToDef(customEntry) : null) ??
       BASE_TILE_LAYERS.find((l) => l.id === selectedId) ??
-      BASE_TILE_LAYERS.find((l) => l.id === DEFAULT_BASE_TILE_LAYER_ID)!;
+      BASE_TILE_LAYERS.find((l) => l.id === DEFAULT_BASE_TILE_LAYER_ID);
 
     const baseLayer = this.leaf.tileLayer(tileLayerDef.url, {
       maxZoom: tileLayerDef.maxZoom,

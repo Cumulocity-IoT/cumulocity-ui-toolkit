@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, model, OnDestroy, ViewChild } fro
 import { fromEvent, Subject, takeUntil } from 'rxjs';
 import { CoreModule, ModalLabels } from '@c8y/ngx-components';
 import { BsModalRef } from 'ngx-bootstrap/modal';
-import { LocationGeocoderService } from '../service/location-geocoder.service';
+import { LocationGeocoderService } from '~services/location-geocoder.service';
 import type * as L from 'leaflet';
 import { isNil } from 'lodash';
 import { MapService } from '@c8y/ngx-components/map';
@@ -39,7 +39,7 @@ export class CenterMapModalComponent implements AfterViewInit, OnDestroy {
     lat: number;
     long: number;
     zoomLevel: number;
-  }>();
+  }>({ lat: 51.505, long: -0.09, zoomLevel: 13 });
 
   constructor(
     public bsModalRef: BsModalRef,

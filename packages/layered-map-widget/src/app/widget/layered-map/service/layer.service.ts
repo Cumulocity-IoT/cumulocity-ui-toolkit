@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { IManagedObject } from '@c8y/client';
 import { FeatureGroup, LatLng, latLng, Marker } from 'leaflet';
-import { flatten, has, isEmpty, set } from 'lodash';
+import { has, isEmpty, set } from 'lodash';
 import {
   BasicLayerConfig,
   isQueryLayerConfig,
@@ -149,7 +149,7 @@ export class LayerService {
   }
 
   extractMinMaxBounds(allLayers: MyLayer[]) {
-    const markers = flatten(allLayers.map((l) => [...l.markerCache.values()]));
+    const markers = allLayers.flatMap((l) => [...l.markerCache.values()]);
 
     if (isEmpty(markers)) {
       return undefined;
@@ -188,8 +188,13 @@ export class LayerService {
   }
 
   private createMarker(deviceId: string, coordinate: LatLng, layer: MyLayer) {
-    const color = layer.config.color?.length ? layer.config.color : '#ffffff';
-    const icon = this.markerIconService.getIcon(layer.config.icon, 'text-primary', color);
+    const hasCustomColor = !!layer.config.color?.length;
+    const color = hasCustomColor ? layer.config.color : '#ffffff';
+    // `.text-primary` sets its colour with `!important`, which overrides the inline
+    // colour and would force every marker to the brand colour. Only use it as a
+    // fallback when no custom colour is configured.
+    const classNames = hasCustomColor ? '' : 'text-primary';
+    const icon = this.markerIconService.getIcon(layer.config.icon, classNames, color);
     const popup = this.popupService.getPopup({ deviceId, layer });
 
     const marker = new Marker(coordinate, {

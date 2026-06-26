@@ -116,14 +116,15 @@ export function serializeNode(root: BuilderNode): string {
 export function nodeToJson(node: BuilderNode): QueryJson | null {
   switch (node.kind) {
     case 'and':
+
+    // falls through — 'and' and 'or' share the same grouping logic
     case 'or': {
-      const kids = (node.children ?? [])
-        .map(nodeToJson)
-        .filter((c): c is QueryJson => c !== null);
+      const kids = (node.children ?? []).map(nodeToJson).filter((c): c is QueryJson => c !== null);
 
       if (kids.length === 0) {
         return null;
       }
+
       if (kids.length === 1) {
         return kids[0];
       }
@@ -257,7 +258,10 @@ export function jsonToNode(json: QueryJson): BuilderNode | null {
   }
 
   if ('__bygroupid' in json) {
-    return { kind: 'bygroupid', ids: numbersToString((json as { __bygroupid: number | number[] }).__bygroupid) };
+    return {
+      kind: 'bygroupid',
+      ids: numbersToString((json as { __bygroupid: number | number[] }).__bygroupid),
+    };
   }
 
   if ('__isinhierarchyof' in json) {
@@ -296,7 +300,7 @@ function rawToComparison(field: string, raw: unknown): BuilderNode | null {
     for (const op of ['lt', 'le', 'gt', 'ge'] as BuilderOp[]) {
       const opKey = `__${op}`;
 
-      if (opKey in (raw as object)) {
+      if (opKey in raw) {
         const [valueType, value] = valueTypeOf((raw as Record<string, unknown>)[opKey]);
 
         return { kind: 'comparison', field, operator: op, valueType, value };
@@ -311,11 +315,12 @@ function valueTypeOf(v: unknown): [BuilderValueType, string] {
   if (v === null) {
     return ['null', ''];
   }
+
   if (typeof v === 'number') {
     return ['number', String(v)];
   }
 
-  return ['string', String(v)];
+  return ['string', typeof v === 'string' ? v : JSON.stringify(v)];
 }
 
 // ---------------------------------------------------------------------------
@@ -329,6 +334,7 @@ export function unwrapQuery(query: string): string {
   if (s.startsWith('$filter=')) {
     s = s.slice('$filter='.length).trim();
   }
+
   if (s.startsWith('(') && s.endsWith(')')) {
     s = s.slice(1, -1).trim();
   }

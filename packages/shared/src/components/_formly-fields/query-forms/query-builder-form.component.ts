@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, input, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CoreModule } from '@c8y/ngx-components';
 import { validateQuery } from '~components/query-display/query-validator';
@@ -81,21 +81,21 @@ import {
         <h5 class="card-title m-b-0" translate>Query</h5>
         <div class="btn-group btn-group-sm" role="group">
           <button
-            type="button"
             class="btn"
             [class.btn-primary]="mode === 'builder'"
             [class.btn-default]="mode !== 'builder'"
             (click)="switchToBuilder()"
+            type="button"
             translate
           >
             Builder
           </button>
           <button
-            type="button"
             class="btn"
             [class.btn-primary]="mode === 'raw'"
             [class.btn-default]="mode !== 'raw'"
             (click)="switchToRaw()"
+            type="button"
             translate
           >
             Raw
@@ -111,21 +111,28 @@ import {
         } @else {
           <textarea
             class="form-control"
-            rows="3"
             [(ngModel)]="rawValue"
             (ngModelChange)="onRawChange()"
+            rows="3"
             placeholder="has(c8y_Position) and type eq 'Pump'"
           ></textarea>
           @if (rawMessages.length) {
-            <div class="alert m-t-8 m-b-0" [class.alert-danger]="parseError" [class.alert-warning]="!parseError">
+            <div
+              class="alert m-t-8 m-b-0"
+              [class.alert-danger]="parseError"
+              [class.alert-warning]="!parseError"
+            >
               @for (m of rawMessages; track m) {
                 <div>{{ m }}</div>
               }
             </div>
           }
           <p class="text-muted small m-t-8 m-b-0">
-            <i c8yIcon="info-circle" class="m-r-4"></i>
-            <span translate>Switch to the builder to edit this query visually (only parseable queries can be converted).</span>
+            <i class="m-r-4" c8yIcon="info-circle"></i>
+            <span translate
+              >Switch to the builder to edit this query visually (only parseable queries can be
+              converted).</span
+            >
           </p>
         }
       </div>
@@ -137,7 +144,11 @@ import {
           @if (parent === null) {
             <span class="text-muted small" translate>Match</span>
             <div class="c8y-select-wrapper lm-qb-combinator">
-              <select class="form-control input-sm" [(ngModel)]="node.kind" (ngModelChange)="emit()">
+              <select
+                class="form-control input-sm"
+                [(ngModel)]="node.kind"
+                (ngModelChange)="emit()"
+              >
                 <option value="and">{{ 'ALL (AND)' | translate }}</option>
                 <option value="or">{{ 'ANY (OR)' | translate }}</option>
               </select>
@@ -166,18 +177,26 @@ import {
                 <input
                   class="form-control input-sm lm-qb-grow"
                   [(ngModel)]="node.field"
-                  (ngModelChange)="emit()"
                   [placeholder]="'field (e.g. type)' | translate"
+                  (ngModelChange)="emit()"
                 />
                 <div class="c8y-select-wrapper lm-qb-op">
-                  <select class="form-control input-sm" [(ngModel)]="node.operator" (ngModelChange)="emit()">
+                  <select
+                    class="form-control input-sm"
+                    [(ngModel)]="node.operator"
+                    (ngModelChange)="emit()"
+                  >
                     @for (op of operators; track op.value) {
                       <option [value]="op.value">{{ op.label }}</option>
                     }
                   </select>
                 </div>
                 <div class="c8y-select-wrapper lm-qb-vt">
-                  <select class="form-control input-sm" [(ngModel)]="node.valueType" (ngModelChange)="emit()">
+                  <select
+                    class="form-control input-sm"
+                    [(ngModel)]="node.valueType"
+                    (ngModelChange)="emit()"
+                  >
                     <option value="string">{{ 'Text' | translate }}</option>
                     <option value="number">{{ 'Number' | translate }}</option>
                     <option value="null">null</option>
@@ -186,10 +205,10 @@ import {
                 @if (node.valueType !== 'null') {
                   <input
                     class="form-control input-sm lm-qb-grow"
-                    [type]="node.valueType === 'number' ? 'number' : 'text'"
                     [(ngModel)]="node.value"
-                    (ngModelChange)="emit()"
+                    [type]="node.valueType === 'number' ? 'number' : 'text'"
                     [placeholder]="'value' | translate"
+                    (ngModelChange)="emit()"
                   />
                 }
               }
@@ -197,42 +216,42 @@ import {
                 <input
                   class="form-control input-sm lm-qb-grow"
                   [(ngModel)]="node.fragment"
-                  (ngModelChange)="emit()"
                   [placeholder]="'fragment (e.g. c8y_Position)' | translate"
+                  (ngModelChange)="emit()"
                 />
               }
               @case ('hasany') {
                 <input
                   class="form-control input-sm lm-qb-grow"
                   [(ngModel)]="node.fragments"
-                  (ngModelChange)="emit()"
                   [placeholder]="'fragments, comma separated' | translate"
+                  (ngModelChange)="emit()"
                 />
               }
               @case ('bygroupid') {
                 <input
                   class="form-control input-sm lm-qb-grow"
                   [(ngModel)]="node.ids"
-                  (ngModelChange)="emit()"
                   [placeholder]="'group ids, comma separated' | translate"
+                  (ngModelChange)="emit()"
                 />
               }
               @case ('isinhierarchyof') {
                 <input
                   class="form-control input-sm lm-qb-grow"
                   [(ngModel)]="node.ids"
-                  (ngModelChange)="emit()"
                   [placeholder]="'root ids, comma separated' | translate"
+                  (ngModelChange)="emit()"
                 />
               }
             }
 
             @if (parent.kind !== 'not') {
               <button
-                type="button"
                 class="btn btn-clean btn-xs text-danger"
-                (click)="onRemove(parent, index)"
                 [title]="'Remove' | translate"
+                (click)="onRemove(parent, index)"
+                type="button"
               >
                 <i c8yIcon="trash-o"></i>
               </button>
@@ -251,11 +270,19 @@ import {
               <p class="text-muted small m-b-0" translate>No conditions yet.</p>
             }
             <div class="lm-qb-actions">
-              <button type="button" class="btn btn-default btn-xs btn-icon" (click)="addChild(node)">
+              <button
+                class="btn btn-default btn-xs btn-icon"
+                (click)="addChild(node)"
+                type="button"
+              >
                 <i c8yIcon="plus-circle"></i>
                 <span translate>Add condition</span>
               </button>
-              <button type="button" class="btn btn-default btn-xs btn-icon" (click)="addGroup(node)">
+              <button
+                class="btn btn-default btn-xs btn-icon"
+                (click)="addGroup(node)"
+                type="button"
+              >
                 <i c8yIcon="plus-circle"></i>
                 <span translate>Add group</span>
               </button>
@@ -275,8 +302,8 @@ import {
   `,
 })
 export class QueryBuilderFormComponent implements OnInit {
-  @Input() filter!: Record<string, unknown>;
-  @Input() filterKey = 'query';
+  filter = input.required<Record<string, unknown>>();
+  filterKey = input('query');
 
   mode: 'builder' | 'raw' = 'builder';
   root: BuilderNode = { kind: 'and', children: [] };
@@ -293,7 +320,7 @@ export class QueryBuilderFormComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    const existing = this.filter[this.filterKey];
+    const existing = this.filter()[this.filterKey()];
 
     if (typeof existing === 'string' && existing.trim()) {
       const parsed = parseToRoot(existing);
@@ -317,9 +344,9 @@ export class QueryBuilderFormComponent implements OnInit {
     const serialized = serializeNode(this.root);
 
     if (serialized) {
-      this.filter[this.filterKey] = serialized;
+      this.filter()[this.filterKey()] = serialized;
     } else {
-      delete this.filter[this.filterKey];
+      delete this.filter()[this.filterKey()];
     }
 
     this.rawValue = serialized;
@@ -379,7 +406,9 @@ export class QueryBuilderFormComponent implements OnInit {
 
     if (!parsed) {
       this.parseError = true;
-      this.rawMessages = ['Cannot parse this query — fix the syntax before switching to the builder.'];
+      this.rawMessages = [
+        'Cannot parse this query — fix the syntax before switching to the builder.',
+      ];
 
       return;
     }
@@ -405,9 +434,9 @@ export class QueryBuilderFormComponent implements OnInit {
     const value = unwrapQuery(this.rawValue);
 
     if (value) {
-      this.filter[this.filterKey] = value;
+      this.filter()[this.filterKey()] = value;
     } else {
-      delete this.filter[this.filterKey];
+      delete this.filter()[this.filterKey()];
     }
   }
 

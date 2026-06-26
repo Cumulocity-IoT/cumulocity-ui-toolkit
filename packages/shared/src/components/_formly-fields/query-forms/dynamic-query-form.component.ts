@@ -92,6 +92,7 @@ export class DynamicQueryFormComponent implements AfterViewInit {
 
       if (match) {
         this.selectedFilters.push(match);
+
         if (match.type !== 'date' && match.type !== 'query-builder') {
           set(properties, match.title, match);
         }
@@ -127,6 +128,7 @@ export class DynamicQueryFormComponent implements AfterViewInit {
 
     if (this.selectedFilters.includes(b)) {
       this.selectedFilters = this.selectedFilters.filter((f) => f !== b);
+
       if (b.type !== 'date' && b.type !== 'query-builder') {
         delete properties[b.title];
       }

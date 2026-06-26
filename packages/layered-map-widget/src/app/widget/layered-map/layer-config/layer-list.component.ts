@@ -64,8 +64,6 @@ export class LayerListComponent {
   getQuery(layer: LayerConfig<BasicLayerConfig>): string {
     const cfg = layer.config;
 
-    return isQueryLayerConfig(cfg)
-      ? filterToQueryString(cfg.filter as Record<string, unknown>)
-      : '';
+    return isQueryLayerConfig(cfg) ? filterToQueryString(cfg.filter) : '';
   }
 }

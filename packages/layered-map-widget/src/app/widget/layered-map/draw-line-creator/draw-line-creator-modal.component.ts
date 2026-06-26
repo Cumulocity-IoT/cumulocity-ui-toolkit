@@ -13,7 +13,7 @@ import {
 } from 'leaflet';
 import { isEmpty } from 'lodash';
 import { BsModalRef } from 'ngx-bootstrap/modal';
-import { LocationGeocoderService } from '../service/location-geocoder.service';
+import { LocationGeocoderService } from '~services/location-geocoder.service';
 import { ITrack } from '../layered-map-widget.model';
 
 @Component({

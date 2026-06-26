@@ -1,5 +1,13 @@
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { startOfDay, startOfMonth, startOfWeek, startOfYear, subDays, subMonths, subYears } from 'date-fns';
+import {
+  startOfDay,
+  startOfMonth,
+  startOfWeek,
+  startOfYear,
+  subDays,
+  subMonths,
+  subYears,
+} from 'date-fns';
 
 /**
  * Supported relative date presets used by query-form select fields.

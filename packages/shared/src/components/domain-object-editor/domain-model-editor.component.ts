@@ -3,11 +3,9 @@ import {
   effect,
   EventEmitter,
   input,
-  OnChanges,
   OnInit,
   Output,
   signal,
-  SimpleChanges,
   ViewChild,
 } from '@angular/core';
 import { EditorComponent, MonacoEditorMarkerValidatorDirective } from '@c8y/ngx-components/editor';
@@ -30,7 +28,7 @@ import { EVENT_SCHEMA } from './event-schema';
     MonacoEditorMarkerValidatorDirective,
   ],
 })
-export class DomainModelEditorComponent implements OnInit, OnChanges {
+export class DomainModelEditorComponent implements OnInit {
   domainModel = input<'alarm' | 'event' | 'operation' | 'json'>('operation');
   value = input<string>();
   @Output() valueChange = new EventEmitter<string>();
@@ -57,6 +55,27 @@ export class DomainModelEditorComponent implements OnInit, OnChanges {
       this.timeout = setTimeout(() => {
         this.notifyIfValid(value); // emit after 200ms of inactivity
       }, 200);
+    });
+
+    // React to domain-model switches. Signal inputs do not trigger ngOnChanges,
+    // so the editor content and schema are reset here instead.
+    let initialDomainModel = true;
+
+    effect(() => {
+      this.domainModel(); // track the signal
+
+      if (initialDomainModel) {
+        initialDomainModel = false; // skip the initial run (ngOnInit handles it)
+
+        return;
+      }
+
+      const json = this.getDefaultJSONForDomainModel();
+      const jsonStr = JSON.stringify(json, undefined, 2);
+
+      this.form?.get('jsonEditor')?.setValue(jsonStr, { emitEvent: false });
+
+      setTimeout(() => this.assignSchema());
     });
   }
 
@@ -88,22 +107,6 @@ export class DomainModelEditorComponent implements OnInit, OnChanges {
     });
 
     this.notifyIfValid(jsonStr);
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['domainModel'] && !changes['domainModel'].firstChange) {
-      const previous = changes['domainModel'].previousValue as string;
-      const current = changes['domainModel'].currentValue as string;
-
-      if (previous !== current) {
-        const json = this.getDefaultJSONForDomainModel();
-        const jsonStr = JSON.stringify(json, undefined, 2);
-
-        this.form?.get('jsonEditor')?.setValue(jsonStr, { emitEvent: false });
-
-        setTimeout(() => this.assignSchema());
-      }
-    }
   }
 
   assignSchema() {

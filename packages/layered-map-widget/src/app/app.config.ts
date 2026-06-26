@@ -12,7 +12,9 @@ export const appConfig: ApplicationConfig = {
     importProvidersFrom(CoreModule.forRoot()),
     importProvidersFrom(CockpitDashboardModule),
     importProvidersFrom(
-      FormlyModule.forRoot({ types: [{ name: 'relative-date', component: RelativeDateTypeComponent }] })
+      FormlyModule.forRoot({
+        types: [{ name: 'relative-date', component: RelativeDateTypeComponent }],
+      })
     ),
   ],
 };

@@ -12,43 +12,79 @@ import { CustomBaseTileLayerEntry } from '../base-tile-layers';
   template: `
     <c8y-modal
       [title]="title | translate"
-      (onClose)="onClose()"
-      (onDismiss)="onDismiss()"
       [labels]="labels"
       [disabled]="!entry.label || !entry.url"
+      (onClose)="onClose()"
+      (onDismiss)="onDismiss()"
     >
       <div class="m-16">
         <div class="form-group">
           <label class="control-label" translate>Name</label>
-          <input class="form-control" type="text" [(ngModel)]="entry.label" [placeholder]="'e.g. Company WMS' | translate" />
+          <input
+            class="form-control"
+            [(ngModel)]="entry.label"
+            [placeholder]="'e.g. Company WMS' | translate"
+            type="text"
+          />
         </div>
 
         <div class="form-group">
           <label class="control-label" translate>Tile URL</label>
-          <input class="form-control" type="url" [(ngModel)]="entry.url" placeholder="https://example.com/tiles/{z}/{x}/{y}.png" />
+          <input
+            class="form-control"
+            [(ngModel)]="entry.url"
+            type="url"
+            placeholder="https://example.com/tiles/{z}/{x}/{y}.png"
+          />
           <p class="help-block">
-            Use <code>&#123;z&#125;</code>, <code>&#123;x&#125;</code>, <code>&#123;y&#125;</code> as placeholders.
-            ESRI endpoints use <code>&#123;z&#125;/&#123;y&#125;/&#123;x&#125;</code>.
+            Use <code>&#123;z&#125;</code>, <code>&#123;x&#125;</code>,
+            <code>&#123;y&#125;</code> as placeholders. ESRI endpoints use
+            <code>&#123;z&#125;/&#123;y&#125;/&#123;x&#125;</code>.
           </p>
         </div>
 
         <div class="form-group">
-          <label class="control-label" translate>Attribution <small class="text-muted" translate>(optional)</small></label>
-          <input class="form-control" type="text" [(ngModel)]="entry.attribution" [placeholder]="'© Map Provider' | translate" />
+          <label class="control-label" translate
+            >Attribution <small class="text-muted" translate>(optional)</small></label
+          >
+          <input
+            class="form-control"
+            [(ngModel)]="entry.attribution"
+            [placeholder]="'© Map Provider' | translate"
+            type="text"
+          />
         </div>
 
         <div class="row">
           <div class="col-xs-6">
             <div class="form-group">
-              <label class="control-label" translate>Max zoom <small class="text-muted">(optional, default 19)</small></label>
-              <input class="form-control" type="number" min="1" max="22" [(ngModel)]="entry.maxZoom" placeholder="19" />
+              <label class="control-label" translate
+                >Max zoom <small class="text-muted">(optional, default 19)</small></label
+              >
+              <input
+                class="form-control"
+                [(ngModel)]="entry.maxZoom"
+                type="number"
+                min="1"
+                max="22"
+                placeholder="19"
+              />
             </div>
           </div>
           <div class="col-xs-6">
             <div class="form-group">
-              <label class="control-label" translate>Subdomains <small class="text-muted">(optional, default abc)</small></label>
-              <input class="form-control" type="text" [(ngModel)]="entry.subdomains" placeholder="abc" />
-              <p class="help-block">Single string of subdomain characters, e.g. <code>abcd</code>.</p>
+              <label class="control-label" translate
+                >Subdomains <small class="text-muted">(optional, default abc)</small></label
+              >
+              <input
+                class="form-control"
+                [(ngModel)]="entry.subdomains"
+                type="text"
+                placeholder="abc"
+              />
+              <p class="help-block">
+                Single string of subdomain characters, e.g. <code>abcd</code>.
+              </p>
             </div>
           </div>
         </div>

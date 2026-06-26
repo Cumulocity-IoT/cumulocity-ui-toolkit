@@ -4,8 +4,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { ApplicationAvailabilityService } from '~services/application-availability.service';
 import { DTM_CONTEXT_PATH } from '~services/dtm.service';
-import { take } from 'rxjs/operators';
-import { clone, cloneDeep, has } from 'lodash';
+import { take, lastValueFrom } from 'rxjs';
 import {
   BASE_TILE_LAYERS,
   CustomBaseTileLayerEntry,
@@ -63,25 +62,25 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
     void this.loadCustomLayers();
     this.dtmInstalled = this.applicationAvailability.isAvailable(DTM_CONTEXT_PATH);
 
-    if (!has(this.config, 'layers')) {
-      this.config.layers = [];
+    if (!('layers' in this.config)) {
+      (this.config as ILayeredMapWidgetConfig).layers = [];
     }
 
-    if (!has(this.config, 'baseTileLayerId')) {
+    if (!('baseTileLayerId' in this.config)) {
       this.config.baseTileLayerId = DEFAULT_BASE_TILE_LAYER_ID;
     }
 
-    if (!has(this.config, 'autoCenter')) {
+    if (!('autoCenter' in this.config)) {
       this.config.autoCenter = true;
     } else {
       this.config.autoCenter = `${this.config.autoCenter}` === 'true';
     }
 
-    if (!has(this.config, 'manualCenter')) {
-      this.config.manualCenter = { lat: 0, long: 0, zoomLevel: 15 };
+    if (!('manualCenter' in this.config)) {
+      (this.config as ILayeredMapWidgetConfig).manualCenter = { lat: 0, long: 0, zoomLevel: 15 };
     }
 
-    if (!has(this.config, 'positionPolling')) {
+    if (!('positionPolling' in this.config)) {
       // Disabled by default: only devices that actually move need position
       // polling. For stationary devices it just produces needless requests.
       this.config.positionPolling = {
@@ -105,7 +104,7 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
       modalRef.content.dtmInstalled = dtmInstalled;
     }
 
-    const close = modalRef.content?.closeSubject.pipe(take(1)).toPromise();
+    const close = lastValueFrom(modalRef.content?.closeSubject.pipe(take(1)));
 
     if (!layer) {
       // create mode
@@ -117,7 +116,7 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
       }
     } else {
       // edit mode
-      const original = cloneDeep(layer.config);
+      const original = structuredClone(layer.config);
 
       modalRef.content?.setLayer(layer.config);
       const updated = await close;
@@ -139,10 +138,10 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
         modalRef.content.assetType = layer.config.assetType;
       }
 
-      modalRef.content.cfg.set(cloneDeep(layer.config.popoverConfig));
+      modalRef.content.cfg.set(structuredClone(layer.config.popoverConfig));
     }
 
-    const close = modalRef.content?.closeSubject.pipe(take(1)).toPromise();
+    const close = lastValueFrom(modalRef.content?.closeSubject.pipe(take(1)));
     const popoverConfig = await close;
 
     if (popoverConfig) {
@@ -153,8 +152,10 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
   async openCenterMapModal() {
     const modalRef = this.bsModalService.show(CenterMapModalComponent);
 
-    modalRef.content?.center.set(cloneDeep(this.config.manualCenter));
-    const modal = modalRef.content?.closeSubject.pipe(take(1)).toPromise();
+    if (this.config.manualCenter) {
+      modalRef.content?.center.set(structuredClone(this.config.manualCenter));
+    }
+    const modal = lastValueFrom(modalRef.content?.closeSubject.pipe(take(1)));
     const center = await modal;
 
     if (center) {
@@ -177,8 +178,8 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
   async openEventTrackCreatorModal() {
     const modalRef = this.bsModalService.show(EventLineCreatorModalComponent, {});
 
-    modalRef.content.items = clone(this.config.devices ?? []); // TODO: remove this and add device selection in event modal
-    const openExportTemplateModal = modalRef.content?.closeSubject.pipe(take(1)).toPromise();
+    modalRef.content.items = [...(this.config.devices ?? [])]; // TODO: remove this and add device selection in event modal
+    const openExportTemplateModal = lastValueFrom(modalRef.content?.closeSubject.pipe(take(1)));
     const track = await openExportTemplateModal;
 
     if (track) {
@@ -190,7 +191,7 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
     const modalRef = this.bsModalService.show(DrawLineCreatorModalComponent, {
       class: 'modal-lg',
     });
-    const openExportTemplateModal = modalRef.content.closeSubject.pipe(take(1)).toPromise();
+    const openExportTemplateModal = lastValueFrom(modalRef.content.closeSubject.pipe(take(1)));
     const track = await openExportTemplateModal;
 
     if (track) {
@@ -241,7 +242,7 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
       modalRef.content.setEntry(existing);
     }
 
-    const result = await modalRef.content?.closeSubject.pipe(take(1)).toPromise();
+    const result = await lastValueFrom(modalRef.content?.closeSubject.pipe(take(1)));
 
     if (!result) {
       return;
