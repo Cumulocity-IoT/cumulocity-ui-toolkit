@@ -15,7 +15,7 @@
       <div class="col-xs-4">
         <div class="form-group form-group-sm">
           <label for="zoomLevel" class="control-label">{{ 'Zoom level' | translate }}</label>
-          <c8y-range [(ngModel)]="center().zoomLevel" (change)="onUserChangedZoomLevel()">
+          <c8y-range [ngModel]="center().zoomLevel" (ngModelChange)="patchCenter({ zoomLevel: $event })" (change)="onUserChangedZoomLevel()">
             <input id="zoomLevel" type="range" min="2" max="18" step="1" />
           </c8y-range>
         </div>
@@ -24,8 +24,8 @@
         <div class="form-group form-group-sm m-b-8">
           <label translate>Center bound</label>
           <div class="input-group input-group-sm">
-            <input type="number" required placeholder="lat (required)" name="centerLat" class="form-control" [(ngModel)]="center().lat" />
-            <input type="number" required placeholder="lng (required)" name="centerLng" class="form-control" [(ngModel)]="center().long" />
+            <input type="number" required placeholder="lat (required)" name="centerLat" class="form-control" [ngModel]="center().lat" (ngModelChange)="patchCenter({ lat: $event })" />
+            <input type="number" required placeholder="lng (required)" name="centerLng" class="form-control" [ngModel]="center().long" (ngModelChange)="patchCenter({ long: $event })" />
             <div class="input-group-btn">
               <button container="body" placement="top" title="Use your location" (click)="detectUserLocation()" class="btn btn-default">
                 <i c8yIcon="location-arrow"></i>

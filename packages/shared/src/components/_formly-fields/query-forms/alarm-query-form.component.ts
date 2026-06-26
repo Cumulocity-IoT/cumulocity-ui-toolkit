@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, model } from '@angular/core';
 import { Severity, AlarmStatus } from '@c8y/client';
 import { CoreModule } from '@c8y/ngx-components';
 import { DynamicQueryFormComponent } from './dynamic-query-form.component';
@@ -6,14 +6,14 @@ import { DynamicQueryFormComponent } from './dynamic-query-form.component';
 @Component({
   selector: 'ps-alarm-query-form',
   template: `<ps-dynamic-query-form
-    [filter]="filter()"
+    [(filter)]="filter"
     [params]="queryParams"
   ></ps-dynamic-query-form>`,
   standalone: true,
   imports: [CoreModule, DynamicQueryFormComponent],
 })
 export class AlarmQueryFormComponent {
-  filter = input<Record<string, unknown>>({});
+  filter = model<Record<string, unknown>>({});
   queryParams = [
     {
       title: 'createdFrom',

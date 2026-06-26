@@ -71,7 +71,7 @@
       <span>
         <div class="legend form-block center">{{ queryType }} Query Configuration</div>
         <ps-query-forms-tab
-          [filter]="layer.filter"
+          [(filter)]="layer.filter"
           [queryType]="queryType"
           [disabledTabs]="isAssetLayer ? ['Alarm', 'Event'] : []"
           (tabChange)="onQueryTypeChange($event)"

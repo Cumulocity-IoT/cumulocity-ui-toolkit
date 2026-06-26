@@ -1,18 +1,18 @@
-import { Component, input } from '@angular/core';
+import { Component, model } from '@angular/core';
 import { CoreModule } from '@c8y/ngx-components';
 import { DynamicQueryFormComponent } from './dynamic-query-form.component';
 
 @Component({
   selector: 'ps-inventory-query-form',
   template: `<ps-dynamic-query-form
-    [filter]="filter()"
+    [(filter)]="filter"
     [params]="queryParams"
   ></ps-dynamic-query-form>`,
   standalone: true,
   imports: [CoreModule, DynamicQueryFormComponent],
 })
 export class InventoryQueryFormComponent {
-  filter = input<Record<string, unknown>>({});
+  filter = model<Record<string, unknown>>({});
   queryParams = [
     {
       title: 'fragmentType',

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, input } from '@angular/core';
+import { AfterViewInit, Component, input, model } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { C8yJSONSchema, CoreModule } from '@c8y/ngx-components';
 import { FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
@@ -55,12 +55,14 @@ export interface QueryParam {
       }
 
       <div class="form-group m-t-16">
+        <!-- formly owns and mutates [model] in place by design; it always receives
+             the current filter object, and our own edits re-emit a fresh copy. -->
         <formly-form [form]="form" [fields]="fields" [model]="filter()"></formly-form>
       </div>
 
       @for (p of queryBuilderFilters; track p.title) {
         <div class="m-t-8">
-          <ps-query-builder-form [filter]="filter()" [filterKey]="p.title"></ps-query-builder-form>
+          <ps-query-builder-form [(filter)]="filter" [filterKey]="p.title"></ps-query-builder-form>
         </div>
       }
     </div>
@@ -79,7 +81,10 @@ export class DynamicQueryFormComponent implements AfterViewInit {
 
   form = new FormGroup({});
   fields: FormlyFieldConfig[] = [];
-  filter = input<Record<string, unknown>>({});
+  // Two-way model owned by the parent. Edits we control (deselecting a param)
+  // emit a fresh object via `filter.update()` instead of mutating the value in
+  // place, so the change propagates up to the owner's signal.
+  filter = model<Record<string, unknown>>({});
   params = input<QueryParam[]>([]);
 
   constructor(private jsonschema: C8yJSONSchema) {}
@@ -132,7 +137,13 @@ export class DynamicQueryFormComponent implements AfterViewInit {
       if (b.type !== 'date' && b.type !== 'query-builder') {
         delete properties[b.title];
       }
-      delete this.filter()[b.title];
+      this.filter.update((filter) => {
+        const next = { ...filter };
+
+        delete next[b.title];
+
+        return next;
+      });
     } else {
       if (b.type !== 'date' && b.type !== 'query-builder') {
         set(properties, b.title, b);

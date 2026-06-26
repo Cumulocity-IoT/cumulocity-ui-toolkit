@@ -17,13 +17,13 @@
     <div class="tab">
       @switch (queryType()) {
         @case ('Inventory') {
-          <ps-inventory-query-form [filter]="filter()"></ps-inventory-query-form>
+          <ps-inventory-query-form [(filter)]="filter"></ps-inventory-query-form>
         }
         @case ('Alarm') {
-          <ps-alarm-query-form [filter]="filter()"></ps-alarm-query-form>
+          <ps-alarm-query-form [(filter)]="filter"></ps-alarm-query-form>
         }
         @case ('Event') {
-          <ps-event-query-form [filter]="filter()"></ps-event-query-form>
+          <ps-event-query-form [(filter)]="filter"></ps-event-query-form>
         }
       }
     </div>

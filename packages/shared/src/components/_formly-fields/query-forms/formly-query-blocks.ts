@@ -122,7 +122,7 @@ export function getTextInputBlock(meta: {
   return {
     key: meta.key,
     type: 'input',
-    templateOptions: {
+    props: {
       label: meta.label,
       placeholder: meta.placeholder ?? '',
       description: meta.description,

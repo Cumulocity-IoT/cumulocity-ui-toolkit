@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, input, OnInit } from '@angular/core';
+import { Component, input, model, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CoreModule } from '@c8y/ngx-components';
 import { validateQuery } from '~components/query-display/query-validator';
@@ -302,7 +302,10 @@ import {
   `,
 })
 export class QueryBuilderFormComponent implements OnInit {
-  filter = input.required<Record<string, unknown>>();
+  // Two-way model: the owning component holds the filter object. We never mutate
+  // the value in place — every edit emits a fresh object upward so Angular's
+  // change-detection contract holds and parent computed()/effect() consumers run.
+  filter = model.required<Record<string, unknown>>();
   filterKey = input('query');
 
   mode: 'builder' | 'raw' = 'builder';
@@ -343,12 +346,7 @@ export class QueryBuilderFormComponent implements OnInit {
   emit(): void {
     const serialized = serializeNode(this.root);
 
-    if (serialized) {
-      this.filter()[this.filterKey()] = serialized;
-    } else {
-      delete this.filter()[this.filterKey()];
-    }
-
+    this.writeFilterKey(serialized);
     this.rawValue = serialized;
   }
 
@@ -431,13 +429,27 @@ export class QueryBuilderFormComponent implements OnInit {
   onRawChange(): void {
     this.validateRaw();
 
-    const value = unwrapQuery(this.rawValue);
+    this.writeFilterKey(unwrapQuery(this.rawValue));
+  }
 
-    if (value) {
-      this.filter()[this.filterKey()] = value;
-    } else {
-      delete this.filter()[this.filterKey()];
-    }
+  /**
+   * Writes (or clears) the builder's clause under `filterKey`, emitting a new
+   * filter object upward rather than mutating the value held by the parent.
+   */
+  private writeFilterKey(value: string): void {
+    const key = this.filterKey();
+
+    this.filter.update((filter) => {
+      const next = { ...filter };
+
+      if (value) {
+        next[key] = value;
+      } else {
+        delete next[key];
+      }
+
+      return next;
+    });
   }
 
   private validateRaw(): void {

@@ -84,7 +84,7 @@ export class CenterMapModalComponent implements AfterViewInit, OnDestroy {
       .subscribe(() => {
         const zoom = this.map.getZoom();
 
-        this.center().zoomLevel = zoom;
+        this.patchCenter({ zoomLevel: zoom });
       });
 
     fromEvent<L.DragEndEvent>(this.map, 'dragend')
@@ -92,8 +92,7 @@ export class CenterMapModalComponent implements AfterViewInit, OnDestroy {
       .subscribe(() => {
         const center = this.map.getCenter();
 
-        this.center().lat = center.lat;
-        this.center().long = center.lng;
+        this.patchCenter({ lat: center.lat, long: center.lng });
       });
   }
 
@@ -118,8 +117,7 @@ export class CenterMapModalComponent implements AfterViewInit, OnDestroy {
 
     if (!isNil(lat) && !isNaN(lat) && !isNil(lon) && !isNaN(lon)) {
       this.map?.flyTo([lat, lon], this.center().zoomLevel, { duration: 1 });
-      this.center().lat = lat;
-      this.center().long = lon;
+      this.patchCenter({ lat, long: lon });
     }
   }
 
@@ -128,11 +126,19 @@ export class CenterMapModalComponent implements AfterViewInit, OnDestroy {
       navigator.geolocation.getCurrentPosition((position) => {
         const { latitude, longitude } = position.coords;
 
-        this.center().lat = latitude;
-        this.center().long = longitude;
+        this.patchCenter({ lat: latitude, long: longitude });
         this.map?.flyTo([latitude, longitude], this.center().zoomLevel, { duration: 1 });
       });
     }
+  }
+
+  /**
+   * Updates the `center` model by emitting a new object rather than mutating the
+   * value in place — the model is owned by the parent, so in-place writes would
+   * bypass Angular's change-detection contract for the two-way binding.
+   */
+  patchCenter(patch: Partial<{ lat: number; long: number; zoomLevel: number }>): void {
+    this.center.update((center) => ({ ...center, ...patch }));
   }
 
   // - MODAL section
