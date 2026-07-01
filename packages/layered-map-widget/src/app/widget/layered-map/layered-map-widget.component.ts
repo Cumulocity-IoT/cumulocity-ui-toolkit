@@ -211,6 +211,7 @@ export class LayeredMapWidgetComponent implements AfterViewInit, OnDestroy {
       minZoom: 2,
       detectRetina: true,
       attribution: tileLayerDef.attribution,
+      referrerPolicy: 'strict-origin-when-cross-origin',
       ...(tileLayerDef.subdomains ? { subdomains: tileLayerDef.subdomains } : {}),
     });
 
