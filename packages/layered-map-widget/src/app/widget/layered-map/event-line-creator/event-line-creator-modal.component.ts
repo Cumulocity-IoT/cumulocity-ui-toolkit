@@ -58,6 +58,7 @@ export class EventLineCreatorModalComponent implements AfterViewInit {
         maxZoom: 22,
         maxNativeZoom: 19,
         detectRetina: true,
+        referrerPolicy: 'strict-origin-when-cross-origin',
       }),
     ],
     zoom: 1,

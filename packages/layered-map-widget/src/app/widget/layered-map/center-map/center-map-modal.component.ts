@@ -60,6 +60,7 @@ export class CenterMapModalComponent implements AfterViewInit, OnDestroy {
           maxZoom: 22,
           maxNativeZoom: 19,
           detectRetina: true,
+          referrerPolicy: 'strict-origin-when-cross-origin',
         }),
       ],
       center: this.leaf.latLng(51.23544, 6.79599), // Düsseldorf
