@@ -12,7 +12,8 @@ import { TenantOptionRow } from '../model';
   imports: [CoreModule],
 })
 export class ImportOptionModalComponent {
-  closeSubject: Subject<TenantOptionRow | null> = new Subject();
+  /** Emits the imported row(s), or null on cancel. */
+  closeSubject: Subject<TenantOptionRow | TenantOptionRow[] | null> = new Subject();
 
   option: ITenantOption = {
     key: '',
@@ -25,17 +26,27 @@ export class ImportOptionModalComponent {
   private alert = inject(AlertService);
   private modal = inject(BsModalRef);
 
+  get isImportAllMode(): boolean {
+    return !!this.option.category && !this.option.key;
+  }
+
   import() {
     this.isLoading = true;
-    this.tenantOptionMgmt
-      .allowListOption(this.option)
+
+    const importPromise = this.isImportAllMode
+      ? this.tenantOptionMgmt.allowListCategory(this.option.category)
+      : this.tenantOptionMgmt.allowListOption(this.option);
+
+    importPromise
       .then(
-        (row) => {
-          this.closeSubject.next(row);
+        (result: TenantOptionRow | TenantOptionRow[]) => {
+          this.closeSubject.next(result);
           this.modal.hide();
         },
-        (error) => {
-          this.alert.danger('Option could not be imported', JSON.stringify(error));
+        (error: unknown) => {
+          const msg = error instanceof Error ? error.message : JSON.stringify(error);
+
+          this.alert.danger('Option could not be imported', msg);
         }
       )
       .finally(() => (this.isLoading = false));

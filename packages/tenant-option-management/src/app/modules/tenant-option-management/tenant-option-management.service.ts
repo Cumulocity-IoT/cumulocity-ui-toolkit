@@ -88,6 +88,48 @@ export class TenantOptionManagementService {
     return { id: `${option.category}-${option.key}`, value: option.value, ...item };
   }
 
+  async allowListCategory(category: string): Promise<TenantOptionRow[]> {
+    // Fetch all tenant options and filter by category client-side.
+    const tenantOptionsForCategory: ITenantOption[] = [];
+    const response = await this.tenantOption.list({
+      pageSize: this.MAX_PAGE_SIZE,
+      withTotalPages: true,
+    });
+
+    tenantOptionsForCategory.push(...response.data.filter((o) => o.category === category));
+
+    for (
+      let currentPage = response.paging.currentPage + 1;
+      currentPage <= response.paging.totalPages;
+      currentPage++
+    ) {
+      const { data } = await this.tenantOption.list({
+        pageSize: this.MAX_PAGE_SIZE,
+        currentPage,
+      });
+
+      tenantOptionsForCategory.push(...data.filter((o) => o.category === category));
+    }
+
+    if (!tenantOptionsForCategory.length) {
+      return Promise.reject(new Error(`No tenant options found for category "${category}"`));
+    }
+
+    const rows: TenantOptionRow[] = [];
+
+    for (const option of tenantOptionsForCategory) {
+      try {
+        const item = await this.addOptionToConfiguration(option);
+
+        rows.push({ id: `${option.category}-${option.key}`, value: option.value, ...item });
+      } catch {
+        // skip options that are already tracked in the configuration
+      }
+    }
+
+    return rows;
+  }
+
   async updateOption(row: ITenantOption & { value: string }): Promise<TenantOptionRow> {
     const option: ITenantOption = {
       category: row.category,

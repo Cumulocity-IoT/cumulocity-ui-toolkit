@@ -2,7 +2,7 @@
   <ng-container c8y-modal-title>
     <h1><i class="c8y-icon c8y-icon-device"></i></h1>
     <h3 id="modal-title">
-      {{ 'Import Tenant Option' | translate }}
+      {{ 'Add Existing Tenant Option' | translate }}
     </h3>
   </ng-container>
   <div class="modal-body">
@@ -19,10 +19,17 @@
     </c8y-form-group>
 
     <c8y-form-group class="m-16">
-      <label for="keyInput" translate>Key</label>
-      <input type="text" class="form-control" id="keyInput" [(ngModel)]="option.key" required />
+      <label for="keyInput" translate>Key <small class="text-muted">({{ 'optional – leave empty to import all keys of the category' | translate }})</small></label>
+      <input type="text" class="form-control" id="keyInput" [(ngModel)]="option.key" />
       <c8y-messages> </c8y-messages>
     </c8y-form-group>
+
+    @if (isImportAllMode) {
+      <div class="alert alert-info m-l-16 m-r-16">
+        <i c8yIcon="info-circle"></i>
+        {{ 'All keys of category "{{ category }}" will be added.' | translate: { category: option.category } }}
+      </div>
+    }
   </div>
   <div class="modal-footer separator-top bg-level-0 sticky-bottom">
     <button
@@ -39,7 +46,7 @@
       type="button"
       (click)="import()"
       [ngClass]="{ 'btn-pending': isLoading }"
-      [disabled]="!option.key.length || !option.category.length"
+      [disabled]="!option.category.length || isLoading"
     >
       {{ 'Import' | translate }}
     </button>
