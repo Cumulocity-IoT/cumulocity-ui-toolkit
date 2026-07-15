@@ -9,6 +9,9 @@ import {
 import { DomService } from './dom.service';
 
 describe('DomService', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
   it('appends created component host element to document body', () => {
     const element = document.createElement('div');
     const hostView = { rootNodes: [element] } as EmbeddedViewRef<unknown>;

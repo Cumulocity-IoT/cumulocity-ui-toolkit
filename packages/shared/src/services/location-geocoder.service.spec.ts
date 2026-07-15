@@ -2,6 +2,9 @@ import { FetchClient } from '@c8y/client';
 import { LocationGeocoderService } from './location-geocoder.service';
 
 describe('LocationGeocoderService', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
   it('returns parsed coordinates when the API has a result', async () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
     const fetchSpy: any = jest.spyOn(FetchClient.prototype, 'fetch').mockResolvedValue({
@@ -19,7 +22,7 @@ describe('LocationGeocoderService', () => {
 
   it('returns undefined when no geocoding result is available', async () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-    const spy: any = jest.spyOn(FetchClient.prototype, 'fetch').mockResolvedValue({
+    jest.spyOn(FetchClient.prototype, 'fetch').mockResolvedValue({
       // eslint-disable-next-line @typescript-eslint/require-await, @typescript-eslint/no-explicit-any
       json: async () => [],
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -2,6 +2,9 @@ import { TenantOptionsService } from '@c8y/client';
 import { TenantOptionCredentialsService } from './tenant-option-credentials.service';
 
 describe('TenantOptionCredentialsService', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
   let tenantOptions: {
     create: jest.Mock;
     detail: jest.Mock;

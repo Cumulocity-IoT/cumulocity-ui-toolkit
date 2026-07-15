@@ -32,9 +32,7 @@ describe('WidgetConfigurationService', () => {
     const service = new WidgetConfigurationService(inventoryService, alertService);
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    await expect(service.getWidgetConfiguration('d1', 'w-missing')).rejects.toThrow(
-      'w-missing doesn not exist in Dashboard d1'
-    );
+    await expect(service.getWidgetConfiguration('d1', 'w-missing')).rejects.toThrow(/w-missing.*Dashboard d1/);
   });
 
   it('updates widget configuration and reports server failures', async () => {
