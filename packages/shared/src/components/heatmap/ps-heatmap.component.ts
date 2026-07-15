@@ -49,9 +49,10 @@ export class HeatmapComponent implements OnInit, OnDestroy {
   }
 
   private initMap(): void {
-    const baseLayer = this.l.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    const baseLayer = this.l.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       ...this.options,
       className: 'bw-layer',
+      referrerPolicy: 'strict-origin-when-cross-origin',
     });
 
     this.map = this.l.map(this.mapReference.nativeElement, {
