@@ -24,7 +24,7 @@ export * from './services/hierarchy-aggregate.service';
 export * from './services/inventory-delta-polling.service';
 export * from './services/local-storage.service';
 export * from './services/location-geocoder.service';
-export * from './services/location-reatime.service';
+export * from './services/location-realtime.service';
 export * from './services/managed-object-update-detection.service';
 export * from './services/measurement-download.service';
 export * from './services/microservice.service';
