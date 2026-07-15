@@ -64,5 +64,6 @@ describe('OperationToastService', () => {
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(alertService.remove).toHaveBeenCalledWith(alert);
+    expect(sub.unsubscribe).toHaveBeenCalledTimes(1);
   });
 });

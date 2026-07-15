@@ -3,8 +3,25 @@ import { ACTIVE_TAB_STORAGE_KEY, ActiveTabService } from './active-tab.service';
 import { LocalStorageService } from './local-storage.service';
 
 describe('ActiveTabService', () => {
+  const originalHiddenDescriptor = Object.getOwnPropertyDescriptor(document, 'hidden');
+  const originalCryptoDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'crypto');
+  const originalOnFocus = window.onfocus;
+  const originalOnBlur = window.onblur;
   let storage$: Subject<unknown>;
   let localStorageService: jest.Mocked<Pick<LocalStorageService, 'get' | 'set' | 'storage$'>>;
+
+  afterEach(() => {
+    if (originalHiddenDescriptor) {
+      Object.defineProperty(document, 'hidden', originalHiddenDescriptor);
+    }
+
+    if (originalCryptoDescriptor) {
+      Object.defineProperty(globalThis, 'crypto', originalCryptoDescriptor);
+    }
+    window.onfocus = originalOnFocus;
+    window.onblur = originalOnBlur;
+    jest.restoreAllMocks();
+  });
 
   beforeEach(() => {
     storage$ = new Subject();

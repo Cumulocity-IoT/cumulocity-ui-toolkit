@@ -28,7 +28,7 @@ describe('TenantOptionCredentialsService', () => {
 
     const token = await service.saveCredentials({ username: 'u', password: 'p' });
 
-    expect(token).toBe('1234000000000000');
+    expect(token).toBe(String(Math.floor(0.1234 * 1e16)));
     expect(tenantOptions.create).toHaveBeenCalledWith(
       expect.objectContaining({ key: `${token}.username`, value: 'u' })
     );

@@ -2,7 +2,7 @@ import { EventService } from '@c8y/client';
 import { RealtimeSubjectService } from '@c8y/ngx-components';
 import { EMPTY, firstValueFrom, of } from 'rxjs';
 import { take } from 'rxjs/operators';
-import { LocationRealtimeService } from './location-reatime.service';
+import { LocationRealtimeService } from './location-realtime.service';
 
 describe('LocationRealtimeService', () => {
   it('returns latest location event from historical API data', async () => {
