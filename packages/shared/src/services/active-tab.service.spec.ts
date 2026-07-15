@@ -1,57 +1,3 @@
-import { Subject } from 'rxjs';
-import { ACTIVE_TAB_STORAGE_KEY, ActiveTabService } from './active-tab.service';
-import { LocalStorageService } from './local-storage.service';
-
-describe('ActiveTabService', () => {
-  let storage$: Subject<unknown>;
-  let localStorageService: Pick<LocalStorageService, 'storage$' | 'get' | 'set'>;
-  let service: ActiveTabService;
-
-  beforeEach(() => {
-    storage$ = new Subject();
-    localStorageService = {
-      storage$,
-      get: jest.fn(),
-      set: jest.fn(),
-    };
-
-    Object.defineProperty(document, 'hidden', { configurable: true, value: false });
-    Object.defineProperty(globalThis, 'crypto', {
-      configurable: true,
-      value: { randomUUID: jest.fn(() => 'tab-1') },
-    });
-
-    service = new ActiveTabService(localStorageService as LocalStorageService);
-  });
-
-  it('initializes active state and persists active tab id when visible', () => {
-    service.init();
-
-    expect(service.active$.getValue()).toBe(true);
-    expect(service.lastActive$.getValue()).toBe(true);
-    expect(localStorageService.set).toHaveBeenCalledWith(ACTIVE_TAB_STORAGE_KEY, 'tab-1');
-  });
-
-  it('updates lastActive when storage changes active tab', () => {
-    service.init();
-    (localStorageService.get as jest.Mock).mockReturnValue('tab-2');
-
-    storage$.next({});
-
-    expect(service.lastActive$.getValue()).toBe(false);
-  });
-
-  it('toggles active state on blur and focus', () => {
-    service.init();
-
-    window.onblur?.(new FocusEvent('blur'));
-    expect(service.active$.getValue()).toBe(false);
-
-    window.onfocus?.(new FocusEvent('focus'));
-    expect(service.active$.getValue()).toBe(true);
-    expect(localStorageService.set).toHaveBeenCalledTimes(2);
-  });
-});
 import { BehaviorSubject, Subject } from 'rxjs';
 import { ACTIVE_TAB_STORAGE_KEY, ActiveTabService } from './active-tab.service';
 import { LocalStorageService } from './local-storage.service';
@@ -69,11 +15,10 @@ describe('ActiveTabService', () => {
     };
 
     Object.defineProperty(document, 'hidden', { value: false, configurable: true });
-    jest.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue('tab-1');
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
+    Object.defineProperty(globalThis, 'crypto', {
+      configurable: true,
+      value: { randomUUID: jest.fn(() => 'tab-1') },
+    });
   });
 
   it('initializes and marks the current tab as active', () => {
