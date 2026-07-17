@@ -5,7 +5,7 @@ import { WidgetConfigurationService } from './widget-configuration.service';
 describe('WidgetConfigurationService', () => {
   it('returns widget configuration for existing widget', async () => {
     const inventoryService = {
-      detail: jest.fn().mockResolvedValue({
+      detail: jasmine.createSpy('detail').and.returnValue(Promise.resolve({
         data: {
           c8y_Dashboard: {
             children: {
@@ -13,34 +13,38 @@ describe('WidgetConfigurationService', () => {
             },
           },
         },
-      }),
-      update: jest.fn(),
+      })),
+      update: jasmine.createSpy('update'),
     } as unknown as InventoryService;
-    const alertService = { addServerFailure: jest.fn() } as unknown as AlertService;
+    const alertService = { addServerFailure: jasmine.createSpy('addServerFailure') } as unknown as AlertService;
     const service = new WidgetConfigurationService(inventoryService, alertService);
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    await expect(service.getWidgetConfiguration('d1', 'w1')).resolves.toEqual({ title: 'T' });
+    expect(await service.getWidgetConfiguration('d1', 'w1')).toEqual({ title: 'T' });
   });
 
   it('throws when widget does not exist in dashboard', async () => {
     const inventoryService = {
-      detail: jest.fn().mockResolvedValue({ data: { c8y_Dashboard: { children: {} } } }),
-      update: jest.fn(),
+      detail: jasmine.createSpy('detail').and.returnValue(Promise.resolve({ data: { c8y_Dashboard: { children: {} } } })),
+      update: jasmine.createSpy('update'),
     } as unknown as InventoryService;
-    const alertService = { addServerFailure: jest.fn() } as unknown as AlertService;
+    const alertService = { addServerFailure: jasmine.createSpy('addServerFailure') } as unknown as AlertService;
     const service = new WidgetConfigurationService(inventoryService, alertService);
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    await expect(service.getWidgetConfiguration('d1', 'w-missing')).rejects.toThrow(
-      /w-missing.*Dashboard d1/
-    );
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      await service.getWidgetConfiguration('d1', 'w-missing');
+      fail('Expected an error to be thrown');
+    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      expect((error as any).message).toMatch(/w-missing.*Dashboard d1/);
+    }
   });
 
   it('updates widget configuration and reports server failures', async () => {
-    const update = jest.fn().mockRejectedValue(new Error('failed'));
+    const update = jasmine.createSpy('update').and.returnValue(Promise.reject(new Error('failed')));
     const inventoryService = {
-      detail: jest.fn().mockResolvedValue({
+      detail: jasmine.createSpy('detail').and.returnValue(Promise.resolve({
         data: {
           c8y_Dashboard: {
             children: {
@@ -48,10 +52,10 @@ describe('WidgetConfigurationService', () => {
             },
           },
         },
-      }),
+      })),
       update,
     } as unknown as InventoryService;
-    const alertService = { addServerFailure: jest.fn() } as unknown as AlertService;
+    const alertService = { addServerFailure: jasmine.createSpy('addServerFailure') } as unknown as AlertService;
     const service = new WidgetConfigurationService(inventoryService, alertService);
 
     await service.updateWidgetConfiguration('d1', 'w1', { title: 'new' });

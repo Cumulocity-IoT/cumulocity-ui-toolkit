@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { InventoryService } from '@c8y/client';
 import { AlertService } from '@c8y/ngx-components';
-import { has } from 'lodash';
 
 interface DashboardChild {
   config: unknown;

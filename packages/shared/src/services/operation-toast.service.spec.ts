@@ -8,11 +8,11 @@ describe('OperationToastService', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/unbound-method
     const stream = new Subject<any>();
     const alertService = {
-      add: jest.fn(),
-      remove: jest.fn(),
+      add: jasmine.createSpy('add'),
+      remove: jasmine.createSpy('remove'),
     } as unknown as AlertService;
     const operationRealtime = {
-      onUpdate$: jest.fn(() => stream.asObservable()),
+      onUpdate$: jasmine.createSpy('onUpdate$').and.returnValue(stream.asObservable()),
     } as unknown as OperationRealtimeService;
     const service = new OperationToastService(alertService, operationRealtime);
 
@@ -21,7 +21,7 @@ describe('OperationToastService', () => {
       type: 'info',
       operationDetails: { deviceId: 'd1', uuid: 'u1' },
     };
-    const next = jest.fn();
+    const next = jasmine.createSpy('next');
 
     service.add(alert).subscribe(next);
     stream.next({ status: OperationStatus.EXECUTING, uuid: 'u1' });
@@ -32,24 +32,24 @@ describe('OperationToastService', () => {
     expect(alertService.add).toHaveBeenCalled();
     expect(next).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledWith(
-      expect.objectContaining({ status: OperationStatus.SUCCESSFUL, uuid: 'u1' })
+      jasmine.objectContaining({ status: OperationStatus.SUCCESSFUL, uuid: 'u1' })
     );
   });
 
   it('removes alert and realtime subscription by uuid', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/unbound-method
     const stream = new Subject<any>();
-    const sub = { unsubscribe: jest.fn(), closed: false };
+    const sub = { unsubscribe: jasmine.createSpy('unsubscribe'), closed: false };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/unbound-method, @typescript-eslint/no-unsafe-argument
-    jest.spyOn(stream, 'subscribe').mockReturnValue(sub as any);
+    spyOn(stream, 'subscribe').and.returnValue(sub as any);
 
     const alertService = {
-      add: jest.fn(),
-      remove: jest.fn(),
+      add: jasmine.createSpy('add'),
+      remove: jasmine.createSpy('remove'),
     } as unknown as AlertService;
     const operationRealtime = {
-      onUpdate$: jest.fn(() => stream.asObservable()),
+      onUpdate$: jasmine.createSpy('onUpdate$').and.returnValue(stream.asObservable()),
     } as unknown as OperationRealtimeService;
     const service = new OperationToastService(alertService, operationRealtime);
 

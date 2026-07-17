@@ -8,7 +8,7 @@ describe('ActiveTabService', () => {
   const originalOnFocus = window.onfocus;
   const originalOnBlur = window.onblur;
   let storage$: Subject<unknown>;
-  let localStorageService: jest.Mocked<Pick<LocalStorageService, 'get' | 'set' | 'storage$'>>;
+  let localStorageService: jasmine.SpyObj<Pick<LocalStorageService, 'get' | 'set' | 'storage$'>>;
 
   afterEach(() => {
     if (originalHiddenDescriptor) {
@@ -20,21 +20,17 @@ describe('ActiveTabService', () => {
     }
     window.onfocus = originalOnFocus;
     window.onblur = originalOnBlur;
-    jest.restoreAllMocks();
   });
 
   beforeEach(() => {
     storage$ = new Subject();
-    localStorageService = {
-      get: jest.fn(),
-      set: jest.fn(),
-      storage$,
-    };
+    localStorageService = jasmine.createSpyObj<Pick<LocalStorageService, 'get' | 'set' | 'storage$'>>('LocalStorageService', ['get', 'set']);
+    localStorageService.storage$ = storage$;
 
     Object.defineProperty(document, 'hidden', { value: false, configurable: true });
     Object.defineProperty(globalThis, 'crypto', {
       configurable: true,
-      value: { randomUUID: jest.fn(() => 'tab-1') },
+      value: { randomUUID: jasmine.createSpy('randomUUID').and.returnValue('tab-1') },
     });
   });
 
@@ -66,7 +62,7 @@ describe('ActiveTabService', () => {
 
     service.init();
 
-    localStorageService.get.mockReturnValue('different-tab');
+    localStorageService.get.and.returnValue('different-tab');
     storage$.next({});
 
     expect(service.lastActive$.getValue()).toBe(false);
@@ -77,10 +73,10 @@ describe('ActiveTabService', () => {
 
     service.init();
 
-    localStorageService.get.mockReturnValue('tab-1');
+    localStorageService.get.and.returnValue('tab-1');
     expect(service.isActive()).toBe(true);
 
-    localStorageService.get.mockReturnValue('tab-2');
+    localStorageService.get.and.returnValue('tab-2');
     expect(service.isActive()).toBe(false);
   });
 
@@ -91,7 +87,7 @@ describe('ActiveTabService', () => {
 
     service.ngOnDestroy();
 
-    localStorageService.get.mockReturnValue('different-tab');
+    localStorageService.get.and.returnValue('different-tab');
     storage$.next({});
     expect(service.lastActive$.getValue()).toBe(true);
   });

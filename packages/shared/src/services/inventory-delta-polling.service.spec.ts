@@ -3,7 +3,7 @@ import { InventoryDeltaPollingService } from './inventory-delta-polling.service'
 
 describe('InventoryDeltaPollingService', () => {
   afterEach(() => {
-    jest.useRealTimers();
+    jasmine.clock().uninstall();
   });
 
   it('creates add and remove deltas correctly', () => {
@@ -18,21 +18,18 @@ describe('InventoryDeltaPollingService', () => {
   });
 
   it('emits only when there is a non-empty delta', async () => {
-    jest.useFakeTimers();
+    jasmine.clock().install();
     const service = new InventoryDeltaPollingService({} as InventoryService);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const checkSpy: any = jest
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .spyOn(service as any, 'checkForUpdates')
-      .mockResolvedValueOnce({ add: [], remove: [] })
-      .mockResolvedValueOnce({ add: [{ id: 'new-1' }], remove: [] });
-    const next = jest.fn();
+    const checkSpy: any = spyOn(service as any, 'checkForUpdates')
+      .and.returnValues(Promise.resolve({ add: [], remove: [] }), Promise.resolve({ add: [{ id: 'new-1' }], remove: [] }));
+    const next = jasmine.createSpy('next');
 
     const sub = service.createPolling$({}, 10, []).subscribe(next);
 
-    jest.advanceTimersByTime(10);
+    jasmine.clock().tick(10);
     await Promise.resolve();
-    jest.advanceTimersByTime(10);
+    jasmine.clock().tick(10);
     await Promise.resolve();
 
     expect(checkSpy).toHaveBeenCalledTimes(2);
