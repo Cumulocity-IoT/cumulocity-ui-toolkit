@@ -44,6 +44,7 @@
       "ACKNOWLEDGED": "Bestätigt",
       "ACTIVE": "Aktiv",
       "CLEARED": "Gelöscht",
+      "DUE": "Fällig",
       "UNKNOWN": "Unbekannt"
     },
     "title": "Erinnerungen",

@@ -44,6 +44,7 @@
       "ACKNOWLEDGED": "Acknowledged",
       "ACTIVE": "Active",
       "CLEARED": "Cleared",
+      "DUE": "Due",
       "UNKNOWN": "Unknown"
     },
     "title": "Reminder",

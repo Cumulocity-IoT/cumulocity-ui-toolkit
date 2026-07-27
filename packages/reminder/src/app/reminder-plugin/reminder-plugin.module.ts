@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { provideHttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { AlertModule, CoreModule, EventRealtimeService, hookAction } from '@c8y/ngx-components';
@@ -10,6 +11,7 @@ import { MomentModule } from 'ngx-moment';
 import { AssetFieldType } from '~components/_formly-fields/asset.formly/asset.formly.component';
 import { TimeFieldType } from '~components/_formly-fields/time.formly/time.formly.component';
 import { ActiveTabService } from '~services/active-tab.service';
+import { AssetAccessService } from '~services/asset-access.service';
 import { DomService } from '~services/dom.service';
 import { LocalStorageService } from '~services/local-storage.service';
 import {
@@ -44,11 +46,17 @@ import { ReminderService } from './services/reminder.service';
     TooltipModule,
   ],
   providers: [
+    // dependencies: api services
+    provideHttpClient(),
+    EventRealtimeService,
+    // dependencies: toolkit services
+    AssetAccessService,
+    LocalStorageService,
     ActiveTabService,
     DomService,
-    EventRealtimeService,
-    LocalStorageService,
+    // plugin services
     ReminderService,
+    // hooks
     hookAction({
       component: ReminderIndicatorComponent,
     }),

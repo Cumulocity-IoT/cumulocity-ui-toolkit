@@ -1,9 +1,9 @@
 {
   "name": "cumulocity-reminder-plugin",
-  "version": "1.4.4",
+  "version": "1.4.5",
   "description": "",
   "author": "@dirk-peter-c8y",
-  "homepage": "___TODO___",
+  "homepage": "https://github.com/Cumulocity-IoT/cumulocity-ui-toolkit/tree/main/packages/reminder",
   "scripts": {
     "test": "jest"
   },
