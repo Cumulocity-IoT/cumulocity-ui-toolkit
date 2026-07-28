@@ -16,7 +16,8 @@ import { KpiAggregatorWidgetConfig } from '../../models/kpi-aggregator-widget.mo
 
 @Component({
   selector: 'c8y-kpi-aggregator-widget-config',
-  template: '<formly-form [form]="form" [fields]="fields" [model]="config"></formly-form>',
+  template:
+    '<formly-form [form]="form" [fields]="fields" [model]="formModel" (modelChange)="onModelChange($event)"></formly-form>',
   styleUrl: 'kpi-aggregator-widget-config.component.less',
   standalone: true,
   imports: [CoreModule, FormlyModule],
@@ -24,17 +25,17 @@ import { KpiAggregatorWidgetConfig } from '../../models/kpi-aggregator-widget.mo
 export class KpiAggregatorWidgetConfigComponent implements OnInit {
   private optionsService = inject(OptionsService);
 
-  @Input() config!: KpiAggregatorWidgetConfig;
-
-  set opacity(opacity: number) {
-    this.config.opacity = opacity / 100;
+  @Input() set config(config: KpiAggregatorWidgetConfig) {
+    this._config = config;
+    this.syncFormStateFromConfig();
   }
 
-  get opacity(): number {
-    return this.config.opacity * 100;
+  get config(): KpiAggregatorWidgetConfig {
+    return this._config;
   }
 
   form = new FormGroup({});
+  formModel: KpiAggregatorWidgetConfig = cloneDeep(KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG);
 
   fields: FormlyFieldConfig[] = [
     {
@@ -266,10 +267,21 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
   ];
 
   private defaultConfig = cloneDeep(KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG);
+  private _config!: KpiAggregatorWidgetConfig;
 
   ngOnInit(): void {
     this.setTenantConfigs();
-    this.setDefaultValues();
+    this.syncFormStateFromConfig();
+  }
+
+  onModelChange(model: KpiAggregatorWidgetConfig): void {
+    this.formModel = model;
+
+    if (!this._config) {
+      return;
+    }
+
+    Object.assign(this._config, model);
   }
 
   private setTenantConfigs() {
@@ -279,8 +291,18 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
     }
   }
 
-  private setDefaultValues(): void {
-    // make sure all defaults are present, e.g. after updates
-    this.config = { ...this.defaultConfig, ...this.config };
+  private syncFormStateFromConfig(): void {
+    if (!this._config) {
+      return;
+    }
+
+    // Keep defaults and current input in sync while preserving the input object reference.
+    const mergedConfig: KpiAggregatorWidgetConfig = {
+      ...this.defaultConfig,
+      ...this._config,
+    };
+
+    Object.assign(this._config, mergedConfig);
+    this.formModel = cloneDeep(mergedConfig);
   }
 }
