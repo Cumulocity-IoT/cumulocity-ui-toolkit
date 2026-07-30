@@ -3,7 +3,7 @@
   "version": "0.1.2",
   "description": "",
   "author": "@dirk-peter-c8y",
-  "homepage": "___TODO___",
+  "homepage": "https://github.com/Cumulocity-IoT/cumulocity-ui-toolkit/tree/main/packages/release-notes",
   "dependencies": {
     "ngx-moment": "^6.0.2",
     "shared": "workspace:*"

@@ -3,7 +3,7 @@
   "version": "1.4.4",
   "description": "",
   "author": "@dirk-peter-c8y",
-  "homepage": "___TODO___",
+  "homepage": "https://github.com/Cumulocity-IoT/cumulocity-ui-toolkit/tree/main/packages/reminder",
   "scripts": {
     "test": "ng test plugin.reminder --watch=false --browsers=ChromeHeadless",
     "test:watch": "ng test plugin.reminder"

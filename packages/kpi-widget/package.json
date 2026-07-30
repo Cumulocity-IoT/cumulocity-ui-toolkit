@@ -1,9 +1,9 @@
 {
   "name": "cumulocity-kpi-aggregator-widget-plugin",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "",
   "author": "@dirk-peter-c8y",
-  "homepage": "___TODO___",
+  "homepage": "https://github.com/Cumulocity-IoT/cumulocity-ui-toolkit/tree/main/packages/kpi-widget",
   "dependencies": {
     "ng2-charts": "^9.0.0",
     "shared": "workspace:*"
