@@ -15,7 +15,7 @@ import { isToCreateIOperation } from '~helpers/domain-model-type.helper';
 import { removePlaceholders } from '~helpers/extract-placeholders';
 import { cloneDeep } from 'lodash';
 @Component({
-  selector: 'app-operations-widget',
+  selector: 'c8y-operations-widget',
   templateUrl: './operations-widget.component.html',
   styleUrls: ['./operations-widget.component.scss'],
   standalone: true,
@@ -37,42 +37,6 @@ export class OperationsWidgetComponent {
   selectedButton: OperationButtonConfig = null;
   previewPayload: string = '';
   payloadData: Record<string, unknown> = {};
-
-  private generateFormlyFields(button: OperationButtonConfig) {
-    if (!button.fields) return;
-
-    this.formlyFields = button.fields.map((field: OperationParamConfig) => {
-      const fieldConfig: FormlyFieldConfig = {
-        key: field.path,
-        type: field.type,
-        props: {
-          label: field.label || field.key,
-          required: true,
-        },
-      };
-
-      // Special handling for Select/Dropdown
-      if (field.type === 'select') {
-        fieldConfig.type = 'select';
-        fieldConfig.props.options = field.options.map((opt) => ({
-          label: opt.label,
-          value: opt.value,
-        }));
-      }
-      // Special handling for Number (HTML input type)
-      else if (field.type === 'number') {
-        fieldConfig.type = 'input';
-        fieldConfig.props.type = 'number';
-      }
-      // Default Text Input
-      else {
-        fieldConfig.type = 'input';
-        fieldConfig.props.type = 'text';
-      }
-
-      return fieldConfig;
-    });
-  }
 
   async sendOperation() {
     // this.selectedButton.operationValue = this.payloadData;
@@ -146,5 +110,41 @@ export class OperationsWidgetComponent {
     }
 
     return existing;
+  }
+
+  private generateFormlyFields(button: OperationButtonConfig) {
+    if (!button.fields) return;
+
+    this.formlyFields = button.fields.map((field: OperationParamConfig) => {
+      const fieldConfig: FormlyFieldConfig = {
+        key: field.path,
+        type: field.type,
+        props: {
+          label: field.label || field.key,
+          required: true,
+        },
+      };
+
+      // Special handling for Select/Dropdown
+      if (field.type === 'select') {
+        fieldConfig.type = 'select';
+        fieldConfig.props.options = field.options.map((opt) => ({
+          label: opt.label,
+          value: opt.value,
+        }));
+      }
+      // Special handling for Number (HTML input type)
+      else if (field.type === 'number') {
+        fieldConfig.type = 'input';
+        fieldConfig.props.type = 'number';
+      }
+      // Default Text Input
+      else {
+        fieldConfig.type = 'input';
+        fieldConfig.props.type = 'text';
+      }
+
+      return fieldConfig;
+    });
   }
 }

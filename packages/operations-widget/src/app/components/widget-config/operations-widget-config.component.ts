@@ -1,25 +1,37 @@
-import { Component, inject, Input } from '@angular/core';
+import { Component, inject, Input, TemplateRef, ViewChild } from '@angular/core';
+import { CoreModule, HumanizePipe } from '@c8y/ngx-components';
+import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
+import { extractPlaceholdersFromObject } from '~helpers/extract-placeholders';
 import { ICONS } from '../../models/icons.const';
 import {
   OperationButtonConfig,
   OperationParamConfig,
   OperationWidgetConfig,
 } from '../../models/operations-widget-config.model';
-import { CoreModule, HumanizePipe } from '@c8y/ngx-components';
 import { OperationsEditorComponent } from '../operations-value/operations-editor.component';
-import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
-import { ButtonInstanceComponent } from '../button-instance/button-instance.component';
-import { extractPlaceholdersFromObject } from '~helpers/extract-placeholders';
+import { OperationsWidgetComponent } from '../operations-widget/operations-widget.component';
+import { WidgetConfigService } from '@c8y/ngx-components/context-dashboard';
 
 @Component({
   selector: 'app-operations-widget-config',
   templateUrl: './operations-widget-config.component.html',
   styleUrl: './operations-widget-config.component.scss',
   standalone: true,
-  imports: [CoreModule, BsDropdownModule, ButtonInstanceComponent, OperationsEditorComponent],
+  imports: [CoreModule, BsDropdownModule, OperationsEditorComponent, OperationsWidgetComponent],
 })
 export class OperationsWidgetConfigComponent {
+  private readonly widgetConfigService = inject(WidgetConfigService);
   private humanize = inject(HumanizePipe);
+
+  @ViewChild('widgetPreview')
+  set previewMapSet(template: TemplateRef<unknown>) {
+    if (template) {
+      this.widgetConfigService.setPreview(template);
+
+      return;
+    }
+    this.widgetConfigService.setPreview(null);
+  }
 
   @Input() get config(): OperationWidgetConfig {
     return this._config;
