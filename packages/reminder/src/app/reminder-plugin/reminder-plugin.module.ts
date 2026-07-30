@@ -1,9 +1,5 @@
-
 import { ENVIRONMENT_INITIALIZER, inject, importProvidersFrom } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { provideHttpClient } from '@angular/common/http';
-import { NgModule } from '@angular/core';
-import { RouterModule } from '@angular/router';
 import { AlertModule, CoreModule, EventRealtimeService, hookAction } from '@c8y/ngx-components';
 import { AssetSelectorModule } from '@c8y/ngx-components/assets-navigator';
 import { FormlyModule } from '@ngx-formly/core';
@@ -20,9 +16,13 @@ import { ReminderIndicatorComponent } from './components/reminder-indicator/remi
 import { ReminderService } from './services/reminder.service';
 
 export const ReminderPluginProviders = [
+  // dependencies: api services
+  provideHttpClient(),
+  EventRealtimeService,
+  // dependencies: toolkit services
+  AssetAccessService,
   ActiveTabService,
   DomService,
-  EventRealtimeService,
   LocalStorageService,
   ReminderService,
   importProvidersFrom(
@@ -38,14 +38,6 @@ export const ReminderPluginProviders = [
     }),
     MomentModule,
     TooltipModule
-    // dependencies: api services
-    provideHttpClient(),
-    EventRealtimeService,
-    // dependencies: toolkit services
-    AssetAccessService,
-    LocalStorageService,
-    ActiveTabService,
-    DomService,
   ),
   hookAction({
     component: ReminderIndicatorComponent,

@@ -1,9 +1,9 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CoreModule } from '@c8y/ngx-components';
 import { FormlyModule } from '@ngx-formly/core';
 import { ActivatedRoute, ActivatedRouteSnapshot } from '@angular/router';
-import { EventService, IEvent, IManagedObject, InventoryService } from '@c8y/client';
+import { EventService, IEvent, IManagedObject, InventoryService, IResult } from '@c8y/client';
 import { AlertService } from '@c8y/ngx-components';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { TranslateService } from '@ngx-translate/core';
@@ -140,6 +140,7 @@ export class ReminderModalComponent implements OnInit {
       this.reminder.source.id === this.asset?.id
         ? this.asset
         : (await this.inventoryService.detail(this.reminder.source.id)).data;
+    let request: IResult<IEvent>;
 
     if (source && Object.hasOwn(source, 'c8y_IsDeviceGroup')) reminder['isGroup'] = {};
 
@@ -158,9 +159,7 @@ export class ReminderModalComponent implements OnInit {
         this.translateService.instant('reminder.feedback.created') as string
       );
       this.close();
-    } catch (error) {
-      console.error(error);
-      this.isLoading = false;
+    } else {
       this.alertService.danger(
         this.translateService.instant('reminder.feedback.not-created') as string
       );
