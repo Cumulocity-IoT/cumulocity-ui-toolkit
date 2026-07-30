@@ -270,14 +270,18 @@ export class KpiAggregatorWidgetComponent implements OnInit {
     this.total = total;
 
     // sort
-    const sorted = orderBy(groups[0].objects, (object) =>
-      (object['name'] as string).trim().toLowerCase()
-    );
+    const sorted = orderBy(groups[0].objects, (object) => this.getAssetNameSortKey(object));
 
     groups[0].objects =
       this.config.order === KpiAggregatorWidgetOrder.desc ? sorted.reverse() : sorted;
 
     return groups;
+  }
+
+  private getAssetNameSortKey(object: IManagedObject): string {
+    const value: unknown = object.name;
+
+    return typeof value === 'string' ? value.trim().toLowerCase() : '';
   }
 
   private handleRawAssets(assets: IManagedObject[]) {
