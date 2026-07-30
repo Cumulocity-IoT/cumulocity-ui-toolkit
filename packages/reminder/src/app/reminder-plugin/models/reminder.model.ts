@@ -1,19 +1,22 @@
 import { IEvent, ITenantOption } from '@c8y/client';
+import { AssetFilterConfig } from '~models/asset-access.model';
 
-export const REMINDER_ASSET_CONTEXT_ROOTS = ['group', 'device'];
-export const REMINDER_TYPE = 'c8y_Reminder';
-export const REMINDER_TYPE_FRAGMENT = 'reminderType';
-export const REMINDER_INITIAL_QUERY_SIZE = 100;
-export const REMINDER_DRAWER_OPEN_CLASS = 'drawerOpen';
-export const REMINDER_MAIN_HEADER_CLASS = 'app-main-header';
-export const REMINDER_COUNTER_DISPLAY_THRESHOLD = 9;
-export const REMINDER_TEXT_LENGTH = 100;
-export const REMINDER_HIGHLIGHT_DURATION_SECONDS = 5;
-export const REMINDER_TENENAT_OPTION_CATEGORY: ITenantOption['category'] = 'c8y.reminder';
-export const REMINDER_TENENAT_OPTION_TYPE_KEY: ITenantOption['key'] = 'types';
-export const REMINDER_LOCAL_STORAGE_FILTER = 'c8y_rpFilter';
-export const REMINDER_LOCAL_STORAGE_CONFIG = 'c8y_rpConfig';
-export const REMINDER_LOCAL_STORAGE_DEFAULT_CONFIG: ReminderConfig = {
+export const REMINDER__ASSET_CONTEXT_ROOTS = ['group', 'device'];
+export const REMINDER__TYPE = 'c8y_Reminder';
+export const REMINDER__TYPE_FRAGMENT = 'reminderType';
+export const REMINDER__INITIAL_QUERY_SIZE = 100;
+export const REMINDER__DRAWER_OPEN_CLASS = 'drawerOpen';
+export const REMINDER__MAIN_HEADER_CLASS = 'app-main-header';
+export const REMINDER__COUNTER_DISPLAY_THRESHOLD = 9;
+export const REMINDER__TEXT_LENGTH = 100;
+export const REMINDER__HIGHLIGHT_DURATION_SECONDS = 5;
+export const REMINDER__TENANT_OPTION__CATEGORY: ITenantOption['category'] = 'c8y.reminder';
+export const REMINDER__TENANT_OPTION__TYPE_KEY: ITenantOption['key'] = 'types';
+export const REMINDER__TENANT_OPTION__CONFIG_KEY: ITenantOption['key'] = 'config';
+export const REMINDER__TENANT_OPTION__ASSET_ACCESS_KEY: ITenantOption['key'] = 'assetFilter';
+export const REMINDER__LOCAL_STORAGE__FILTER = 'c8y_rpFilter';
+export const REMINDER__LOCAL_STORAGE__CONFIG = 'c8y_rpConfig';
+export const REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG: ReminderConfig = {
   toast: false,
   browser: false,
   filter: { reminderType: '' },
@@ -21,7 +24,7 @@ export const REMINDER_LOCAL_STORAGE_DEFAULT_CONFIG: ReminderConfig = {
 };
 
 export interface Reminder extends IEvent {
-  type: typeof REMINDER_TYPE;
+  type: typeof REMINDER__TYPE;
   status: ReminderStatus;
   isGroup?: object;
   diff?: number;
@@ -34,6 +37,15 @@ export interface ReminderConfig {
   filter?: ReminderGroupFilter;
   toast?: boolean;
   useContext?: boolean;
+}
+
+export interface ResponsibilityFilter extends Partial<AssetFilterConfig> {
+  enabled: boolean;
+}
+
+export interface ReminderTenantConfig {
+  useContext?: boolean;
+  responsibilityFilter?: ResponsibilityFilter;
 }
 
 export interface ReminderGroup {

@@ -12,9 +12,9 @@ import moment from 'moment';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import {
   Reminder,
-  REMINDER_TEXT_LENGTH,
-  REMINDER_TYPE,
-  REMINDER_TYPE_FRAGMENT,
+  REMINDER__TEXT_LENGTH,
+  REMINDER__TYPE,
+  REMINDER__TYPE_FRAGMENT,
   ReminderStatus,
   ReminderType,
 } from '../../models/reminder.model';
@@ -31,6 +31,7 @@ interface FormlySelectOptions {
   templateUrl: './reminder-modal.component.html',
   standalone: true,
   imports: [CoreModule, ReactiveFormsModule, FormlyModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReminderModalComponent implements OnInit {
   private activatedRoute = inject(ActivatedRoute);
@@ -50,7 +51,7 @@ export class ReminderModalComponent implements OnInit {
     source: undefined,
     text: undefined,
     time: undefined,
-    type: REMINDER_TYPE,
+    type: REMINDER__TYPE,
   };
 
   fields: FormlyFieldConfig[] = [
@@ -71,7 +72,7 @@ export class ReminderModalComponent implements OnInit {
           props: {
             label: this.translateService.instant('reminder.labels.message') as string,
             required: true,
-            maxLength: REMINDER_TEXT_LENGTH,
+            maxLength: REMINDER__TEXT_LENGTH,
             // TODO show max length & used chars
           },
         },
@@ -119,11 +120,15 @@ export class ReminderModalComponent implements OnInit {
   async submit(): Promise<void> {
     this.isLoading = true;
 
-    if (!this.reminder.source || !this.reminder.text) return;
+    if (!this.reminder.source || !this.reminder.text) {
+      this.isLoading = false;
+
+      return;
+    }
 
     const reminder: IEvent = {
       source: this.reminder.source,
-      type: REMINDER_TYPE,
+      type: REMINDER__TYPE,
       reminderType: this.reminder.reminderType || null,
       time: moment(this.reminder.time).seconds(0).toISOString(),
       text: this.reminder.text,
@@ -139,8 +144,16 @@ export class ReminderModalComponent implements OnInit {
     if (source && Object.hasOwn(source, 'c8y_IsDeviceGroup')) reminder['isGroup'] = {};
 
     try {
-      await this.eventService.create(reminder);
-      this.isLoading = false;
+      request = await this.eventService.create(reminder);
+    } catch (error) {
+      console.error(error);
+    }
+
+    this.isLoading = false;
+
+    if (!request) return;
+
+    if (request.res.status === 201) {
       this.alertService.success(
         this.translateService.instant('reminder.feedback.created') as string
       );
@@ -211,7 +224,7 @@ export class ReminderModalComponent implements OnInit {
     if (!this.typeOptions.length) return;
 
     this.fields.push({
-      key: REMINDER_TYPE_FRAGMENT,
+      key: REMINDER__TYPE_FRAGMENT,
       type: 'select',
       props: {
         label: this.translateService.instant('reminder.labels.type') as string,

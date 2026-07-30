@@ -1,4 +1,4 @@
-import { Component, inject, Input } from '@angular/core';
+import { Component, inject, Input, input } from '@angular/core';
 import { CoreModule } from '@c8y/ngx-components';
 import { Reminder, ReminderType } from '../../models/reminder.model';
 import { ReminderService } from '../../services/reminder.service';
@@ -13,20 +13,25 @@ import { ReminderService } from '../../services/reminder.service';
 export class ReminderTypeComponent {
   private reminderService = inject(ReminderService);
 
-  @Input() set reminder(reminder: Reminder) {
-    this.setType(reminder.reminderType);
-  }
+  readonly reminder = input<Reminder | undefined>();
+  readonly id = input<ReminderType['id'] | undefined>();
 
-  @Input() set id(reminderTypeID: ReminderType['id']) {
-    this.setType(reminderTypeID);
-  }
+  type?: ReminderType;
 
-  type: ReminderType;
+  constructor() {
+    effect(() => {
+      const id = this.id() ?? this.reminder()?.reminderType;
 
-  private setType(id: ReminderType['id']) {
-    this.type = {
-      id,
-      name: this.reminderService.getReminderTypeName(id),
-    };
+      if (id == null) {
+        this.type = undefined;
+
+        return;
+      }
+
+      this.type = {
+        id,
+        name: this.reminderService.getReminderTypeName(id),
+      };
+    });
   }
 }

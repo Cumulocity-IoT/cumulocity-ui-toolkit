@@ -1,9 +1,9 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CoreModule } from '@c8y/ngx-components';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
-import { REMINDER_COUNTER_DISPLAY_THRESHOLD } from '../../models/reminder.model';
+import { REMINDER__COUNTER_DISPLAY_THRESHOLD } from '../../models/reminder.model';
 import { ReminderService } from '../../services/reminder.service';
 
 const ReminderStatus = {
@@ -23,10 +23,11 @@ export class ReminderIndicatorComponent implements OnInit, OnDestroy {
   private reminderService = inject(ReminderService);
   private translateService = inject(TranslateService);
 
-  open = false;
-  counter = 0;
+  readonly maxCounter = REMINDER__COUNTER_DISPLAY_THRESHOLD;
+
+  open = signal<boolean>(false);
+  counter = signal<number>(0);
   status = ReminderStatus.default;
-  maxCounter = REMINDER_COUNTER_DISPLAY_THRESHOLD;
   tooltipText!: string;
 
   private subscription = new Subscription();
@@ -34,8 +35,8 @@ export class ReminderIndicatorComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     // use open status from service
     this.subscription.add(
-      this.reminderService.open$?.subscribe((open) => {
-        this.open = open;
+      this.reminderService.open$.subscribe((open) => {
+        this.open.set(open);
       })
     );
 
@@ -57,14 +58,14 @@ export class ReminderIndicatorComponent implements OnInit, OnDestroy {
   }
 
   private setCounterStatus(counter: number): void {
-    this.counter = counter;
+    this.counter.set(counter);
 
     if (counter >= this.maxCounter) this.status = ReminderStatus.danger;
     else if (counter >= 1) this.status = ReminderStatus.warning;
     else this.status = ReminderStatus.default;
   }
 
-  private setCounterText(counter = this.counter): void {
+  private setCounterText(counter = this.counter()): void {
     let txt: string;
 
     switch (counter) {

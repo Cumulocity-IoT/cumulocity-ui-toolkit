@@ -99,6 +99,9 @@ msgstr "Aktiv"
 msgid "reminder.status.CLEARED"
 msgstr "Gelöscht"
 
+msgid "reminder.status.DUE"
+msgstr "Fällig"
+
 msgid "reminder.status.UNKNOWN"
 msgstr "Unbekannt"
 
