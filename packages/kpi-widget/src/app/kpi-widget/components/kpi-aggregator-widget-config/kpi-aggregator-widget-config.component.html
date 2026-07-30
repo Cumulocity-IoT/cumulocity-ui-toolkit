@@ -1,0 +1,10 @@
+<formly-form [form]="form" [fields]="fields" [model]="formModel" (modelChange)="onModelChange($event)"></formly-form>
+
+<ng-template #widgetPreview>
+  @for(renderKey of [previewRenderKey]; track renderKey) {
+    <c8y-kpi-aggregator-widget
+      [attr.data-preview-key]="renderKey"
+      [config]="previewConfig"
+    ></c8y-kpi-aggregator-widget>
+  }
+</ng-template>

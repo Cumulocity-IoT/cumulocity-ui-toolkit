@@ -1,10 +1,18 @@
-import { Component, inject, Input, OnInit } from '@angular/core';
-import { CoreModule } from '@c8y/ngx-components';
-import { FormlyModule } from '@ngx-formly/core';
+import {
+  Component,
+  DestroyRef,
+  inject,
+  Input,
+  OnInit,
+  TemplateRef,
+  ViewChild,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormGroup } from '@angular/forms';
-import { OptionsService } from '@c8y/ngx-components';
-import { FormlyFieldConfig } from '@ngx-formly/core';
+import { CoreModule, OptionsService } from '@c8y/ngx-components';
+import { FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
 import { cloneDeep } from 'lodash';
+import { debounceTime, Subject } from 'rxjs';
 import {
   KPI_AGGREGAOR_WIDGET__CHART_LEGEND_POSITION_OPTIONS,
   KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG,
@@ -13,17 +21,31 @@ import {
   KPI_AGGREGAOR_WIDGET_ORDER_OPTIONS,
 } from '../../models/kpi-aggregator-widget.const';
 import { KpiAggregatorWidgetConfig } from '../../models/kpi-aggregator-widget.model';
+import { KpiAggregatorWidgetComponent } from '../kpi-aggregator-widget/kpi-aggregator-widget.component';
+import { WidgetConfigService } from '@c8y/ngx-components/context-dashboard';
 
 @Component({
   selector: 'c8y-kpi-aggregator-widget-config',
-  template:
-    '<formly-form [form]="form" [fields]="fields" [model]="formModel" (modelChange)="onModelChange($event)"></formly-form>',
-  styleUrl: 'kpi-aggregator-widget-config.component.less',
+  templateUrl: './kpi-aggregator-widget-config.component.html',
+  styleUrl: './kpi-aggregator-widget-config.component.less',
   standalone: true,
-  imports: [CoreModule, FormlyModule],
+  imports: [CoreModule, FormlyModule, KpiAggregatorWidgetComponent],
 })
 export class KpiAggregatorWidgetConfigComponent implements OnInit {
+  private readonly widgetConfigService = inject(WidgetConfigService);
+  private readonly destroyRef = inject(DestroyRef);
   private optionsService = inject(OptionsService);
+  private readonly previewUpdate$ = new Subject<void>();
+
+  @ViewChild('widgetPreview')
+  set previewMapSet(template: TemplateRef<unknown>) {
+    if (template) {
+      this.widgetConfigService.setPreview(template);
+
+      return;
+    }
+    this.widgetConfigService.setPreview(null);
+  }
 
   @Input() set config(config: KpiAggregatorWidgetConfig) {
     this._config = config;
@@ -36,6 +58,8 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
 
   form = new FormGroup({});
   formModel: KpiAggregatorWidgetConfig = cloneDeep(KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG);
+  previewConfig: KpiAggregatorWidgetConfig = cloneDeep(KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG);
+  previewRenderKey = 0;
 
   fields: FormlyFieldConfig[] = [
     {
@@ -270,18 +294,33 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
   private _config!: KpiAggregatorWidgetConfig;
 
   ngOnInit(): void {
+    this.previewUpdate$
+      .pipe(debounceTime(1000), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (!this._config) {
+          return;
+        }
+
+        this.previewConfig = cloneDeep(this._config);
+        this.previewRenderKey += 1;
+      });
+
     this.setTenantConfigs();
     this.syncFormStateFromConfig();
   }
 
   onModelChange(model: KpiAggregatorWidgetConfig): void {
-    this.formModel = model;
-
     if (!this._config) {
       return;
     }
 
-    Object.assign(this._config, model);
+    this.formModel = this._config;
+
+    if (model !== this._config) {
+      Object.assign(this._config, model);
+    }
+
+    this.schedulePreviewRefresh();
   }
 
   private setTenantConfigs() {
@@ -303,6 +342,11 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
     };
 
     Object.assign(this._config, mergedConfig);
-    this.formModel = cloneDeep(mergedConfig);
+    this.formModel = this._config;
+    this.schedulePreviewRefresh();
+  }
+
+  private schedulePreviewRefresh(): void {
+    this.previewUpdate$.next();
   }
 }
