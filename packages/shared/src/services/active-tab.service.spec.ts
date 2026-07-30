@@ -24,8 +24,11 @@ describe('ActiveTabService', () => {
 
   beforeEach(() => {
     storage$ = new Subject();
-    localStorageService = jasmine.createSpyObj<Pick<LocalStorageService, 'get' | 'set' | 'storage$'>>('LocalStorageService', ['get', 'set']);
-    localStorageService.storage$ = storage$;
+    localStorageService = jasmine.createSpyObj<Pick<LocalStorageService, 'get' | 'set' | 'storage$'>>(
+      'LocalStorageService',
+      ['get', 'set'],
+      { storage$: storage$ as LocalStorageService['storage$'] }
+    );
 
     Object.defineProperty(document, 'hidden', { value: false, configurable: true });
     Object.defineProperty(globalThis, 'crypto', {
@@ -49,10 +52,10 @@ describe('ActiveTabService', () => {
 
     service.init();
 
-    window.onblur?.(new FocusEvent('blur'));
+    window.dispatchEvent(new FocusEvent('blur'));
     expect(service.active$.getValue()).toBe(false);
 
-    window.onfocus?.(new FocusEvent('focus'));
+    window.dispatchEvent(new FocusEvent('focus'));
     expect(service.active$.getValue()).toBe(true);
     expect(localStorageService.set).toHaveBeenCalledWith(ACTIVE_TAB_STORAGE_KEY, 'tab-1');
   });

@@ -2,10 +2,11 @@ import { Component, inject, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router } from '@angular/router';
 import { AlertService, CoreModule, HeaderService } from '@c8y/ngx-components';
+import { isEmpty } from 'lodash';
 import { CollapseModule } from 'ngx-bootstrap/collapse';
+import { BsModalService } from 'ngx-bootstrap/modal';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { MomentModule } from 'ngx-moment';
-import { BsModalService } from 'ngx-bootstrap/modal';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import {
   Reminder,

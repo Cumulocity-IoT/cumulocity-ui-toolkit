@@ -1,4 +1,4 @@
-import { Component, inject, Input, input } from '@angular/core';
+import { Component, effect, inject, input } from '@angular/core';
 import { CoreModule } from '@c8y/ngx-components';
 import { Reminder, ReminderType } from '../../models/reminder.model';
 import { ReminderService } from '../../services/reminder.service';
