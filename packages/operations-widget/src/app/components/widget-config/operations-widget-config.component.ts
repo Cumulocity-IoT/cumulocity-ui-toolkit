@@ -1,8 +1,8 @@
 import { Component, inject, Input, TemplateRef, ViewChild } from '@angular/core';
 import { CoreModule, HumanizePipe } from '@c8y/ngx-components';
+import { IconSelectorService } from '@c8y/ngx-components/icon-selector';
 import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
 import { extractPlaceholdersFromObject } from '~helpers/extract-placeholders';
-import { ICONS } from '../../models/icons.const';
 import {
   OperationButtonConfig,
   OperationParamConfig,
@@ -21,6 +21,7 @@ import { WidgetConfigService } from '@c8y/ngx-components/context-dashboard';
 })
 export class OperationsWidgetConfigComponent {
   private readonly widgetConfigService = inject(WidgetConfigService);
+  private readonly iconSelector = inject(IconSelectorService);
   private humanize = inject(HumanizePipe);
 
   @ViewChild('widgetPreview')
@@ -54,10 +55,17 @@ export class OperationsWidgetConfigComponent {
     'btn-link',
   ];
 
-  availableIcons: string[] = [...ICONS];
   supportedOperations: string[] = [];
 
   private _config: OperationWidgetConfig;
+
+  async openIconSelector(item: OperationButtonConfig): Promise<void> {
+    const icon = await this.iconSelector.selectIcon({ currentSelection: item.icon });
+
+    if (icon) {
+      item.icon = icon;
+    }
+  }
 
   addField(buttonIndex: number, placeholder: { key: string; path: string }) {
     if (!this.config.buttons[buttonIndex].fields) this.config.buttons[buttonIndex].fields = [];
