@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { DataGridComponent } from '@c8y/ngx-components';
-import { invoke, set, has } from 'lodash';
+import { invoke, set } from 'lodash';
 
 @Injectable({ providedIn: 'root' })
 export class DataGridPatchService {
@@ -21,11 +21,11 @@ export class DataGridPatchService {
    * @param grid
    */
   applySingleSortBehavior(grid: DataGridComponent): void {
-    if (has(grid, this.ORIGINAL_METHOD_BACKUP_ATTRIBUTE_NAME)) {
+    if (grid && Object.hasOwn(grid, this.ORIGINAL_METHOD_BACKUP_ATTRIBUTE_NAME)) {
       return;
     }
 
-    if (!has(grid, 'changeSortOrder')) {
+    if (!grid || !Object.hasOwn(grid, 'changeSortOrder')) {
       throw new Error('Patching of c8y-data-grid failed. Method changeSortOrder not found.');
     }
     set(grid, this.ORIGINAL_METHOD_BACKUP_ATTRIBUTE_NAME, grid.changeSortOrder.bind(grid));

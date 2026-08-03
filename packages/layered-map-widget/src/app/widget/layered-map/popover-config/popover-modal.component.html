@@ -1,0 +1,106 @@
+<c8y-modal title="{{ title | translate }}" (onClose)="onClose()" (onDismiss)="onDismiss()" [labels]="labels"
+  style="width: 100%">
+  <div class="m-16">
+    <div class="form-group">
+      <formly-form [form]="form" [fields]="fields" [model]="config"></formly-form>
+    </div>
+
+    @if (isAssetLayer) {
+    <div class="form-group m-t-16">
+      <label translate>Asset properties</label>
+      <p class="text-muted small m-b-8" translate>
+        Asset properties to display in the popover. The asset type's defined properties are
+        suggested; any property path can also be added manually.
+      </p>
+
+      @if (availableAssetProperties.length) {
+        <div class="c8y-select-wrapper m-b-8" title="{{ 'Add a defined asset property' | translate }}">
+          <select class="form-control" #propSelect (change)="addProperty(propSelect.value); propSelect.value = ''">
+            <option value="" disabled selected>{{ 'Select an asset property…' | translate }}</option>
+            @for (p of availableAssetProperties; track p.name) {
+              <option [value]="p.name">{{ p.label }}</option>
+            }
+          </select>
+        </div>
+      }
+
+      <div class="input-group m-b-8">
+        <input
+          class="form-control"
+          type="text"
+          [(ngModel)]="newProperty"
+          placeholder="{{ 'Property name' | translate }}"
+          (keyup.enter)="addProperty(newProperty)"
+        />
+        <span class="input-group-btn">
+          <button class="btn btn-default" type="button" (click)="addProperty(newProperty)" [disabled]="!newProperty">
+            <i c8yIcon="plus-circle" class="m-r-4"></i><span translate>Add</span>
+          </button>
+        </span>
+      </div>
+
+      @for (p of config.assetProperties; track p) {
+        <span class="label label-primary m-r-4 m-b-4 d-inline-block">
+          {{ p }}
+          <button class="btn-clean m-l-4" type="button" (click)="removeProperty(p)" title="{{ 'Remove' | translate }}">
+            <i c8yIcon="times"></i>
+          </button>
+        </span>
+      }
+    </div>
+    }
+    <!-- TODO: Fix this feature before enabling -->
+    <!-- <div class="form-group m-t-16">
+      <label>Actions</label>
+      @for (action of config.actions; track action) {
+        <span class="row m-0">
+          <input class="form-control input-sm col-sm-10" type="text" [(ngModel)]="action.label"
+            [tooltip]="action.body | json" />
+          <button class="btn btn-dot col m-l-8" (click)="removeAction(action)">
+            <i c8yIcon="minus-circle" class="text-danger"></i>
+          </button>
+        </span>
+      }
+    </div> -->
+    <!-- <button class="btn btn-default btn-sm" [disabled]="true" (click)="isActionsFormCollapsed = false; scroll(addActionBtn)"
+      [disabled]="!isActionsFormCollapsed">
+      <i c8yIcon="plus-circle" class="m-r-4"></i>Add action
+    </button> -->
+
+    <div class="actions-form" [collapse]="isActionsFormCollapsed" [isAnimated]="true">
+      <div class="legend form-block center">Add action</div>
+      <div class="form-group m-t-16">
+        <div class="tabContainer">
+          <!-- tabs -->
+          <ul class="nav nav-tabs nav-tabsc8y m-b-8">
+            @for (t of tabs; track t) {
+              <li [class.active]="t.active">
+                <button type="button" [title]="t.label" [disabled]="t.disabled" (click)="changeTab(t.id)">
+                  @if (t.icon) {
+                    <i class="{{ t.icon }}"></i>
+                  }
+                  <span class="txt">{{ t.label }}</span>
+                </button>
+              </li>
+            }
+          </ul>
+
+          <!-- tab content -->
+          <ng-container class="tab">
+            <div class="col-sm-12 m-b-8" style="height: 200px; border: 1px solid var(--c8y-component-border-color, var(--c8y-root-component-border-color))">
+              <domain-model-editor [domainModel]="currentTab" (valueChange)="onChange($event)" (isValidChange)="isEditorValid = $event"></domain-model-editor>
+            </div>
+            
+          </ng-container>
+
+          <div class="col-sm-12 p-t-16 p-b-8">
+            <button #addActionBtn class="btn btn-primary" (click)="addAction(currentTab)" [disabled]="!isEditorValid">
+              {{ ('Add' | translate) + ' ' + currentTab }}
+            </button>
+            <button class="btn btn-default" (click)="cancelAdd()">{{ 'Cancel' | translate }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</c8y-modal>

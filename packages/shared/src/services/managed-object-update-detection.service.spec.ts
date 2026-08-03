@@ -1,37 +1,29 @@
 import { InventoryService } from '@c8y/client';
 
-jest.mock(
-  'date-fns',
-  () => ({
-    subMinutes: (date: Date) => date,
-  }),
-  { virtual: true }
-);
-
 import { ManagedObjectUpdatePollingService } from './managed-object-update-detection.service';
 
 describe('ManagedObjectUpdatePollingService', () => {
   beforeEach(() => {
-    jest.useFakeTimers();
+    jasmine.clock().install();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    jasmine.clock().uninstall();
   });
 
   it('emits updates when managed objects are returned', async () => {
     const inventory = {
       // eslint-disable-next-line @typescript-eslint/require-await
-      list: jest.fn(async () => ({
+      list: jasmine.createSpy('list').and.callFake(async () => ({
         data: [{ id: 'mo-1', lastUpdated: '2026-01-01T00:00:01.000Z' }],
       })),
     } as unknown as InventoryService;
     const service = new ManagedObjectUpdatePollingService(inventory);
-    const next = jest.fn();
+    const next = jasmine.createSpy('next');
 
     const sub = service.startListening('type eq x', 1).subscribe(next);
 
-    jest.advanceTimersByTime(2);
+    jasmine.clock().tick(2);
     await Promise.resolve();
 
     expect(next).toHaveBeenCalledWith([{ id: 'mo-1', lastUpdated: '2026-01-01T00:00:01.000Z' }]);
@@ -42,7 +34,7 @@ describe('ManagedObjectUpdatePollingService', () => {
 
   it('returns existing stream when already listening', () => {
     // eslint-disable-next-line @typescript-eslint/require-await
-    const inventory = { list: jest.fn(async () => ({ data: [] })) } as unknown as InventoryService;
+    const inventory = { list: jasmine.createSpy('list').and.callFake(async () => ({ data: [] })) } as unknown as InventoryService;
     const service = new ManagedObjectUpdatePollingService(inventory);
 
     const stream1 = service.startListening('type eq x', 1);

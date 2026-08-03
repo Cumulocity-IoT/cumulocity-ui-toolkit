@@ -11,12 +11,11 @@
     "activityBar.activeBackground": "#ffbe0033",
     "activityBar.inactiveForeground": "#F9FAFB66",
     "activityBar.activeBorder": "#ffbe00",
-
-    "activityBarBadge.background": "#ffbe00",
-    "activityBarBadge.foreground": "#212121",
-
     "button.background": "#ffbe00",
     "button.foreground": "#212121",
+    "toolbar.hoverOutline": "#212121"
+  },
+  "typescript.tsdk": "node_modules\\typescript\\lib"
 
     "toolbar.hoverOutline": "#ffbe00",
 

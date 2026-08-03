@@ -5,7 +5,7 @@
 ### Prerequisites
 
 0. Install dependencies (on root level `npm i`, then cd into `/test` and also run `npm i`there.)
-1. Ensure that a local server is running with the package to be tested. Ensure that `TENANT`is targeting UI Guild tenant (using `export TENANT=...`) and `APP`is set to `cockpit-test` (using `export APP=cockpit-test`).
+1. Ensure that a local server is running with the package to be tested. Ensure that `TENANT`is targeting UI Guild tenant (using `export TENANT=...`) and `APP`is set to `cockpit-test-1023` (using `export APP=cockpit-test-1023`).
 2. The Cypress configuration must point to the same tenant as the local server.
 3. Make sure to use the correct test script as the shell and remotes query param need to match between the locally running Angular dev server and the cypress test configuration.
 
@@ -15,7 +15,7 @@
   - `base.config.ts` (for headless testing)
   - `cypress.config.ts` (for visual testing)
 - Per default the test is targeted at the UI Guild tenant
-    - The application cockpit-test is used
+    - The application cockpit-test-1023 is used
     - This app is meant to be left empty, meaning no plugins shall be installed there as otherwise conflicts might happen between versions of the same plugin (ala testing against the old version )
 
 ### Steps to Run Tests

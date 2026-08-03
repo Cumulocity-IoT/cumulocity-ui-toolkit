@@ -8,7 +8,7 @@ describe('LocationRealtimeService', () => {
   it('returns latest location event from historical API data', async () => {
     const event = {
       // eslint-disable-next-line @typescript-eslint/require-await
-      list: jest.fn(async () => ({
+      list: jasmine.createSpy('list').and.callFake(async () => ({
         data: [
           {
             type: 'c8y_LocationUpdate',
@@ -20,7 +20,7 @@ describe('LocationRealtimeService', () => {
     } as unknown as EventService;
     const service = new LocationRealtimeService({} as RealtimeSubjectService, event);
 
-    jest.spyOn(service, 'onCreate$').mockReturnValue(EMPTY);
+    spyOn(service, 'onCreate$').and.returnValue(EMPTY);
 
     const result = await firstValueFrom(service.fetchLatestAndRealtime$('device-1').pipe(take(1)));
 
@@ -31,11 +31,11 @@ describe('LocationRealtimeService', () => {
   it('startListening creates one stream per device id', () => {
     const service = new LocationRealtimeService(
       {} as RealtimeSubjectService,
-      { list: jest.fn() } as unknown as EventService
+      { list: jasmine.createSpy('list') } as unknown as EventService
     );
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-    jest.spyOn(service, 'fetchLatestAndRealtime$').mockReturnValue(of({} as any));
+    spyOn(service, 'fetchLatestAndRealtime$').and.returnValue(of({} as any));
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
     const map = service.startListening([{ id: 'd1' }, { id: 'd2' }] as any);

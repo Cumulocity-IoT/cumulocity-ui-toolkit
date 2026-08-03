@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { IMeasurement, MeasurementService } from '@c8y/client';
 import { saveAs } from 'file-saver';
 import { concatMap, from, map, Observable, switchMap } from 'rxjs';
-import { get, has, isNil } from 'lodash';
+import { get, isNil } from 'lodash';
 
 @Injectable()
 export class MeasurementDownloadService {
@@ -88,7 +88,9 @@ export class MeasurementDownloadService {
       const nestedKeys = Object.keys(fragment);
 
       for (const nestedKey of nestedKeys) {
-        if (has(fragment, `${nestedKey}.value`)) {
+        const nestedValue = get(fragment, nestedKey) as Record<string, unknown>;
+
+        if (nestedValue && Object.hasOwn(nestedValue, 'value')) {
           result.push(`${key}.${nestedKey}`);
         }
       }

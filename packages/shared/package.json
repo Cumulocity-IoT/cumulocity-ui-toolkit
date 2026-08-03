@@ -4,19 +4,10 @@
   "description": "Shared Angular components, pipes, services, and helpers for Cumulocity UI plugins",
   "author": "Cumulocity UI Guild",
   "license": "Apache-2.0",
-  "main": "./dist/fesm2022/shared.mjs",
-  "module": "./dist/fesm2022/shared.mjs",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "esm2022": "./dist/esm2022/shared.mjs",
-      "default": "./dist/fesm2022/shared.mjs"
-    }
-  },
   "scripts": {
     "build": "ng build shared",
-    "test": "jest"
+    "test": "ng test shared --watch=false --browsers=ChromeHeadless",
+    "test:watch": "ng test shared"
   },
   "peerDependencies": {
     "@angular/common": ">=18.0.0",
@@ -26,6 +17,6 @@
     "@c8y/client": ">=1021.0.0",
     "@c8y/ngx-components": ">=1021.0.0",
     "rxjs": ">=7.0.0",
-    "date-fns":"4.1.0"
+    "date-fns": "^4.4.0"
   }
 }

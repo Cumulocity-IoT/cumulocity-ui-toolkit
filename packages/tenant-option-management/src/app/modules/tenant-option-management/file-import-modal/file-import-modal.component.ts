@@ -9,8 +9,8 @@ import {
   ModalService,
   Pagination,
   Status,
-  _,
 } from '@c8y/ngx-components';
+import { gettext } from '@c8y/ngx-components/gettext';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
@@ -135,12 +135,12 @@ export class FileImportModalComponent {
     ) {
       await this.confirmationModal
         .confirm(
-          _('Overwrite Tenant Options') as string,
-          _(
+          gettext('Overwrite Tenant Options') as string,
+          gettext(
             'There is an existing tenant option with the same categroy and key. Do you want to continue an overwrite that one?'
           ) as string,
           Status.DANGER,
-          { ok: _('Overwritte') as string, cancel: _('Cancel') as string }
+          { ok: gettext('Overwritte'), cancel: gettext('Cancel') }
         )
         .then((result) => {
           if (result) {

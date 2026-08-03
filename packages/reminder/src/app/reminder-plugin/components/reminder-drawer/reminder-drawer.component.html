@@ -1,6 +1,6 @@
 <aside [class.open]="open">
   <header>
-    <h2>{{'reminder.title' | translate }}</h2>
+    <h2 translate>Reminder</h2>
     <small class="text-muted" title="{{ lastUpdate | c8yDate }}">
       {{ 'reminder.labels.last-update' | translate }}: {{ lastUpdate | c8yDate: 'short' }} <!-- time ago -->
     </small>
@@ -10,7 +10,7 @@
     <li>
       <button class="btn btn-primary" (click)="createReminder()" type="button">
         <i [c8yIcon]="'plus-circle'"></i>
-        {{ 'reminder.actions.add' | translate }}
+        {{ 'Create Reminder' | translate }}
       </button>
     </li>
   </ul>
@@ -19,9 +19,7 @@
     <!-- filter: reminder type -->
     @if (types.length) {
       <div class="filter">
-        <label class="text-truncate" for="reminder-type-filter" translate
-          >reminder.actions.filter-type</label
-        >
+        <label for="reminder-type-filter" translate>Filter by Reminder Type</label>
         <div class="c8y-select-wrapper">
           <select
             class="form-control"
@@ -29,8 +27,8 @@
             [(ngModel)]="reminderTypeFilter"
             (change)="setFilter()"
             name="reminder-type"
-          >
-            <option value="">{{ 'reminder.labels.not-filtered' | translate }}</option>
+            >
+            <option value="">{{ 'Not filtered' | translate }}</option>
             @for (type of types; track type) {
               <option [ngValue]="type.id">{{ type.name | translate }}</option>
             }
@@ -52,7 +50,7 @@
 
     <!-- list of reminders -->
     <ul class="reminder-group-list">
-      @for (group of reminderGroups; track group) {
+      @for (group of reminderGroups; track group.status) {
         <li class="reminder-group-item">
           <header>
             <button
@@ -68,15 +66,12 @@
               >
                 {{ group.count || 0 }}
                 @if (group.total) {
-                  <small
-                    class="text-muted"
-                    title="{{ 'reminder.info.unfiltered-reminders' | translate }}"
-                  >
+                  <small class="text-muted" title="{{ 'Number of reminders if not filtered' | translate }}">
                     / {{ group.total }}
                   </small>
                 }
               </span>
-              <em class="text-uppercase">{{ 'reminder.group-status.' + group.status | translate }}</em>
+              <em>{{ group.status | translate }}</em>
               <i [c8yIcon]="'expand-arrow'" [class.expanded]="groupIsExpanded[$index]"></i>
             </button>
           </header>
@@ -88,7 +83,7 @@
             [isAnimated]="true"
           >
             <!-- TODO add empty info -->
-            @for (reminder of group.reminders; track reminder) {
+            @for (reminder of group.reminders; track reminder.id) {
               <ng-template
                 [ngTemplateOutlet]="reminderItem"
                 [ngTemplateOutletContext]="{ reminder }"
@@ -100,7 +95,9 @@
       }
     </ul>
 
-    <small class="text-muted" translate> reminder.info.retention-rules </small>
+    <small class="text-muted" translate>
+      Cleared reminders are automatically deleted over time by the retention rules.
+    </small>
   </div>
 
   <footer>
@@ -111,9 +108,9 @@
           (change)="setConfig('toast')"
           type="checkbox"
           name="toast-notifications-enabled"
-        />
+          />
         <span></span>
-        <span class="text-truncate">{{ 'reminder.labels.notification-toast' | translate }}</span>
+        {{ 'Toast Notifications' | translate }}
       </label>
     </div>
 
@@ -124,9 +121,9 @@
           (change)="setConfig('browser')"
           type="checkbox"
           name="browser-notifications-enabled"
-        />
+          />
         <span></span>
-        <span class="text-truncate">{{ 'reminder.labels.notification-browser' | translate }}</span>
+        {{ 'Browser Notifications' | translate }}
       </label>
     </div>
   </footer>
@@ -140,7 +137,7 @@
       active: reminder.status !== reminderStatus.active,
       changed: reminder.changed,
     }"
-  >
+    >
     <header>
       <i
         class="status-icon"
@@ -151,6 +148,7 @@
               ? 'bell-slash'
               : 'check-circle'
         "
+        title="Status: {{ reminder.status }}"
       ></i>
 
       @if (reminder.status !== reminderStatus.cleared) {
@@ -184,7 +182,7 @@
             class="btn btn-xs btn-hollow btn-success"
             (click)="updateReminder(reminder, reminderStatus.acknowledged)"
             type="button"
-            title="{{ 'reminder.actions.acknowledge' | translate }}"
+            title="{{ 'Acknowledge the reminder' | translate }}"
           >
             <i [c8yIcon]="'bell-slash'"></i>
           </button>
@@ -194,7 +192,7 @@
             class="btn btn-xs btn-hollow btn-danger"
             (click)="updateReminder(reminder, reminderStatus.cleared)"
             type="button"
-            title="{{ 'reminder.actions.clear' | translate }}"
+            title="{{ 'Clear the reminder' | translate }}"
           >
             <i [c8yIcon]="'check-circle'"></i>
           </button>
@@ -204,7 +202,7 @@
             class="btn btn-xs btn-hollow btn-primary"
             (click)="updateReminder(reminder, reminderStatus.active)"
             type="button"
-            title="{{ 'reminder.actions.reactivate' | translate }}"
+            title="{{ 'Reactivate the reminder' | translate }}"
           >
             <i [c8yIcon]="'bell'"></i>
           </button>
@@ -213,7 +211,7 @@
     </header>
 
     <p>
-      {{ reminder.text | translate }}
+      {{ reminder.text }}
     </p>
 
     <footer>
@@ -223,7 +221,7 @@
           class="btn btn-clean reminder-tag"
           (click)="setFilter(reminder.reminderType)"
           type="button"
-          title="{{ 'reminder.actions.filter-type' | translate }}"
+          title="{{ 'Filter by this Reminder Type' | translate }}"
         >
           <i class="m-r-4" [c8yIcon]="'tag'"></i>
           <c8y-reminder-type [id]="reminder.reminderType"></c8y-reminder-type>

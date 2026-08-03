@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { IIdentified } from '@c8y/client';
-import { CommonModule, CoreModule } from '@c8y/ngx-components';
+import { CoreModule } from '@c8y/ngx-components';
 import {
   AssetSelectionChangeEvent,
   AssetSelectorModule,
@@ -12,7 +12,7 @@ import { Subject } from 'rxjs';
   selector: 'device-selector-modal',
   templateUrl: './device-selector-modal.component.html',
   standalone: true,
-  imports: [CommonModule, AssetSelectorModule, CoreModule],
+  imports: [AssetSelectorModule, CoreModule],
 })
 export class DeviceSelectorModalComponent {
   config = {

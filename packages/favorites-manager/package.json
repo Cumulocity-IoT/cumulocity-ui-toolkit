@@ -3,9 +3,10 @@
   "version": "1.0.1",
   "description": "",
   "author": "Christian Guether",
-  "homepage": "___TODO___",
+  "homepage": "https://github.com/Cumulocity-IoT/cumulocity-ui-toolkit/tree/main/packages/favorites-manager",
   "scripts": {
-    "test": "jest"
+    "test": "ng test plugin.favorites-manager --watch=false --browsers=ChromeHeadless",
+    "test:watch": "ng test plugin.favorites-manager"
   },
   "dependencies": {
     "shared": "workspace:*"

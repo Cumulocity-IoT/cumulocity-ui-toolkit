@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, effect, input, model } from '@angular/core';
 import { IAlarm } from '@c8y/client';
 import { CoreModule } from '@c8y/ngx-components';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
@@ -10,13 +10,21 @@ import { TooltipModule } from 'ngx-bootstrap/tooltip';
   imports: [CoreModule, TooltipModule],
 })
 export class AlarmIconComponent {
-  @Input() placement: 'top' | 'right' | 'bottom' | 'left' = 'right';
-  @Input() display: 'severity' | 'status' = 'severity';
-  @Input() severity: string;
-  @Input() status: string;
+  placement = input<'top' | 'right' | 'bottom' | 'left'>('right');
+  display = input<'severity' | 'status'>('severity');
+  severity = model<string>();
+  status = model<string>();
 
-  @Input() set alarm(alarm: IAlarm) {
-    this.severity = String(alarm.severity);
-    this.status = String(alarm.status);
+  alarm = input<IAlarm>();
+
+  constructor() {
+    effect(() => {
+      const alarm = this.alarm();
+
+      if (alarm) {
+        this.severity.set(String(alarm.severity));
+        this.status.set(String(alarm.status));
+      }
+    });
   }
 }

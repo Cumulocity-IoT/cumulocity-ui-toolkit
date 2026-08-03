@@ -4,19 +4,19 @@ import { HierarchyAggregationService } from './hierarchy-aggregate.service';
 
 describe('HierarchyAggregationService', () => {
   it('emits an initial empty result immediately', async () => {
-    const list = jest.fn().mockResolvedValue({ data: [] });
+    const list = jasmine.createSpy('list').and.returnValue(Promise.resolve({ data: [] }));
     const service = new HierarchyAggregationService({ list } as unknown as InventoryService);
 
     const result = await firstValueFrom(service.getAllChildrenOfManagedObject$('root'));
 
     expect(result).toEqual([]);
     expect(list).toHaveBeenCalledWith(
-      expect.objectContaining({ query: '$filter=(bygroupid(root))' })
+      jasmine.objectContaining({ query: '$filter=(bygroupid(root))' })
     );
   });
 
   it('reuses direct children cache when enabled', async () => {
-    const list = jest.fn().mockResolvedValue({ data: [] });
+    const list = jasmine.createSpy('list').and.returnValue(Promise.resolve({ data: [] }));
     const service = new HierarchyAggregationService({ list } as unknown as InventoryService);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
@@ -29,11 +29,11 @@ describe('HierarchyAggregationService', () => {
 
   it('maps and deduplicates extracted attribute values', async () => {
     const service = new HierarchyAggregationService({
-      list: jest.fn(),
+      list: jasmine.createSpy('list'),
     } as unknown as InventoryService);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-    jest.spyOn(service, 'getAllChildrenOfManagedObject$').mockReturnValue(
+    spyOn(service, 'getAllChildrenOfManagedObject$').and.returnValue(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
       of(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument

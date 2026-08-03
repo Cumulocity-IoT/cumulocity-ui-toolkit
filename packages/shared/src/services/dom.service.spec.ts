@@ -9,21 +9,18 @@ import {
 import { DomService } from './dom.service';
 
 describe('DomService', () => {
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
   it('appends created component host element to document body', () => {
     const element = document.createElement('div');
     const hostView = { rootNodes: [element] } as EmbeddedViewRef<unknown>;
-    const componentRef = { hostView } as ComponentRef<unknown>;
-    const create = jest.fn(() => componentRef);
-    const resolveComponentFactory = jest.fn(() => ({ create }));
+    const componentRef = { hostView } as unknown as ComponentRef<unknown>;
+    const create = jasmine.createSpy('create').and.returnValue(componentRef);
+    const resolveComponentFactory = jasmine.createSpy('resolveComponentFactory').and.returnValue({ create });
     const componentFactoryResolver = {
       resolveComponentFactory,
     } as unknown as ComponentFactoryResolver;
-    const appRef = { attachView: jest.fn(), detachView: jest.fn() } as unknown as ApplicationRef;
+    const appRef = { attachView: jasmine.createSpy('attachView'), detachView: jasmine.createSpy('detachView') } as unknown as ApplicationRef;
     const injector = {} as Injector;
-    const appendSpy = jest.spyOn(document.body, 'appendChild');
+    const appendSpy = spyOn(document.body, 'appendChild');
     const service = new DomService(componentFactoryResolver, appRef, injector);
 
     const result = service.appendComponentToBody(class Dummy {} as Type<unknown>);
@@ -38,9 +35,9 @@ describe('DomService', () => {
 
   it('detaches and destroys a component ref', () => {
     const hostView = {} as EmbeddedViewRef<unknown>;
-    const componentRef = { hostView, destroy: jest.fn() } as unknown as ComponentRef<unknown>;
+    const componentRef = { hostView, destroy: jasmine.createSpy('destroy') } as unknown as ComponentRef<unknown>;
     const componentFactoryResolver = {} as ComponentFactoryResolver;
-    const appRef = { attachView: jest.fn(), detachView: jest.fn() } as unknown as ApplicationRef;
+    const appRef = { attachView: jasmine.createSpy('attachView'), detachView: jasmine.createSpy('detachView') } as unknown as ApplicationRef;
     const injector = {} as Injector;
     const service = new DomService(componentFactoryResolver, appRef, injector);
 

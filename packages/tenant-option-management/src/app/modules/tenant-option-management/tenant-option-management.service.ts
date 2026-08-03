@@ -13,6 +13,11 @@ export class TenantOptionManagementService {
   private alertService = inject(AlertService);
   private userService = inject(UserService);
 
+  /**
+   * Returns the single `tenant_option_plugin_config` managed object used to
+   * track which tenant options are managed by this plugin.  Creates it lazily
+   * on first use.
+   */
   async getConfiguration(): Promise<TenantOptionConfiguration> {
     const { data } = await this.inventory.list({
       pageSize: 1,
@@ -39,6 +44,11 @@ export class TenantOptionManagementService {
     return { id: `${option.category}-${option.key}`, value: option.value, ...item };
   }
 
+  /**
+   * Appends `to` to the plugin's configuration managed object.
+   * Rejects with `'Tenant option already exists!'` if an entry with the same
+   * category+key combination is already registered.
+   */
   async addOptionToConfiguration(to: ITenantOption): Promise<TenantOptionConfigurationItem> {
     const config = await this.getConfiguration();
 
@@ -62,6 +72,11 @@ export class TenantOptionManagementService {
     return item;
   }
 
+  /**
+   * Updates the `lastUpdated` timestamp and `user` of an existing configuration
+   * entry.  Rejects with `'Tenant option configuration does not exist!'` when
+   * the category+key pair cannot be found.
+   */
   async updateOptionForConfiguration(to: ITenantOption): Promise<TenantOptionConfigurationItem> {
     const config = await this.getConfiguration();
 
@@ -100,6 +115,11 @@ export class TenantOptionManagementService {
     return { id: `${option.category}-${option.key}`, value: option.value, ...item };
   }
 
+  /**
+   * Fetches **all** tenant options across all pages (up to {@link MAX_PAGE_SIZE}
+   * per request) and maps them to `{ id: "category-key", value }` pairs.
+   * Returns an empty array and shows a danger alert on API failure.
+   */
   async getAllOptions(): Promise<{ id: string; value: string }[]> {
     try {
       const tenantOptions: ITenantOption[] = [];
@@ -148,6 +168,11 @@ export class TenantOptionManagementService {
     await this.inventory.update(delta);
   }
 
+  /**
+   * Lazily resolves and caches the current user's ID (falling back to email).
+   * The promise is stored in `this.currentUser` so subsequent calls within the
+   * same service lifetime skip the `/user/currentUser` request.
+   */
   private getUser(): Promise<string> {
     if (this.currentUser == null) {
       this.currentUser = this.userService.current().then((data) => {

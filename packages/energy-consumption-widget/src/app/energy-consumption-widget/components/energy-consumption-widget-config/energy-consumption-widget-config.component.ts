@@ -1,6 +1,8 @@
-import { Component, Input } from '@angular/core';
+import { Component, inject, Input, TemplateRef, ViewChild } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { FormlyFieldConfig } from '@ngx-formly/core';
+import { CoreModule } from '@c8y/ngx-components';
+import { WidgetConfigService } from '@c8y/ngx-components/context-dashboard';
+import { FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
 import {
   ENERGY_CONSUMPTION_WIDGET__DATE_RANGE,
   ENERGY_CONSUMPTION_WIDGET__DEFAULT_DATE_RANGE,
@@ -12,15 +14,29 @@ import {
   EnergyWidgetDateDisplayMode,
   EnergyWidgetRangeType,
 } from '../../models/energy-consumption-widget.model';
+import { EnergyConsumptionWidgetComponent } from '../energy-consumption-widget/energy-consumption-widget.component';
 
 @Component({
   selector: 'c8y-energy-consumption-widget-config',
-  template: '<formly-form [form]="form" [fields]="fields" [model]="config"></formly-form>',
+  templateUrl: './energy-consumption-widget-config.component.html',
   styleUrl: './energy-consumption-widget-config.component.scss',
-  standalone: false,
+  standalone: true,
+  imports: [CoreModule, FormlyModule, EnergyConsumptionWidgetComponent],
 })
 export class EnergyConsumptionWidgetConfigComponent {
+  private readonly widgetConfigService = inject(WidgetConfigService);
+
   @Input() config!: EnergyConsumptionWidgetConfig;
+
+  @ViewChild('widgetPreview')
+  set previewMapSet(template: TemplateRef<unknown>) {
+    if (template) {
+      this.widgetConfigService.setPreview(template);
+
+      return;
+    }
+    this.widgetConfigService.setPreview(null);
+  }
 
   form = new FormGroup({});
 

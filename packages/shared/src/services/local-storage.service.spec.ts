@@ -1,15 +1,9 @@
-import { firstValueFrom } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { LocalStorageService } from './local-storage.service';
 
 describe('LocalStorageService', () => {
   beforeEach(() => {
     localStorage.clear();
-    jest.useFakeTimers();
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
   });
 
   it('sets and gets values and supports defaults', () => {
@@ -31,19 +25,24 @@ describe('LocalStorageService', () => {
     expect(service.get('k2')).toBeUndefined();
   });
 
-  it('emits storage changes through a debounced stream', async () => {
+  it('emits storage changes through a debounced stream', (done) => {
     const service = new LocalStorageService();
 
-    service.debounceTime = 20;
+    service.debounceTime = 100;
     service.init();
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return
-    const emitted = firstValueFrom(service.storage$.pipe(take(1)));
+    const subscription = service.storage$.pipe(take(1)).subscribe(
+      (result) => {
+        expect(result).toBe(localStorage);
+        subscription.unsubscribe();
+        done();
+      },
+      (error) => {
+        fail(`Unexpected error: ${error}`);
+        done();
+      }
+    );
 
     window.dispatchEvent(new StorageEvent('storage'));
-    jest.advanceTimersByTime(20);
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    await expect(emitted).resolves.toBe(localStorage);
   });
 });

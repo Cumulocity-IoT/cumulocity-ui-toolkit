@@ -1,7 +1,13 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { TestBed } from '@angular/core/testing';
 import { FavoritesManagerService } from './favorites-manager.service';
 import { InventoryService, IResult, IUser, UserService } from '@c8y/client';
 import { provideMock } from '~helpers/auto-mock.helper';
+
+/** Cast an autoMock'd method to a Jasmine spy so we can configure its return value. */
+function asSpy<T>(fn: T): jasmine.Spy {
+  return fn as unknown as jasmine.Spy;
+}
 
 describe('FavoritesManagerService', () => {
   let service: FavoritesManagerService;
@@ -21,20 +27,24 @@ describe('FavoritesManagerService', () => {
   });
 
   it('should return true if ManagedObject is marked as favorite', async () => {
-    const userServiceSpy = jest.spyOn(userService, 'current').mockResolvedValue({
-      data: { customProperties: { favorites: ['1', '2', '3'] } },
-    } as IResult<IUser>);
+    asSpy(userService.current).and.returnValue(
+      Promise.resolve({
+        data: { customProperties: { favorites: ['1', '2', '3'] } },
+      } as IResult<IUser>)
+    );
 
     const result = await service.getFavoriteStatus('2');
 
     expect(result).toBe(true);
-    expect(userServiceSpy).toHaveBeenCalled();
+    expect(userService.current).toHaveBeenCalled();
   });
 
   it('should return false if ManagedObject is not marked as favorite', async () => {
-    jest.spyOn(userService, 'current').mockResolvedValue({
-      data: { customProperties: { favorites: ['1', '2', '3'] } },
-    } as IResult<IUser>);
+    asSpy(userService.current).and.returnValue(
+      Promise.resolve({
+        data: { customProperties: { favorites: ['1', '2', '3'] } },
+      } as IResult<IUser>)
+    );
 
     const result = await service.getFavoriteStatus('4');
 
@@ -42,32 +52,30 @@ describe('FavoritesManagerService', () => {
   });
 
   it('should add ManagedObject to favorites', async () => {
-    const updateCurrentSpy = jest
-      .spyOn(userService, 'updateCurrent')
-      .mockResolvedValue({} as IResult<IUser>);
-
-    jest
-      .spyOn(userService, 'current')
-      .mockResolvedValue({ data: { customProperties: { favorites: [] } } } as IResult<IUser>);
+    asSpy(userService.updateCurrent).and.returnValue(Promise.resolve({} as IResult<IUser>));
+    asSpy(userService.current).and.returnValue(
+      Promise.resolve({ data: { customProperties: { favorites: [] } } } as IResult<IUser>)
+    );
 
     await service.addToFavorites('3');
-    expect(updateCurrentSpy).toHaveBeenCalledWith({
+
+    expect(userService.updateCurrent).toHaveBeenCalledWith({
       customProperties: { favorites: ['3'] },
-    } as unknown);
+    });
   });
 
   it('should remove ManagedObject from favorites', async () => {
-    const updateCurrentSpy = jest
-      .spyOn(userService, 'updateCurrent')
-      .mockResolvedValue({} as IResult<IUser>);
-
-    jest.spyOn(userService, 'current').mockResolvedValue({
-      data: { customProperties: { favorites: ['1', '2', '3'] } },
-    } as IResult<IUser>);
+    asSpy(userService.updateCurrent).and.returnValue(Promise.resolve({} as IResult<IUser>));
+    asSpy(userService.current).and.returnValue(
+      Promise.resolve({
+        data: { customProperties: { favorites: ['1', '2', '3'] } },
+      } as IResult<IUser>)
+    );
 
     await service.removeFromFavorites('2');
-    expect(updateCurrentSpy).toHaveBeenCalledWith({
+
+    expect(userService.updateCurrent).toHaveBeenCalledWith({
       customProperties: { favorites: ['1', '3'] },
-    } as unknown);
+    });
   });
 });

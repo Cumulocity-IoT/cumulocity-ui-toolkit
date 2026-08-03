@@ -1,5 +1,5 @@
 import type { ConfigurationOptions } from '@c8y/devkit';
-import { author, name, description, version } from './package.json';
+import { author, description, version } from './package.json';
 import { license } from '../../package.json';
 
 export default {
@@ -8,12 +8,13 @@ export default {
     description,
     version,
     name: 'Release Notes',
+    contextPath: 'release-notes-plugin',
     contentSecurityPolicy:
       "base-uri 'none'; default-src 'self' 'unsafe-inline' http: https: ws: wss:; connect-src 'self' http: https: ws: wss:;  script-src 'self' *.bugherd.com *.twitter.com *.twimg.com *.aptrinsic.com 'unsafe-inline' 'unsafe-eval' data:; style-src * 'unsafe-inline' blob:; img-src * data: blob:; font-src * data:; frame-src *; worker-src 'self' blob:;",
     dynamicOptionsUrl: true,
     remotes: {
-      // 'plugin name from package.json': [ PluginModule ]
-      [name]: ['ReleaseNotesAdminPluginModule', 'ReleaseNotesPluginModule'],
+      // 'plugin name from package.json': [ PluginProviders, ... ]
+      'release-notes-plugin': ['ReleaseNotesAdminPluginProviders', 'ReleaseNotesPluginProviders'],
     },
     package: 'plugin',
     isPackage: true,
@@ -21,14 +22,16 @@ export default {
     exports: [
       {
         name: 'Release Notes Admin',
-        module: 'ReleaseNotesAdminPluginModule',
+        module: 'ReleaseNotesAdminPluginProviders',
         path: './src/app/plugin/release-notes-admin-plugin.module.ts',
+        readmePath: './src/admin-plugin/README.md',
         description: 'Provides an admin interface to create, update and delete release notes',
       },
       {
         name: 'Release Notes Display',
-        module: 'ReleaseNotesPluginModule',
+        module: 'ReleaseNotesPluginProviders',
         path: './src/app/plugin/release-notes-plugin.module.ts',
+        readmePath: './src/display-plugin/README.md',
         description: '',
       },
     ],

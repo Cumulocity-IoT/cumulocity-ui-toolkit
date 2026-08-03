@@ -69,3 +69,4 @@ test/node_modules
 test/cypress/videos
 test/cypress/screenshots
 test/cypress/downloads
+test/cypress/logs

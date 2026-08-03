@@ -1,20 +1,14 @@
 import { Component, EventEmitter, Output, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IManagedObjectBinary, InventoryBinaryService } from '@c8y/client';
-import {
-  AlertService,
-  CommonModule,
-  CoreModule,
-  DropAreaComponent,
-  DroppedFile,
-} from '@c8y/ngx-components';
+import { AlertService, CoreModule, DropAreaComponent, DroppedFile } from '@c8y/ngx-components';
 import { isNil } from 'lodash';
 
 @Component({
   selector: 'image-upload',
   templateUrl: './image-upload.component.html',
   standalone: true,
-  imports: [CoreModule, CommonModule, FormsModule],
+  imports: [CoreModule, FormsModule],
 })
 export class ImageUploadComponent {
   selectedFile?: File;

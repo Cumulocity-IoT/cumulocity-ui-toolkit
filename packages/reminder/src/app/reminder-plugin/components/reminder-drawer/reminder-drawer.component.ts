@@ -1,8 +1,12 @@
 import { Component, inject, OnDestroy } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router } from '@angular/router';
-import { AlertService, HeaderService } from '@c8y/ngx-components';
-import { has, isEmpty } from 'lodash';
+import { AlertService, CoreModule, HeaderService } from '@c8y/ngx-components';
+import { isEmpty } from 'lodash';
+import { CollapseModule } from 'ngx-bootstrap/collapse';
 import { BsModalService } from 'ngx-bootstrap/modal';
+import { TooltipModule } from 'ngx-bootstrap/tooltip';
+import { MomentModule } from 'ngx-moment';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import {
   Reminder,
@@ -19,13 +23,22 @@ import {
 } from '../../models/reminder.model';
 import { ReminderService } from '../../services/reminder.service';
 import { ReminderModalComponent } from '../reminder-modal/reminder-modal.component';
+import { ReminderTypeComponent } from '../reminder-type/reminder-type.component';
 
 @Component({
   selector: 'c8y-reminder-drawer',
   templateUrl: './reminder-drawer.component.html',
   styleUrl: './reminder-drawer.component.less',
-  standalone: false,
-  // changeDetection: ChangeDetectionStrategy.OnPush, // TODO
+  standalone: true,
+  imports: [
+    CoreModule,
+    FormsModule,
+    CollapseModule,
+    TooltipModule,
+    MomentModule,
+    ReminderTypeComponent,
+    ReminderModalComponent,
+  ],
 })
 export class ReminderDrawerComponent implements OnDestroy {
   private alertService = inject(AlertService);
@@ -176,12 +189,11 @@ export class ReminderDrawerComponent implements OnDestroy {
   async updateReminder(reminder: Reminder, status: Reminder['status']): Promise<void> {
     reminder.status = status;
 
-    const { res } = await this.reminderService.update(reminder);
-
-    if (res.status === 200) {
+    try {
+      await this.reminderService.update(reminder);
       this.alertService.success(`Reminder ${String(status).toLowerCase()}`);
-    } else {
-      this.alertService.danger('Could not update reminder', res.statusText);
+    } catch (error) {
+      this.alertService.danger('Failed to update reminder', `${JSON.stringify(error)}`);
     }
   }
 
@@ -216,7 +228,8 @@ export class ReminderDrawerComponent implements OnDestroy {
    */
   private handleConfigChange(config: ReminderConfig): void {
     if (
-      has(config.filter, 'reminderType') &&
+      config?.filter &&
+      Object.hasOwn(config.filter, 'reminderType') &&
       this.reminderTypeFilter !== config.filter?.reminderType
     ) {
       this.reminderTypeFilter = config.filter.reminderType;
@@ -236,7 +249,9 @@ export class ReminderDrawerComponent implements OnDestroy {
   private handleRouteChange(url: string): void {
     if (isEmpty(url)) return;
 
-    const pathElements: string[] = url.split('/').filter((element) => !isEmpty(element));
+    const pathElements: string[] = url
+      .split('/')
+      .filter((element) => element && element.length > 0);
 
     if (!pathElements.length) return;
 

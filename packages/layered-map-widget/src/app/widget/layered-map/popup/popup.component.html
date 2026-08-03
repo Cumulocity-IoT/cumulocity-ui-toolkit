@@ -1,0 +1,54 @@
+<div class="map-marker" style="min-width: 24rem">
+  @if (!mo()) {
+    <div class="d-flex a-i-center j-c-center p-8 text-muted">
+      <c8y-loading></c8y-loading>
+    </div>
+  } @else {
+    <a
+      class="deviceLink text-14 text-truncate d-block"
+      [href]="mo()?.c8y_IsDeviceGroup ? '#/group/' + mo()?.id : '#/device/' + mo()?.id"
+      title="{{ mo()?.name }}"
+    >
+      {{ mo()?.name }}
+    </a>
+    @if (cfg().showDate && (lastUpdated() || mo())) {
+      <div class="text-muted m-t-4 m-b-4">
+        <i c8yIcon="clock-o"></i>
+        {{ "Last update" | translate }}:<br />{{ (lastUpdated() ? lastUpdated() : mo()?.lastUpdated) | c8yDate }}
+      </div>
+    }
+    @if (cfg().showAlarms) {
+      <alarm-display [mo]="mo()"></alarm-display>
+    }
+
+    @if (cfg().showLatestValues && latestValues().length) {
+      <div class="latest-values m-t-8">
+        <div class="text-muted text-uppercase text-bold text-10 m-b-4" translate>Latest values</div>
+        @for (v of latestValues(); track v.key) {
+          <div class="d-flex j-c-between text-12" [title]="v.time | c8yDate">
+            <span class="text-muted text-truncate m-r-8" [title]="v.key">{{ v.key }}</span>
+            <span class="text-bold">{{ v.value }} {{ v.unit }}</span>
+          </div>
+        }
+      </div>
+    }
+
+    @if (assetProperties().length) {
+      <div class="asset-properties m-t-8">
+        <div class="text-muted text-uppercase text-bold text-10 m-b-4" translate>Properties</div>
+        <c8y-properties-list [data]="mo()" [properties]="assetProperties()" [noParse]="true"></c8y-properties-list>
+      </div>
+    }
+
+    @if (cfg().actions.length) {
+      <div class="d-flex flex-wrap m-t-8">
+        @for (a of cfg().actions; track a.label) {
+          <button class="btn btn-default btn-xs m-r-4 m-b-4" (click)="sendAction(a, mo())">
+            <i c8yIcon="{{ a | actionIcon }}"></i>
+            {{ a.label }}
+          </button>
+        }
+      </div>
+    }
+  }
+</div>

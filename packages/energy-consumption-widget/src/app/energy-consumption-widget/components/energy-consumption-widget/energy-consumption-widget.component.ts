@@ -1,6 +1,18 @@
-import { Component, inject, Input, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  inject,
+  Input,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { IMeasurement, IMeasurementValue, MeasurementService } from '@c8y/client';
-import { ChartConfiguration, ChartData } from 'chart.js';
+import { CoreModule } from '@c8y/ngx-components';
+import { Chart, ChartConfiguration, ChartData, registerables } from 'chart.js';
 import { cloneDeep, sortBy } from 'lodash';
 import moment from 'moment';
 import {
@@ -32,13 +44,16 @@ interface MeasurementSeries {
   [series: string]: IMeasurementValue;
 }
 
+let chartJsRegistered = false;
+
 @Component({
   selector: 'c8y-energy-consumption-widget',
   templateUrl: './energy-consumption-widget.component.html',
   styleUrl: './energy-consumption-widget.component.scss',
-  standalone: false,
+  standalone: true,
+  imports: [CommonModule, FormsModule, CoreModule],
 })
-export class EnergyConsumptionWidgetComponent implements OnInit {
+export class EnergyConsumptionWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   private measurementService = inject(MeasurementService);
 
   @Input() config!: EnergyConsumptionWidgetConfig;
@@ -50,14 +65,31 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
   loading: boolean = true;
   dateRange!: string;
 
+  @ViewChild('barCanvas')
+  private barCanvas?: ElementRef<HTMLCanvasElement>;
+
   private measurements: IMeasurement[] = [];
   private milestones?: string[];
   private unit?: string;
+  private barChart?: Chart<'bar'>;
 
   ngOnInit(): void {
+    if (!chartJsRegistered) {
+      Chart.register(...registerables);
+      chartJsRegistered = true;
+    }
+
     this.dateRange = this.config.defaultRange;
     this.barChartOptions = this.setChartOptions();
     void this.fetchData();
+  }
+
+  ngAfterViewInit(): void {
+    this.renderChart();
+  }
+
+  ngOnDestroy(): void {
+    this.barChart?.destroy();
   }
 
   reload(): void {
@@ -72,6 +104,22 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
     this.measurements = await this.loadMeasurements();
     this.barChartData = this.setChartConfig(this.digestMeasurements());
     this.loading = false;
+    setTimeout(() => this.renderChart());
+  }
+
+  private renderChart(): void {
+    const canvas = this.barCanvas?.nativeElement;
+
+    if (!canvas || !this.barChartData || !this.barChartOptions || this.loading) {
+      return;
+    }
+
+    this.barChart?.destroy();
+    this.barChart = new Chart(canvas, {
+      type: 'bar',
+      data: this.barChartData,
+      options: this.barChartOptions,
+    });
   }
 
   // add date param
@@ -111,6 +159,11 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
     return measurement;
   }
 
+  /**
+   * Converts raw IMeasurements into labelled chart data points.
+   * The first measurement is skipped in DELTA mode because it has no predecessor;
+   * the `unit` field is extracted from each measurement and cached for the axis label.
+   */
   private digestMeasurements(measurements = this.measurements): RawChartData[] {
     const rawData: RawChartData[] = [];
 
@@ -158,10 +211,20 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
     return this.config.series ? series[this.config.series] : (series as IMeasurementValue);
   }
 
+  /**
+   * Rounds `value` to `digits` decimal places using symmetric rounding.
+   * `digits` defaults to `config.digits`.
+   */
   private roundValue(value: number, digits = this.config.digits): number {
     return Math.round(value * 10 ** digits) / 10 ** digits;
   }
 
+  /**
+   * Returns the chart value for one bar.
+   * - In {@link EnergyWidgetDateDisplayMode.DELTA} mode (and `index > 0`) the value is
+   *   the difference to the previous measurement, rounded to `config.digits`.
+   * - Otherwise the raw cumulative reading is used.
+   */
   private calcValue(measurement: IMeasurement, index: number): number {
     const value = this.getValueFromMeasurement(measurement);
 
@@ -170,6 +233,14 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
       : this.roundValue(value);
   }
 
+  /**
+   * Generates `range.amount + 1` ISO-string timestamps — one for "now" plus one
+   * boundary date per bar.  Dates are snapped to the start of their period
+   * (midnight for days/weeks/months, top of the hour for hours).
+   *
+   * @param dateRange - A space-separated string such as `"7 days"` or `"12 months"`.
+   * @param startOfWeek - Day-of-week index for the first day (1 = Monday, default).
+   */
   private generateMilestones(dateRange = this.dateRange, startOfWeek = 1): string[] {
     // TODO make start of week configurable
     const range = this.getDurationFromRange(dateRange);
@@ -200,12 +271,18 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
       }
 
       milestones.push(d.toISOString());
-      milestones.reverse();
     }
+
+    milestones.reverse();
 
     return milestones;
   }
 
+  /**
+   * Parses a range string such as `"7 days"` or `"12 months"` into an
+   * `{ amount, unit }` tuple consumed by {@link generateMilestones} and
+   * {@link generateLabel}.
+   */
   private getDurationFromRange(dateRange = this.dateRange): MomentManipulation {
     const range = dateRange.split(' ');
 
@@ -216,6 +293,17 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
     return window.getComputedStyle(document.documentElement).getPropertyValue('--brand-light');
   }
 
+  /**
+   * Derives a human-readable axis label for one bar from its milestone timestamp
+   * and the current date range unit:
+   * - `months`  → `"Jan 24"`
+   * - `weeks`   → `"01. - 07. Jan"`
+   * - `hours`   → `"14:00"`
+   * - `days`    → `"01. Jan"`
+   *
+   * Note: the milestone stored on each measurement is the *end* of the period,
+   * so the label subtracts one unit to represent the correct period.
+   */
   private generateLabel(
     measurement: IMeasurement,
     dateRange = this.dateRange,
@@ -257,7 +345,9 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
   }
 
   private setChartOptions(): ChartConfiguration<'bar'>['options'] {
-    const options = cloneDeep(ENERGY_CONSUMPTION_WIDGET__DEFAULT_CHART_CONFIG);
+    const options = cloneDeep(
+      ENERGY_CONSUMPTION_WIDGET__DEFAULT_CHART_CONFIG
+    ) as ChartConfiguration<'bar'>['options'];
 
     const tooltip = {
       tooltip: {
@@ -276,7 +366,9 @@ export class EnergyConsumptionWidgetComponent implements OnInit {
     options.scales.y = {
       beginAtZero: this.config.beginAtZero || false,
     };
+    options.responsive = true;
+    options.maintainAspectRatio = false;
 
-    return options as ChartConfiguration<'bar'>['options'];
+    return options;
   }
 }

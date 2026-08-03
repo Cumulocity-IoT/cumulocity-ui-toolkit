@@ -2,8 +2,6 @@
 
 describe('Operations Widget', () => {
   before(() => {
-    Cypress.session.clearAllSavedSessions();
-
     cy.getAuth().login().disableGainsight();
   });
 

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, model } from '@angular/core';
 import { BsDatepickerConfig } from 'ngx-bootstrap/datepicker';
 import { CoreModule } from '@c8y/ngx-components';
 import { BsDatepickerModule } from 'ngx-bootstrap/datepicker';
@@ -10,13 +10,12 @@ import { BsDatepickerModule } from 'ngx-bootstrap/datepicker';
   imports: [CoreModule, BsDatepickerModule],
 })
 export class ActionBarDatePicker {
-  @Input() placement: 'left' | 'right' = 'left';
-  @Input() date: Date = new Date();
-  @Input() title = '';
-  @Input() config: Partial<BsDatepickerConfig> = {};
-  @Output() dateChange = new EventEmitter<Date>();
+  placement = input<'left' | 'right'>('left');
+  date = model<Date>(new Date());
+  title = input('');
+  config = input<Partial<BsDatepickerConfig>>({});
 
   dateChanged(date: Date) {
-    this.dateChange.emit(date);
+    this.date.set(date);
   }
 }

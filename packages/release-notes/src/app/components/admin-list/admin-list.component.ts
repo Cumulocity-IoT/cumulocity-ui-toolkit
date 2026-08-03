@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { AlertService } from '@c8y/ngx-components';
+import { AlertService, CoreModule } from '@c8y/ngx-components';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { ReleaseNote } from '../../models/release-notes.model';
 import { ReleaseNotesService } from '../../services/release-notes.service';
@@ -10,7 +10,8 @@ import { TranslateService } from '@ngx-translate/core';
   selector: 'c8y-release-notes-admin-list',
   templateUrl: './admin-list.component.html',
   styleUrl: './admin-list.component.scss',
-  standalone: false,
+  standalone: true,
+  imports: [CoreModule],
 })
 export class ReminderNotesAdminListComponent implements OnInit {
   private releaseNoteServive = inject(ReleaseNotesService);

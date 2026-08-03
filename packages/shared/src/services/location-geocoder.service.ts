@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { FetchClient } from '@c8y/client';
 import { throttle } from '@c8y/ngx-components';
-import { isArray, isEmpty } from 'lodash';
 
 interface NominatimLocationData {
   place_id: number;
@@ -24,9 +23,9 @@ export class LocationGeocoderService {
   geoCodeSearchUrl = `https://nominatim.openstreetmap.org`;
 
   @throttle(200)
-  async geoCode(address: string): Promise<{ lat: number; lon: number } | undefined> {
+  async geoCode(address: string): Promise<{ lat?: number; lon?: number }> {
     const response = await new FetchClient(`${this.geoCodeSearchUrl}`).fetch(
-      `search?city=${address}&format=json`,
+      `search?city=${encodeURIComponent(address)}&format=json`,
       {
         method: 'GET',
         headers: {
@@ -38,11 +37,11 @@ export class LocationGeocoderService {
 
     const data = (await response.json()) as NominatimLocationData[];
 
-    if (isArray(data) && !isEmpty(data)) {
+    if (Array.isArray(data) && data.length > 0) {
       const { lat, lon } = data[0];
       return { lat: parseFloat(lat), lon: parseFloat(lon) };
     }
 
-    return undefined;
+    return { lat: undefined, lon: undefined };
   }
 }

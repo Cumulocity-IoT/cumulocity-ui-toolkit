@@ -9,7 +9,7 @@ describe('DataGridPatchService', () => {
   });
 
   it('patches changeSortOrder to enforce single column sorting', () => {
-    const originalSort = jest.fn();
+    const originalSort = jasmine.createSpy('changeSortOrder');
     const grid = {
       columns: [
         { name: 'name', sortable: true, sortOrder: 'asc' },
@@ -28,42 +28,42 @@ describe('DataGridPatchService', () => {
   it('does not patch twice when backup method already exists', () => {
     const grid = {
       columns: [],
-      changeSortOrder: jest.fn(),
-      multiSortMethod: jest.fn(),
+      changeSortOrder: jasmine.createSpy('changeSortOrder'),
+      multiSortMethod: jasmine.createSpy('multiSortMethod'),
     } as unknown as DataGridComponent;
 
     service.applySingleSortBehavior(grid);
 
     expect(
-      (grid as unknown as { changeSortOrder: jest.Mock }).changeSortOrder
-    ).toHaveBeenCalledTimes(0);
+      (grid as unknown as { changeSortOrder: jasmine.Spy }).changeSortOrder
+    ).not.toHaveBeenCalled();
   });
 
   it('throws when changeSortOrder is missing', () => {
     const grid = { columns: [] } as unknown as DataGridComponent;
 
-    expect(() => service.applySingleSortBehavior(grid)).toThrow(
-      'Patching of c8y-data-grid failed. Method changeSortOrder not found.'
+    expect(() => service.applySingleSortBehavior(grid)).toThrowError(
+      /Patching of c8y-data-grid failed/
     );
   });
 
   it('does not patch an already patched grid', () => {
-    const changeSortOrder = jest.fn();
+    const changeSortOrder = jasmine.createSpy('changeSortOrder');
     const grid = {
       columns: [],
       changeSortOrder,
-      multiSortMethod: jest.fn(),
+      multiSortMethod: jasmine.createSpy('multiSortMethod'),
     } as never;
 
     service.applySingleSortBehavior(grid);
 
-    expect((grid as unknown as { changeSortOrder: jest.Mock }).changeSortOrder).toBe(
+    expect((grid as unknown as { changeSortOrder: jasmine.Spy }).changeSortOrder).toBe(
       changeSortOrder
     );
   });
 
   it('resets other sorted columns and invokes original method', () => {
-    const original = jest.fn();
+    const original = jasmine.createSpy('changeSortOrder');
     const grid = {
       columns: [
         { name: 'a', sortable: true, sortOrder: 'asc' },

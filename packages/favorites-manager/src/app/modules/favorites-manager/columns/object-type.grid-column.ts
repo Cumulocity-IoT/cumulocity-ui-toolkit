@@ -1,4 +1,5 @@
-import { BaseColumn, gettext } from '@c8y/ngx-components';
+import { BaseColumn } from '@c8y/ngx-components';
+import { gettext } from '@c8y/ngx-components/gettext';
 import { ObjectTypeCellRendererComponent } from './object-type.cell-renderer.component';
 
 export class ObjectTypeColumn extends BaseColumn {

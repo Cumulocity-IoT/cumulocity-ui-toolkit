@@ -1,7 +1,5 @@
-import { CommonModule } from '@angular/common';
+import { ENVIRONMENT_INITIALIZER, inject, importProvidersFrom } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
-import { NgModule } from '@angular/core';
-import { RouterModule } from '@angular/router';
 import { AlertModule, CoreModule, EventRealtimeService, hookAction } from '@c8y/ngx-components';
 import { AssetSelectorModule } from '@c8y/ngx-components/assets-navigator';
 import { FormlyModule } from '@ngx-formly/core';
@@ -14,27 +12,24 @@ import { ActiveTabService } from '~services/active-tab.service';
 import { AssetAccessService } from '~services/asset-access.service';
 import { DomService } from '~services/dom.service';
 import { LocalStorageService } from '~services/local-storage.service';
-import {
-  ReminderDrawerComponent,
-  ReminderIndicatorComponent,
-  ReminderModalComponent,
-} from './components';
-import { ReminderTypeComponent } from './components/reminder-type/reminder-type.component';
+import { ReminderIndicatorComponent } from './components/reminder-indicator/reminder-indicator.component';
 import { ReminderService } from './services/reminder.service';
 
-@NgModule({
-  declarations: [
-    ReminderIndicatorComponent,
-    ReminderDrawerComponent,
-    ReminderModalComponent,
-    ReminderTypeComponent,
-  ],
-  imports: [
-    CommonModule,
-    CoreModule,
+export const ReminderPluginProviders = [
+  // dependencies: api services
+  provideHttpClient(),
+  EventRealtimeService,
+  // dependencies: toolkit services
+  AssetAccessService,
+  ActiveTabService,
+  DomService,
+  LocalStorageService,
+  ReminderService,
+  importProvidersFrom(
     AssetSelectorModule,
     AlertModule,
     CollapseModule,
+    CoreModule,
     FormlyModule.forChild({
       types: [
         { name: 'time', component: TimeFieldType },
@@ -42,28 +37,19 @@ import { ReminderService } from './services/reminder.service';
       ],
     }),
     MomentModule,
-    RouterModule,
-    TooltipModule,
-  ],
-  providers: [
-    // dependencies: api services
-    provideHttpClient(),
-    EventRealtimeService,
-    // dependencies: toolkit services
-    AssetAccessService,
-    LocalStorageService,
-    ActiveTabService,
-    DomService,
-    // plugin services
-    ReminderService,
-    // hooks
-    hookAction({
-      component: ReminderIndicatorComponent,
-    }),
-  ],
-})
-export class ReminderPluginModule {
-  constructor(private reminderService: ReminderService) {
-    void this.reminderService.init();
-  }
-}
+    TooltipModule
+  ),
+  hookAction({
+    component: ReminderIndicatorComponent,
+  }),
+  {
+    provide: ENVIRONMENT_INITIALIZER,
+    multi: true,
+    useValue: () => {
+      void inject(ReminderService).init();
+    },
+  },
+];
+
+/** @deprecated Use ReminderPluginProviders instead */
+export const ReminderPluginModule = ReminderPluginProviders;

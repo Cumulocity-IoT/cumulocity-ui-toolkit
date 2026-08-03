@@ -3,12 +3,9 @@
   "version": "1.0.5",
   "description": "",
   "author": "Hendrik Naether",
-  "homepage": "___TODO___",
-  "scripts": {
-    "test": "jest"
-  },
+  "homepage": "https://github.com/Cumulocity-IoT/cumulocity-ui-toolkit/tree/main/packages/tenant-option-management",
   "dependencies": {
-    "jsoneditor": "^9.10.2",
+    "jsoneditor": "^9.10.5",
     "shared": "workspace:*"
   }
 }

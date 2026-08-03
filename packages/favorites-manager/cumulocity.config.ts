@@ -20,6 +20,7 @@ export default {
         name: 'Favorites Manager',
         module: 'favoritesManagerViewProviders',
         path: './src/app/modules/favorites-manager/index.ts',
+        readmePath: './src/README.md',
         description:
           'Mark any asset or device as a favorite to quickly access these in your personal favorites list',
       },

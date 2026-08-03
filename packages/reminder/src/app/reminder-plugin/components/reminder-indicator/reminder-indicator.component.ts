@@ -1,4 +1,6 @@
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { CoreModule } from '@c8y/ngx-components';
+import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { REMINDER__COUNTER_DISPLAY_THRESHOLD } from '../../models/reminder.model';
@@ -13,9 +15,9 @@ const ReminderStatus = {
 @Component({
   selector: 'c8y-reminder-indicator',
   templateUrl: './reminder-indicator.component.html',
-  styleUrl: './reminder-indicator.component.less',
-  standalone: false,
-  // changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrls: ['./reminder-indicator.component.less'],
+  standalone: true,
+  imports: [CoreModule, TooltipModule],
 })
 export class ReminderIndicatorComponent implements OnInit, OnDestroy {
   private reminderService = inject(ReminderService);

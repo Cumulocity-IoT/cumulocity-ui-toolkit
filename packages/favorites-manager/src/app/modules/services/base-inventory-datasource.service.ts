@@ -67,7 +67,7 @@ export class BaseInventoryDatasourceService {
     return this.inventoryService.list(filter).then((result) => result.paging.totalPages);
   }
 
-  createQueryJSON(columns: Column[], baseQuery: object = {}): QueryJSONRepresenation {
+  createQueryJSON(columns: Column[], baseQuery: QueryFilter = {}): QueryJSONRepresenation {
     const json = new QueryJSONRepresenation(baseQuery);
 
     for (const column of columns) {
@@ -85,7 +85,7 @@ export class BaseInventoryDatasourceService {
 
       if (column.externalFilterQuery && column.filteringConfig) {
         json.__filter.__and.push(
-          column.filteringConfig.getFilter(column.externalFilterQuery) as object
+          column.filteringConfig.getFilter(column.externalFilterQuery) as Record<string, unknown>
         );
       }
     }

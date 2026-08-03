@@ -2,20 +2,29 @@
   "name": "cypress-tests",
   "version": "0.0.0",
   "description": "Contains end-to-end tests for the packages.",
+  "packageManager": "pnpm@11.0.9",
   "keywords": [],
   "author": "UI Guild, @hnaether-c8y",
   "license": "Apache-2.0",
+  "scripts": {
+    "cy:run": "env -u ELECTRON_RUN_AS_NODE TZ=Etc/UTC cypress run --browser chrome --config video=false,screenshotOnRunFailure=false",
+    "cy:open": "TZ=Etc/UTC cypress open"
+  },
   "dependencies": {
-    "@angular/common": "^18.2.0",
-    "@c8y/client": "^1021.22.37",
-    "bignumber.js": "^9.3.0",
-    "cumulocity-cypress": "^0.8.14",
-    "cypress-terminal-report": "^7.2.0"
+    "@angular/common": "~20.3.0",
+    "@c8y/client": "^1023.0.0",
+    "bignumber.js": "^11.1.1",
+    "cumulocity-cypress": "^1.8.4",
+    "cypress-terminal-report": "^7.3.3",
+    "uuid": "14.0.0"
   },
   "devDependencies": {
-    "@types/chai": "^5.2.2",
-    "@types/lodash": "^4.17.16",
-    "cypress": "~14.3.3",
-    "typescript": "~5.8.3"
+    "@types/chai": "^5.2.3",
+    "@types/lodash": "^4.17.24",
+    "cypress": "~15.15.0",
+    "cypress-recurse": "^1.37.2",
+    "dotenv": "^16.5.0",
+    "tsx": "^4.22.3",
+    "typescript": "~5.9.3"
   }
 }

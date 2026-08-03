@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Output, input } from '@angular/core';
 import { CoreModule } from '@c8y/ngx-components';
 import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
 
@@ -9,17 +9,17 @@ import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
   imports: [CoreModule, BsDropdownModule],
 })
 export class ActionBarDropdown {
-  @Input() placement: 'left' | 'right' = 'left';
+  placement = input<'left' | 'right'>('left');
 
-  @Input() title: string;
+  title = input<string>();
 
-  @Input() items: ActionBarDropdownItem[] = [];
+  items = input<ActionBarDropdownItem[]>([]);
 
   @Output() selectionChange = new EventEmitter<ActionBarDropdownItem>();
 
   changeSelection(item: ActionBarDropdownItem) {
     item.selected = true;
-    this.items.forEach((r) => {
+    this.items().forEach((r) => {
       if (r !== item) r.selected = false;
     });
     this.selectionChange.emit(item);

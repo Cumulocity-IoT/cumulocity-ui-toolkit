@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { FieldWrapper } from '@ngx-formly/core';
+import { FieldWrapper, FormlyModule } from '@ngx-formly/core';
 
 @Component({
   selector: 'formly-wrapper-panel',
@@ -11,6 +11,7 @@ import { FieldWrapper } from '@ngx-formly/core';
       </div>
     </div>
   `,
-  standalone: false,
+  standalone: true,
+  imports: [FormlyModule],
 })
 export class PanelWrapperComponent extends FieldWrapper {}

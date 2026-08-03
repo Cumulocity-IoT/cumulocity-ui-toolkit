@@ -132,7 +132,7 @@ export class AssetAccessService {
             method: 'custom-endpoint',
             endpoint: '',
             cacheTtl: this.DEFAULT_CACHE_TTL,
-          } as AssetFilterConfig;
+          } satisfies AssetFilterConfig;
         }
       }),
       catchError((err) => {
@@ -142,7 +142,7 @@ export class AssetAccessService {
           method: 'custom-endpoint',
           endpoint: '',
           cacheTtl: this.DEFAULT_CACHE_TTL,
-        } as AssetFilterConfig);
+        } satisfies AssetFilterConfig);
       })
     );
   }
@@ -217,7 +217,7 @@ export class AssetAccessService {
       })
       .then((res) => {
         if (Array.isArray(res)) return res as string[];
-        if ('assetIds' in res) return (res as { assetIds: string[] }).assetIds;
+        if ('assetIds' in res) return res.assetIds;
         if ('inventoryAssignments' in res)
           return this.digestInventory(
             (res as { inventoryAssignments: InventoryRoleAssignment[] }).inventoryAssignments
