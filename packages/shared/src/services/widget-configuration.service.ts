@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { InventoryService } from '@c8y/client';
 import { AlertService } from '@c8y/ngx-components';
 
@@ -14,17 +14,15 @@ interface C8yDashboard {
 
 @Injectable()
 export class WidgetConfigurationService {
-  constructor(
-    private inventoryService: InventoryService,
-    private alertService: AlertService
-  ) {}
+  private inventoryService = inject(InventoryService);
+  private alertService = inject(AlertService);
 
   async updateWidgetConfiguration(dashboardId: string, widgetId: string, newConfig: unknown) {
     const { data: mo } = await this.inventoryService.detail(dashboardId);
     const dashboard = mo['c8y_Dashboard'] as C8yDashboard;
 
     if (!dashboard?.children || !Object.hasOwn(dashboard.children, widgetId)) {
-      throw new Error(widgetId + ' doesn not exist in Dashboard ' + dashboardId);
+      throw new Error(widgetId + ' does not exist in Dashboard ' + dashboardId);
     }
     dashboard.children[widgetId].config = newConfig;
 
@@ -41,7 +39,7 @@ export class WidgetConfigurationService {
       const dashboard = res.data['c8y_Dashboard'] as C8yDashboard;
 
       if (!dashboard?.children || !Object.hasOwn(dashboard.children, widgetId)) {
-        throw new Error(widgetId + ' doesn not exist in Dashboard ' + dashboardId);
+        throw new Error(widgetId + ' does not exist in Dashboard ' + dashboardId);
       }
 
       return dashboard.children[widgetId].config;

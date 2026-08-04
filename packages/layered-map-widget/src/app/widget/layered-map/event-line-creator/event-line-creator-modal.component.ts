@@ -1,4 +1,4 @@
-import { AfterViewInit, Component } from '@angular/core';
+import { inject, AfterViewInit, Component } from '@angular/core';
 import { Subject } from 'rxjs';
 import { IManagedObject } from '@c8y/client';
 import { CoreModule, ModalLabels } from '@c8y/ngx-components';
@@ -9,6 +9,7 @@ import { LayeredMapWidgetService } from '../service/layered-map-widget.service';
 import { isEmpty } from 'lodash';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { ITrack } from '../layered-map-widget.model';
+import { OSM_TILE_OPTIONS, OSM_TILE_URL } from '../base-tile-layers';
 
 type IEventsForm = {
   deviceId: number | null;
@@ -52,15 +53,7 @@ export class EventLineCreatorModalComponent implements AfterViewInit {
   isLoadingEvents = false;
 
   options: MapOptions = {
-    layers: [
-      tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        opacity: 0.7,
-        maxZoom: 22,
-        maxNativeZoom: 19,
-        detectRetina: true,
-        referrerPolicy: 'strict-origin-when-cross-origin',
-      }),
-    ],
+    layers: [tileLayer(OSM_TILE_URL, { ...OSM_TILE_OPTIONS, opacity: 0.7 })],
     zoom: 1,
     center: latLng(0, 0),
     attributionControl: false,
@@ -68,10 +61,9 @@ export class EventLineCreatorModalComponent implements AfterViewInit {
 
   map: LMap | undefined;
 
-  constructor(
-    public bsModalRef: BsModalRef,
-    private trackService: LayeredMapWidgetService
-  ) {}
+  public bsModalRef = inject(BsModalRef);
+
+  private trackService = inject(LayeredMapWidgetService);
 
   ngAfterViewInit(): void {
     if (this.map) {

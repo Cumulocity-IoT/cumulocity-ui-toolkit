@@ -34,18 +34,24 @@ export class OperationsWidgetComponent {
   @Input() config: OperationWidgetConfig = {};
   buttons: OperationButtonConfig[] = [];
   operationValue: Partial<IOperation> = {};
-  selectedButton: OperationButtonConfig = null;
+  selectedButton?: OperationButtonConfig;
   previewPayload: string = '';
   payloadData: Record<string, unknown> = {};
 
   async sendOperation() {
-    // this.selectedButton.operationValue = this.payloadData;
     this.modalRef.hide();
 
+    const button = this.selectedButton;
+
+    // The modal can only be opened from a button, so this is defensive only.
+    if (!button) {
+      return;
+    }
+
     if (isToCreateIOperation(this.payloadData)) {
-      await this.operationsWidgetService.createOperation(this.selectedButton, this.payloadData);
+      await this.operationsWidgetService.createOperation(button, this.payloadData);
     } else {
-      this.alertService.danger('No valid Operation!', this.selectedButton.operationValue);
+      this.alertService.danger('No valid Operation!', button.operationValue);
     }
   }
 
@@ -74,7 +80,7 @@ export class OperationsWidgetComponent {
     removePlaceholders(this.operationValue);
     this.model = cloneDeep(this.operationValue ?? {});
 
-    if (button.fields.length > 0) {
+    if (button.fields?.length) {
       this.generateFormlyFields(button);
       this.modalRef = this.modalService.show(template);
     } else {
@@ -124,11 +130,14 @@ export class OperationsWidgetComponent {
           required: true,
         },
       };
+      // `FormlyFieldConfig.props` is optional; capture it once so the branches
+      // below do not each have to re-assert it.
+      const props = (fieldConfig.props ??= {});
 
       // Special handling for Select/Dropdown
       if (field.type === 'select') {
         fieldConfig.type = 'select';
-        fieldConfig.props.options = field.options.map((opt) => ({
+        props.options = (field.options ?? []).map((opt) => ({
           label: opt.label,
           value: opt.value,
         }));
@@ -136,12 +145,12 @@ export class OperationsWidgetComponent {
       // Special handling for Number (HTML input type)
       else if (field.type === 'number') {
         fieldConfig.type = 'input';
-        fieldConfig.props.type = 'number';
+        props.type = 'number';
       }
       // Default Text Input
       else {
         fieldConfig.type = 'input';
-        fieldConfig.props.type = 'text';
+        props.type = 'text';
       }
 
       return fieldConfig;

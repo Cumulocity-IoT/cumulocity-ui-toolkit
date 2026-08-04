@@ -69,9 +69,8 @@ export class LocalStorageService {
     try {
       const storage = localStorage.getItem(key);
       return storage ? (JSON.parse(storage) as T) : undefined;
-    } catch (error) {
-      console.warn(`Failed to parse localStorage value for key "${key}":`, error);
-
+    } catch {
+      // Corrupt or non-JSON entry — indistinguishable from "not set" to callers.
       return undefined;
     }
   }

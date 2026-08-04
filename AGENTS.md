@@ -34,6 +34,7 @@ cumulocity-ui-toolkit/
 │   ├── energy-consumption-widget/
 │   ├── favorites-manager/
 │   ├── kpi-widget/
+│   ├── layered-map-widget/
 │   ├── operations-widget/
 │   ├── release-notes/
 │   ├── reminder/
@@ -83,7 +84,7 @@ All commands run from the **repository root** unless noted.
 2. **Run `pnpm run generate:scripts`** — Auto-generates `build:<name>`, `serve:<name>`, `test:<name>`, and `test:watch:<name>` entries in the root `package.json`. Do **not** hand-edit the generated section (keyed by the `--generated----------` marker).
 3. **Add `tsconfig.spec.json`** — Copy from an existing plugin. Extends root `tsconfig.json`; sets `"types": ["jasmine", "node"]`.
 4. **Import from shared** — Use the path aliases (`~services/*`, `~helpers/*`, etc.) defined in the root `tsconfig.json`. Never use relative paths that cross package boundaries.
-5. **Assets** — Place static assets in `packages/<plugin>/public/` or `packages/<plugin>/src/assets/`. Run `pnpm run generate:assets` to regenerate the typed barrel if needed.
+5. **Assets** — Place static assets in `packages/<plugin>/public/` and register that directory in the plugin's `assets` array in `angular.json`. Asset paths there are **workspace-root relative**, so they must include the `packages/<plugin>/` prefix. Assets imported from TypeScript (e.g. `assets/preview.png` via a generated `assets.ts` barrel) are bundled by the build and need no `angular.json` entry — run `pnpm run generate:assets` to regenerate that barrel.
 
 ---
 
@@ -102,7 +103,7 @@ All commands run from the **repository root** unless noted.
 - Test files: `**/*.spec.ts` inside `packages/`.
 - The root `karma.conf.js` is shared by all projects.
 - Each package has a `tsconfig.spec.json` with `"types": ["jasmine", "node"]`.
-- All 8 Angular projects in `angular.json` have a `test` architect target.
+- All 9 Angular projects in `angular.json` (`shared` + 8 plugins) have a `test` architect target.
 - Run a single project: `pnpm exec ng test <project> --watch=false --browsers=ChromeHeadlessCI`
 - `ChromeHeadlessCI` custom launcher (defined in `karma.conf.js`) adds `--no-sandbox --disable-gpu --disable-dev-shm-usage` — required in CI.
 - Test helper for creating Jasmine spies: `packages/shared/src/helpers/auto-mock.helper.ts`.
@@ -146,7 +147,7 @@ All commands run from the **repository root** unless noted.
 
 The `tools/generate-scripts.mts` file is an **ESM TypeScript** script (`.mts` extension — run with `node --experimental-strip-types`). It reads all projects from `angular.json` and regenerates the `build:*`, `serve:*`, `test:*`, and `test:watch:*` entries in `package.json`. The source of truth for which projects get test scripts is whether the project has a `@angular/build:karma` test target in `angular.json`.
 
-The root `test` script (which chains all 8 suites sequentially) is also regenerated. Do **not** hand-edit anything after the `--generated----------` marker in `package.json`.
+The root `test` script (which chains all 9 suites sequentially) is also regenerated. Do **not** hand-edit anything after the `--generated----------` marker in `package.json`. CI verifies this: a change to root configuration re-runs `generate:scripts` and fails if `package.json` is stale.
 
 ---
 

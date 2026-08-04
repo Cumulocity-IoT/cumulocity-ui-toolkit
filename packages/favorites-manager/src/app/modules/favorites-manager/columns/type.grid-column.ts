@@ -22,7 +22,7 @@ export class TypeColumn extends BaseColumn {
         placeholder: 'c8y_MQTTDevice',
       }),
       getFilter(model: { types: string[] }) {
-        const filter = {};
+        const filter: Record<string, unknown> = {};
 
         if (model.types && model.types.length) {
           filter['type'] = { __in: model.types };

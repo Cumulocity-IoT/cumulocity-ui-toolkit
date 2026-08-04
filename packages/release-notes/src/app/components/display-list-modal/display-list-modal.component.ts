@@ -15,7 +15,7 @@ export class ReleaseNotesDisplayListModalComponent implements OnInit {
   private bsModalRef = inject(BsModalRef);
   private releaseNoteService = inject(ReleaseNotesService);
 
-  releaseNotes: ReleaseNote[];
+  releaseNotes: ReleaseNote[] = [];
   showOnlyNewReleases = false;
 
   ngOnInit(): void {

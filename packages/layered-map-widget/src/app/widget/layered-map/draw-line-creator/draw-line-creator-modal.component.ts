@@ -1,4 +1,4 @@
-import { AfterViewInit, Component } from '@angular/core';
+import { inject, AfterViewInit, Component } from '@angular/core';
 import { Subject } from 'rxjs';
 import { CoreModule, ModalLabels } from '@c8y/ngx-components';
 import {
@@ -15,6 +15,7 @@ import { isEmpty } from 'lodash';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { LocationGeocoderService } from '~services/location-geocoder.service';
 import { ITrack } from '../layered-map-widget.model';
+import { OSM_TILE_OPTIONS, OSM_TILE_URL } from '../base-tile-layers';
 
 @Component({
   providers: [LocationGeocoderService],
@@ -36,20 +37,12 @@ export class DrawLineCreatorModalComponent implements AfterViewInit {
 
   coordinates: LatLng[] = [];
   line: Polyline;
-  mouseMoveLine: Polyline;
+  mouseMoveLine: Polyline | null = null;
 
   trackName: string;
 
   options: MapOptions = {
-    layers: [
-      tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        opacity: 0.7,
-        maxZoom: 22,
-        maxNativeZoom: 19,
-        detectRetina: true,
-        referrerPolicy: 'strict-origin-when-cross-origin',
-      }),
-    ],
+    layers: [tileLayer(OSM_TILE_URL, { ...OSM_TILE_OPTIONS, opacity: 0.7 })],
     zoom: 1,
     center: latLng(0, 0),
     attributionControl: false,
@@ -57,10 +50,9 @@ export class DrawLineCreatorModalComponent implements AfterViewInit {
 
   map: LMap;
 
-  constructor(
-    public bsModalRef: BsModalRef,
-    private geo: LocationGeocoderService
-  ) {}
+  public bsModalRef = inject(BsModalRef);
+
+  private geo = inject(LocationGeocoderService);
 
   ngAfterViewInit(): void {
     this.map.invalidateSize();
@@ -73,21 +65,29 @@ export class DrawLineCreatorModalComponent implements AfterViewInit {
   async navigateToAddress(address: string): Promise<void> {
     const { lat, lon } = await this.geo.geoCode(address);
 
-    if (!isNaN(lat) && !isNaN(lon)) {
+    if (lat !== undefined && lon !== undefined && !isNaN(lat) && !isNaN(lon)) {
       this.map.flyTo([lat, lon], 17, { duration: 1 });
     }
   }
 
   startDrawingLine(): void {
     this.isDrawingLine = true;
-    document.getElementById('draw-line-map').style.cursor = 'crosshair';
-    this.map.dragging.disable();
+    this.setMapCursor('crosshair');
+    this.map.dragging?.disable();
   }
 
   pauseDrawingLine(): void {
     this.isDrawingLine = false;
-    document.getElementById('draw-line-map').style.cursor = '';
-    this.map.dragging.enable();
+    this.setMapCursor('');
+    this.map.dragging?.enable();
+  }
+
+  private setMapCursor(cursor: string): void {
+    const container = document.getElementById('draw-line-map');
+
+    if (container) {
+      container.style.cursor = cursor;
+    }
   }
 
   resetLine(): void {

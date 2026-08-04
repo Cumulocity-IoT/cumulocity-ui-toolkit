@@ -1,7 +1,7 @@
 {
   "name": "cumulocity-kpi-aggregator-widget-plugin",
   "version": "1.0.4",
-  "description": "",
+  "description": "Aggregates inventory managed objects matching a configurable query and displays the results as bar charts, pie charts, or lists.",
   "author": "@dirk-peter-c8y",
   "homepage": "https://github.com/Cumulocity-IoT/cumulocity-ui-toolkit/tree/main/packages/kpi-widget",
   "dependencies": {

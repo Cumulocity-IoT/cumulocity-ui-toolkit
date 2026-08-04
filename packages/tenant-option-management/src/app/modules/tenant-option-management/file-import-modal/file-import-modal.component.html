@@ -20,7 +20,7 @@
       {{ 'Cancel' | translate }}
     </button>
     <button title="{{ 'Import' | translate }}" class="btn btn-primary" type="button" (click)="import()"
-      [ngClass]="{ 'btn-pending': isLoading }">
+      [class.btn-pending]="isLoading">
       {{ 'Import' | translate }}
     </button>
   </div>

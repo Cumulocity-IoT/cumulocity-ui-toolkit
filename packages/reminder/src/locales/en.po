@@ -39,6 +39,21 @@ msgstr "No Reminder is due"
 msgid "reminder.counter.one"
 msgstr "One Reminder is due"
 
+msgid "reminder.error.invalidConfig"
+msgstr "The reminder configuration is invalid and was ignored."
+
+msgid "reminder.error.load"
+msgstr "Could not load the reminders."
+
+msgid "reminder.error.loadTypes"
+msgstr "Could not load the reminder types."
+
+msgid "reminder.error.responsibilityFilter"
+msgstr "Could not load the responsibility filter. Showing all reminders."
+
+msgid "reminder.error.update"
+msgstr "Could not update the reminder."
+
 msgid "reminder.feedback.created"
 msgstr "The reminder has been created."
 

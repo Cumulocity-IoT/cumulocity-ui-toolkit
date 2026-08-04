@@ -2,8 +2,10 @@ import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { InventoryService } from '@c8y/client';
+import { AlertService } from '@c8y/ngx-components';
+import { TranslateService } from '@ngx-translate/core';
 import { provideMock } from '~helpers/auto-mock.helper';
-import { KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG } from '../../models/kpi-aggregator-widget.const';
+import { KPI_AGGREGATOR_WIDGET__DEFAULT_CONFIG } from '../../models/kpi-aggregator-widget.const';
 import { KpiAggregatorWidgetComponent } from './kpi-aggregator-widget.component';
 
 /** Minimal ActivatedRoute stub (ngOnInit reads snapshot.data for the asset context). */
@@ -17,7 +19,12 @@ describe('KpiAggregatorWidgetComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [KpiAggregatorWidgetComponent],
-      providers: [provideMock(InventoryService), { provide: ActivatedRoute, useValue: ROUTE_STUB }],
+      providers: [
+        provideMock(InventoryService),
+        provideMock(AlertService),
+        provideMock(TranslateService),
+        { provide: ActivatedRoute, useValue: ROUTE_STUB },
+      ],
       schemas: [NO_ERRORS_SCHEMA],
     }).overrideComponent(KpiAggregatorWidgetComponent, {
       // Strip heavy module imports so we can test private methods without
@@ -111,12 +118,12 @@ describe('KpiAggregatorWidgetComponent', () => {
 
   describe('buildQuery()', () => {
     it('prepends $filter= to the raw query when no placeholders are present', () => {
-      component.config = { ...KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG, query: 'has(type)' };
+      component.config = { ...KPI_AGGREGATOR_WIDGET__DEFAULT_CONFIG, query: 'has(type)' };
       expect((component as any)['buildQuery']()).toBe('$filter=has(type)');
     });
 
     it('replaces a bracket placeholder with the matching asset field value', () => {
-      component.config = { ...KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG, query: 'type = "[type]"' };
+      component.config = { ...KPI_AGGREGATOR_WIDGET__DEFAULT_CONFIG, query: 'type = "[type]"' };
       component.asset = { type: 'Sensor' } as never;
       const query: string = (component as any)['buildQuery']();
 
@@ -124,8 +131,8 @@ describe('KpiAggregatorWidgetComponent', () => {
     });
 
     it('leaves the placeholder unchanged when no asset is set', () => {
-      component.config = { ...KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG, query: 'type = "[type]"' };
-      component.asset = undefined;
+      component.config = { ...KPI_AGGREGATOR_WIDGET__DEFAULT_CONFIG, query: 'type = "[type]"' };
+      component.asset = undefined as never;
       const query: string = (component as any)['buildQuery']();
 
       expect(query).toBe('$filter=type = "[type]"');
@@ -136,26 +143,26 @@ describe('KpiAggregatorWidgetComponent', () => {
 
   describe('generatePieChartLabel()', () => {
     beforeEach(() => {
-      component['aggreagtedValue'] = 200;
+      component['aggregatedValue'] = 200;
     });
 
     it('returns the percentage string when config.percent is true', () => {
-      component.config = { ...KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG, percent: true };
+      component.config = { ...KPI_AGGREGATOR_WIDGET__DEFAULT_CONFIG, percent: true };
       const ctx = { parsed: 50, formattedValue: '50' } as never;
 
       expect((component as any)['generatePieChartLabel'](ctx)).toBe('25% (50)');
     });
 
     it('returns the raw formattedValue when config.percent is false', () => {
-      component.config = { ...KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG, percent: false };
+      component.config = { ...KPI_AGGREGATOR_WIDGET__DEFAULT_CONFIG, percent: false };
       const ctx = { parsed: 50, formattedValue: '50' } as never;
 
       expect((component as any)['generatePieChartLabel'](ctx)).toBe('50');
     });
 
     it('rounds the percentage to 1 decimal place', () => {
-      component['aggreagtedValue'] = 300;
-      component.config = { ...KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG, percent: true };
+      component['aggregatedValue'] = 300;
+      component.config = { ...KPI_AGGREGATOR_WIDGET__DEFAULT_CONFIG, percent: true };
       const ctx = { parsed: 100, formattedValue: '100' } as never;
 
       // 100/300 = 33.333… → rounded to 33.3%

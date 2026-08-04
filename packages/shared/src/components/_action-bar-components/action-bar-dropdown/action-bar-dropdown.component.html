@@ -11,7 +11,7 @@
         <span class="d-contents">
           @if (item.selected) {
             <span class="text-truncate">
-              <i [c8yIcon]="item.icon" [ngClass]="item.styleClass"></i>
+              <i [c8yIcon]="item.icon" [class]="item.styleClass"></i>
               <span class="m-l-4">{{ item.label | translate }}</span>
             </span>
           }
@@ -26,9 +26,9 @@
       aria-labelledby="item-filter"
       >
       @for (item of items(); track item.label) {
-        <li [ngClass]="{ active: item.selected }">
+        <li [class.active]="item.selected">
           <button [title]="item.label | translate" (click)="changeSelection(item)" inherit>
-            <i [c8yIcon]="item.icon" [ngClass]="item.styleClass"></i>
+            <i [c8yIcon]="item.icon" [class]="item.styleClass"></i>
             <span class="m-l-4">{{ item.label | translate }}</span>
           </button>
         </li>

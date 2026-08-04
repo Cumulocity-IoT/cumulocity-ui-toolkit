@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, signal } from '@angular/core';
+import { computed, inject, input, signal, Component } from '@angular/core';
 import { EventService, IManagedObject, InventoryService } from '@c8y/client';
 import { CoreModule, PropertiesListComponent, PropertiesListItem } from '@c8y/ngx-components';
 import { DEFAULT_CONFIG, MyLayer, PopoverAction, PopoverConfig } from '../layered-map-widget.model';
@@ -138,23 +138,16 @@ export class PopupComponent {
   /** Mutable track line — not rendered in the popup, not a signal. */
   line: LatLng[] = [];
 
-  // Kept as a plain field because it is only needed by the async fetch methods.
-  private _content!: { deviceId: string; layer: MyLayer };
+  private inventory = inject(InventoryService);
 
-  constructor(
-    private inventory: InventoryService,
-    private events: EventService,
-    private actions: PopoverActionService
-  ) {
-    effect(() => {
-      this._content = this.content();
-    });
-  }
+  private events = inject(EventService);
+
+  private actions = inject(PopoverActionService);
 
   onShow(): void {
     // Refresh cfg from the layer every time the popup opens so that changes
     // made to popoverConfig after the marker was created are reflected.
-    const popoverConfig = this._content?.layer.config.popoverConfig;
+    const popoverConfig = this.content()?.layer.config.popoverConfig;
 
     this.cfg.set(popoverConfig ?? DEFAULT_CONFIG);
     void this.startFetch();
@@ -172,7 +165,7 @@ export class PopupComponent {
   }
 
   private fetchDevice(): Promise<void> {
-    return this.inventory.detail(this._content.deviceId).then((result) => {
+    return this.inventory.detail(this.content().deviceId).then((result) => {
       this.mo.set(result.data);
     });
   }
@@ -182,7 +175,7 @@ export class PopupComponent {
       pageSize: 1,
       withTotalPages: false,
       fragmentType: 'c8y_Position',
-      source: this._content.deviceId,
+      source: this.content().deviceId,
     };
 
     return this.events.list(eventFilter).then((result) => {

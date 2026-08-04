@@ -3,6 +3,7 @@ import { RealtimeSubjectService } from '@c8y/ngx-components';
 import { EMPTY, firstValueFrom, of } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { LocationRealtimeService } from './location-realtime.service';
+import { createService } from '~helpers/create-service.helper';
 
 describe('LocationRealtimeService', () => {
   it('returns latest location event from historical API data', async () => {
@@ -18,7 +19,10 @@ describe('LocationRealtimeService', () => {
         ],
       })),
     } as unknown as EventService;
-    const service = new LocationRealtimeService({} as RealtimeSubjectService, event);
+    const service = createService(LocationRealtimeService, [
+      { provide: RealtimeSubjectService, useValue: {} },
+      { provide: EventService, useValue: event },
+    ]);
 
     spyOn(service, 'onCreate$').and.returnValue(EMPTY);
 
@@ -29,21 +33,20 @@ describe('LocationRealtimeService', () => {
   });
 
   it('startListening creates one stream per device id', () => {
-    const service = new LocationRealtimeService(
-      {} as RealtimeSubjectService,
-      { list: jasmine.createSpy('list') } as unknown as EventService
-    );
+    const service = createService(LocationRealtimeService, [
+      { provide: RealtimeSubjectService, useValue: {} as RealtimeSubjectService },
+      {
+        provide: EventService,
+        useValue: { list: jasmine.createSpy('list') },
+      },
+    ]);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
     spyOn(service, 'fetchLatestAndRealtime$').and.returnValue(of({} as any));
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
     const map = service.startListening([{ id: 'd1' }, { id: 'd2' }] as any);
 
     expect(map.size).toBe(2);
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(service.fetchLatestAndRealtime$).toHaveBeenCalledWith('d1');
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(service.fetchLatestAndRealtime$).toHaveBeenCalledWith('d2');
   });
 });

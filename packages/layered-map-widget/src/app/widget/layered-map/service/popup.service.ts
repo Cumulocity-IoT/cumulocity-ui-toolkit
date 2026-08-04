@@ -1,11 +1,11 @@
-import { ApplicationRef, ComponentRef, createComponent, Injectable } from '@angular/core';
+import { createComponent, inject, ApplicationRef, ComponentRef, Injectable } from '@angular/core';
 import { PopupComponent } from '../popup/popup.component';
 import { MyLayer } from '../layered-map-widget.model';
 import { Marker } from 'leaflet';
 
 @Injectable({ providedIn: 'root' })
 export class PopUpService {
-  constructor(private applicationRef: ApplicationRef) {}
+  private applicationRef = inject(ApplicationRef);
 
   getPopup(popupData: { deviceId: string; layer: MyLayer }): {
     html: HTMLElement;

@@ -16,7 +16,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { TenantOptionManagementService } from '../tenant-option-management.service';
 import { isEmpty } from 'lodash';
-import { ImportStatusEnum, TenantOptionImportRow } from '../model';
+import {
+  ImportStatusEnum,
+  isImportableTenantOption,
+  TenantOptionImportRow,
+} from '../tenant-option-management.model';
 
 @Component({
   templateUrl: './file-import-modal.component.html',
@@ -87,18 +91,37 @@ export class FileImportModalComponent {
   }
 
   onFileSelected(event: Event & { target: HTMLInputElement }) {
-    const file: File = event.target.files[0];
+    const file = event.target.files?.[0];
 
     if (file && file.type === 'application/json') {
       const reader = new FileReader();
 
       reader.onload = (e: ProgressEvent<FileReader>) => {
         try {
-          const fileContent = e.target.result as string;
+          const fileContent = e.target?.result as string;
 
-          const rows = JSON.parse(fileContent) as TenantOptionImportRow[];
+          const parsed: unknown = JSON.parse(fileContent);
 
-          this.rows = rows.map((r) => ({
+          if (!Array.isArray(parsed)) {
+            throw new Error('Expected the file to contain an array of tenant options.');
+          }
+
+          const validRows = parsed.filter(isImportableTenantOption);
+
+          if (!validRows.length) {
+            throw new Error('The file contains no entries with a category and a key.');
+          }
+
+          if (validRows.length < parsed.length) {
+            this.alertService.warning(
+              this.translateService.instant(
+                gettext('{{count}} entries were skipped because they have no category or key.'),
+                { count: parsed.length - validRows.length }
+              ) as string
+            );
+          }
+
+          this.rows = validRows.map((r) => ({
             ...r,
             status: ImportStatusEnum.LOADING,
             id: `${r.category}-${r.key}`,
@@ -115,15 +138,22 @@ export class FileImportModalComponent {
               });
           }
         } catch (error) {
-          this.alertService.danger('Invalid file content. Please select a valid JSON file.');
-          console.warn(error);
+          this.alertService.danger(
+            this.translateService.instant(
+              gettext('Invalid file content. Please select a valid JSON file.')
+            ) as string,
+            (error as Error)?.message
+          );
         }
       };
 
       reader.readAsText(file);
     } else {
-      this.alertService.danger('Invalid file type. Please select a JSON file.');
-      console.warn('Invalid file type. Please select a JSON file.');
+      this.alertService.danger(
+        this.translateService.instant(
+          gettext('Invalid file type. Please select a JSON file.')
+        ) as string
+      );
     }
   }
 
@@ -137,10 +167,10 @@ export class FileImportModalComponent {
         .confirm(
           gettext('Overwrite Tenant Options') as string,
           gettext(
-            'There is an existing tenant option with the same categroy and key. Do you want to continue an overwrite that one?'
+            'There is an existing tenant option with the same category and key. Do you want to continue an overwrite that one?'
           ) as string,
           Status.DANGER,
-          { ok: gettext('Overwritte'), cancel: gettext('Cancel') }
+          { ok: gettext('Overwrite'), cancel: gettext('Cancel') }
         )
         .then((result) => {
           if (result) {
@@ -187,16 +217,16 @@ export class FileImportModalComponent {
         const option = {
           key: item.key,
           category: item.category,
-          value: item.value,
+          value: item.value ?? '',
         };
 
         await this.optionsManagement.updateOption(option);
 
         try {
           await this.optionsManagement.addOptionToConfiguration(option);
-        } catch (error) {
-          // Ignore the rejection
-          console.warn(error);
+        } catch {
+          // The option itself was written; failing to also register it in the
+          // plugin configuration must not fail the import.
         }
         row.status = ImportStatusEnum.UPDATED;
       } else {

@@ -1,13 +1,9 @@
 {
   "name": "cumulocity-favorites-manager-plugin",
   "version": "1.0.1",
-  "description": "",
+  "description": "Mark any asset or device as a favorite to quickly access these in your personal favorites list",
   "author": "Christian Guether",
   "homepage": "https://github.com/Cumulocity-IoT/cumulocity-ui-toolkit/tree/main/packages/favorites-manager",
-  "scripts": {
-    "test": "ng test plugin.favorites-manager --watch=false --browsers=ChromeHeadless",
-    "test:watch": "ng test plugin.favorites-manager"
-  },
   "dependencies": {
     "shared": "workspace:*"
   }

@@ -1,6 +1,7 @@
 import { AstNode, QueryJson } from './reverse-queries-util.model';
 import { QueryParser } from './query-parser';
 import { Tokenizer } from './string-tokenizer';
+import { unwrapQuery } from './unwrap-query';
 
 /**
  * Parses a Cumulocity OData-style query string back into a `QueryJson` object
@@ -67,21 +68,13 @@ export class ReverseQueriesUtil {
     }
 
     try {
-      let processed = query.trim();
-
-      if (processed.startsWith('$filter=')) {
-        processed = processed.slice('$filter='.length).trim();
-
-        if (processed.startsWith('(') && processed.endsWith(')')) {
-          processed = processed.slice(1, -1).trim();
-        }
-      }
+      const processed = unwrapQuery(query);
 
       const parser = new QueryParser(new Tokenizer(processed));
       return this.convert(parser.parse());
-    } catch (e) {
-      console.error('ReverseQueriesUtil: failed to parse query', e);
-
+    } catch {
+      // Failure is already signalled by the `null` return, and this runs on
+      // every keystroke via `isParseable()`.
       return null;
     }
   }

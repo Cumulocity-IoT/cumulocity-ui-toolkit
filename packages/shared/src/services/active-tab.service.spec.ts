@@ -1,6 +1,7 @@
-import { BehaviorSubject, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 import { ACTIVE_TAB_STORAGE_KEY, ActiveTabService } from './active-tab.service';
 import { LocalStorageService } from './local-storage.service';
+import { createService } from '~helpers/create-service.helper';
 
 describe('ActiveTabService', () => {
   const originalHiddenDescriptor = Object.getOwnPropertyDescriptor(document, 'hidden');
@@ -24,11 +25,11 @@ describe('ActiveTabService', () => {
 
   beforeEach(() => {
     storage$ = new Subject();
-    localStorageService = jasmine.createSpyObj<Pick<LocalStorageService, 'get' | 'set' | 'storage$'>>(
-      'LocalStorageService',
-      ['get', 'set'],
-      { storage$: storage$ as LocalStorageService['storage$'] }
-    );
+    localStorageService = jasmine.createSpyObj<
+      Pick<LocalStorageService, 'get' | 'set' | 'storage$'>
+    >('LocalStorageService', ['get', 'set'], {
+      storage$: storage$ as LocalStorageService['storage$'],
+    });
 
     Object.defineProperty(document, 'hidden', { value: false, configurable: true });
     Object.defineProperty(globalThis, 'crypto', {
@@ -38,41 +39,61 @@ describe('ActiveTabService', () => {
   });
 
   it('initializes and marks the current tab as active', () => {
-    const service = new ActiveTabService(localStorageService as unknown as LocalStorageService);
+    const service = createService(ActiveTabService, [
+      {
+        provide: LocalStorageService,
+        useValue: localStorageService,
+      },
+    ]);
 
     service.init();
 
-    expect(service.active$).toBeInstanceOf(BehaviorSubject);
-    expect(service.lastActive$.getValue()).toBe(true);
+    expect(service.active()).toBe(true);
+    expect(service.lastActive()).toBe(true);
     expect(localStorageService.set).toHaveBeenCalledWith(ACTIVE_TAB_STORAGE_KEY, 'tab-1');
   });
 
   it('updates active flag on window focus and blur', () => {
-    const service = new ActiveTabService(localStorageService as unknown as LocalStorageService);
+    const service = createService(ActiveTabService, [
+      {
+        provide: LocalStorageService,
+        useValue: localStorageService,
+      },
+    ]);
 
     service.init();
 
     window.dispatchEvent(new FocusEvent('blur'));
-    expect(service.active$.getValue()).toBe(false);
+    expect(service.active()).toBe(false);
 
     window.dispatchEvent(new FocusEvent('focus'));
-    expect(service.active$.getValue()).toBe(true);
+    expect(service.active()).toBe(true);
     expect(localStorageService.set).toHaveBeenCalledWith(ACTIVE_TAB_STORAGE_KEY, 'tab-1');
   });
 
-  it('reacts to storage changes and updates lastActive$', () => {
-    const service = new ActiveTabService(localStorageService as unknown as LocalStorageService);
+  it('reacts to storage changes and updates lastActive', () => {
+    const service = createService(ActiveTabService, [
+      {
+        provide: LocalStorageService,
+        useValue: localStorageService,
+      },
+    ]);
 
     service.init();
 
     localStorageService.get.and.returnValue('different-tab');
     storage$.next({});
 
-    expect(service.lastActive$.getValue()).toBe(false);
+    expect(service.lastActive()).toBe(false);
   });
 
   it('returns active status from local storage', () => {
-    const service = new ActiveTabService(localStorageService as unknown as LocalStorageService);
+    const service = createService(ActiveTabService, [
+      {
+        provide: LocalStorageService,
+        useValue: localStorageService,
+      },
+    ]);
 
     service.init();
 
@@ -84,7 +105,12 @@ describe('ActiveTabService', () => {
   });
 
   it('unsubscribes on destroy', () => {
-    const service = new ActiveTabService(localStorageService as unknown as LocalStorageService);
+    const service = createService(ActiveTabService, [
+      {
+        provide: LocalStorageService,
+        useValue: localStorageService,
+      },
+    ]);
 
     service.init();
 
@@ -92,6 +118,6 @@ describe('ActiveTabService', () => {
 
     localStorageService.get.and.returnValue('different-tab');
     storage$.next({});
-    expect(service.lastActive$.getValue()).toBe(true);
+    expect(service.lastActive()).toBe(true);
   });
 });

@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { FetchClient, InventoryService, TenantOptionsService } from '@c8y/client';
-import { firstValueFrom, from, Observable, of } from 'rxjs';
+import { defer, firstValueFrom, from, Observable, of, throwError } from 'rxjs';
 import { catchError, map, retry, switchMap, tap } from 'rxjs/operators';
 import { AssetFilterConfig, AssetFilterMethod } from '../models/asset-access.model';
 
@@ -30,41 +30,36 @@ export class AssetAccessService {
 
   private cache = new Map<string, CacheEntry>();
 
-  constructor(
-    private fetchClient: FetchClient,
-    private tenantOptionsService: TenantOptionsService,
-    private inventoryService: InventoryService
-  ) {}
+  private fetchClient = inject(FetchClient);
+
+  private tenantOptionsService = inject(TenantOptionsService);
+
+  private inventoryService = inject(InventoryService);
 
   /**
-   * Fetches asset IDs using a pre-loaded configuration object
+   * Fetches asset IDs using a pre-loaded configuration object.
+   *
+   * Errors are propagated rather than mapped to an empty array: callers have to
+   * be able to tell "this user has no assets" apart from "we could not find out".
+   *
    * @param config - The asset filter configuration to use
    * @returns Observable of asset ID strings array
    */
   getAssetIdsFromConfig(config: AssetFilterConfig): Observable<string[]> {
-    return this.fetchAssetIds(config).pipe(
-      catchError((err) => {
-        console.error('[AssetAccessService] Failed to fetch asset IDs from config', err);
-
-        return of([] as string[]);
-      })
-    );
+    return this.fetchAssetIds(config);
   }
 
   /**
-   * Fetches asset IDs as an Observable
+   * Fetches asset IDs as an Observable. Errors are propagated — see
+   * {@link getAssetIdsFromConfig}.
+   *
    * @param configCategory - The tenant option category to load configuration from
    * @param configKey - The tenant option key to load configuration from
    * @returns Observable of asset ID strings array
    */
   getAssetIds(configCategory: string, configKey: string): Observable<string[]> {
     return this.loadConfig(configCategory, configKey).pipe(
-      switchMap((config) => this.fetchAssetIds(config)),
-      catchError((err) => {
-        console.error('[AssetAccessService] Failed to fetch asset IDs', err);
-
-        return of([] as string[]);
-      })
+      switchMap((config) => this.fetchAssetIds(config))
     );
   }
 
@@ -122,29 +117,40 @@ export class AssetAccessService {
             ...(option?.value ? (JSON.parse(option.value) as Partial<AssetFilterConfig>) : {}),
           } as AssetFilterConfig;
         } catch (parseErr) {
-          console.error(
-            '[AssetAccessService] Failed to parse config JSON',
-            parseErr,
-            option?.value
+          // A malformed option is a configuration error, not "no assets".
+          throw new Error(
+            `[AssetAccessService] Tenant option ${configCategory}/${configKey} does not contain valid JSON`,
+            { cause: parseErr }
           );
-
-          return {
-            method: 'custom-endpoint',
-            endpoint: '',
-            cacheTtl: this.DEFAULT_CACHE_TTL,
-          } satisfies AssetFilterConfig;
         }
       }),
-      catchError((err) => {
-        console.warn('[AssetAccessService] Failed to load config from tenant options', err);
+      catchError((err: unknown) => {
+        // A missing tenant option simply means the filter was never configured,
+        // which is a legitimate "nothing to filter by". Anything else is an error.
+        if (this.isNotFound(err)) {
+          return of(this.getEmptyConfig());
+        }
 
-        return of({
-          method: 'custom-endpoint',
-          endpoint: '',
-          cacheTtl: this.DEFAULT_CACHE_TTL,
-        } satisfies AssetFilterConfig);
+        return throwError(() => err);
       })
     );
+  }
+
+  /** A configuration that resolves to no assets. */
+  private getEmptyConfig(): AssetFilterConfig {
+    return {
+      method: 'custom-endpoint',
+      endpoint: '',
+      cacheTtl: this.DEFAULT_CACHE_TTL,
+    } satisfies AssetFilterConfig;
+  }
+
+  private isNotFound(err: unknown): boolean {
+    const status =
+      (err as { res?: { status?: number }; status?: number } | null)?.res?.status ??
+      (err as { status?: number } | null)?.status;
+
+    return status === 404;
   }
 
   /**
@@ -161,14 +167,8 @@ export class AssetAccessService {
       return of(cached);
     }
 
-    return this.resolveAssetIds(config).pipe(
-      tap((ids) => this.setCache(cacheKey, ids)),
-      catchError((err) => {
-        console.error('[AssetAccessService] Asset ID resolution failed', err, config);
-
-        return of([] as string[]);
-      })
-    );
+    // Only successful results are cached, so a failure is retried on next call.
+    return this.resolveAssetIds(config).pipe(tap((ids) => this.setCache(cacheKey, ids)));
   }
 
   /**
@@ -180,7 +180,9 @@ export class AssetAccessService {
   private resolveAssetIds(config: AssetFilterConfig): Observable<string[]> {
     switch (config.method) {
       case 'custom-endpoint':
-        return config.endpoint ? this.fetchFromEndpoint(config) : of([] as string[]);
+        return config.endpoint
+          ? this.fetchFromEndpoint({ ...config, endpoint: config.endpoint })
+          : of([] as string[]);
 
       case 'managed-object':
         return config.managedObjectId
@@ -191,9 +193,9 @@ export class AssetAccessService {
         return config.query ? this.fetchFromInventoryQuery(config.query) : of([] as string[]);
 
       default:
-        console.warn('[AssetAccessService] Unknown filter method', config.method);
-
-        return of([] as string[]);
+        return throwError(
+          () => new Error(`[AssetAccessService] Unknown filter method "${String(config.method)}"`)
+        );
     }
   }
 
@@ -203,37 +205,35 @@ export class AssetAccessService {
    * @returns Observable of asset ID strings with automatic retry on failure
    * @private
    */
-  private fetchFromEndpoint(config: AssetFilterConfig): Observable<string[]> {
-    const request = this.fetchClient
-      .fetch(config.endpoint, { method: 'GET', headers: { 'Content-Type': 'application/json' } })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Request failed with status ${response.status}`);
-        }
+  private fetchFromEndpoint(
+    config: AssetFilterConfig & { endpoint: string }
+  ): Observable<string[]> {
+    // `defer` so that `retry` actually issues a new request — retrying a
+    // subscription to an already-created promise would just replay its result.
+    const request = () =>
+      this.fetchClient
+        .fetch(config.endpoint, { method: 'GET', headers: { 'Content-Type': 'application/json' } })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`Request failed with status ${response.status}`);
+          }
 
-        return response.json() as Promise<
-          { assetIds: string[] } | string[] | InventoryRoleAssignment[]
-        >;
-      })
-      .then((res) => {
-        if (Array.isArray(res)) return res as string[];
-        if ('assetIds' in res) return res.assetIds;
-        if ('inventoryAssignments' in res)
-          return this.digestInventory(
-            (res as { inventoryAssignments: InventoryRoleAssignment[] }).inventoryAssignments
-          );
+          return response.json() as Promise<
+            { assetIds: string[] } | string[] | InventoryRoleAssignment[]
+          >;
+        })
+        .then((res) => {
+          if (Array.isArray(res)) return res as string[];
+          if ('assetIds' in res) return res.assetIds;
+          if ('inventoryAssignments' in res)
+            return this.digestInventory(
+              (res as { inventoryAssignments: InventoryRoleAssignment[] }).inventoryAssignments
+            );
 
-        return [];
-      });
+          return [];
+        });
 
-    return from(request).pipe(
-      retry(1),
-      catchError((err) => {
-        console.error('[AssetAccessService] HTTP endpoint failed', config, err);
-
-        return of([] as string[]);
-      })
-    );
+    return defer(request).pipe(retry(1));
   }
 
   /**
@@ -245,24 +245,27 @@ export class AssetAccessService {
    */
   private fetchFromManagedObject(managedObjectId: string, fragment?: string): Observable<string[]> {
     const fragmentPath = fragment || 'assetIds';
-    let value: string[] | InventoryRoleAssignment;
 
     return from(this.inventoryService.detail(managedObjectId)).pipe(
       map((result) => {
-        value = this.getNestedValue<string[]>(result.data, fragmentPath);
-
-        return typeof value === 'object'
-          ? this.digestInventory(value as unknown as InventoryRoleAssignment[])
-          : value || [];
-      }),
-      catchError((err) => {
-        console.error(
-          '[AssetAccessService] Failed to fetch from managed object',
-          managedObjectId,
-          err
+        const value = this.getNestedValue<string[] | InventoryRoleAssignment[]>(
+          result.data,
+          fragmentPath
         );
 
-        return of([] as string[]);
+        if (!Array.isArray(value)) {
+          return [];
+        }
+
+        // Discriminate on the element shape. The previous `typeof value === 'object'`
+        // check was true for *any* array, so a plain `string[]` fragment — the
+        // documented default — was run through `digestInventory` and became
+        // `[undefined]`.
+        if (value.every((entry): entry is string => typeof entry === 'string')) {
+          return value;
+        }
+
+        return this.digestInventory(value.filter((entry) => !!entry?.managedObject));
       })
     );
   }
@@ -287,11 +290,6 @@ export class AssetAccessService {
 
         // Default: extract id from managed objects
         return data.map((item) => item.id) || [];
-      }),
-      catchError((err) => {
-        console.error('[AssetAccessService] Failed to fetch from inventory query', query, err);
-
-        return of([] as string[]);
       })
     );
   }
@@ -314,9 +312,8 @@ export class AssetAccessService {
         return `query:${config.query || ''}`;
 
       default:
-        console.warn('[AssetAccessService] Unknown cache key method', config.method);
-
-        return 'unknown';
+        // `resolveAssetIds` rejects unknown methods; this only has to be stable.
+        return `unknown:${String(config.method)}`;
     }
   }
 

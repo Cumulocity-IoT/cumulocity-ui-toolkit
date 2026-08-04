@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { inject, Component, OnInit } from '@angular/core';
 import { CellRendererContext, CoreModule } from '@c8y/ngx-components';
 import { IManagedObjectExtended } from '../favorites-manager.model';
 
@@ -14,7 +14,7 @@ import { IManagedObjectExtended } from '../favorites-manager.model';
 export class ObjectTypeCellRendererComponent implements OnInit {
   objectType: string;
 
-  constructor(public context: CellRendererContext) {}
+  public context = inject(CellRendererContext);
 
   ngOnInit() {
     if (!this.context.item) {

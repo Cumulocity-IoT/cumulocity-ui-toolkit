@@ -32,7 +32,6 @@ export default [
       '**/i18n.ts',
       '**/src/index.html',
       '**/test/cypress',
-      '**/*.spec.ts',
       '**/*.html',
       'karma.conf.js',
     ],
@@ -169,6 +168,27 @@ export default [
           allow: ['.png$'],
         },
       ],
+    },
+  },
+  {
+    // Spec files are linted (they are the bulk of the type-unsafe code otherwise),
+    // but a handful of rules fight unavoidable test idioms:
+    //  - stubbing a collaborator means casting a partial literal to its type;
+    //  - `expect(service.method).toHaveBeenCalled()` deliberately passes an
+    //    unbound reference, which is exactly what `unbound-method` forbids;
+    //  - reaching into a private member to test it needs an `any` cast.
+    // Everything else — prettier, unused vars, no-console, formatting — still applies.
+    files: ['**/*.spec.ts'],
+
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/unbound-method': 'off',
+      // Jasmine's `describe`/`it` blocks are naturally long.
+      '@typescript-eslint/member-ordering': 'off',
     },
   },
   ...compat.extends('plugin:@angular-eslint/template/recommended').map((config) => ({

@@ -50,15 +50,14 @@ describe('filterToQueryString', () => {
   it('maps ids to OR clauses via QueriesUtil __in', () => {
     // QueriesUtil serialises __in as (id eq '1') or (id eq '2') or ...
     const result = filterToQueryString({ ids: '1,2,3' });
+
     expect(result).toContain("id eq '1'");
     expect(result).toContain("id eq '2'");
     expect(result).toContain("id eq '3'");
   });
 
   it('inlines and unwraps a stored query clause via ReverseQueriesUtil', () => {
-    expect(filterToQueryString({ query: '$filter=(has(c8y_IsDevice))' })).toBe(
-      'has(c8y_IsDevice)'
-    );
+    expect(filterToQueryString({ query: '$filter=(has(c8y_IsDevice))' })).toBe('has(c8y_IsDevice)');
   });
 
   it('round-trips a comparison query string', () => {
@@ -67,6 +66,7 @@ describe('filterToQueryString', () => {
 
   it('joins multiple clauses with and', () => {
     const result = filterToQueryString({ type: 'Pump', fragmentType: 'c8y_IsDevice' });
+
     // QueriesUtil wraps each clause in parens when combining
     expect(result).toContain("type eq 'Pump'");
     expect(result).toContain('has(c8y_IsDevice)');
@@ -81,6 +81,7 @@ describe('filterToQueryString', () => {
       d: { nested: true },
       name: 'kept',
     };
+
     expect(filterToQueryString(filter)).toBe("name eq 'kept'");
   });
 });

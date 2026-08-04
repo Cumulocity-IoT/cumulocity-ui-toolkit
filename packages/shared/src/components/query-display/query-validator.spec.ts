@@ -21,6 +21,7 @@ describe('UNSUPPORTED_HAS_PROPERTIES', () => {
       'childAdditions',
       'externalIds',
     ];
+
     expected.forEach((p) => expect(UNSUPPORTED_HAS_PROPERTIES.has(p)).toBeTrue());
   });
 
@@ -51,6 +52,7 @@ describe('validateQuery', () => {
 
   it('detects has(type) as unsupported', () => {
     const msgs = validateQuery('has(type)');
+
     expect(msgs.length).toBe(1);
     expect(msgs[0]).toContain('has(type)');
     expect(msgs[0]).toContain('standard property');
@@ -58,6 +60,7 @@ describe('validateQuery', () => {
 
   it('detects has(name) as unsupported', () => {
     const msgs = validateQuery('has(name)');
+
     expect(msgs.length).toBe(1);
     expect(msgs[0]).toContain('has(name)');
   });
@@ -71,18 +74,21 @@ describe('validateQuery', () => {
   });
 
   it('detects unsupported property inside compound and expression', () => {
-    const msgs = validateQuery("has(c8y_IsDevice) and has(type)");
+    const msgs = validateQuery('has(c8y_IsDevice) and has(type)');
+
     expect(msgs.length).toBe(1);
     expect(msgs[0]).toContain('has(type)');
   });
 
   it('detects multiple violations across the query', () => {
     const msgs = validateQuery('has(type) and has(name)');
+
     expect(msgs.length).toBe(2);
   });
 
   it('detects hasany() with unsupported standard properties', () => {
     const msgs = validateQuery('hasany(type, name)');
+
     expect(msgs.length).toBe(1);
     expect(msgs[0]).toContain('hasany');
     expect(msgs[0]).toContain('type');
@@ -99,6 +105,7 @@ describe('validateQuery', () => {
 
   it('flags only the unsupported fragments in hasany()', () => {
     const msgs = validateQuery('hasany(c8y_IsDevice, type, owner)');
+
     expect(msgs.length).toBe(1);
     expect(msgs[0]).toContain('type');
     expect(msgs[0]).toContain('owner');
@@ -107,6 +114,7 @@ describe('validateQuery', () => {
 
   it('handles $filter= wrapped query', () => {
     const msgs = validateQuery('$filter=(has(type))');
+
     expect(msgs.length).toBe(1);
   });
 
@@ -122,6 +130,7 @@ describe('validateQuery', () => {
 describe('cumulocityQueryValidator', () => {
   it('returns null for valid query', () => {
     const ctrl = new FormControl('has(c8y_IsDevice)');
+
     expect(cumulocityQueryValidator(ctrl)).toBeNull();
   });
 
@@ -133,6 +142,7 @@ describe('cumulocityQueryValidator', () => {
   it('returns ValidationErrors for unsupported standard property', () => {
     const ctrl = new FormControl('has(type)');
     const errors = cumulocityQueryValidator(ctrl);
+
     expect(errors).not.toBeNull();
     expect(errors?.['cumulocityQuery']).toContain('has(type)');
   });
@@ -140,6 +150,7 @@ describe('cumulocityQueryValidator', () => {
   it('joins multiple error messages with ;', () => {
     const ctrl = new FormControl('has(type) and has(name)');
     const errors = cumulocityQueryValidator(ctrl);
+
     expect(errors?.['cumulocityQuery']).toContain(';');
   });
 });

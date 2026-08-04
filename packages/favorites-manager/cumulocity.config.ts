@@ -51,11 +51,5 @@ export default {
       '@ngx-translate/core',
       '@ngx-formly/core',
     ],
-    copy: [
-      {
-        from: 'packages/favorites-manager/assets',
-        to: 'assets',
-      },
-    ],
   },
 } as const satisfies ConfigurationOptions;

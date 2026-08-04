@@ -1,17 +1,16 @@
 import {
+  effect,
+  input,
+  output,
   AfterViewInit,
   Component,
-  effect,
-  EventEmitter,
-  input,
   OnDestroy,
   OnInit,
-  Output,
   ViewChild,
 } from '@angular/core';
-import { BehaviorSubject, Subject } from 'rxjs';
-import { FormBuilder, FormsModule } from '@angular/forms';
-import { filter, takeUntil, tap } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { FormControl, FormGroup, FormsModule } from '@angular/forms';
+import { filter, takeUntil } from 'rxjs/operators';
 import { CoreModule, CountdownIntervalComponent } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { PopoverModule } from 'ngx-bootstrap/popover';
@@ -32,7 +31,12 @@ export class PSAutoRefreshComponent implements OnInit, AfterViewInit, OnDestroy 
   /**
    * Controls the loading state of the alarms list reload button.
    */
-  isLoading$ = input<BehaviorSubject<boolean>>();
+  /**
+   * Loading state of the caller's reload action. Previously an
+   * `input<BehaviorSubject<boolean>>()`, which forced callers to hand a Subject
+   * to the component and left an untorn-down subscription behind.
+   */
+  isLoading = input(false);
 
   /**
    * * Set the value of `isIntervalEnabled` in response to user interactions with the alarm list scroll.
@@ -54,29 +58,49 @@ export class PSAutoRefreshComponent implements OnInit, AfterViewInit, OnDestroy 
    * the state of a toggle button. It retrieves the value from the associated form control, providing the
    * current state of the toggle button.
    */
+  /**
+   * `FormGroup.value` is a `Partial`, so the raw control value is exposed here to
+   * keep the template binding non-optional under `strictTemplates`.
+   */
+  get refreshInterval(): number {
+    return this.toggleIntervalForm.controls.refreshInterval.value;
+  }
+
   get isIntervalToggleEnabled(): boolean {
-    return this.toggleIntervalForm.get('intervalToggle').value;
+    return this.toggleIntervalForm.controls.intervalToggle.value;
   }
 
   /**
    * Event emitter for notifying when a countdown timer has completed.
    */
-  @Output()
-  onCountdownEnded = new EventEmitter<void>();
+  readonly countdownEnded = output<void>();
 
   @ViewChild(CountdownIntervalComponent)
-  countdownIntervalComponent: CountdownIntervalComponent;
+  countdownIntervalComponent!: CountdownIntervalComponent;
 
-  toggleIntervalForm = this.initForm();
+  /**
+   * Built from explicit non-nullable controls rather than `FormBuilder.group()`
+   * so `controls.x` is typed and never `null` — `form.get('x')` returns
+   * `AbstractControl | null` and forced a guard at every use.
+   */
+  readonly toggleIntervalForm = new FormGroup({
+    intervalToggle: new FormControl<boolean>(true, { nonNullable: true }),
+    refreshInterval: new FormControl<number>(30_000, { nonNullable: true }),
+  });
+
   private destroy$: Subject<void> = new Subject<void>();
   /**
    * Indicates whether the user has been interacting with the interval toggle.
    * Property holds the current state of the interval toggle input element entered by the user,
    * distinguishing it from changes made programmatically (e.g. value from isIntervalToggleEnabled).
    */
-  private doesUserCheckedIntervalToggle: boolean;
+  private doesUserCheckedIntervalToggle = false;
 
-  constructor(private fb: FormBuilder) {
+  constructor() {
+    // `effect()` requires an injection context, and the countdown child is
+    // guarded with `?.` because the first run may precede view initialisation.
+    this.listenOnLoadingChanges();
+
     effect(() => {
       const value = this.isIntervalToggleEnabledInput();
 
@@ -87,7 +111,7 @@ export class PSAutoRefreshComponent implements OnInit, AfterViewInit, OnDestroy 
       const shouldSetInterval = this.isIntervalToggleEnabled || this.doesUserCheckedIntervalToggle;
       const shouldToggleInterval =
         this.isIntervalToggleEnabled && this.doesUserCheckedIntervalToggle && value;
-      const intervalToggleControl = this.toggleIntervalForm.get('intervalToggle');
+      const intervalToggleControl = this.toggleIntervalForm.controls.intervalToggle;
 
       /**
        * We check if any interactions to toggle interval button were made.
@@ -115,7 +139,6 @@ export class PSAutoRefreshComponent implements OnInit, AfterViewInit, OnDestroy 
 
   ngAfterViewInit(): void {
     this.onIntervalToggleChange();
-    this.listenOnLoadingChanges();
   }
 
   ngOnDestroy(): void {
@@ -136,32 +159,28 @@ export class PSAutoRefreshComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   private onIntervalToggleChange(): void {
-    this.toggleIntervalForm
-      .get('intervalToggle')
-      .valueChanges.pipe(takeUntil(this.destroy$), filter(Boolean))
+    this.toggleIntervalForm.controls.intervalToggle.valueChanges
+      .pipe(takeUntil(this.destroy$), filter(Boolean))
       .subscribe(() => setTimeout(() => this.startCountdown()));
   }
 
-  private initForm() {
-    return this.fb.group({
-      intervalToggle: true,
-      refreshInterval: 30_000,
-    });
-  }
-
   private listenToRefreshIntervalChange(): void {
-    this.toggleIntervalForm
-      .get('refreshInterval')
-      .valueChanges.pipe(takeUntil(this.destroy$))
+    this.toggleIntervalForm.controls.refreshInterval.valueChanges
+      .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.resetCountdown());
   }
 
+  /**
+   * Stops the countdown while a reload is in flight and resets it afterwards.
+   * Registered as an effect, so it is torn down with the component.
+   */
   private listenOnLoadingChanges() {
-    const subject = this.isLoading$();
+    effect(() => {
+      const loading = this.isLoading();
 
-    if (!subject) return;
-    subject.pipe(tap(() => this.countdownIntervalComponent?.stop())).subscribe((state) => {
-      if (!state) {
+      this.countdownIntervalComponent?.stop();
+
+      if (!loading) {
         this.countdownIntervalComponent?.reset();
       }
     });

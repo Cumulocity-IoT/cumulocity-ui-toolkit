@@ -11,6 +11,7 @@ import {
 import { OperationsEditorComponent } from '../operations-value/operations-editor.component';
 import { OperationsWidgetComponent } from '../operations-widget/operations-widget.component';
 import { WidgetConfigService } from '@c8y/ngx-components/context-dashboard';
+import { setWidgetPreview } from '~helpers/widget-preview.helper';
 
 @Component({
   selector: 'app-operations-widget-config',
@@ -26,12 +27,7 @@ export class OperationsWidgetConfigComponent {
 
   @ViewChild('widgetPreview')
   set previewMapSet(template: TemplateRef<unknown>) {
-    if (template) {
-      this.widgetConfigService.setPreview(template);
-
-      return;
-    }
-    this.widgetConfigService.setPreview(null);
+    setWidgetPreview(this.widgetConfigService, template);
   }
 
   @Input() get config(): OperationWidgetConfig {
@@ -67,9 +63,22 @@ export class OperationsWidgetConfigComponent {
     }
   }
 
+  /**
+   * `buttons` and `fields` are optional on the persisted config, so every access
+   * goes through these two helpers instead of repeating the guards inline.
+   */
+  private fieldsOf(buttonIndex: number): OperationParamConfig[] | undefined {
+    const button = this.config.buttons?.[buttonIndex];
+
+    if (!button) {
+      return undefined;
+    }
+
+    return (button.fields ??= []);
+  }
+
   addField(buttonIndex: number, placeholder: { key: string; path: string }) {
-    if (!this.config.buttons[buttonIndex].fields) this.config.buttons[buttonIndex].fields = [];
-    this.config.buttons[buttonIndex].fields.push({
+    this.fieldsOf(buttonIndex)?.push({
       key: placeholder.key,
       path: placeholder.path,
       label: this.humanize.transform(placeholder.key),
@@ -79,7 +88,7 @@ export class OperationsWidgetConfigComponent {
   }
 
   updateField(buttonIndex: number, placeholder: { key: string; path: string }) {
-    const field = this.config.buttons[buttonIndex].fields.find((f) => f.key === placeholder.key);
+    const field = this.fieldsOf(buttonIndex)?.find((f) => f.key === placeholder.key);
 
     if (field) {
       field.path = placeholder.path;
@@ -87,21 +96,20 @@ export class OperationsWidgetConfigComponent {
   }
 
   addOption(field: OperationParamConfig) {
-    if (!field.options) field.options = [];
-    field.options.push({ label: '', value: '' });
+    (field.options ??= []).push({ label: '', value: '' });
   }
 
   removeField(buttonIndex: number, key: string) {
-    const fields = this.config.buttons[buttonIndex].fields;
-    const idx = fields.findIndex((f) => f.key === key);
+    const fields = this.fieldsOf(buttonIndex);
+    const idx = fields?.findIndex((f) => f.key === key) ?? -1;
 
-    if (idx !== -1) {
-      this.config.buttons[buttonIndex].fields.splice(idx, 1);
+    if (fields && idx !== -1) {
+      fields.splice(idx, 1);
     }
   }
 
   removeOption(field: OperationParamConfig, index: number) {
-    field.options.splice(index, 1);
+    field.options?.splice(index, 1);
   }
 
   addNewButton(): void {
@@ -137,35 +145,46 @@ export class OperationsWidgetConfigComponent {
   }
 
   onOperationBodyChanged(operation: string, buttonIndex: number) {
+    let json: Record<string, unknown>;
+
     try {
-      const json = JSON.parse(operation) as Record<string, unknown>;
+      json = JSON.parse(operation) as Record<string, unknown>;
+    } catch {
+      // Invalid while the user is still typing; placeholders re-sync on the next
+      // valid payload. Only the parse is guarded so real sync failures surface.
+      return;
+    }
 
-      this._config.buttons[buttonIndex].operationValue = operation;
-      const placeholders = extractPlaceholdersFromObject(json);
-      const placeholderKeys = (placeholders ?? []).map((p) => p.key);
-      const fields = this.config.buttons[buttonIndex].fields ?? [];
-      const fieldKeys = fields.map((f) => f.key);
-      const newPlaceholders = placeholders.filter((p) => !fieldKeys.includes(p.key));
-      const updatePlaceholders = placeholders.filter((p) => fieldKeys.includes(p.key));
+    const button = this.config.buttons?.[buttonIndex];
 
-      // Add placeholders which are not yet part of the fields
-      for (const n of newPlaceholders) {
-        this.addField(buttonIndex, n);
-      }
+    if (!button) {
+      return;
+    }
 
-      // Update in case the path changed
-      for (const update of updatePlaceholders) {
-        this.updateField(buttonIndex, update);
-      }
+    button.operationValue = operation;
 
-      // Remove fields whose keys are not in placeholders anymore
-      const removedFieldKeys = fieldKeys.filter((k) => !placeholderKeys.includes(k));
+    const placeholders = extractPlaceholdersFromObject(json);
+    const placeholderKeys = (placeholders ?? []).map((p) => p.key);
+    const fields = button.fields ?? [];
+    const fieldKeys = fields.map((f) => f.key);
+    const newPlaceholders = placeholders.filter((p) => !fieldKeys.includes(p.key));
+    const updatePlaceholders = placeholders.filter((p) => fieldKeys.includes(p.key));
 
-      for (const key of removedFieldKeys) {
-        this.removeField(buttonIndex, key);
-      }
-    } catch (error) {
-      console.error(error);
+    // Add placeholders which are not yet part of the fields
+    for (const n of newPlaceholders) {
+      this.addField(buttonIndex, n);
+    }
+
+    // Update in case the path changed
+    for (const update of updatePlaceholders) {
+      this.updateField(buttonIndex, update);
+    }
+
+    // Remove fields whose keys are not in placeholders anymore
+    const removedFieldKeys = fieldKeys.filter((k) => !placeholderKeys.includes(k));
+
+    for (const key of removedFieldKeys) {
+      this.removeField(buttonIndex, key);
     }
   }
 

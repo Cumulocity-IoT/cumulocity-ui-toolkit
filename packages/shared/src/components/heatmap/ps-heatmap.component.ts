@@ -1,5 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-misused-promises */
-import { Component, effect, ElementRef, input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+  effect,
+  inject,
+  input,
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import { CoreModule, FormsModule } from '@c8y/ngx-components';
 import { MapService } from '@c8y/ngx-components/map';
 import * as L from 'leaflet';
@@ -32,7 +41,9 @@ export class HeatmapComponent implements OnInit, OnDestroy {
   heatLayer!: L.GridLayer;
   l!: typeof L;
 
-  constructor(private mapService: MapService) {
+  private mapService = inject(MapService);
+
+  constructor() {
     effect(() => this.renderData());
   }
 
@@ -61,7 +72,7 @@ export class HeatmapComponent implements OnInit, OnDestroy {
 
   private initMap(): void {
     const baseLayer = this.l.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      ...this.options,
+      ...this.options(),
       className: 'bw-layer',
       referrerPolicy: 'strict-origin-when-cross-origin',
     });
@@ -72,7 +83,7 @@ export class HeatmapComponent implements OnInit, OnDestroy {
     });
 
     setTimeout(() => {
-      const bwLayerElement = document.querySelector('div.leaflet-layer.bw-layer');
+      const bwLayerElement = document.querySelector<HTMLElement>('div.leaflet-layer.bw-layer');
 
       if (bwLayerElement) {
         bwLayerElement.style.filter = 'grayscale(100%)';
@@ -87,6 +98,10 @@ export class HeatmapComponent implements OnInit, OnDestroy {
       const tile = L.DomUtil.create('canvas', 'leaflet-tile');
       const ctx = tile.getContext('2d');
       const size = this.heatLayer.getTileSize();
+
+      if (!ctx) {
+        return tile;
+      }
 
       tile.width = size.x;
       tile.height = size.y;
@@ -128,7 +143,7 @@ export class HeatmapComponent implements OnInit, OnDestroy {
     this.heatLayer.addTo(this.map);
 
     setTimeout(() => {
-      const bwLayerElement = document.querySelector('div.leaflet-layer.heat-layer');
+      const bwLayerElement = document.querySelector<HTMLElement>('div.leaflet-layer.heat-layer');
 
       if (bwLayerElement) {
         bwLayerElement.style.filter = `blur(${this.blurRadius()}px)`;

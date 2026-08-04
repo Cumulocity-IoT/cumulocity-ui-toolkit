@@ -31,7 +31,7 @@
       class="btn btn-primary"
       type="button"
       (click)="export()"
-      [ngClass]="{ 'btn-pending': isLoading }"
+      [class.btn-pending]="isLoading"
       [disabled]="isLoading"
     >
       {{ 'Export' | translate }}

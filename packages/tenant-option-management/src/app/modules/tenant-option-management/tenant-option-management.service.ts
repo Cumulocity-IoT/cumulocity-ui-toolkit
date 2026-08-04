@@ -1,17 +1,24 @@
 import { inject, Injectable } from '@angular/core';
 import { ITenantOption, InventoryService, TenantOptionsService, UserService } from '@c8y/client';
 import { AlertService } from '@c8y/ngx-components';
-import { TenantOptionConfiguration, TenantOptionConfigurationItem, TenantOptionRow } from './model';
+import { gettext } from '@c8y/ngx-components/gettext';
+import { TranslateService } from '@ngx-translate/core';
+import {
+  TenantOptionConfiguration,
+  TenantOptionConfigurationItem,
+  TenantOptionRow,
+} from './tenant-option-management.model';
 
 @Injectable()
 export class TenantOptionManagementService {
   private readonly MAX_PAGE_SIZE = 2000;
-  currentUser?: Promise<string> = null;
+  private currentUser: Promise<string> | null = null;
 
   private inventory = inject(InventoryService);
   private tenantOption = inject(TenantOptionsService);
   private alertService = inject(AlertService);
   private userService = inject(UserService);
+  private translateService = inject(TranslateService);
 
   /**
    * Returns the single `tenant_option_plugin_config` managed object used to
@@ -41,7 +48,7 @@ export class TenantOptionManagementService {
   async addOption(option: ITenantOption): Promise<TenantOptionRow> {
     await this.tenantOption.create(option);
     const item = await this.addOptionToConfiguration(option);
-    return { id: `${option.category}-${option.key}`, value: option.value, ...item };
+    return { id: `${option.category}-${option.key}`, value: option.value ?? '', ...item };
   }
 
   /**
@@ -100,7 +107,7 @@ export class TenantOptionManagementService {
     const { data: option } = await this.tenantOption.detail(keyCategory);
 
     const item = await this.addOptionToConfiguration(option);
-    return { id: `${option.category}-${option.key}`, value: option.value, ...item };
+    return { id: `${option.category}-${option.key}`, value: option.value ?? '', ...item };
   }
 
   async updateOption(row: ITenantOption & { value: string }): Promise<TenantOptionRow> {
@@ -112,7 +119,7 @@ export class TenantOptionManagementService {
 
     await this.tenantOption.update(option).then((res) => res.data);
     const item = await this.updateOptionForConfiguration(option);
-    return { id: `${option.category}-${option.key}`, value: option.value, ...item };
+    return { id: `${option.category}-${option.key}`, value: option.value ?? '', ...item };
   }
 
   /**
@@ -131,8 +138,8 @@ export class TenantOptionManagementService {
       tenantOptions.push(...response.data);
 
       for (
-        let currentPage = response.paging.currentPage + 1;
-        currentPage <= response.paging.totalPages;
+        let currentPage = (response.paging?.currentPage ?? 1) + 1;
+        currentPage <= (response.paging?.totalPages ?? 0);
         currentPage++
       ) {
         const { data } = await this.tenantOption.list({
@@ -143,11 +150,15 @@ export class TenantOptionManagementService {
         tenantOptions.push(...data);
       }
 
-      return tenantOptions.map((o) => ({ id: `${o.category}-${o.key}`, value: o.value }));
+      return tenantOptions.map((o) => ({
+        id: `${o.category}-${o.key}`,
+        value: o.value ?? '',
+      }));
     } catch (error) {
-      console.error(error);
-
-      this.alertService.danger('Failed to load tenant options', (error as Error).message);
+      this.alertService.danger(
+        this.translateService.instant(gettext('Failed to load tenant options')) as string,
+        (error as Error).message
+      );
 
       return [];
     }
@@ -157,8 +168,16 @@ export class TenantOptionManagementService {
     try {
       await this.tenantOption.delete({ category: row.category, key: row.key });
     } catch (e) {
-      console.warn(e);
+      // If the option is already gone we still want to clean up the configuration.
+      // Any other failure must abort, otherwise the configuration would claim the
+      // option was removed while it still exists.
+      const status = (e as { res?: { status?: number } } | null)?.res?.status;
+
+      if (status !== 404) {
+        throw e;
+      }
     }
+
     const config = await this.getConfiguration();
     const delta = {
       id: config.id,
@@ -174,13 +193,17 @@ export class TenantOptionManagementService {
    * same service lifetime skip the `/user/currentUser` request.
    */
   private getUser(): Promise<string> {
-    if (this.currentUser == null) {
-      this.currentUser = this.userService.current().then((data) => {
+    // Assigned to a local first so the returned promise is never `null`.
+    const cached =
+      this.currentUser ??
+      this.userService.current().then((data) => {
         const { id, email } = data.data;
-        return id ?? email;
-      });
-    }
 
-    return this.currentUser;
+        return id ?? email ?? '';
+      });
+
+    this.currentUser = cached;
+
+    return cached;
   }
 }

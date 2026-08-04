@@ -1,4 +1,4 @@
-import { Token, TokenType } from './reverse-queries-util.model';
+import { StructuralTokenType, Token } from './reverse-queries-util.model';
 
 export class Tokenizer {
   private pos = 0;
@@ -34,10 +34,11 @@ export class Tokenizer {
     throw new Error(`Unexpected character: ${ch}`);
   }
 
-  private consume(type: TokenType, value?: string): Token {
+  /** Consumes a single character and returns the matching structural token. */
+  private consume(type: StructuralTokenType): Token {
     this.pos++;
 
-    return { type, value };
+    return { type };
   }
 
   private readString(): Token {
@@ -47,6 +48,11 @@ export class Tokenizer {
     while (this.pos < this.input.length && this.input[this.pos] !== quote) {
       value += this.input[this.pos++];
     }
+
+    if (this.pos >= this.input.length) {
+      throw new Error(`Unterminated string literal: ${quote}${value}`);
+    }
+
     this.pos++; // skip ending quote
 
     return { type: 'STRING', value };

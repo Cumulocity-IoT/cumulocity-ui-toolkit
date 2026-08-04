@@ -1,12 +1,12 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { IManagedObject, InventoryService } from '@c8y/client';
 import type { LatLngBounds } from 'leaflet';
-import { Observable, timer } from 'rxjs';
-import { exhaustMap, filter, map, tap } from 'rxjs/operators';
+import { EMPTY, from, Observable, timer } from 'rxjs';
+import { catchError, exhaustMap, filter, map, tap } from 'rxjs/operators';
 
 @Injectable()
 export class PositionPollingService {
-  constructor(private inventory: InventoryService) {}
+  private inventory = inject(InventoryService);
 
   /**
    * Periodic delta poll for position updates. `buildFilter` is evaluated on every
@@ -18,7 +18,11 @@ export class PositionPollingService {
     let currentDate = new Date().toISOString();
 
     return timer(interval, interval).pipe(
-      exhaustMap(() => this.checkForUpdates(buildFilter(), currentDate)),
+      // Catching inside the projection keeps the outer timer alive: a failed
+      // request skips this tick instead of terminating the polling for good.
+      exhaustMap(() =>
+        from(this.checkForUpdates(buildFilter(), currentDate)).pipe(catchError(() => EMPTY))
+      ),
       filter((result) => result.data.length > 0),
       tap((result) => {
         const moWithLatestDate = result.data.reduce((a, b) =>

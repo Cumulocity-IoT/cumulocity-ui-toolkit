@@ -114,7 +114,7 @@
               <label translate for="buttonColors">Button Color</label>
               <div class="dropdown" style="width: 100%" dropdown>
                 <button
-                  [ngClass]="
+                  [class]="
                     'btn btn-default dropdown-toggle c8y-dropdown ' +
                     (item.buttonClasses || 'btn-warning')
                   "
@@ -240,7 +240,7 @@
                   <input [(ngModel)]="item.showModal" type="checkbox" />
                   <span></span>
                   <span>
-                    {{ 'Confirm operation' }}
+                    {{ 'Confirm operation' | translate }}
                   </span>
                 </label>
                 @if (item.showModal) {

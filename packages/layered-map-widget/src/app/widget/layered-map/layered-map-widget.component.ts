@@ -1,9 +1,10 @@
 import {
+  inject,
+  input,
   AfterViewInit,
   Component,
   ElementRef,
   Input,
-  input,
   OnDestroy,
   ViewChild,
 } from '@angular/core';
@@ -11,7 +12,12 @@ import type * as L from 'leaflet';
 import { isEmpty, isNil } from 'lodash';
 import { fromEvent, Subject, Subscription } from 'rxjs';
 import { ILayeredMapWidgetConfig, isQueryLayerConfig, MyLayer } from './layered-map-widget.model';
-import { BASE_TILE_LAYERS, customEntryToDef, DEFAULT_BASE_TILE_LAYER_ID } from './base-tile-layers';
+import {
+  BASE_TILE_LAYERS,
+  customEntryToDef,
+  DEFAULT_BASE_TILE_LAYER,
+  DEFAULT_BASE_TILE_LAYER_ID,
+} from './base-tile-layers';
 import { CustomBaseTileLayerService } from './service/custom-base-tile-layer.service';
 import { LayerService } from './service/layer.service';
 import { InventoryPollingService } from './service/inventory-polling.service';
@@ -19,6 +25,7 @@ import { debounceTime, filter, takeUntil } from 'rxjs/operators';
 import { AlarmPollingService } from './service/alarm-polling.service';
 import { PositionPollingService } from './service/position-polling.service';
 import { EventPollingService } from './service/event-polling.service';
+import { escapeHtml, safeCssColor, safeIconName } from './utils/sanitize';
 import { IManagedObject } from '@c8y/client';
 import { CoreModule, DashboardChildComponent } from '@c8y/ngx-components';
 
@@ -58,15 +65,19 @@ export class LayeredMapWidgetComponent implements AfterViewInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
-  constructor(
-    private layerService: LayerService,
-    private inventoryPollingService: InventoryPollingService,
-    private positionPollingService: PositionPollingService,
-    private eventPollingService: EventPollingService,
-    private alarmPollingService: AlarmPollingService,
-    private customBaseTileLayerService: CustomBaseTileLayerService,
-    child: DashboardChildComponent
-  ) {
+  private layerService = inject(LayerService);
+
+  private inventoryPollingService = inject(InventoryPollingService);
+
+  private positionPollingService = inject(PositionPollingService);
+
+  private eventPollingService = inject(EventPollingService);
+
+  private alarmPollingService = inject(AlarmPollingService);
+
+  private customBaseTileLayerService = inject(CustomBaseTileLayerService);
+
+  constructor(child: DashboardChildComponent) {
     child.changeEnd
       .pipe(
         filter((child) => child.lastChange === 'resize'),
@@ -203,7 +214,7 @@ export class LayeredMapWidgetComponent implements AfterViewInit, OnDestroy {
     const tileLayerDef =
       (customEntry ? customEntryToDef(customEntry) : null) ??
       BASE_TILE_LAYERS.find((l) => l.id === selectedId) ??
-      BASE_TILE_LAYERS.find((l) => l.id === DEFAULT_BASE_TILE_LAYER_ID);
+      DEFAULT_BASE_TILE_LAYER;
 
     const baseLayer = this.leaf.tileLayer(tileLayerDef.url, {
       maxZoom: tileLayerDef.maxZoom,
@@ -234,7 +245,13 @@ export class LayeredMapWidgetComponent implements AfterViewInit, OnDestroy {
       }
 
       if (config.autoCenter) {
-        void Promise.all(this.allLayers.map((layer) => layer.initialLoad)).then(() => {
+        // `initialLoad` is undefined for layers that were never loaded, so the
+        // pending promises are filtered out before awaiting them.
+        const pending = this.allLayers
+          .map((layer) => layer.initialLoad)
+          .filter((load): load is Promise<void> => !!load);
+
+        void Promise.all(pending).then(() => {
           const bounds = this.layerService.extractMinMaxBounds(this.allLayers);
 
           if (bounds) {
@@ -364,20 +381,27 @@ export class LayeredMapWidgetComponent implements AfterViewInit, OnDestroy {
     try {
       this.tearDownRealtime();
       this.layerService.tearDown(this.allLayers);
-      this.map.clearAllEventListeners();
-    } catch (e) {
-      console.warn(e);
+      this.map?.clearAllEventListeners();
+    } finally {
+      // `remove()` releases the tile layers, DOM listeners and internal timers.
+      // Without it every dashboard layout change leaks a map instance.
+      this.map?.remove();
     }
   }
 
   private buildLayerLabel(cfg: import('./layered-map-widget.model').BasicLayerConfig): string {
-    const dot = cfg.color
-      ? `<span class="lm-layer-dot" style="background:${cfg.color};"></span>`
+    // Layer configuration is persisted per dashboard and shared between users,
+    // so name, colour and icon are untrusted — see utils/sanitize.ts.
+    const color = safeCssColor(cfg.color);
+    const iconName = safeIconName(cfg.icon);
+    const dot = color ? `<span class="lm-layer-dot" style="background:${color};"></span>` : '';
+    const icon = iconName
+      ? `<i class="dlt-c8y-icon-${iconName} lm-layer-icon"${color ? ` style="color:${color};"` : ''}></i>`
       : '';
-    const icon = cfg.icon
-      ? `<i class="dlt-c8y-icon-${cfg.icon} lm-layer-icon"${cfg.color ? ` style="color:${cfg.color};"` : ''}></i>`
-      : '';
-    return `<span class="lm-layer-label">${dot}${icon}<span>${cfg.name}</span></span>`;
+
+    return `<span class="lm-layer-label">${dot}${icon}<span>${escapeHtml(
+      cfg.name ?? ''
+    )}</span></span>`;
   }
 
   private tearDownRealtime(): void {

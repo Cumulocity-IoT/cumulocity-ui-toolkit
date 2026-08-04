@@ -1,22 +1,15 @@
-import { Injectable } from '@angular/core';
-import { IEvent, EventService } from '@c8y/client';
+import { inject, Injectable } from '@angular/core';
+import { EventService } from '@c8y/client';
 import { has, isEmpty } from 'lodash';
 import { LatLng, polyline, Polyline } from 'leaflet';
 import { ILayeredMapWidgetConfig, ITrack } from '../layered-map-widget.model';
+import { ILocationUpdateEvent, isLocationUpdateEvent } from '~services/location-realtime.service';
 
-export interface ILocationUpdateEvent extends IEvent {
-  c8y_Position: {
-    accuracy: number;
-    alt: number;
-    lat: number;
-    lng: number;
-  };
-  type: 'c8y_LocationUpdate';
-}
+export type { ILocationUpdateEvent };
 
 @Injectable()
 export class LayeredMapWidgetService {
-  constructor(private eventService: EventService) {}
+  private eventService = inject(EventService);
 
   getTrack(config: ILayeredMapWidgetConfig): ITrack | undefined {
     if (
@@ -69,6 +62,10 @@ export class LayeredMapWidgetService {
       revert: true,
       source: deviceId,
     };
-    return this.eventService.list(filter).then((result) => result.data as ILocationUpdateEvent[]);
+    // Only events that really carry coordinates may be handed on — `fetchCoordinates`
+    // dereferences `c8y_Position` unconditionally.
+    return this.eventService
+      .list(filter)
+      .then((result) => result.data.filter(isLocationUpdateEvent));
   }
 }

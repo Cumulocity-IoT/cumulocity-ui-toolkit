@@ -1,16 +1,19 @@
 import { Component, inject } from '@angular/core';
 import { ITenantOption } from '@c8y/client';
 import {
+  AlertService,
   Column,
   ColumnDataType,
   CoreModule,
   DisplayOptions,
   Pagination,
 } from '@c8y/ngx-components';
+import { gettext } from '@c8y/ngx-components/gettext';
+import { TranslateService } from '@ngx-translate/core';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Subject } from 'rxjs';
 import { TenantOptionManagementService } from '../tenant-option-management.service';
-import { TenantOptionConfigurationItem } from '../model';
+import { TenantOptionConfigurationItem } from '../tenant-option-management.model';
 
 @Component({
   templateUrl: './export-modal.component.html',
@@ -45,6 +48,8 @@ export class ExportModalComponent {
 
   private optionsManagement = inject(TenantOptionManagementService);
   private modal = inject(BsModalRef);
+  private alertService = inject(AlertService);
+  private translateService = inject(TranslateService);
 
   constructor() {
     this.columns = this.getDefaultColumns();
@@ -110,14 +115,25 @@ export class ExportModalComponent {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
 
-      link.href = url;
-      link.download = 'export_tenant_options.json';
-      link.click();
-    } catch (e) {
-      console.error('Export failed', e);
-    } finally {
+      try {
+        link.href = url;
+        link.download = 'export_tenant_options.json';
+        link.click();
+      } finally {
+        // The object URL pins the blob in memory until it is revoked.
+        URL.revokeObjectURL(url);
+      }
+
       this.isLoading = false;
       this.close();
+    } catch (e) {
+      // Keep the modal open on failure so the user can retry — closing it
+      // silently looks like a successful export.
+      this.isLoading = false;
+      this.alertService.danger(
+        this.translateService.instant(gettext('Could not export the tenant options.')) as string,
+        e as string
+      );
     }
   }
 

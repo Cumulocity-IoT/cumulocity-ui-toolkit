@@ -1,20 +1,21 @@
-import { Pipe, PipeTransform } from '@angular/core';
+import { inject, Pipe, PipeTransform } from '@angular/core';
 import { IMeasurement } from '@c8y/client';
 import { get } from 'lodash';
 import { NumberPipe } from '@c8y/ngx-components';
+import { detectMeasurementPaths } from '../helpers/measurement-paths';
 
 @Pipe({
   name: 'c8yMeasurement',
   standalone: true,
 })
 export class C8yMeasurementPipe implements PipeTransform {
-  constructor(private number: NumberPipe) {}
+  private number = inject(NumberPipe);
 
   transform(measurement: IMeasurement, round?: 'ceil' | 'floor', digitsInfo?: string): string {
     if (!measurement) {
       return '-';
     }
-    const paths = this.detectMeasurementPaths(measurement);
+    const paths = detectMeasurementPaths(measurement);
     const l = paths.length;
 
     if (l === 0) {
@@ -25,31 +26,12 @@ export class C8yMeasurementPipe implements PipeTransform {
       const unit = m.unit;
 
       if (!isNaN(+value)) {
-        value = this.number.transform(value, round ?? 'ceil', digitsInfo ?? '1.1-2');
+        value = this.number.transform(value, round ?? 'ceil', digitsInfo ?? '1.1-2') ?? value;
       }
 
       return unit?.length ? `${value} ${unit}` : `${value}`;
     } else {
       return `Found multiple measurements (${l}).`;
     }
-  }
-
-  private detectMeasurementPaths(m: IMeasurement): string[] {
-    const nope = ['id', 'type', 'time', 'self', 'source'];
-    const result: string[] = [];
-    const fragmentCandidates = Object.keys(m).filter((key) => !nope.includes(key));
-
-    for (const key of fragmentCandidates) {
-      const fragment = get(m, key) as Record<string, unknown>;
-      const nestedKeys = Object.keys(fragment);
-
-      for (const nestedKey of nestedKeys) {
-        if (fragment && Object.hasOwn(fragment, `${nestedKey}.value`)) {
-          result.push(`${key}.${nestedKey}`);
-        }
-      }
-    }
-
-    return result;
   }
 }

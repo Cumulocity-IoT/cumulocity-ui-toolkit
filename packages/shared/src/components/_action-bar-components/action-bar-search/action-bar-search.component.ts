@@ -1,4 +1,4 @@
-import { Component, effect, EventEmitter, input, Output } from '@angular/core';
+import { effect, inject, input, output, Component } from '@angular/core';
 import { IIdentified, IManagedObject, InventoryService, IResultList } from '@c8y/client';
 import { CoreModule } from '@c8y/ngx-components';
 import { map, Observable, pipe, UnaryFunction } from 'rxjs';
@@ -26,9 +26,12 @@ export class ActionBarSearchComponent {
     pageSize: 10,
   };
 
-  @Output() selectionChange = new EventEmitter<IManagedObject>();
+  /** Emits `undefined` when the user clears the selection. */
+  readonly selectionChange = output<IManagedObject | undefined>();
 
-  constructor(private inventory: InventoryService) {
+  private inventory = inject(InventoryService);
+
+  constructor() {
     effect(() => {
       const value = this.filter();
 

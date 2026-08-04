@@ -1,6 +1,7 @@
 import { QueriesUtil } from '@c8y/client';
 import { ReverseQueriesUtil } from '~components/query-display/reverse-queries-util';
 import type { QueryJson } from '~components/query-display/reverse-queries-util.model';
+import { unwrapQuery } from '~components/query-display/unwrap-query';
 
 /**
  * Comparison operators supported by the Cumulocity inventory query language and
@@ -327,20 +328,7 @@ function valueTypeOf(v: unknown): [BuilderValueType, string] {
 // Small helpers
 // ---------------------------------------------------------------------------
 
-/** Strips a `$filter=` prefix and one layer of surrounding parentheses. */
-export function unwrapQuery(query: string): string {
-  let s = query.trim();
-
-  if (s.startsWith('$filter=')) {
-    s = s.slice('$filter='.length).trim();
-  }
-
-  if (s.startsWith('(') && s.endsWith(')')) {
-    s = s.slice(1, -1).trim();
-  }
-
-  return s;
-}
+export { unwrapQuery } from '~components/query-display/unwrap-query';
 
 function splitStrings(value?: string): string[] {
   return (value ?? '')
