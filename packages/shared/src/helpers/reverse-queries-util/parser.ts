@@ -107,7 +107,8 @@ export class QueryParser {
 
     if (field.toLowerCase() === 'bygroupid') {
       this.expect('LPAREN');
-      const id = Number(this.expect('NUMBER').value);
+      // Group ids are opaque identifiers; keep them as written in the query.
+      const id = this.expect('NUMBER').value;
 
       this.expect('RPAREN');
 

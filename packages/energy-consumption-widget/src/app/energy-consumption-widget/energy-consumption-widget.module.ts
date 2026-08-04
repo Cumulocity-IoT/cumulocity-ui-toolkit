@@ -1,7 +1,9 @@
 import { DynamicWidgetDefinition, hookWidget } from '@c8y/ngx-components';
+import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { assets } from './assets/assets';
 
 export const EnergyConsumptionWidgetPluginProviders = [
+  provideCharts(withDefaultRegisterables()),
   hookWidget({
     id: 'energy-comsumption.widget',
     label: 'Energy Consumption Widget',

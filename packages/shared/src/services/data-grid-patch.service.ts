@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { DataGridComponent } from '@c8y/ngx-components';
-import { invoke, set, has } from 'lodash';
+import { invoke, set } from 'lodash';
 
 @Injectable({ providedIn: 'root' })
 export class DataGridPatchService {

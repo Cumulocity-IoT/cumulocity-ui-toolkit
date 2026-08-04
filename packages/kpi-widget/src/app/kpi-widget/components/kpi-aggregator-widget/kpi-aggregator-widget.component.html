@@ -9,22 +9,22 @@
           class="text-muted"
           [tooltip]="'Current Page: ' + paging.currentPage + '\nTotal Pages: ' + paging.totalPages"
           [placement]="'bottom'"
-          >
+        >
           ({{ paging.currentPage }}/{{ paging.totalPages }})
         </span>
       } @else {
         <span
           class="text-muted"
-        [tooltip]="
-          'Current Page: ' +
-          paging.currentPage +
-          '\nPage Limit: ' +
-          pageLimit +
-          '\nTotal Pages: ' +
-          paging.totalPages
-        "
+          [tooltip]="
+            'Current Page: ' +
+            paging.currentPage +
+            '\nPage Limit: ' +
+            pageLimit +
+            '\nTotal Pages: ' +
+            paging.totalPages
+          "
           [placement]="'bottom'"
-          >
+        >
           ({{ paging.currentPage }}/{{ pageLimit }}|{{ paging.totalPages }})
         </span>
       }
@@ -41,7 +41,7 @@
       dropdownToggle
       type="button"
       title="dropdown-toggle"
-      >
+    >
       <i [c8yIcon]="'ellipsis-v'"></i>
     </button>
 
@@ -51,7 +51,7 @@
           [disabled]="!paging || paging?.totalPages <= paging?.currentPage"
           (click)="loadNextBatch()"
           type="button"
-          >
+        >
           <i [c8yIcon]="'chevron-double-right'"></i>
           {{ 'Load next batch' | translate }}
         </button>
@@ -83,32 +83,33 @@
         <ng-template
           [ngTemplateOutlet]="assetListTemplateDefault"
           [ngTemplateOutletContext]="{ assets: assetGroups[0].objects }"
-          >
+        >
         </ng-template>
       }
       @case (displayMode.pieAggregate) {
         <ng-template
           [ngTemplateOutlet]="pieCHartTemplateDefault"
           [ngTemplateOutletContext]="{ assets: assetGroups }"
-          >
+        >
         </ng-template>
       }
       @case (displayMode.pieCount) {
         <ng-template
           [ngTemplateOutlet]="pieCHartTemplateDefault"
           [ngTemplateOutletContext]="{ assets: assetGroups }"
-          >
+        >
         </ng-template>
       }
       @default {
         <ng-template
           [ngTemplateOutlet]="barChartTemplateDefault"
           [ngTemplateOutletContext]="{ groups: assetGroups }"
-          >
+        >
         </ng-template>
       }
     }
   } @else {
+    <!-- empty -->
     <div class="p-16">
       <h2 class="m-b-16">Empty AssetGroup Result</h2>
       <pre>{{ config | json }}</pre>
@@ -120,6 +121,7 @@
     </div>
   }
 } @else {
+  <!-- loading -->
   <div class="loading-data">
     <c8y-loading></c8y-loading>
   </div>
@@ -134,7 +136,7 @@
           <ng-template
             [ngTemplateOutlet]="barChartItemTemplateDefault"
             [ngTemplateOutletContext]="{ group: group }"
-            >
+          >
           </ng-template>
         </li>
       }
@@ -148,9 +150,7 @@
   <span>
     {{ group.value }}
     @if (config.percent) {
-      <span class="percent text-muted">
-        {{ (group.value / total) * 100 | number: '1.1-1' }}%
-      </span>
+      <span class="percent text-muted"> {{ (group.value / total) * 100 | number: '1.1-1' }}% </span>
     }
   </span>
   <div
@@ -203,6 +203,3 @@
   </div>
 </ng-template>
 
-<!-- loading -->
-
-<!-- empty -->

@@ -1,4 +1,4 @@
-<c8y-action-bar-item [placement]="placement" itemClass="navbar-form">
+<c8y-action-bar-item [placement]="placement()" itemClass="navbar-form">
   <c8y-typeahead [(ngModel)]="selected" placeholder="{{ 'Search…' | translate }}" (onSearch)="setPipe($event)" (onIconClick)="onIconClick($event)" style="min-width: 200px">
     <c8y-li
       *c8yFor="let device of devices; loadMore: 'auto'; pipe: filterPipe; notFound: notFoundTemplate"

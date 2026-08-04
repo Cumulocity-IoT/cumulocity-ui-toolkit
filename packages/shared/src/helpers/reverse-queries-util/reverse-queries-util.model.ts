@@ -47,7 +47,7 @@ export interface HasNode {
 
 export interface ByGroupIdNode {
   type: 'bygroupid';
-  groupId: number;
+  groupId: string;
 }
 
 export type QueryJson =
@@ -55,5 +55,5 @@ export type QueryJson =
   | { __or: QueryJson[] }
   | { __not: QueryJson }
   | { __has: string }
-  | { __bygroupid: number }
+  | { __bygroupid: string }
   | { [fragment: string]: unknown };

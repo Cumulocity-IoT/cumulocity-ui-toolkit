@@ -3,7 +3,7 @@ import { EventService, IEvent, IManagedObject } from '@c8y/client';
 import { RealtimeService, RealtimeSubjectService } from '@c8y/ngx-components';
 import { from, merge, Observable } from 'rxjs';
 import { filter, map, pairwise, startWith } from 'rxjs/operators';
-import { has, isEmpty } from 'lodash';
+import { isEmpty } from 'lodash';
 
 export interface ILocationUpdateEvent extends IEvent {
   c8y_Position: {

@@ -2,7 +2,7 @@
   <header>
     <h2 translate>Reminder</h2>
     <small class="text-muted" title="{{ lastUpdate | c8yDate }}">
-      {{ 'Last updated' | translate }}: {{ lastUpdate | amTimeAgo }}
+      {{ 'reminder.labels.last-update' | translate }}: {{ lastUpdate | c8yDate: 'short' }} <!-- time ago -->
     </small>
   </header>
 
@@ -38,13 +38,15 @@
     }
 
     <!-- context filter -->
-    <div class="filter">
-      <label class="c8y-switch">
-        <input [(ngModel)]="contextFilterEnabled" type="checkbox" name="context-filter-enabled" />
-        <span></span>
-        {{ 'Filter by Current Context' | translate }}
-      </label>
-    </div>
+    @if (reminderService.contextFilterAvailable()) {
+      <div class="filter">
+        <label class="c8y-switch">
+          <input [(ngModel)]="contextFilterEnabled" type="checkbox" name="context-filter-enabled" />
+          <span></span>
+          <span class="text-truncate">{{ 'reminder.actions.filter-by-context' | translate }}</span>
+        </label>
+      </div>
+    }
 
     <!-- list of reminders -->
     <ul class="reminder-group-list">
@@ -153,17 +155,23 @@
         <small
           class="date"
           [class.text-danger]="reminder.status === reminderStatus.active && reminder.diff > 0"
-          title="{{ 'Due' | translate }}: {{ reminder.time | c8yDate }}"
-          >
-          {{ reminder.time | amTimeAgo }}
+          title="{{ 'reminder.status.DUE' | translate }}: {{ reminder.time | c8yDate }}"
+        >
+          {{ reminder.time | c8yDate: 'short' }} <!-- time ago -->
         </small>
       } @else {
         <small class="date">
-          <span title="{{ 'Due' | translate }}: {{ reminder.lastUpdated | c8yDate }}">
-            {{ reminder.time | amTimeAgo }}
+          <span
+            title="{{ 'reminder.status.DUE' | translate }}: {{ reminder.lastUpdated | c8yDate }}"
+          >
+            {{ reminder.time | c8yDate: 'short' }} <!-- time ago -->
           </span>
-          <span title="{{ 'Last Updated' | translate }}: {{ reminder.lastUpdated | c8yDate }}">
-            {{ reminder.lastUpdated | amTimeAgo }}
+          <span
+            title="{{ 'reminder.labels.last-update' | translate }}: {{
+              reminder.lastUpdated | c8yDate
+            }}"
+          >
+            {{ reminder.lastUpdated | c8yDate: 'short' }} <!-- time ago -->
           </span>
         </small>
       }

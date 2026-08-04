@@ -63,8 +63,13 @@ export class Tokenizer {
   private readNumber(): Token {
     let value = '';
 
-    while (/[0-9]/.test(this.input[this.pos])) {
+    while (/[0-9.]/.test(this.input[this.pos])) {
       value += this.input[this.pos++];
+    }
+
+    // `QueriesUtil` renders numbers with an OData type suffix (e.g. `30f`).
+    if (/[fdlFDL]/.test(this.input[this.pos] ?? '')) {
+      this.pos++;
     }
 
     return { type: 'NUMBER', value };

@@ -78,12 +78,84 @@ export class KpiAggregatorWidgetComponent implements OnInit {
 
   private rawAssets!: IManagedObject[];
 
+  ngOnInit(): void {
+    const asset = this.getAssetFromContext(this.activatedRoute.snapshot);
+
+    if (asset) this.asset = asset;
+
+    this.config.pageLimit =
+      typeof this.config.pageLimit !== 'number' || this.config.pageLimit <= 0
+        ? 10000
+        : this.config.pageLimit;
+    this.pieChartOptions.plugins.legend.position = this.config.chartLegendPosition || 'top';
+
+    if (this.config.runOnLoad) {
+      void this.loadData();
+    }
+  }
+
+  async loadData(): Promise<void> {
+    this.loading = true;
+    this.timestampStart = new Date();
+
+    // first page and paging
+    const response = await this.loadPageOne();
+    let assets: IManagedObject[];
+
+    if (!response) {
+      this.loading = false;
+
+      return;
+    }
+
+    // further pages
+    if (response.limit > 1)
+      assets =
+        this.config.parallelRequests > 1
+          ? await this.loadDataParallel(response.limit, response.assets)
+          : await this.loadDataSequentially(response.limit, response.assets);
+    else assets = response.assets;
+
+    this.pageLimit = response.limit;
+    this.handleRawAssets(assets);
+
+    this.timestampEnd = new Date();
+    this.duration = this.calcQueryDuration();
+    this.loading = false;
+  }
+
+  async loadNextBatch(): Promise<void> {
+    if (
+      this.paging.totalPages &&
+      this.paging.currentPage &&
+      this.paging.totalPages <= this.paging.currentPage
+    )
+      return;
+
+    const limit = this.getNextBatchLimit();
+
+    this.loading = true;
+    this.timestampStart = new Date();
+
+    const assets =
+      this.config.parallelRequests > 1
+        ? await this.loadDataParallel(limit, this.rawAssets)
+        : await this.loadDataSequentially(limit, this.rawAssets);
+
+    this.pageLimit = limit;
+    this.handleRawAssets(assets);
+
+    this.timestampEnd = new Date();
+    this.duration = this.calcQueryDuration();
+    this.loading = false;
+  }
+
   // display: aggregated
   private digestAggregatedAssets(assets: IManagedObject[]): AssetGroup[] {
     let groups: AssetGroup[] = [];
     let key: string;
     let group: AssetGroup;
-    let value: number | string;
+    let value: number;
     let total = 0;
 
     assets.forEach((asset) => {
@@ -92,24 +164,35 @@ export class KpiAggregatorWidgetComponent implements OnInit {
 
       if (!key) return;
 
-      value = this.getPathData<number>(asset, this.config.kpiFragment);
+      const rawValue = this.getPathData<unknown>(asset, this.config.kpiFragment);
+      const parsedValue = this.toNumber(rawValue);
+
+      if (parsedValue === null) {
+        return;
+      }
+
+      value = parsedValue;
       total += value;
 
-      if (typeof value === 'number') {
-        if (group) {
-          group.objects.push(asset);
+      if (group) {
+        group.objects.push(asset);
 
-          group.value = (group.value as number) + value;
-        } else {
-          groups.push({
-            key,
-            label: this.getPathData<string>(asset, this.config.label),
-            value,
-            objects: [asset],
-          });
-        }
+        group.value = (group.value as number) + value;
+      } else {
+        groups.push({
+          key,
+          label: this.getPathData<string>(asset, this.config.label),
+          value,
+          objects: [asset],
+        });
       }
     });
+
+    // If no numeric KPI values can be extracted, gracefully fall back to counting
+    // so the widget still renders useful grouped results instead of an empty view.
+    if (groups.length === 0 && assets.length > 0) {
+      return this.digestCountedAssets(assets);
+    }
 
     this.total = total;
 
@@ -187,9 +270,7 @@ export class KpiAggregatorWidgetComponent implements OnInit {
     this.total = total;
 
     // sort
-    const sorted = orderBy(groups[0].objects, (object) =>
-      (object['name'] as string).trim().toLowerCase()
-    );
+    const sorted = orderBy(groups[0].objects, (object) => this.getAssetNameSortKey(object));
 
     groups[0].objects =
       this.config.order === KpiAggregatorWidgetOrder.desc ? sorted.reverse() : sorted;
@@ -197,76 +278,10 @@ export class KpiAggregatorWidgetComponent implements OnInit {
     return groups;
   }
 
-  ngOnInit(): void {
-    const asset = this.getAssetFromContext(this.activatedRoute.snapshot);
+  private getAssetNameSortKey(object: IManagedObject): string {
+    const value: unknown = object.name;
 
-    if (asset) this.asset = asset;
-
-    this.config.pageLimit =
-      typeof this.config.pageLimit !== 'number' || this.config.pageLimit <= 0
-        ? 10000
-        : this.config.pageLimit;
-    this.pieChartOptions.plugins.legend.position = this.config.chartLegendPosition || 'top';
-
-    if (this.config.runOnLoad) {
-      void this.loadData();
-    }
-  }
-
-  async loadData(): Promise<void> {
-    this.loading = true;
-    this.timestampStart = new Date();
-
-    // first page and paging
-    const response = await this.loadPageOne();
-    let assets: IManagedObject[];
-
-    if (!response) {
-      this.loading = false;
-
-      return;
-    }
-
-    // further pages
-    if (response.limit > 1)
-      assets =
-        this.config.parallelRequests > 1
-          ? await this.loadDataParallel(response.limit, response.assets)
-          : await this.loadDataSequentially(response.limit, response.assets);
-    else assets = response.assets;
-
-    this.pageLimit = response.limit;
-    this.handleRawAssets(assets);
-
-    this.timestampEnd = new Date();
-    this.duration = this.calcQueryDuration();
-    this.loading = false;
-  }
-
-  async loadNextBatch(): Promise<void> {
-    if (
-      this.paging.totalPages &&
-      this.paging.currentPage &&
-      this.paging.totalPages <= this.paging.currentPage
-    )
-      return;
-
-    const limit = this.getNextBatchLimit();
-
-    this.loading = true;
-    this.timestampStart = new Date();
-
-    const assets =
-      this.config.parallelRequests > 1
-        ? await this.loadDataParallel(limit, this.rawAssets)
-        : await this.loadDataSequentially(limit, this.rawAssets);
-
-    this.pageLimit = limit;
-    this.handleRawAssets(assets);
-
-    this.timestampEnd = new Date();
-    this.duration = this.calcQueryDuration();
-    this.loading = false;
+    return typeof value === 'string' ? value.trim().toLowerCase() : '';
   }
 
   private handleRawAssets(assets: IManagedObject[]) {
@@ -439,6 +454,26 @@ export class KpiAggregatorWidgetComponent implements OnInit {
     }
 
     return data as T;
+  }
+
+  private toNumber(value: unknown): number | null {
+    if (typeof value === 'number') {
+      return Number.isFinite(value) ? value : null;
+    }
+
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+
+      if (!trimmed) {
+        return null;
+      }
+
+      const parsed = Number(trimmed);
+
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    return null;
   }
 
   /**

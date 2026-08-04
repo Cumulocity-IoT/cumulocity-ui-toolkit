@@ -8,8 +8,16 @@ export class ReverseQueriesUtil {
       return null;
     }
 
+    // `QueriesUtil.buildQuery()` returns a full OData-style query string
+    // (`$filter=… $orderby=…`); the tokenizer only understands the filter body.
+    const filter = this.extractFilter(query);
+
+    if (!filter) {
+      return null;
+    }
+
     try {
-      const parser = new QueryParser(new Tokenizer(query));
+      const parser = new QueryParser(new Tokenizer(filter));
       const syntaxTree = parser.parse();
       const json = this.convert(syntaxTree);
       return json;
@@ -18,6 +26,24 @@ export class ReverseQueriesUtil {
 
       return null;
     }
+  }
+
+  /**
+   * Returns the filter expression of a query string, accepting both a bare
+   * expression and a `$filter=…` prefixed one (optionally followed by
+   * `$orderby=…`).
+   */
+  private extractFilter(query: string): string {
+    const trimmed = query.trim();
+
+    if (!trimmed.startsWith('$filter=')) {
+      return trimmed;
+    }
+
+    const withoutFilter = trimmed.slice('$filter='.length);
+    const orderByIndex = withoutFilter.indexOf('$orderby=');
+
+    return (orderByIndex === -1 ? withoutFilter : withoutFilter.slice(0, orderByIndex)).trim();
   }
 
   private convert(ast: AstNode): QueryJson {

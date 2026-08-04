@@ -103,7 +103,7 @@ All commands run from the **repository root** unless noted.
 - Test files: `**/*.spec.ts` inside `packages/`.
 - The root `karma.conf.js` is shared by all projects.
 - Each package has a `tsconfig.spec.json` with `"types": ["jasmine", "node"]`.
-- All 9 Angular projects in `angular.json` have a `test` architect target.
+- All 10 Angular projects in `angular.json` have a `test` architect target.
 - Run a single project: `pnpm exec ng test <project> --watch=false --browsers=ChromeHeadlessCI`
 - `ChromeHeadlessCI` custom launcher (defined in `karma.conf.js`) adds `--no-sandbox --disable-gpu --disable-dev-shm-usage` — required in CI.
 - Test helper for creating Jasmine spies: `packages/shared/src/helpers/auto-mock.helper.ts`.
