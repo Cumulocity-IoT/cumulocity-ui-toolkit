@@ -17,10 +17,10 @@ import { SmartViewExportModalComponent } from './smart-view-export-modal.compone
   template: `
     <button
       class="btn btn-link"
-      type="button"
       [title]="label"
       [attr.aria-label]="label"
       (click)="openModal()"
+      type="button"
     >
       <i c8yIcon="download-archive"></i>
       {{ label }}

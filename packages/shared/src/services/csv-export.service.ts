@@ -28,6 +28,7 @@ export class CsvExportService {
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement('a');
+
     a.href = url;
     a.download = `${filename}.csv`;
     document.body.appendChild(a);
@@ -53,6 +54,7 @@ export class CsvExportService {
     const headers = Array.from(
       flattenedData.reduce<Set<string>>((acc, row) => {
         Object.keys(row).forEach((key) => acc.add(key));
+
         return acc;
       }, new Set<string>())
     );
@@ -75,11 +77,12 @@ export class CsvExportService {
       if (Array.isArray(value)) {
         result[newKey] = JSON.stringify(value);
       } else if (value !== null && typeof value === 'object') {
-        this.flattenObject(value as object, newKey, result);
+        this.flattenObject(value, newKey, result);
       } else {
         result[newKey] = value as Primitive;
       }
     }
+
     return result;
   }
 

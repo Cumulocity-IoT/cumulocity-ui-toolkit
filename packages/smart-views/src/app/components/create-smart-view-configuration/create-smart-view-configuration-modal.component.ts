@@ -70,7 +70,9 @@ export class CreateSmartViewConfigurationModalComponent implements OnInit {
       'Determines the position in the navigator menu. Higher values appear first.'
     ),
     columns: gettext('Columns'),
-    columnsFromDefinition: gettext('Auto-populated from the asset definition. You can still edit, add, or remove columns.'),
+    columnsFromDefinition: gettext(
+      'Auto-populated from the asset definition. You can still edit, add, or remove columns.'
+    ),
     loadingProperties: gettext('Loading property definitions…'),
     columnName: gettext('Name'),
     columnPath: gettext('Path'),
@@ -254,9 +256,9 @@ export class CreateSmartViewConfigurationModalComponent implements OnInit {
       }));
 
     const dtmKeys = new Set(dtmColumns.map((c) => c.name));
-    const defaults = CreateSmartViewConfigurationModalComponent.DEFAULT_COLUMNS
-      .filter((c) => !dtmKeys.has(c.name))
-      .map((c) => ({ ...c }));
+    const defaults = CreateSmartViewConfigurationModalComponent.DEFAULT_COLUMNS.filter(
+      (c) => !dtmKeys.has(c.name)
+    ).map((c) => ({ ...c }));
 
     return [...defaults, ...dtmColumns];
   }

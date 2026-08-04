@@ -16,7 +16,11 @@ export default {
     dynamicOptionsUrl: true,
     remotes: {
       // 'plugin name from package.json': [ PluginProviders ]
-      [name]: ['SmartViewsPluginProviders', 'SmartViewsConfigurationPluginProviders', 'SmartViewsExportPluginProviders'],
+      [name]: [
+        'SmartViewsPluginProviders',
+        'SmartViewsConfigurationPluginProviders',
+        'SmartViewsExportPluginProviders',
+      ],
     },
     package: 'plugin',
     isPackage: true,
@@ -43,8 +47,7 @@ export default {
         module: 'SmartViewsExportPluginProviders',
         path: './src/app/index.ts',
         readmePath: './README.md',
-        description:
-          'Adds an "Export CSV" action-bar button to the smart-view detail page.',
+        description: 'Adds an "Export CSV" action-bar button to the smart-view detail page.',
       },
     ],
     license,

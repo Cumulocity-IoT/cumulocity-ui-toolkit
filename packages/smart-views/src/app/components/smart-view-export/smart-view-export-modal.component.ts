@@ -95,25 +95,23 @@ export class SmartViewExportModalComponent implements OnInit {
   private async loadConfig(): Promise<void> {
     try {
       const { data } = await this.inventoryService.detail(this.smartViewId);
-      this.smartViewMo = data as ISmartViewManagedObject;
+
+      this.smartViewMo = data;
 
       const config = this.smartViewMo.c8y_SmartViewConfiguration;
 
       if (!config) {
-        this.errorMessage.set(
-          gettext('This managed object has no smart-view configuration.')
-        );
+        this.errorMessage.set(gettext('This managed object has no smart-view configuration.'));
         this.state.set('confirm');
 
         return;
       }
 
       const count = await this.exportService.countItems(config.query);
+
       this.itemCount.set(count);
     } catch {
-      this.errorMessage.set(
-        gettext('Could not load the smart view. Please try again.')
-      );
+      this.errorMessage.set(gettext('Could not load the smart view. Please try again.'));
     } finally {
       this.state.set('confirm');
     }
@@ -132,7 +130,7 @@ export class SmartViewExportModalComponent implements OnInit {
       const row: Record<string, unknown> = {};
 
       for (const col of columns) {
-        row[col.header] = this.resolvePath(item as Record<string, unknown>, col.path);
+        row[col.header] = this.resolvePath(item, col.path);
       }
 
       return row;
