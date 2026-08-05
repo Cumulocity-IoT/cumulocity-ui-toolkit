@@ -40,6 +40,7 @@ export * from './services/active-tab.service';
 export * from './services/application-availability.service';
 export * from './services/data-grid-patch.service';
 export * from './services/dtm.service';
+export * from './services/grid-column-width.service';
 export * from './services/dom.service';
 export * from './services/hierarchy-aggregation.service';
 export * from './services/inventory-delta-polling.service';
