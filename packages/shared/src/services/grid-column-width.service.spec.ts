@@ -3,18 +3,18 @@ import { DataGridComponent, DataGridService } from '@c8y/ngx-components';
 import { Column, ColumnConfig, GridConfig } from '@c8y/ngx-components';
 import { Subject, of } from 'rxjs';
 import { provideMock } from '../helpers/auto-mock.helper';
-import { ExtendedColumnConfig, GridColumnWidthService, isExtendedColumnConfig } from './grid-column-width.service';
+import {
+  ExtendedColumnConfig,
+  GridColumnWidthService,
+  isExtendedColumnConfig,
+} from './grid-column-width.service';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeColumn(
-  name: string,
-  gridTrackSize: string,
-  positionFixed = false
-): Column {
-  return { name, gridTrackSize, positionFixed, visible: true } as Column;
+function makeColumn(name: string, gridTrackSize: string, positionFixed = false): Column {
+  return { name, gridTrackSize, positionFixed, visible: true };
 }
 
 function makeStoredConfig(columns: ColumnConfig[]): GridConfig {
@@ -24,18 +24,24 @@ function makeStoredConfig(columns: ColumnConfig[]): GridConfig {
 function makeGrid(columns: Column[] = [makeColumn('name', '200px'), makeColumn('type', '150px')]) {
   let currentColumns = ([] as Column[]).concat(columns);
   const configurationStrategy = {
-    getConfig$: jest.fn().mockReturnValue(of(makeStoredConfig([]))),
-    saveConfig$: jest.fn().mockReturnValue(of(undefined)),
-    getContext: jest.fn(),
-    isContextKnown: jest.fn().mockReturnValue(true),
+    getConfig$: jasmine.createSpy('getConfig$').and.returnValue(of(makeStoredConfig([]))),
+    saveConfig$: jasmine.createSpy('saveConfig$').and.returnValue(of(undefined)),
+    getContext: jasmine.createSpy('getContext'),
+    isContextKnown: jasmine.createSpy('isContextKnown').and.returnValue(true),
   };
 
   const grid = {
-    get columns() { return currentColumns; },
-    set columns(val) { currentColumns = val; },
-    get pagination() { return { pageSize: 25 }; },
+    get columns() {
+      return currentColumns;
+    },
+    set columns(val) {
+      currentColumns = val;
+    },
+    get pagination() {
+      return { pageSize: 25 };
+    },
     resizeHandleMouseDown$: new Subject<{ event: MouseEvent; targetColumnName: string }>(),
-    resizeHandleContainerMouseUp$: new Subject<MouseEvent>(),
+    windowMouseUp$: new Subject<MouseEvent>(),
     configurationStrategy,
   } as unknown as DataGridComponent;
 
@@ -59,7 +65,9 @@ describe('GridColumnWidthService', () => {
     dataGridService = TestBed.inject(DataGridService);
 
     // Provide a no-op default for applyConfigToColumns.
-    jest.spyOn(dataGridService, 'applyConfigToColumns').mockImplementation((_, cols) => ([] as Column[]).concat(cols));
+    (dataGridService.applyConfigToColumns as jasmine.Spy).and.callFake((_, cols: Column[]) =>
+      ([] as Column[]).concat(cols)
+    );
   });
 
   // -------------------------------------------------------------------------
@@ -72,7 +80,9 @@ describe('GridColumnWidthService', () => {
 
   describe('isExtendedColumnConfig', () => {
     it('returns true when gridTrackSize is a string', () => {
-      expect(isExtendedColumnConfig({ name: 'name', gridTrackSize: '200px' })).toBe(true);
+      const col: ExtendedColumnConfig = { name: 'name', gridTrackSize: '200px' };
+
+      expect(isExtendedColumnConfig(col)).toBe(true);
     });
 
     it('returns false when gridTrackSize is absent', () => {
@@ -80,7 +90,9 @@ describe('GridColumnWidthService', () => {
     });
 
     it('returns false when gridTrackSize is not a string (e.g. number from malformed storage)', () => {
-      expect(isExtendedColumnConfig({ name: 'name', gridTrackSize: 200 as any })).toBe(false);
+      const col = { name: 'name', gridTrackSize: 200 } as unknown as ColumnConfig;
+
+      expect(isExtendedColumnConfig(col)).toBe(false);
     });
   });
 
@@ -88,6 +100,7 @@ describe('GridColumnWidthService', () => {
     it('restores gridTrackSize from an ExtendedColumnConfig onto the matching live column', () => {
       const destroy$ = new Subject<void>();
       const grid = makeGrid();
+
       service.applyColumnWidthPersistence(grid, destroy$.asObservable());
 
       const storedColumns: ExtendedColumnConfig[] = [
@@ -110,6 +123,7 @@ describe('GridColumnWidthService', () => {
     it('leaves columns unchanged when the stored config has no gridTrackSize', () => {
       const destroy$ = new Subject<void>();
       const grid = makeGrid();
+
       service.applyColumnWidthPersistence(grid, destroy$.asObservable());
 
       const storedColumns: ColumnConfig[] = [
@@ -138,7 +152,8 @@ describe('GridColumnWidthService', () => {
       service.applyColumnWidthPersistence(makeGrid(), d2$.asObservable());
 
       expect(dataGridService.applyConfigToColumns).toBe(patchedFn);
-      d1$.next(); d2$.next();
+      d1$.next();
+      d2$.next();
     });
   });
 
@@ -148,20 +163,21 @@ describe('GridColumnWidthService', () => {
 
   describe('saving widths after resize', () => {
     beforeEach(() => {
-      jest.useFakeTimers();
-      jest.spyOn(global, 'requestAnimationFrame').mockImplementation((cb) => { cb(0); return 0; });
-    });
+      // Run the deferred frame synchronously so the save pipeline completes inline.
+      spyOn(window, 'requestAnimationFrame').and.callFake((cb: FrameRequestCallback) => {
+        cb(0);
 
-    afterEach(() => {
-      jest.useRealTimers();
-      jest.restoreAllMocks();
+        return 0;
+      });
     });
 
     function simulateResize(grid: DataGridComponent, finalColumns: Column[]) {
-      (grid.resizeHandleMouseDown$ as Subject<any>).next({ event: {} as MouseEvent, targetColumnName: finalColumns[0].name });
+      (grid.resizeHandleMouseDown$ as Subject<any>).next({
+        event: {} as MouseEvent,
+        targetColumnName: finalColumns[0].name,
+      });
       grid.columns = finalColumns;
-      (grid.resizeHandleContainerMouseUp$ as Subject<MouseEvent>).next({} as MouseEvent);
-      jest.runAllTimers();
+      (grid.windowMouseUp$ as Subject<MouseEvent>).next({} as MouseEvent);
     }
 
     it('loads the stored config, merges current widths, and saves via configurationStrategy', () => {
@@ -170,7 +186,8 @@ describe('GridColumnWidthService', () => {
         { name: 'name', visible: true },
         { name: 'type', visible: true },
       ]);
-      (grid.configurationStrategy.getConfig$ as jest.Mock).mockReturnValue(of(storedConfig));
+
+      (grid.configurationStrategy.getConfig$ as jasmine.Spy).and.returnValue(of(storedConfig));
       const destroy$ = new Subject<void>();
 
       service.applyColumnWidthPersistence(grid, destroy$.asObservable());
@@ -178,10 +195,10 @@ describe('GridColumnWidthService', () => {
       simulateResize(grid, [makeColumn('name', '380px'), makeColumn('type', '150px')]);
 
       expect(grid.configurationStrategy.saveConfig$).toHaveBeenCalledWith(
-        expect.objectContaining({
-          columns: expect.arrayContaining([
-            expect.objectContaining({ name: 'name', gridTrackSize: '380px' }),
-            expect.objectContaining({ name: 'type', gridTrackSize: '150px' }),
+        jasmine.objectContaining({
+          columns: jasmine.arrayContaining([
+            jasmine.objectContaining({ name: 'name', gridTrackSize: '380px' }),
+            jasmine.objectContaining({ name: 'type', gridTrackSize: '150px' }),
           ]),
         })
       );
@@ -194,13 +211,16 @@ describe('GridColumnWidthService', () => {
         { name: 'name', visible: false, sortOrder: 'asc' },
         { name: 'type', visible: true },
       ]);
-      (grid.configurationStrategy.getConfig$ as jest.Mock).mockReturnValue(of(storedConfig));
+
+      (grid.configurationStrategy.getConfig$ as jasmine.Spy).and.returnValue(of(storedConfig));
       const destroy$ = new Subject<void>();
 
       service.applyColumnWidthPersistence(grid, destroy$.asObservable());
       simulateResize(grid, [makeColumn('name', '300px'), makeColumn('type', '150px')]);
 
-      const savedConfig = (grid.configurationStrategy.saveConfig$ as jest.Mock).mock.calls[0][0] as GridConfig;
+      const savedConfig = (grid.configurationStrategy.saveConfig$ as jasmine.Spy).calls.argsFor(
+        0
+      )[0] as GridConfig;
       const nameCol = savedConfig.columns.find((c) => c.name === 'name') as ExtendedColumnConfig;
 
       expect(nameCol.visible).toBe(false);
@@ -215,29 +235,29 @@ describe('GridColumnWidthService', () => {
         makeColumn('checkbox', '32px', /* positionFixed */ true),
       ]);
       const storedConfig = makeStoredConfig([{ name: 'name', visible: true }]);
-      (grid.configurationStrategy.getConfig$ as jest.Mock).mockReturnValue(of(storedConfig));
+
+      (grid.configurationStrategy.getConfig$ as jasmine.Spy).and.returnValue(of(storedConfig));
       const destroy$ = new Subject<void>();
 
       service.applyColumnWidthPersistence(grid, destroy$.asObservable());
-      simulateResize(grid, [
-        makeColumn('name', '400px'),
-        makeColumn('checkbox', '32px', true),
-      ]);
+      simulateResize(grid, [makeColumn('name', '400px'), makeColumn('checkbox', '32px', true)]);
 
-      const savedConfig = (grid.configurationStrategy.saveConfig$ as jest.Mock).mock.calls[0][0] as GridConfig;
+      const savedConfig = (grid.configurationStrategy.saveConfig$ as jasmine.Spy).calls.argsFor(
+        0
+      )[0] as GridConfig;
       const checkboxCol = savedConfig.columns.find((c) => c.name === 'checkbox');
+
       expect(checkboxCol).toBeUndefined(); // not in storedConfig.columns → not in merged output either
       destroy$.next();
     });
 
-    it('does NOT save when resizeHandleContainerMouseUp$ fires without a prior resizeHandleMouseDown$', () => {
+    it('does NOT save when windowMouseUp$ fires without a prior resizeHandleMouseDown$', () => {
       const grid = makeGrid();
       const destroy$ = new Subject<void>();
 
       service.applyColumnWidthPersistence(grid, destroy$.asObservable());
 
-      (grid.resizeHandleContainerMouseUp$ as Subject<MouseEvent>).next({} as MouseEvent);
-      jest.runAllTimers();
+      (grid.windowMouseUp$ as Subject<MouseEvent>).next({} as MouseEvent);
 
       expect(grid.configurationStrategy.saveConfig$).not.toHaveBeenCalled();
       destroy$.next();
@@ -245,6 +265,7 @@ describe('GridColumnWidthService', () => {
 
     it('is a no-op when no configurationStrategy is provided', () => {
       const grid = makeGrid();
+
       (grid as any).configurationStrategy = undefined;
 
       // Should not throw.
@@ -264,25 +285,27 @@ describe('GridColumnWidthService', () => {
 
       expect(() =>
         service.applyColumnWidthPersistence(makeGrid(), new Subject<void>().asObservable())
-      ).toThrow('DataGridService.applyConfigToColumns not found');
+      ).toThrowError(/DataGridService\.applyConfigToColumns not found/);
     });
 
     it('throws when DataGridComponent.resizeHandleMouseDown$ is not found', () => {
       const grid = makeGrid();
+
       delete (grid as any).resizeHandleMouseDown$;
 
       expect(() =>
         service.applyColumnWidthPersistence(grid, new Subject<void>().asObservable())
-      ).toThrow('DataGridComponent.resizeHandleMouseDown$ not found');
+      ).toThrowError(/DataGridComponent\.resizeHandleMouseDown\$ not found/);
     });
 
-    it('throws when DataGridComponent.resizeHandleContainerMouseUp$ is not found', () => {
+    it('throws when DataGridComponent.windowMouseUp$ is not found', () => {
       const grid = makeGrid();
-      delete (grid as any).resizeHandleContainerMouseUp$;
+
+      delete (grid as any).windowMouseUp$;
 
       expect(() =>
         service.applyColumnWidthPersistence(grid, new Subject<void>().asObservable())
-      ).toThrow('DataGridComponent.resizeHandleContainerMouseUp$ not found');
+      ).toThrowError(/DataGridComponent\.windowMouseUp\$ not found/);
     });
   });
 
@@ -292,13 +315,12 @@ describe('GridColumnWidthService', () => {
 
   describe('cleanup via until$', () => {
     beforeEach(() => {
-      jest.useFakeTimers();
-      jest.spyOn(global, 'requestAnimationFrame').mockImplementation((cb) => { cb(0); return 0; });
-    });
+      // Run the deferred frame synchronously so the save pipeline completes inline.
+      spyOn(window, 'requestAnimationFrame').and.callFake((cb: FrameRequestCallback) => {
+        cb(0);
 
-    afterEach(() => {
-      jest.useRealTimers();
-      jest.restoreAllMocks();
+        return 0;
+      });
     });
 
     it('stops listening to resize events after until$ emits', () => {
@@ -308,9 +330,11 @@ describe('GridColumnWidthService', () => {
       service.applyColumnWidthPersistence(grid, destroy$.asObservable());
       destroy$.next();
 
-      (grid.resizeHandleMouseDown$ as Subject<any>).next({ event: {} as MouseEvent, targetColumnName: 'name' });
-      (grid.resizeHandleContainerMouseUp$ as Subject<MouseEvent>).next({} as MouseEvent);
-      jest.runAllTimers();
+      (grid.resizeHandleMouseDown$ as Subject<any>).next({
+        event: {} as MouseEvent,
+        targetColumnName: 'name',
+      });
+      (grid.windowMouseUp$ as Subject<MouseEvent>).next({} as MouseEvent);
 
       expect(grid.configurationStrategy.saveConfig$).not.toHaveBeenCalled();
     });

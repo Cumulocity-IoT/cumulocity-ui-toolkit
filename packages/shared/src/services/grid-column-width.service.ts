@@ -45,7 +45,7 @@ export function isExtendedColumnConfig(col: ColumnConfig): col is ExtendedColumn
  * same `DataGridService` instance benefits automatically.
  *
  * **Resize detection** – mirrors the internal `resizeHandleDrag$` pattern:
- * `resizeHandleMouseDown$` → `mergeMap` → `resizeHandleContainerMouseUp$.pipe(take(1))`
+ * `resizeHandleMouseDown$` → `mergeMap` → `windowMouseUp$.pipe(take(1))`
  * → one `requestAnimationFrame` defer (so the grid's own rAF callback that
  * writes the final `gridTrackSize` has run before we read the values).
  *
@@ -75,7 +75,7 @@ export function isExtendedColumnConfig(col: ColumnConfig): col is ExtendedColumn
  * ```
  *
  * WARNING: This service accesses public-but-undocumented properties of
- * `DataGridComponent` (`resizeHandleMouseDown$`, `resizeHandleContainerMouseUp$`,
+ * `DataGridComponent` (`resizeHandleMouseDown$`, `windowMouseUp$`,
  * `configurationStrategy`) and monkey-patches `DataGridService.applyConfigToColumns`.
  * It may break in future versions of `@c8y/ngx-components`.
  */
@@ -148,7 +148,7 @@ export class GridColumnWidthService {
   /**
    * Mirrors the internal `resizeHandleDrag$` pipeline from `DataGridComponent`:
    * for each `resizeHandleMouseDown$` emission, waits for the next
-   * `resizeHandleContainerMouseUp$` via `mergeMap` + `take(1)`, then defers one
+   * `windowMouseUp$` via `mergeMap` + `take(1)`, then defers one
    * `requestAnimationFrame` tick before reading column widths.
    *
    * On completion, loads the current stored config from the grid's own
@@ -168,10 +168,9 @@ export class GridColumnWidthService {
       );
     }
 
-    if (!has(grid, 'resizeHandleContainerMouseUp$')) {
+    if (!has(grid, 'windowMouseUp$')) {
       throw new Error(
-        'GridColumnWidthService: patching failed. ' +
-          'DataGridComponent.resizeHandleContainerMouseUp$ not found.'
+        'GridColumnWidthService: patching failed. DataGridComponent.windowMouseUp$ not found.'
       );
     }
 
@@ -179,7 +178,7 @@ export class GridColumnWidthService {
       .pipe(
         takeUntil(until$),
         mergeMap(() =>
-          grid.resizeHandleContainerMouseUp$.pipe(
+          grid.windowMouseUp$.pipe(
             take(1),
             // Defer one animation frame so the grid's own requestAnimationFrame
             // callback — which writes the final gridTrackSize — executes first.
@@ -201,10 +200,14 @@ export class GridColumnWidthService {
             take(1),
             switchMap((storedConfig) => {
               const widths = this.buildWidthMap(grid);
-              const columns: ExtendedColumnConfig[] = (storedConfig?.columns ?? []).map((col) => ({
-                ...col,
-                ...(widths[col.name] ? { gridTrackSize: widths[col.name] } : {}),
-              }));
+              const columns: ExtendedColumnConfig[] = (storedConfig?.columns ?? []).map((col) => {
+                const gridTrackSize = col.name ? widths[col.name] : undefined;
+
+                return {
+                  ...col,
+                  ...(gridTrackSize ? { gridTrackSize } : {}),
+                };
+              });
 
               return grid.configurationStrategy.saveConfig$({
                 ...storedConfig,
@@ -225,7 +228,9 @@ export class GridColumnWidthService {
     return grid.columns
       .filter((col) => !col.positionFixed && col.gridTrackSize)
       .reduce<Record<string, string>>((acc, col) => {
-        acc[col.name] = col.gridTrackSize;
+        if (col.name && col.gridTrackSize) {
+          acc[col.name] = col.gridTrackSize;
+        }
 
         return acc;
       }, {});
