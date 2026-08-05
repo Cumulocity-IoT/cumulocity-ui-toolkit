@@ -71,9 +71,12 @@ export class SmartViewComponent implements OnInit {
       if (isSmartViewManagedObject(data)) {
         const config = data.c8y_SmartViewConfiguration;
 
-        this.title.set(data.name);
-        this.datasource.configure(config);
-        this.columns.set(this.buildColumns(config.columns));
+        this.title.set(data.name ?? deviceId);
+
+        if (config) {
+          this.datasource.configure(config);
+          this.columns.set(this.buildColumns(config.columns));
+        }
       }
     } catch {
       this.errorMessage.set(`Could not load managed object with ID "${deviceId}".`);

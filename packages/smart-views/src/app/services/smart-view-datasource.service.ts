@@ -95,7 +95,7 @@ export class SmartViewDatasourceService {
       filterParts.length === 1 ? filterParts[0] : { __and: filterParts };
 
     const orderby = columns
-      .filter((c) => c.sortOrder && c.path)
+      .filter((c): c is Column & { path: string } => !!c.sortOrder && !!c.path)
       .map((c) => ({ [c.path]: c.sortOrder === 'asc' ? (1 as const) : (-1 as const) }));
 
     const queryObject: QueryObject = orderby.length
@@ -152,7 +152,9 @@ export class SmartViewDatasourceService {
       return null;
     }
 
-    const searchable = columns.filter((c) => isSearchable(c) && c.path);
+    const searchable = columns.filter(
+      (c): c is SearchableColumn & { path: string } => isSearchable(c) && !!c.path
+    );
 
     if (!searchable.length) {
       return null;
