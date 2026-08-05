@@ -22,6 +22,7 @@ describe('CsvExportService', () => {
     // Mock the <a> element to avoid real DOM navigation.
     mockAnchor = { href: '', download: '', click: jasmine.createSpy('click') };
     const realCreateElement = document.createElement.bind(document);
+
     spyOn(document, 'createElement').and.callFake((tag: string) =>
       tag === 'a' ? (mockAnchor as unknown as HTMLAnchorElement) : realCreateElement(tag)
     );
@@ -84,12 +85,12 @@ describe('CsvExportService', () => {
 
     it('appends the anchor to the body before clicking', () => {
       service.downloadFile([{ id: 1 }]);
-      expect(appendChildSpy).toHaveBeenCalledWith(mockAnchor as unknown as HTMLElement);
+      expect(appendChildSpy).toHaveBeenCalledWith(mockAnchor);
     });
 
     it('removes the anchor from the body after clicking', () => {
       service.downloadFile([{ id: 1 }]);
-      expect(removeChildSpy).toHaveBeenCalledWith(mockAnchor as unknown as HTMLElement);
+      expect(removeChildSpy).toHaveBeenCalledWith(mockAnchor);
     });
 
     it('revokes the object URL after clicking', () => {
@@ -100,6 +101,7 @@ describe('CsvExportService', () => {
     it('creates the blob with the correct MIME type', () => {
       service.downloadFile([{ id: 1 }]);
       const blob = createObjectURLSpy.calls.mostRecent().args[0] as Blob;
+
       expect(blob.type).toBe('text/csv;charset=utf-8;');
     });
   });
@@ -116,6 +118,7 @@ describe('CsvExportService', () => {
       service.downloadFile([{ a: 1 }, { b: 2 }]);
       const csv = await lastBlobContent(createObjectURLSpy);
       const [header, row1, row2] = csv.split('\n');
+
       expect(header).toBe('a,b');
       expect(row1).toBe('1,');
       expect(row2).toBe(',2');
@@ -127,6 +130,7 @@ describe('CsvExportService', () => {
         { name: 'Bob', score: 20 },
       ]);
       const csv = await lastBlobContent(createObjectURLSpy);
+
       expect(csv).toBe('name,score\nAlice,10\nBob,20');
     });
 
@@ -162,6 +166,7 @@ describe('CsvExportService', () => {
     it('JSON-stringifies array values', async () => {
       service.downloadFile([{ tags: ['x', 'y'] }]);
       const csv = await lastBlobContent(createObjectURLSpy);
+
       // JSON.stringify produces ["x","y"] which contains quotes → escapeCsv doubles them
       expect(csv).toContain('[""x"",""y""]');
     });
@@ -192,24 +197,28 @@ describe('CsvExportService', () => {
     it('wraps cells containing a comma in double-quotes', async () => {
       service.downloadFile([{ label: 'hello, world' }]);
       const csv = await lastBlobContent(createObjectURLSpy);
+
       expect(csv).toContain('"hello, world"');
     });
 
     it('doubles embedded double-quotes per RFC 4180', async () => {
       service.downloadFile([{ label: 'say "hi"' }]);
       const csv = await lastBlobContent(createObjectURLSpy);
+
       expect(csv).toContain('"say ""hi"""');
     });
 
     it('wraps cells containing a newline in double-quotes', async () => {
       service.downloadFile([{ label: 'line1\nline2' }]);
       const csv = await lastBlobContent(createObjectURLSpy);
+
       expect(csv).toContain('"line1\nline2"');
     });
 
     it('does not wrap plain strings without special characters', async () => {
       service.downloadFile([{ label: 'plain' }]);
       const csv = await lastBlobContent(createObjectURLSpy);
+
       expect(csv).toBe('label\nplain');
     });
   });

@@ -9,9 +9,10 @@ describe('Smart Views Plugin', () => {
     cy.visitShellAndWaitForSelector('', 'en', '#navigator');
   });
 
-  it('Registers the "Smart views" navigator entry', () => {
-    cy.visitShellAndWaitForSelector('', 'en', '#navigator');
+  it('Loads the smart views configuration page', () => {
+    // The navigator entry is nested under Settings, so navigate by route instead.
+    cy.visitShellAndWaitForSelector('smart-views-configuration', 'en', 'c8y-data-grid');
 
-    cy.get('#navigator').contains('Smart views').should('be.visible');
+    cy.get('c8y-title').should('contain.text', 'Smart views configuration');
   });
 });
