@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { FetchClient, IFetchOptions, IFetchResponse } from '@c8y/client';
 import { cloneDeep } from 'lodash';
 
@@ -59,7 +59,7 @@ export class MicroserviceService {
     }
   };
 
-  constructor(private fetch: FetchClient) {}
+  private fetch = inject(FetchClient);
 
   async get(
     url: string,

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { inject, Component } from '@angular/core';
 import { CellRendererContext, CoreModule } from '@c8y/ngx-components';
 
 @Component({
@@ -11,5 +11,5 @@ import { CellRendererContext, CoreModule } from '@c8y/ngx-components';
   imports: [CoreModule],
 })
 export class StatusExtendedCellRendererComponent {
-  constructor(public context: CellRendererContext) {}
+  public context = inject(CellRendererContext);
 }

@@ -39,6 +39,21 @@ msgstr "Keine Erinnerung fällig"
 msgid "reminder.counter.one"
 msgstr "Eine Erinnerung fällig"
 
+msgid "reminder.error.invalidConfig"
+msgstr "Die Erinnerungs-Konfiguration ist ungültig und wurde ignoriert."
+
+msgid "reminder.error.load"
+msgstr "Die Erinnerungen konnten nicht geladen werden."
+
+msgid "reminder.error.loadTypes"
+msgstr "Die Erinnerungstypen konnten nicht geladen werden."
+
+msgid "reminder.error.responsibilityFilter"
+msgstr "Der Zuständigkeitsfilter konnte nicht geladen werden. Es werden alle Erinnerungen angezeigt."
+
+msgid "reminder.error.update"
+msgstr "Die Erinnerung konnte nicht aktualisiert werden."
+
 msgid "reminder.feedback.created"
 msgstr "Die Erinnerung wurde erstellt."
 

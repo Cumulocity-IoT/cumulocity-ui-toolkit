@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { EventService, IEvent, IManagedObject } from '@c8y/client';
 import { RealtimeService, RealtimeSubjectService } from '@c8y/ngx-components';
 import { from, merge, Observable } from 'rxjs';
@@ -13,6 +13,21 @@ export interface ILocationUpdateEvent extends IEvent {
     lng: number;
   };
   type: 'c8y_LocationUpdate';
+}
+
+/**
+ * Narrows an event to a location update, verifying that the position fragment
+ * actually carries usable coordinates.
+ */
+export function isLocationUpdateEvent(event: IEvent): event is ILocationUpdateEvent {
+  const position = (event as Partial<ILocationUpdateEvent>).c8y_Position;
+
+  return (
+    event.type === 'c8y_LocationUpdate' &&
+    !!position &&
+    typeof position.lat === 'number' &&
+    typeof position.lng === 'number'
+  );
 }
 
 const EMPTY_EVENT: ILocationUpdateEvent = {
@@ -30,10 +45,9 @@ const EMPTY_EVENT: ILocationUpdateEvent = {
 };
 @Injectable()
 export class LocationRealtimeService extends RealtimeService<IEvent> {
-  constructor(
-    realtime: RealtimeSubjectService,
-    private event: EventService
-  ) {
+  private event = inject(EventService);
+
+  constructor(realtime: RealtimeSubjectService) {
     super(realtime);
   }
 
@@ -69,9 +83,7 @@ export class LocationRealtimeService extends RealtimeService<IEvent> {
       map((data) => data[0] as ILocationUpdateEvent)
     );
 
-    const realtime$ = this.onCreate$(source).pipe(
-      filter((event) => this.isLocationUpdateEvent(event))
-    );
+    const realtime$ = this.onCreate$(source).pipe(filter((event) => isLocationUpdateEvent(event)));
 
     return merge(latestValue$, realtime$).pipe(
       startWith(EMPTY_EVENT),
@@ -79,9 +91,5 @@ export class LocationRealtimeService extends RealtimeService<IEvent> {
       filter(([prev, curr]) => (prev === EMPTY_EVENT ? true : curr.time >= prev.time)),
       map(([, curr]) => curr)
     );
-  }
-
-  private isLocationUpdateEvent(event: IEvent): event is ILocationUpdateEvent {
-    return event.type === 'c8y_LocationUpdate' && Object.hasOwn(event, 'c8y_Position');
   }
 }

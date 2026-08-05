@@ -147,7 +147,8 @@ describe('DtmService', () => {
     it('encodes the identifier in the request URL', async () => {
       setup({ jsonSchema: { properties: {} } });
       await service.getAssetTypeProperties('Asset Type/With Slash');
-      const url = (fetchSpy.fetch.calls.first().args[0] as string);
+      const url = fetchSpy.fetch.calls.first().args[0];
+
       expect(url).toContain(encodeURIComponent('Asset Type/With Slash'));
     });
 

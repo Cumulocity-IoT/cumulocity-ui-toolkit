@@ -3,6 +3,7 @@ import { FormlyFieldConfig } from '@ngx-formly/core';
 import { AstNode } from './reverse-queries-util.model';
 import { QueryParser } from './query-parser';
 import { Tokenizer } from './string-tokenizer';
+import { unwrapQuery } from './unwrap-query';
 
 /**
  * Standard managed object properties that are NOT supported as arguments to
@@ -86,15 +87,7 @@ export function validateQuery(query?: string): string[] {
   const messages: string[] = [];
 
   try {
-    let processed = query.trim();
-
-    if (processed.startsWith('$filter=')) {
-      processed = processed.slice('$filter='.length).trim();
-
-      if (processed.startsWith('(') && processed.endsWith(')')) {
-        processed = processed.slice(1, -1).trim();
-      }
-    }
+    const processed = unwrapQuery(query);
 
     const parser = new QueryParser(new Tokenizer(processed));
 

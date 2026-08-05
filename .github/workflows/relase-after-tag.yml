@@ -21,7 +21,11 @@ jobs:
         shell: bash
         run: |
           echo "📦 Parsing angular.json..."
-          MATRIX_JSON=$(jq -c '{include: [ (.projects | to_entries[] | {project: .key, path: .value.root}) ]}' angular.json)
+          # Only applications produce a releasable plugin ZIP; the shared library is
+          # built by ng-packagr and consumed in-repo, so it is not released.
+          MATRIX_JSON=$(jq -c '{include: [ (.projects | to_entries[]
+            | select(.value.projectType == "application")
+            | {project: .key, path: .value.root, dist: .value.architect.build.options.outputPath}) ]}' angular.json)
           echo "Matrix: $MATRIX_JSON"
           # Write valid single-line JSON to output
           echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
@@ -71,18 +75,17 @@ jobs:
           echo "name: ${name}"
           echo "version: ${version}"
 
-          # Determine correct dist folder
-          dist_path="dist/${project}"
-          if [ ! -d "$dist_path" ]; then
-            dist_path="dist/$(basename "${name}")"
-          fi
-          if [ ! -d "$dist_path" ]; then
-            echo "❌ dist path, `dist/$(basename "${name}")`, not found for $project"
+          # The build output directory comes straight from angular.json, so it
+          # cannot drift from the actual build.
+          dist_path="${{ matrix.dist }}"
+
+          if [ -z "$dist_path" ] || [ ! -d "$dist_path" ]; then
+            echo "❌ dist path '${dist_path}' not found for $project"
             exit 1
           fi
 
           zip_name="${name}-${version}.zip"
-          (cd "dist/$(basename "$dist_path")" && zip -r "../../release/${zip_name}" .)
+          (cd "$dist_path" && zip -r "$GITHUB_WORKSPACE/release/${zip_name}" .)
           echo "✅ Created release/${zip_name}"
 
       - name: Upload build artifact

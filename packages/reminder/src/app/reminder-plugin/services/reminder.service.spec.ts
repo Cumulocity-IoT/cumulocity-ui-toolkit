@@ -1,9 +1,9 @@
-import { ComponentRef } from '@angular/core';
+import { ComponentRef, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { EventService, IFetchResponse, IResult, TenantOptionsService } from '@c8y/client';
 import { AlertService, EventRealtimeService, RealtimeMessage } from '@c8y/ngx-components';
 import { TranslateService } from '@ngx-translate/core';
-import { BehaviorSubject, EMPTY } from 'rxjs';
+import { BehaviorSubject, EMPTY, Subject } from 'rxjs';
 import { provideMock } from '~helpers/auto-mock.helper';
 import { ActiveTabService } from '~services/active-tab.service';
 import { AssetAccessService } from '~services/asset-access.service';
@@ -102,18 +102,20 @@ describe('ReminderService', () => {
     localStorageService.getOrDefault.and.returnValue({});
     translateService.instant.and.callFake((key: string) => key);
     assetAccessService.getAssetIdsFromConfigAsync.and.resolveTo([]);
-    tenantOptionsService.detail.and.resolveTo({ data: undefined, res: FETCH_RES });
+    tenantOptionsService.detail.and.resolveTo({
+      data: undefined as never,
+      res: FETCH_RES,
+    });
     eventService.list.and.resolveTo({
       data: [],
       paging: { totalPages: 0 },
       res: FETCH_RES,
     } as never);
 
-    const drawerOpen$ = new BehaviorSubject(false);
-
     domService.appendComponentToBody.and.returnValue({
       instance: {
-        open$: drawerOpen$,
+        open: signal(false),
+        openChange: new Subject<boolean>(),
         toggleDrawer: jasmine.createSpy('toggleDrawer'),
       },
     } as ComponentRef<unknown>);
@@ -124,9 +126,9 @@ describe('ReminderService', () => {
   });
 
   it('exposes default streams', () => {
-    expect(service.open$.value).toBeFalse();
-    expect(service.reminders$.value).toEqual([]);
-    expect(service.reminderCounter$.value).toBe(0);
+    expect(service.open()).toBeFalse();
+    expect(service.reminders()).toEqual([]);
+    expect(service.reminderCounter()).toBe(0);
   });
 
   it('returns configured types via getter', () => {
@@ -144,12 +146,12 @@ describe('ReminderService', () => {
     it('resets reminders and counter stream values', () => {
       const past = new Date(Date.now() - 10_000).toISOString();
 
-      service['reminders'] = [makeReminder({ id: 'one', time: past })];
+      service.reminders.set([makeReminder({ id: 'one', time: past })]);
 
       service.clear();
 
-      expect(service.reminders$.value).toEqual([]);
-      expect(service.reminderCounter$.value).toBe(0);
+      expect(service.reminders()).toEqual([]);
+      expect(service.reminderCounter()).toBe(0);
     });
   });
 
@@ -174,7 +176,7 @@ describe('ReminderService', () => {
 
   describe('setConfig() and resetFilterConfig()', () => {
     it('updates config and persists it to local storage', () => {
-      service.config$.next({ toast: false });
+      service.config.set({ toast: false });
 
       service.setConfig('toast', true);
 
@@ -182,15 +184,15 @@ describe('ReminderService', () => {
         REMINDER__LOCAL_STORAGE__CONFIG,
         { toast: true },
       ]);
-      expect(service.config$.value.toast).toBeTrue();
+      expect(service.config().toast).toBeTrue();
     });
 
     it('removes the filter key from config', () => {
-      service.config$.next({ filter: { reminderType: 't-1' }, browser: true });
+      service.config.set({ filter: { reminderType: 't-1' }, browser: true });
 
       service.resetFilterConfig();
 
-      expect(service.config$.value).toEqual({ browser: true });
+      expect(service.config()).toEqual({ browser: true });
     });
   });
 
@@ -258,7 +260,7 @@ describe('ReminderService', () => {
       const now = Date.now();
       const targetId = 'asset-target';
 
-      service.config$.next({ useContext: true, filter: { reminderType: '' } });
+      service.config.set({ useContext: true, filter: { reminderType: '' } });
 
       const reminders: Reminder[] = [
         makeReminder({
@@ -284,7 +286,7 @@ describe('ReminderService', () => {
     it('applies reminderType filter when configured', () => {
       const now = new Date(Date.now() - 1000).toISOString();
 
-      service.config$.next({
+      service.config.set({
         useContext: false,
         filter: { reminderType: 'type-b' },
       });
@@ -299,7 +301,7 @@ describe('ReminderService', () => {
 
       expect(dueGroup?.count).toBe(1);
       expect(dueGroup?.reminders[0].id).toBe('b');
-      expect(service.config$.value.filter).toEqual({ reminderType: 'type-b' });
+      expect(service.config().filter).toEqual({ reminderType: 'type-b' });
     });
   });
 
@@ -373,7 +375,7 @@ describe('ReminderService', () => {
       expect(service.contextFilterAvailable()).toBeTrue();
       expect(service.types.map((type) => type.id)).toEqual(['a', 'b']);
       expect(domService.appendComponentToBody.calls.count()).toBe(1);
-      expect(service.reminders$.value).toEqual([]);
+      expect(service.reminders()).toEqual([]);
     });
 
     it('resets useContext config when tenant disallows context filtering', async () => {
@@ -390,7 +392,7 @@ describe('ReminderService', () => {
         REMINDER__LOCAL_STORAGE__CONFIG,
         { useContext: false },
       ]);
-      expect(service.config$.value.useContext).toBeFalse();
+      expect(service.config().useContext).toBeFalse();
     });
 
     it('loads responsibility ids and enables stream when configured', async () => {
@@ -418,7 +420,7 @@ describe('ReminderService', () => {
 
       await service.init();
 
-      expect(service.responsibilityFilterEnabled$.value).toBeTrue();
+      expect(service.responsibilityFilterEnabled()).toBeTrue();
       expect(assetAccessService.getAssetIdsFromConfigAsync.calls.count()).toBe(1);
     });
 
@@ -445,22 +447,20 @@ describe('ReminderService', () => {
       } as RealtimeMessage<Reminder>);
 
       eventRealtimeService.onAll$.and.returnValue(source$);
-      service['\x5freminders'] = [];
+      service.reminders.set([]);
 
       service['setupReminderSubscription']();
 
-      expect(service.reminderCounter$.value).toBe(1);
-      expect(service.reminders$.value.length).toBe(1);
+      expect(service.reminderCounter()).toBe(1);
+      expect(service.reminders().length).toBe(1);
     });
 
     it('decrements active reminder counter for DELETE actions', () => {
       const now = new Date(Date.now() - 5_000).toISOString();
       const initial = makeReminder({ id: 'to-delete', time: now, status: ReminderStatus.active });
 
-      service['\x5freminders'] = [initial];
-      service['\x5freminderCounter'] = 1;
-      service.reminders$.next([initial]);
-      service.reminderCounter$.next(1);
+      service.reminders.set([initial]);
+      service.reminderCounter.set(1);
 
       const source$ = new BehaviorSubject({
         realtimeAction: 'DELETE',
@@ -471,8 +471,8 @@ describe('ReminderService', () => {
 
       service['setupReminderSubscription']();
 
-      expect(service.reminderCounter$.value).toBe(0);
-      expect(service.reminders$.value).toEqual([]);
+      expect(service.reminderCounter()).toBe(0);
+      expect(service.reminders()).toEqual([]);
     });
   });
 });

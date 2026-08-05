@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, input, model } from '@angular/core';
+import { inject, input, model, AfterViewInit, Component } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { C8yJSONSchema, CoreModule } from '@c8y/ngx-components';
 import { FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
@@ -46,7 +46,7 @@ export interface QueryParam {
       @for (p of params(); track p) {
         <button
           class="btn btn-default btn-icon btn-sm m-t-8 m-l-0 m-r-8"
-          [ngClass]="selectedFilters.includes(p) ? 'active' : ''"
+          [class.active]="selectedFilters.includes(p)"
           (click)="queryParamClick(p)"
         >
           <i [c8yIcon]="getIcon(p)"></i>
@@ -87,7 +87,7 @@ export class DynamicQueryFormComponent implements AfterViewInit {
   filter = model<Record<string, unknown>>({});
   params = input<QueryParam[]>([]);
 
-  constructor(private jsonschema: C8yJSONSchema) {}
+  private jsonschema = inject(C8yJSONSchema);
 
   ngAfterViewInit(): void {
     const properties = this.queryFormJSON.properties as Record<string, JSONSchema7>;

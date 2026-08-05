@@ -3,11 +3,11 @@ import { CoreModule } from '@c8y/ngx-components';
 
 @Component({
   selector: 'ps-action-bar-reload-button',
-  templateUrl: './reload-button.component.html',
+  templateUrl: './action-bar-reload-button.component.html',
   standalone: true,
   imports: [CoreModule],
 })
-export class ActionBarReloadButton {
+export class ActionBarReloadButtonComponent {
   requestInProgress = false;
   refreshCallBack = input.required<() => Promise<void>>();
 

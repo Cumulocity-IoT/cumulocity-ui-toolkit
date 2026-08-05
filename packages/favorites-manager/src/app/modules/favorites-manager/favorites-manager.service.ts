@@ -3,13 +3,15 @@ import { IUserCustomerProperties } from './favorites-manager.model';
 import { isEmpty } from 'lodash';
 import { DataSourceModifier, ServerSideDataResult } from '@c8y/ngx-components';
 import { InventoryDatasourceService } from '../services/inventory-datasource.service';
+import { QueryFilter } from '../models/query-utils.model';
 import { UserService } from '@c8y/client';
 
 @Injectable()
 export class FavoritesManagerService {
-  serverSideDataCallback: (modifier: DataSourceModifier) => Promise<ServerSideDataResult>;
+  // Assigned by initFavorites() before the grid binds it.
+  serverSideDataCallback!: (modifier: DataSourceModifier) => Promise<ServerSideDataResult>;
 
-  private BASE_QUERY = {
+  private BASE_QUERY: QueryFilter = {
     __and: [],
   };
 
@@ -17,93 +19,94 @@ export class FavoritesManagerService {
 
   private inventoryDatasource = inject(InventoryDatasourceService);
 
+  private hasFavorites = false;
+
   async initFavorites(): Promise<void> {
     const favorites = await this.getFavoritesForCurrentUser();
 
-    if (!favorites || favorites.length === 0) {
-      return;
-    }
+    // Rebuilt rather than appended to, so repeated calls cannot accumulate
+    // duplicate clauses.
+    this.hasFavorites = favorites.length > 0;
+    this.BASE_QUERY = {
+      __and: this.hasFavorites
+        ? [{ __or: favorites.map((favorite) => ({ __eq: { id: favorite } })) }]
+        : [],
+    };
 
-    this.BASE_QUERY.__and.push({
-      __or: favorites.map((favorite) => {
-        return { __eq: { id: favorite } };
-      }),
-    });
-
+    // Always assigned: the grid binds this callback, and without it an empty
+    // favorites list leaves the grid without a data source at all.
     this.serverSideDataCallback = this.onDataSourceModifier.bind(this);
   }
 
   async onDataSourceModifier(
     dataSourceModifier: DataSourceModifier
   ): Promise<ServerSideDataResult> {
+    // Without favorites the base query has no clauses, which would match every
+    // managed object instead of none.
+    if (!this.hasFavorites) {
+      return { data: [], size: 0, filteredSize: 0 } as unknown as ServerSideDataResult;
+    }
+
     return this.inventoryDatasource.reload(dataSourceModifier, this.BASE_QUERY);
   }
 
   async getFavoriteStatus(managedObjectId: string): Promise<boolean> {
-    try {
-      const favorites = await this.getFavoritesForCurrentUser();
+    const favorites = await this.getFavoritesForCurrentUser();
 
-      if (isEmpty(favorites)) {
-        return false;
-      }
-
-      return favorites.findIndex((favorite) => favorite === managedObjectId) !== -1;
-    } catch (error) {
-      console.error('Failed to get favorite status: ', error);
+    if (isEmpty(favorites)) {
+      return false;
     }
+
+    return favorites.includes(managedObjectId);
   }
 
   async addToFavorites(managedObjectId: string): Promise<void> {
-    try {
-      const user = (await this.userService.current()).data;
-      const customProperties = user.customProperties as IUserCustomerProperties;
+    const user = (await this.userService.current()).data;
+    const customProperties = (user.customProperties ?? {}) as IUserCustomerProperties;
 
-      if (!customProperties.favorites) {
-        customProperties.favorites = [];
-      }
-
-      customProperties.favorites.push(managedObjectId);
-
-      await this.userService.updateCurrent(user);
-    } catch (error) {
-      console.error('Failed to add object to favorites: ', error);
+    if (!customProperties.favorites) {
+      customProperties.favorites = [];
     }
+
+    if (customProperties.favorites.includes(managedObjectId)) {
+      return;
+    }
+
+    customProperties.favorites.push(managedObjectId);
+    user.customProperties = customProperties;
+
+    await this.userService.updateCurrent(user);
   }
 
   async removeFromFavorites(managedObjectId: string): Promise<void> {
-    try {
-      const user = (await this.userService.current()).data;
-      const customProperties = user.customProperties as IUserCustomerProperties;
+    const user = (await this.userService.current()).data;
+    const customProperties = user.customProperties as IUserCustomerProperties | undefined;
+    const favorites = customProperties?.favorites;
 
-      if (isEmpty(customProperties.favorites)) {
-        return;
-      }
-
-      customProperties.favorites.splice(
-        customProperties.favorites.findIndex((favoriteId) => favoriteId === managedObjectId),
-        1
-      );
-
-      await this.userService.updateCurrent(user);
-    } catch (error) {
-      console.error('Failed to add object to favorites: ', error);
+    if (!favorites?.length) {
+      return;
     }
+
+    const index = favorites.indexOf(managedObjectId);
+
+    if (index === -1) {
+      return;
+    }
+
+    favorites.splice(index, 1);
+
+    await this.userService.updateCurrent(user);
   }
 
+  /**
+   * Returns the current user's favorites, or an empty list when the user has
+   * none. Request failures are propagated so callers can tell "no favorites"
+   * apart from "could not load favorites".
+   */
   private async getFavoritesForCurrentUser(): Promise<string[]> {
-    try {
-      const user = (await this.userService.current()).data;
-      const customProperties = user.customProperties as IUserCustomerProperties;
+    const user = (await this.userService.current()).data;
+    const customProperties = user.customProperties as IUserCustomerProperties;
 
-      if (!customProperties || !customProperties.favorites) {
-        return undefined;
-      }
-
-      return customProperties.favorites;
-    } catch (error) {
-      console.error('Failed to load favorites for current user: ', error);
-
-      return undefined;
-    }
+    return customProperties?.favorites ?? [];
   }
 }

@@ -1,13 +1,4 @@
-import {
-  Component,
-  effect,
-  EventEmitter,
-  input,
-  OnInit,
-  Output,
-  signal,
-  ViewChild,
-} from '@angular/core';
+import { effect, input, output, signal, Component, OnInit, ViewChild } from '@angular/core';
 import { EditorComponent, MonacoEditorMarkerValidatorDirective } from '@c8y/ngx-components/editor';
 import { CoreModule, FormGroupComponent, MessagesComponent } from '@c8y/ngx-components';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
@@ -31,15 +22,15 @@ import { EVENT_SCHEMA } from './event-schema';
 export class DomainModelEditorComponent implements OnInit {
   domainModel = input<'alarm' | 'event' | 'operation' | 'json'>('operation');
   value = input<string>();
-  @Output() valueChange = new EventEmitter<string>();
-  @Output() isValidChange = new EventEmitter<boolean>();
+  readonly valueChange = output<string>();
+  readonly isValidChange = output<boolean>();
 
   protected code = signal<string>('');
-  private timeout: NodeJS.Timeout;
+  private timeout?: NodeJS.Timeout;
 
   @ViewChild(EditorComponent) editorComponent!: EditorComponent;
   form: FormGroup = new FormGroup({ jsonEditor: new FormControl('') });
-  isValidJson: boolean;
+  isValidJson = false;
 
   options: EditorComponent['editorOptions'] = {
     hover: {
@@ -87,7 +78,7 @@ export class DomainModelEditorComponent implements OnInit {
     let json: Record<string, unknown> | undefined;
 
     try {
-      json = JSON.parse(this.value()) as Record<string, unknown>;
+      json = JSON.parse(this.value() ?? '') as Record<string, unknown>;
     } catch {
       json = undefined;
     }
@@ -110,8 +101,6 @@ export class DomainModelEditorComponent implements OnInit {
   }
 
   assignSchema() {
-    console.warn('Assigning schema for domain model: ' + this.domainModel());
-
     if (this.domainModel() === 'json') {
       return;
     }
@@ -141,8 +130,8 @@ export class DomainModelEditorComponent implements OnInit {
         this.isValidChange.emit(true);
 
         return;
-      } catch (e) {
-        console.warn('JSON parse failed for value: ' + value, e);
+      } catch {
+        // Invalid while the user is still typing — reported via isValidChange.
       }
     }
     this.isValidChange.emit(false);

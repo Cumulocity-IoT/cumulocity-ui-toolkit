@@ -20,7 +20,6 @@ export default {
     package: 'plugin',
     isPackage: true,
     noAppSwitcher: true,
-    webSdkVersion: '1021.22.0',
     exports: [
       {
         name: 'Tenant option plugin',
@@ -50,12 +49,6 @@ export default {
       'ngx-bootstrap',
       '@ngx-translate/core',
       '@ngx-formly/core',
-    ],
-    copy: [
-      {
-        from: 'packages/tenant-option-management/assets',
-        to: 'assets',
-      },
     ],
   },
 } as const satisfies ConfigurationOptions;

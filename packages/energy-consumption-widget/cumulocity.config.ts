@@ -24,7 +24,8 @@ export default {
         module: 'EnergyConsumptionWidgetPluginProviders',
         path: './src/app/energy-consumption-widget/energy-consumption-widget.module.ts',
         readmePath: './src/README.md',
-        description: '',
+        description:
+          'Displays cumulative energy consumption over configurable time ranges as a bar chart, sourced from Cumulocity measurements.',
       },
     ],
     license,

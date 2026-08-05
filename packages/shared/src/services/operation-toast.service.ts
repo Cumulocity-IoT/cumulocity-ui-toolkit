@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { IOperation, OperationStatus } from '@c8y/client';
 import { Alert, AlertService, OperationRealtimeService } from '@c8y/ngx-components';
 import { Subscription, filter } from 'rxjs';
@@ -12,20 +12,25 @@ export interface OperationAlert extends Alert {
 @Injectable()
 export class OperationToastService {
   private realtimeSubscriptions = new Map<string, Subscription>();
-  private alertsCache = new Map<string, OperationAlert>();
+  /**
+   * The alerts actually handed to the `AlertService`, keyed by operation uuid.
+   * These are copies without `operationDetails`, so removal has to go through
+   * this cache — `AlertService` compares by object identity.
+   */
+  private alertsCache = new Map<string, Alert>();
 
-  constructor(
-    private alertService: AlertService,
-    private operationRealtime: OperationRealtimeService
-  ) {}
+  private alertService = inject(AlertService);
+
+  private operationRealtime = inject(OperationRealtimeService);
 
   add(alert: OperationAlert) {
     const { deviceId, uuid } = alert.operationDetails;
+    // Copy rather than mutate: the caller keeps its `operationDetails` so that
+    // `remove()` can still resolve the uuid and tear the subscription down.
+    const { operationDetails: _operationDetails, ...toast } = alert;
 
-    this.alertsCache.set(uuid, alert);
-    // @ts-ignore
-    delete alert.operationDetails;
-    this.alertService.add(alert);
+    this.alertsCache.set(uuid, toast);
+    this.alertService.add(toast);
 
     this.subscribe(uuid, deviceId);
 
@@ -40,11 +45,12 @@ export class OperationToastService {
   }
 
   remove(alert: OperationAlert) {
-    this.alertService.remove(alert);
+    const uuid = alert.operationDetails?.uuid;
+    const toast = uuid ? this.alertsCache.get(uuid) : undefined;
 
-    if (alert.operationDetails) {
-      const uuid = alert.operationDetails?.uuid;
+    this.alertService.remove(toast ?? alert);
 
+    if (uuid) {
       this.alertsCache.delete(uuid);
       this.unsubscribe(uuid);
     }
@@ -117,6 +123,7 @@ export class OperationToastService {
 
     if (sub) {
       sub.unsubscribe();
+      this.realtimeSubscriptions.delete(uuid);
     }
   }
 }

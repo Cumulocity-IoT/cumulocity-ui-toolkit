@@ -7,8 +7,9 @@ import {
   UserService,
 } from '@c8y/client';
 import { AlertService } from '@c8y/ngx-components';
+import { TranslateService } from '@ngx-translate/core';
 import { provideMock } from '~helpers/auto-mock.helper';
-import { TenantOptionConfiguration, TenantOptionRow } from './model';
+import { TenantOptionConfiguration, TenantOptionRow } from './tenant-option-management.model';
 import { TenantOptionManagementService } from './tenant-option-management.service';
 
 const FETCH_RES = {} as IFetchResponse;
@@ -33,6 +34,7 @@ describe('TenantOptionManagementService', () => {
         provideMock(TenantOptionsService),
         provideMock(AlertService),
         provideMock(UserService),
+        provideMock(TranslateService),
       ],
     });
 
@@ -46,7 +48,6 @@ describe('TenantOptionManagementService', () => {
 
     // Default user stub used by addOptionToConfiguration / updateOptionForConfiguration.
     userService.current.and.returnValue(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       Promise.resolve({
         data: {
           id: 'user-1',
@@ -228,7 +229,6 @@ describe('TenantOptionManagementService', () => {
       const other = { category: 'other', key: 'key', lastUpdated: '', user: '' };
       const cfg = makeConfig([existing, other]);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       tenantOptionsService.delete.and.returnValue(
         Promise.resolve({ data: null as any, res: FETCH_RES })
       );
@@ -249,7 +249,6 @@ describe('TenantOptionManagementService', () => {
     it('calls tenantOptionsService.delete with the correct category+key', async () => {
       const cfg = makeConfig([]);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       tenantOptionsService.delete.and.returnValue(
         Promise.resolve({ data: null as any, res: FETCH_RES })
       );

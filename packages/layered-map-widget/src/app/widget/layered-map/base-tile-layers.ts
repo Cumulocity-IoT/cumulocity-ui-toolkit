@@ -27,11 +27,22 @@ export interface BaseTileLayerDef {
   subdomains?: string;
 }
 
+/** The OpenStreetMap raster tile endpoint, referenced by every map in this widget. */
+export const OSM_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+/** Tile options shared by the editor maps (center picker, track creators). */
+export const OSM_TILE_OPTIONS = {
+  maxZoom: 22,
+  maxNativeZoom: 19,
+  detectRetina: true,
+  referrerPolicy: 'strict-origin-when-cross-origin',
+} as const;
+
 export const BASE_TILE_LAYERS: BaseTileLayerDef[] = [
   {
     id: 'osm',
     label: 'OpenStreetMap',
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    url: OSM_TILE_URL,
     maxZoom: 19,
     maxNativeZoom: 19,
     attribution:
@@ -87,6 +98,13 @@ export const BASE_TILE_LAYERS: BaseTileLayerDef[] = [
 ];
 
 export const DEFAULT_BASE_TILE_LAYER_ID: BaseTileLayerId = 'osm';
+
+/**
+ * The fallback definition, resolved eagerly so callers get a guaranteed value
+ * instead of `find()`'s `BaseTileLayerDef | undefined`.
+ */
+export const DEFAULT_BASE_TILE_LAYER: BaseTileLayerDef =
+  BASE_TILE_LAYERS.find((l) => l.id === DEFAULT_BASE_TILE_LAYER_ID) ?? BASE_TILE_LAYERS[0];
 
 export function customEntryToDef(entry: CustomBaseTileLayerEntry): BaseTileLayerDef {
   const zoom = entry.maxZoom ?? 19;

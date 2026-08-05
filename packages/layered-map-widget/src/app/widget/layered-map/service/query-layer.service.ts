@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { AlarmService, EventService, IManagedObject, InventoryService } from '@c8y/client';
 import { normalizeQueryFilter } from '~components/_formly-fields/query-forms/formly-query-blocks';
 
@@ -6,11 +6,9 @@ import { normalizeQueryFilter } from '~components/_formly-fields/query-forms/for
   providedIn: 'root',
 })
 export class QueryLayerService {
-  constructor(
-    private inventory: InventoryService,
-    private alarm: AlarmService,
-    private event: EventService
-  ) {}
+  private inventory = inject(InventoryService);
+  private alarm = inject(AlarmService);
+  private event = inject(EventService);
 
   async fetchByAlarmQuery(params: object): Promise<IManagedObject[]> {
     const result = new Map<string, IManagedObject | null>();

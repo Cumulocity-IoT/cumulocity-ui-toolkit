@@ -117,7 +117,7 @@
   }
   @if (config.showMeta && timestampEnd) {
     <div class="d-flex j-c-center m-t-16 p-b-8">
-      <small class="text-muted">{{ 'Query duration' }}: {{ duration }}</small>
+      <small class="text-muted">{{ 'Query duration' | translate }}: {{ duration }}</small>
     </div>
   }
 } @else {
@@ -154,11 +154,9 @@
     }
   </span>
   <div
-    [ngStyle]="{
-      width: (group.value / max) * 100 + '%',
-      backgroundColor: config.color,
-      opacity: config.opacity / 100,
-    }"
+    [style.width.%]="(group.value / max) * 100"
+    [style.background-color]="config.color"
+    [style.opacity]="config.opacity / 100"
   ></div>
 </ng-template>
 

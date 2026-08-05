@@ -8,9 +8,9 @@ import {
   RELEASE_NOTES__LAST_CHECKED_KEY,
   RELEASE_NOTES__MO_TYPE,
   RELEASE_NOTES__PUBLISHED_FRAGMENT,
+  isReleaseNoteEvent,
   ReleaseNote,
   ReleaseNoteEvent,
-  ReleaseNoteEventPayload,
 } from '../models/release-notes.model';
 
 @Injectable()
@@ -20,10 +20,10 @@ export class ReleaseNotesService {
   private modalService = inject(BsModalService);
   private localStorageService = inject(LocalStorageService);
 
-  private source: ISource;
+  private source?: ISource;
 
   async list(showNewOnly = false, publishedOnly = true, pageSize = 500): Promise<ReleaseNote[]> {
-    const requestFilter = {
+    const requestFilter: Record<string, unknown> = {
       type: RELEASE_NOTES__EVENT_TYPE,
       pageSize,
       dateFrom: new Date(0).toISOString(),
@@ -46,10 +46,14 @@ export class ReleaseNotesService {
     const event = await this.convertReleaseToEvent(release);
     const response = await this.eventService.create(event);
 
-    return this.convertEventToRelease(response.data);
+    return this.convertEventToRelease(this.assertReleaseNoteEvent(response.data));
   }
 
   async delete(releaseNoteID: ReleaseNote['id']): Promise<void> {
+    if (!releaseNoteID) {
+      throw new Error('Cannot delete a release note without an id');
+    }
+
     await this.eventService.delete(releaseNoteID);
   }
 
@@ -64,7 +68,7 @@ export class ReleaseNotesService {
     const event = await this.convertReleaseToEvent(release);
     const response = await this.eventService.update(event);
 
-    return this.convertEventToRelease(response.data);
+    return this.convertEventToRelease(this.assertReleaseNoteEvent(response.data));
   }
 
   async checkForNewRelease(): Promise<void> {
@@ -90,7 +94,11 @@ export class ReleaseNotesService {
    * by delegating each item to {@link convertEventToRelease}.
    */
   private convertEventListToReleaseList(releaseEvents: IEvent[]): ReleaseNote[] {
-    return releaseEvents.map((release) => this.convertEventToRelease(release));
+    // Events without a well-formed payload are skipped rather than turned into
+    // half-empty rows — `convertEventToRelease` dereferences the payload.
+    return releaseEvents
+      .filter(isReleaseNoteEvent)
+      .map((release) => this.convertEventToRelease(release));
   }
 
   /**
@@ -99,8 +107,20 @@ export class ReleaseNotesService {
    * derived from the presence of the top-level fragment (a C8Y convention for
    * queryable boolean fragments).
    */
-  private convertEventToRelease(releaseEvent: IEvent | ReleaseNoteEvent): ReleaseNote {
-    const eventData = releaseEvent[RELEASE_NOTES__EVENT_TYPE] as ReleaseNoteEventPayload;
+  /**
+   * The payload of a created/updated event is the one we just sent, so a missing
+   * fragment here is a genuine defect rather than untrusted input.
+   */
+  private assertReleaseNoteEvent(event: IEvent): ReleaseNoteEvent {
+    if (!isReleaseNoteEvent(event)) {
+      throw new Error(`Event ${event.id} has no ${RELEASE_NOTES__EVENT_TYPE} payload`);
+    }
+
+    return event;
+  }
+
+  private convertEventToRelease(releaseEvent: ReleaseNoteEvent): ReleaseNote {
+    const eventData = releaseEvent[RELEASE_NOTES__EVENT_TYPE];
 
     return {
       id: releaseEvent.id,
@@ -157,7 +177,14 @@ export class ReleaseNotesService {
   private filterByPublishDate(events: ReleaseNoteEvent[]): ReleaseNoteEvent[] {
     const lastChecked = this.localStorageService.get<string>(RELEASE_NOTES__LAST_CHECKED_KEY);
 
-    return events.filter((event) => event[RELEASE_NOTES__EVENT_TYPE].publicationTime > lastChecked);
+    // Without a stored timestamp every release counts as new.
+    if (!lastChecked) {
+      return events;
+    }
+
+    return events.filter(
+      (event) => (event[RELEASE_NOTES__EVENT_TYPE].publicationTime ?? '') > lastChecked
+    );
   }
 
   private getSourceFromManagedObject(id: IManagedObject['id']): ISource {
@@ -208,10 +235,12 @@ export class ReleaseNotesService {
 
     const eventList = response.data as ReleaseNoteEvent[];
 
+    const latest = eventList[0]?.[RELEASE_NOTES__EVENT_TYPE];
+
+    // `eventList.length` alone returned 0 rather than false for an empty list,
+    // which only type-checked while strictNullChecks was off.
     return (
-      eventList.length &&
-      Object.hasOwn(eventList[0][RELEASE_NOTES__EVENT_TYPE], 'publicationTime') &&
-      eventList[0][RELEASE_NOTES__EVENT_TYPE].publicationTime > date
+      !!latest && Object.hasOwn(latest, 'publicationTime') && (latest.publicationTime ?? '') > date
     );
   }
 }

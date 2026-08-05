@@ -1,5 +1,6 @@
-import { Component, effect, model } from '@angular/core';
-import { CommonModule, CoreModule, ModalLabels } from '@c8y/ngx-components';
+import { Component, effect, inject, model } from '@angular/core';
+import { AlertService, CommonModule, CoreModule, ModalLabels } from '@c8y/ngx-components';
+import { gettext } from '@c8y/ngx-components/gettext';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Subject } from 'rxjs';
 import { PopoverConfig } from '../layered-map-widget.model';
@@ -7,16 +8,11 @@ import { FormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { DomainModelEditorComponent } from '~components/domain-object-editor/domain-model-editor.component';
 import { DtmAssetProperty, DtmService } from '~services/dtm.service';
+import { ModalTab } from '~models/modal-tab.model';
 import { CollapseModule } from 'ngx-bootstrap/collapse';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 
-interface Tab {
-  id: 'operation' | 'alarm' | 'event';
-  label: string;
-  icon?: string;
-  active?: boolean;
-  disabled?: boolean;
-}
+type Tab = ModalTab<'operation' | 'alarm' | 'event'>;
 
 @Component({
   templateUrl: './popover-modal.component.html',
@@ -67,17 +63,17 @@ export class PopoverModalComponent {
   tabs: Tab[] = [
     {
       id: 'alarm',
-      label: 'Alarm',
+      label: gettext('Alarm'),
       icon: 'dlt-c8y-icon-bell',
     },
     {
       id: 'event',
-      label: 'Event',
+      label: gettext('Event'),
       icon: 'c8y-icon c8y-icon-events',
     },
     {
       id: 'operation',
-      label: 'Operation',
+      label: gettext('Operation'),
       icon: 'c8y-icon c8y-icon-device-control',
       active: true,
     },
@@ -90,7 +86,7 @@ export class PopoverModalComponent {
     {
       key: 'showDate',
       templateOptions: {
-        label: 'Show last update date',
+        label: gettext('Show last update date'),
       },
       type: 'checkbox',
       defaultValue: true,
@@ -98,7 +94,7 @@ export class PopoverModalComponent {
     {
       key: 'showAlarms',
       templateOptions: {
-        label: 'Show alarm icons',
+        label: gettext('Show alarm icons'),
       },
       type: 'checkbox',
       defaultValue: true,
@@ -106,9 +102,10 @@ export class PopoverModalComponent {
     {
       key: 'showLatestValues',
       templateOptions: {
-        label: 'Show latest measurement values',
-        description:
-          'Displays the device’s latest measurement values. Requires the "latest value" feature to be enabled in the tenant.',
+        label: gettext('Show latest measurement values'),
+        description: gettext(
+          'Displays the device’s latest measurement values. Requires the "latest value" feature to be enabled in the tenant.'
+        ),
       },
       type: 'checkbox',
       defaultValue: false,
@@ -118,10 +115,13 @@ export class PopoverModalComponent {
   isActionsFormCollapsed = true;
   isEditorValid = false;
 
-  constructor(
-    public bsModalRef: BsModalRef,
-    private dtm: DtmService
-  ) {
+  private readonly alert = inject(AlertService);
+
+  public bsModalRef = inject(BsModalRef);
+
+  private dtm = inject(DtmService);
+
+  constructor() {
     effect(() => {
       const value = this.cfg();
 
@@ -145,8 +145,8 @@ export class PopoverModalComponent {
     try {
       this.availableAssetProperties = await this.dtm.getAssetTypeProperties(assetType);
     } catch (e) {
-      console.warn('Failed to load asset type properties', e);
       this.availableAssetProperties = [];
+      this.alert.danger(gettext('Could not load the asset type properties.'), e as string);
     }
   }
 

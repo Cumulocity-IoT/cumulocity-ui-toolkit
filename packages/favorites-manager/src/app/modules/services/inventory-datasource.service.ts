@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { InventoryService } from '@c8y/client';
 import { Column, DataSourceModifier, ServerSideDataResult } from '@c8y/ngx-components';
 import { QueryFilter } from '../models/query-utils.model';
 import { hasSearchableConfig, SearchColumn } from '../models/data-grid.model';
@@ -7,10 +6,6 @@ import { BaseInventoryDatasourceService } from './base-inventory-datasource.serv
 
 @Injectable({ providedIn: 'root' })
 export class InventoryDatasourceService extends BaseInventoryDatasourceService {
-  constructor(inventoryService: InventoryService) {
-    super(inventoryService);
-  }
-
   async reload(
     dataSourceModifier: DataSourceModifier,
     baseQuery: QueryFilter
@@ -46,7 +41,7 @@ export class InventoryDatasourceService extends BaseInventoryDatasourceService {
     for (const c of customColumns) {
       const sortOrder = c.sortOrder === 'asc' ? 1 : -1;
 
-      for (const config of c.sortingConfig.pathSortingConfigs) {
+      for (const config of c.sortingConfig?.pathSortingConfigs ?? []) {
         orderBys.push({
           [config.path]: sortOrder,
         });
@@ -56,9 +51,11 @@ export class InventoryDatasourceService extends BaseInventoryDatasourceService {
     return orderBys;
   }
 
-  private createSearchJSON(columns: Column[], search: string): object {
+  private createSearchJSON(columns: Column[], search: string): Record<string, unknown> | undefined {
+    // Declaring `object` while returning nothing was a type lie; callers already
+    // spread the result, so `undefined` is the honest "no search filter".
     if (!search || !search.length) {
-      return;
+      return undefined;
     }
 
     const text = `*${isNaN(+search) ? this.caseInsensitivify(search) : search}*`;
@@ -67,7 +64,9 @@ export class InventoryDatasourceService extends BaseInventoryDatasourceService {
     columns
       .filter((column) => hasSearchableConfig(column) && column.searchable)
       .forEach((column: SearchColumn) => {
-        orArray.push({ __eq: { [column.path]: text } });
+        if (column.path) {
+          orArray.push({ __eq: { [column.path]: text } });
+        }
       });
 
     const orFilter = { __or: orArray };

@@ -1,6 +1,8 @@
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { MeasurementService } from '@c8y/client';
+import { AlertService } from '@c8y/ngx-components';
+import { TranslateService } from '@ngx-translate/core';
 import { provideMock } from '~helpers/auto-mock.helper';
 import {
   EnergyWidgetDateDisplayMode,
@@ -30,7 +32,11 @@ describe('EnergyConsumptionWidgetComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [EnergyConsumptionWidgetComponent],
-      providers: [provideMock(MeasurementService)],
+      providers: [
+        provideMock(MeasurementService),
+        provideMock(AlertService),
+        provideMock(TranslateService),
+      ],
       schemas: [NO_ERRORS_SCHEMA],
     }).overrideComponent(EnergyConsumptionWidgetComponent, {
       // Strip heavy imports (CoreModule, BaseChartDirective, etc.) so the
@@ -52,7 +58,6 @@ describe('EnergyConsumptionWidgetComponent', () => {
 
   describe('getDurationFromRange()', () => {
     it('parses "7 days"', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((component as any)['getDurationFromRange']('7 days')).toEqual({
         amount: 7,
         unit: 'days',
@@ -60,7 +65,6 @@ describe('EnergyConsumptionWidgetComponent', () => {
     });
 
     it('parses "12 hours"', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((component as any)['getDurationFromRange']('12 hours')).toEqual({
         amount: 12,
         unit: 'hours',
@@ -68,7 +72,6 @@ describe('EnergyConsumptionWidgetComponent', () => {
     });
 
     it('parses "4 weeks"', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((component as any)['getDurationFromRange']('4 weeks')).toEqual({
         amount: 4,
         unit: 'weeks',
@@ -76,7 +79,6 @@ describe('EnergyConsumptionWidgetComponent', () => {
     });
 
     it('parses "12 months"', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((component as any)['getDurationFromRange']('12 months')).toEqual({
         amount: 12,
         unit: 'months',

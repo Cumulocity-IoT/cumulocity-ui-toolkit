@@ -4,19 +4,14 @@
   "description": "Shared Angular components, pipes, services, and helpers for Cumulocity UI plugins",
   "author": "Cumulocity UI Guild",
   "license": "Apache-2.0",
-  "scripts": {
-    "build": "ng build shared",
-    "test": "ng test shared --watch=false --browsers=ChromeHeadless",
-    "test:watch": "ng test shared"
-  },
   "peerDependencies": {
-    "@angular/common": ">=18.0.0",
-    "@angular/core": ">=18.0.0",
-    "@angular/forms": ">=18.0.0",
-    "@angular/router": ">=18.0.0",
-    "@c8y/client": ">=1021.0.0",
-    "@c8y/ngx-components": ">=1021.0.0",
-    "rxjs": ">=7.0.0",
-    "date-fns": "^4.4.0"
+    "@angular/common": "^20.0.0",
+    "@angular/core": "^20.0.0",
+    "@angular/forms": "^20.0.0",
+    "@angular/router": "^20.0.0",
+    "@c8y/client": "1023.14.x",
+    "@c8y/ngx-components": "1023.14.x",
+    "date-fns": "^4.4.0",
+    "rxjs": "^7.8.0"
   }
 }

@@ -207,9 +207,7 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
   }
 
   public onFocus() {
-    if (this.editor) {
-      console.warn('Was focused');
-    }
+    // no-op; kept for API compatibility with the upstream component
   }
 
   public onChangeJSON() {
@@ -340,7 +338,7 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
     try {
       this.editor.setSelection(selection, selection);
     } catch (error) {
-      console.warn('Set selection to path not possible:', levels, error);
+      console.error('Set selection to path not possible:', levels, error);
     }
 
     if (this.hasObservers(this.onPathChanged)) {
@@ -365,7 +363,7 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
       try {
         this.editor.setSelection(selection, selection);
       } catch (error) {
-        console.warn('Set selection to path not possible:', node.path, error);
+        console.error('Set selection to path not possible:', node.path, error);
       }
 
       if (this.hasObservers(this.onPathChanged)) {
@@ -422,12 +420,13 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
     ns.forEach((l) => {
       const ar = l.match(patternArray);
 
-      if (!isEmpty(ar)) {
+      if (ar && !isEmpty(ar)) {
         levels.push(ar[0]);
       }
+
       const ind = l.match(patternIndex);
 
-      if (!isEmpty(ind)) {
+      if (ind && !isEmpty(ind)) {
         levels.push(ind[0]);
       }
     });

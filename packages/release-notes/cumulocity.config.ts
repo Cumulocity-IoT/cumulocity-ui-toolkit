@@ -32,7 +32,8 @@ export default {
         module: 'ReleaseNotesPluginProviders',
         path: './src/app/plugin/release-notes-plugin.module.ts',
         readmePath: './src/display-plugin/README.md',
-        description: '',
+        description:
+          'Shows published release notes to users and notifies them when newer releases are available',
       },
     ],
     license,

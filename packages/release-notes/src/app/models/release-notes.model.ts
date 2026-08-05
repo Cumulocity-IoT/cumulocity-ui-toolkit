@@ -10,8 +10,9 @@ export interface ReleaseNote {
   id: IEvent['id'];
   version: string;
   [RELEASE_NOTES__PUBLISHED_FRAGMENT]: boolean;
-  publicationTime?: Date;
-  body?: string;
+  /** `null` when the release is not published. */
+  publicationTime?: Date | null;
+  body?: string | null;
 }
 
 export interface ReleaseNoteEvent extends IEvent {
@@ -23,4 +24,15 @@ export interface ReleaseNoteEventPayload {
   published: ReleaseNote['published'];
   publicationTime?: string;
   body?: ReleaseNote['body'];
+}
+
+/**
+ * Narrows an event to a release-note event. Events are queried by type, but the
+ * platform does not guarantee the payload fragment is present or well-formed,
+ * and consumers dereference `version` directly.
+ */
+export function isReleaseNoteEvent(event: IEvent): event is ReleaseNoteEvent {
+  const payload = (event as Partial<ReleaseNoteEvent>)[RELEASE_NOTES__EVENT_TYPE];
+
+  return !!payload && typeof payload === 'object' && typeof payload.version === 'string';
 }

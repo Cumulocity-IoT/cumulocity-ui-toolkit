@@ -27,7 +27,12 @@ export class FileNameToIconPipe implements PipeTransform {
       return 'file';
     }
 
-    const [, suffix] = this.fileNameRegexp.exec(name);
+    const match = this.fileNameRegexp.exec(name);
+    const suffix = match?.[1];
+
+    if (!suffix) {
+      return 'file';
+    }
 
     for (const icon of Object.keys(this.fileTypeIconsMap)) {
       if (get(this.fileTypeIconsMap, icon).includes(suffix)) {

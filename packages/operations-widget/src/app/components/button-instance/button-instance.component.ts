@@ -1,4 +1,4 @@
-import { Component, EventEmitter, inject, Input, Output, TemplateRef } from '@angular/core';
+import { inject, output, Component, Input, TemplateRef } from '@angular/core';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { OperationButtonConfig } from '../../models/operations-widget-config.model';
 import { CoreModule } from '@c8y/ngx-components';
@@ -15,7 +15,7 @@ export class ButtonInstanceComponent {
 
   @Input() config: OperationButtonConfig;
   @Input() preview: boolean = false;
-  @Output() clickedOperation = new EventEmitter<OperationButtonConfig>();
+  readonly clickedOperation = output<OperationButtonConfig>();
 
   modalRef?: BsModalRef;
 

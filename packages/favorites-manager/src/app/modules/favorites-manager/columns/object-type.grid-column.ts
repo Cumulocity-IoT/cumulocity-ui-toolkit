@@ -58,7 +58,7 @@ export class ObjectTypeColumn extends BaseColumn {
         },
       ],
       getFilter(model: { objectType: { asset: boolean; device: boolean; group: boolean } }) {
-        const filter = { __or: [] };
+        const filter: { __or: Record<string, unknown>[] } = { __or: [] };
 
         if (model.objectType.asset) {
           filter.__or.push({ __has: 'c8y_IsAsset' });
