@@ -13,6 +13,7 @@
       aria-controls="collapseCache"
       [attr.aria-expanded]="!isCollapsed"
       type="button"
+      data-cy="index-db-cache--toggle"
       (click)="toggle()"
     >
       <i c8yIcon="smartphone-ram"></i>
@@ -190,6 +191,7 @@
       type="button"
       class="btn btn-default"
       [attr.aria-expanded]="!isCollapsed"
+      data-cy="index-db-cache--close"
       (click)="toggle()"
       translate
     >

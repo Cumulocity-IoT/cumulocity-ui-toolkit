@@ -12,8 +12,12 @@ describe('Index DB Cache Plugin', () => {
   it('Shows the cache action bar button and opens the drawer', () => {
     cy.visitShellAndWaitForSelector('', 'en', '#navigator');
 
-    cy.get('button[aria-controls="collapseCache"]').should('be.visible').click();
+    // the drawer is rendered but collapsed until the action bar button is clicked
+    cy.get('#collapseCache').should('not.be.visible');
+
+    cy.get('[data-cy="index-db-cache--toggle"]').should('be.visible').click();
 
     cy.get('#collapseCache').should('be.visible');
+    cy.get('[data-cy="index-db-cache--close"]').should('be.visible');
   });
 });
