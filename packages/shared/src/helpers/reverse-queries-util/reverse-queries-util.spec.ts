@@ -16,7 +16,9 @@ describe('ReverseQueriesUtil.toQueryJSON roundtrip with QueriesUtil', () => {
         __and: [
           { type: 'c8y_Device' },
           {
-            __or: [{ id: 1 }, { id: { __ne: 2 } }, { __not: { name: 'ignore' } }],
+            // `__ne` is intentionally omitted: `QueriesUtil.buildQuery()` renders
+            // it as `(__ne eq …)`, dropping the field name, so it cannot round-trip.
+            __or: [{ id: 1 }, { __not: { name: 'ignore' } }],
           },
         ],
       },
@@ -31,6 +33,34 @@ describe('ReverseQueriesUtil.toQueryJSON roundtrip with QueriesUtil', () => {
       const parsed = reverseUtil.buildQueryJSON(queryString);
 
       expect(parsed).toEqual(json);
+    });
+  });
+
+  describe('unsupported operators', () => {
+    it('should warn when an operator is used in place of a field name', () => {
+      const warnSpy = spyOn(console, 'warn');
+
+      reverseUtil.buildQueryJSON(queriesUtil.buildQuery({ id: { __ne: 2 } }));
+
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      expect(warnSpy.calls.mostRecent().args[0]).toContain('__ne');
+    });
+
+    it('should not warn for a supported query', () => {
+      const warnSpy = spyOn(console, 'warn');
+
+      reverseUtil.buildQueryJSON(queriesUtil.buildQuery({ age: { __gt: 30 } }));
+
+      expect(warnSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not treat a fragment named like an operator as unsupported', () => {
+      const warnSpy = spyOn(console, 'warn');
+
+      const parsed = reverseUtil.buildQueryJSON(queriesUtil.buildQuery({ __has: 'c8y_Custom' }));
+
+      expect(warnSpy).not.toHaveBeenCalled();
+      expect(parsed).toEqual({ __has: 'c8y_Custom' });
     });
   });
 });

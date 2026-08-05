@@ -16,6 +16,8 @@ export class ReverseQueriesUtil {
       return null;
     }
 
+    this.warnAboutUnsupportedOperators(filter);
+
     try {
       const parser = new QueryParser(new Tokenizer(filter));
       const syntaxTree = parser.parse();
@@ -44,6 +46,29 @@ export class ReverseQueriesUtil {
     const orderByIndex = withoutFilter.indexOf('$orderby=');
 
     return (orderByIndex === -1 ? withoutFilter : withoutFilter.slice(0, orderByIndex)).trim();
+  }
+
+  /**
+   * `QueriesUtil.buildQuery()` does not render every JSON operator. For the
+   * unsupported ones (e.g. `__ne`) it emits the operator key itself in place of
+   * the field name — `{ id: { __ne: 2 } }` becomes `(__ne eq 2)`, so the field
+   * is lost and the result cannot be converted back faithfully.
+   *
+   * The expression still parses, so warn instead of failing.
+   */
+  private warnAboutUnsupportedOperators(filter: string): void {
+    const unsupported = filter.match(/(?<![\w.])__[a-z]+(?=\s)/gi);
+
+    if (!unsupported?.length) {
+      return;
+    }
+
+    console.warn(
+      `ReverseQueriesUtil: query contains unsupported operator(s) ${[...new Set(unsupported)].join(
+        ', '
+      )} used as a field name. ` +
+        'The original field name is not part of the query string and cannot be restored.'
+    );
   }
 
   private convert(ast: AstNode): QueryJson {
