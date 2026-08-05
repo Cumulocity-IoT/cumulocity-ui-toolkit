@@ -195,6 +195,12 @@ importers:
         specifier: workspace:*
         version: link:../shared
 
+  packages/index-db-cache:
+    dependencies:
+      shared:
+        specifier: workspace:*
+        version: link:../shared
+
   packages/kpi-widget:
     dependencies:
       ng2-charts:

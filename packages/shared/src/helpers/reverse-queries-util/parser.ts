@@ -42,6 +42,17 @@ export class QueryParser {
     return this.advance();
   }
 
+  /** Like `expect`, for the token types the tokenizer always attaches a value to. */
+  private expectValue(type: TokenType): string {
+    const token = this.expect(type);
+
+    if (token.value === undefined) {
+      throw new Error(`Expected ${type} to carry a value`);
+    }
+
+    return token.value;
+  }
+
   private parseOr(): AstNode {
     const left = this.parseAnd();
     const nodes = [left];
@@ -94,11 +105,11 @@ export class QueryParser {
   }
 
   private parsePredicate(): AstNode {
-    const field = this.expect('IDENT').value;
+    const field = this.expectValue('IDENT');
 
     if (field.toLowerCase() === 'has') {
       this.expect('LPAREN');
-      const fragment = this.expect('IDENT').value;
+      const fragment = this.expectValue('IDENT');
 
       this.expect('RPAREN');
 
@@ -108,14 +119,14 @@ export class QueryParser {
     if (field.toLowerCase() === 'bygroupid') {
       this.expect('LPAREN');
       // Group ids are opaque identifiers; keep them as written in the query.
-      const id = this.expect('NUMBER').value;
+      const id = this.expectValue('NUMBER');
 
       this.expect('RPAREN');
 
       return { type: 'bygroupid', groupId: id };
     }
 
-    const operator = this.expect('OP').value as 'eq' | 'lt' | 'le' | 'gt' | 'ge';
+    const operator = this.expectValue('OP') as 'eq' | 'lt' | 'le' | 'gt' | 'ge';
 
     return {
       type: 'comparison',
@@ -126,12 +137,12 @@ export class QueryParser {
   }
 
   private parseLiteral(): string | number {
-    if (this.match('STRING')) {
-      return this.previousToken.value;
+    if (this.current.type === 'STRING') {
+      return this.expectValue('STRING');
     }
 
-    if (this.match('NUMBER')) {
-      return Number(this.previousToken.value);
+    if (this.current.type === 'NUMBER') {
+      return Number(this.expectValue('NUMBER'));
     }
 
     throw new Error(`Expected literal, got ${this.current.type}`);
