@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AggregatedISeries } from './chart-data.service';
-import { COVERAGE_TTL_MS } from './interceptor-helpers';
+import { COVERAGE_TTL_MS, asError } from './interceptor-helpers';
 
 // ─── DB constants ────────────────────────────────────────────────────────────
 
@@ -119,7 +119,7 @@ export class NewSeriesCacheService {
           resolve({ values });
         }
       };
-      req.onerror = () => reject(req.error);
+      req.onerror = () => reject(asError(req.error, 'IndexedDB request failed'));
     });
   }
 
@@ -160,7 +160,7 @@ export class NewSeriesCacheService {
           resolve(records);
         }
       };
-      req.onerror = () => reject(req.error);
+      req.onerror = () => reject(asError(req.error, 'IndexedDB request failed'));
     });
   }
 
@@ -268,7 +268,7 @@ export class NewSeriesCacheService {
 
     await new Promise<void>((resolve, reject) => {
       tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
+      tx.onerror = () => reject(asError(tx.error, 'IndexedDB transaction failed'));
     });
   }
 
@@ -285,7 +285,7 @@ export class NewSeriesCacheService {
       const req = db.transaction(STORE_DATA, 'readonly').objectStore(STORE_DATA).count();
 
       req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
+      req.onerror = () => reject(asError(req.error, 'IndexedDB request failed'));
     });
 
     let storageSizeMB = 0;
@@ -316,7 +316,7 @@ export class NewSeriesCacheService {
           const tx = db.transaction([STORE_DATA, STORE_COVERAGE], 'readwrite');
 
           tx.oncomplete = () => resolve();
-          tx.onerror = () => reject(tx.error);
+          tx.onerror = () => reject(asError(tx.error, 'IndexedDB transaction failed'));
           tx.objectStore(STORE_DATA).clear();
           tx.objectStore(STORE_COVERAGE).clear();
         })
@@ -332,7 +332,7 @@ export class NewSeriesCacheService {
           const tx = db.transaction([STORE_DATA, STORE_COVERAGE], 'readwrite');
 
           tx.oncomplete = () => resolve();
-          tx.onerror = () => reject(tx.error);
+          tx.onerror = () => reject(asError(tx.error, 'IndexedDB transaction failed'));
 
           const dataStore = tx.objectStore(STORE_DATA);
           const coverageStore = tx.objectStore(STORE_COVERAGE);
@@ -390,7 +390,7 @@ export class NewSeriesCacheService {
         // If IndexedDB is unavailable (private browsing, CSP, etc.) callers
         // receive the rejection and can fall back to a direct API fetch.
         this.dbPromise = null;
-        reject(req.error);
+        reject(asError(req.error, 'IndexedDB request failed'));
       };
     });
 

@@ -56,3 +56,14 @@ export function responseColumnKeys(body: SeriesResponse, requestedKeys: string[]
 
   return requestedKeys;
 }
+
+/**
+ * Normalizes an IndexedDB failure reason (`DOMException | null`) into an
+ * `Error` suitable for promise rejection.
+ */
+export function asError(reason: unknown, fallback: string): Error {
+  if (reason instanceof Error) return reason;
+  if (reason instanceof DOMException) return new Error(`${reason.name}: ${reason.message}`);
+
+  return new Error(fallback);
+}

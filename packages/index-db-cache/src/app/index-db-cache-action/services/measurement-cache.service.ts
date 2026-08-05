@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { CumulocityMeasurement } from './chart-data.service';
-import { COVERAGE_TTL_MS } from './interceptor-helpers';
+import { COVERAGE_TTL_MS, asError } from './interceptor-helpers';
 
 // ─── DB constants ─────────────────────────────────────────────────────────────
 
@@ -99,7 +99,7 @@ export class MeasurementCacheService {
           resolve(results);
         }
       };
-      req.onerror = () => reject(req.error);
+      req.onerror = () => reject(asError(req.error, 'IndexedDB request failed'));
     });
   }
 
@@ -139,7 +139,7 @@ export class MeasurementCacheService {
           resolve(records);
         }
       };
-      req.onerror = () => reject(req.error);
+      req.onerror = () => reject(asError(req.error, 'IndexedDB request failed'));
     });
   }
 
@@ -224,7 +224,7 @@ export class MeasurementCacheService {
 
     await new Promise<void>((resolve, reject) => {
       tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
+      tx.onerror = () => reject(asError(tx.error, 'IndexedDB transaction failed'));
     });
   }
 
@@ -236,7 +236,7 @@ export class MeasurementCacheService {
       const req = db.transaction(STORE_DATA, 'readonly').objectStore(STORE_DATA).count();
 
       req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
+      req.onerror = () => reject(asError(req.error, 'IndexedDB request failed'));
     });
 
     let storageSizeMB = 0;
@@ -262,7 +262,7 @@ export class MeasurementCacheService {
           const tx = db.transaction([STORE_DATA, STORE_COVERAGE], 'readwrite');
 
           tx.oncomplete = () => resolve();
-          tx.onerror = () => reject(tx.error);
+          tx.onerror = () => reject(asError(tx.error, 'IndexedDB transaction failed'));
           tx.objectStore(STORE_DATA).clear();
           tx.objectStore(STORE_COVERAGE).clear();
         })
@@ -276,7 +276,7 @@ export class MeasurementCacheService {
           const tx = db.transaction([STORE_DATA, STORE_COVERAGE], 'readwrite');
 
           tx.oncomplete = () => resolve();
-          tx.onerror = () => reject(tx.error);
+          tx.onerror = () => reject(asError(tx.error, 'IndexedDB transaction failed'));
 
           const dataStore = tx.objectStore(STORE_DATA);
           const coverageStore = tx.objectStore(STORE_COVERAGE);
@@ -333,7 +333,7 @@ export class MeasurementCacheService {
 
       req.onerror = () => {
         this.dbPromise = null;
-        reject(req.error);
+        reject(asError(req.error, 'IndexedDB request failed'));
       };
     });
 

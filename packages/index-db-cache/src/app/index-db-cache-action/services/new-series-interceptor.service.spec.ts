@@ -1,4 +1,7 @@
-import { NewSeriesInterceptorService, aggregationIntervalMs } from './new-series-interceptor.service';
+import {
+  NewSeriesInterceptorService,
+  aggregationIntervalMs,
+} from './new-series-interceptor.service';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -36,11 +39,15 @@ describe('NewSeriesInterceptorService.tryParseParams', () => {
   // ─── URL matching ────────────────────────────────────────────────────────────
 
   it('returns null when URL ends with measurement/measurements (list endpoint)', () => {
-    expect(parse(service, makeReq('https://example.com/measurement/measurements', validParams()))).toBeNull();
+    expect(
+      parse(service, makeReq('https://example.com/measurement/measurements', validParams()))
+    ).toBeNull();
   });
 
   it('returns null for an unrelated URL', () => {
-    expect(parse(service, makeReq('https://example.com/inventory/managedObjects', validParams()))).toBeNull();
+    expect(
+      parse(service, makeReq('https://example.com/inventory/managedObjects', validParams()))
+    ).toBeNull();
   });
 
   it('accepts a URL ending with measurement/measurements/series', () => {
@@ -57,26 +64,31 @@ describe('NewSeriesInterceptorService.tryParseParams', () => {
 
   it('returns null when source is missing', () => {
     const { source: _, ...rest } = validParams();
+
     expect(parse(service, makeReq(SERIES_URL, rest))).toBeNull();
   });
 
   it('returns null when dateFrom is missing', () => {
     const { dateFrom: _, ...rest } = validParams();
+
     expect(parse(service, makeReq(SERIES_URL, rest))).toBeNull();
   });
 
   it('returns null when dateTo is missing', () => {
     const { dateTo: _, ...rest } = validParams();
+
     expect(parse(service, makeReq(SERIES_URL, rest))).toBeNull();
   });
 
   it('returns null when aggregationInterval is missing', () => {
     const { aggregationInterval: _, ...rest } = validParams();
+
     expect(parse(service, makeReq(SERIES_URL, rest))).toBeNull();
   });
 
   it('returns null when series param is absent', () => {
     const { series: _, ...rest } = validParams();
+
     expect(parse(service, makeReq(SERIES_URL, rest))).toBeNull();
   });
 
@@ -84,14 +96,19 @@ describe('NewSeriesInterceptorService.tryParseParams', () => {
 
   it('wraps a single series string into a one-element array', () => {
     const result = parse(service, makeReq(SERIES_URL, validParams()));
+
     expect(result.seriesKeys).toEqual(['c8y_Temperature.T']);
   });
 
   it('preserves an array of series strings', () => {
-    const result = parse(service, makeReq(SERIES_URL, {
-      ...validParams(),
-      series: ['c8y_Temperature.T', 'c8y_Humidity.H'],
-    }));
+    const result = parse(
+      service,
+      makeReq(SERIES_URL, {
+        ...validParams(),
+        series: ['c8y_Temperature.T', 'c8y_Humidity.H'],
+      })
+    );
+
     expect(result.seriesKeys).toEqual(['c8y_Temperature.T', 'c8y_Humidity.H']);
   });
 
@@ -108,10 +125,15 @@ describe('NewSeriesInterceptorService.tryParseParams', () => {
   // ─── Staleness guard ─────────────────────────────────────────────────────────
 
   it('returns null when dateFrom is within 5 minutes of now', () => {
-    expect(parse(service, makeReq(SERIES_URL, {
-      ...validParams(),
-      dateFrom: new Date().toISOString(),
-    }))).toBeNull();
+    expect(
+      parse(
+        service,
+        makeReq(SERIES_URL, {
+          ...validParams(),
+          dateFrom: new Date().toISOString(),
+        })
+      )
+    ).toBeNull();
   });
 
   it('accepts dateFrom well in the past', () => {
@@ -130,11 +152,16 @@ describe('NewSeriesInterceptorService.tryParseParams', () => {
 
   it('returns aggregationInterval unchanged', () => {
     const result = parse(service, makeReq(SERIES_URL, validParams()));
+
     expect(result.aggregationInterval).toBe('PT1H');
   });
 
   it('handles daily aggregation interval', () => {
-    const result = parse(service, makeReq(SERIES_URL, { ...validParams(), aggregationInterval: 'P1D' }));
+    const result = parse(
+      service,
+      makeReq(SERIES_URL, { ...validParams(), aggregationInterval: 'P1D' })
+    );
+
     expect(result.aggregationInterval).toBe('P1D');
   });
 
@@ -142,6 +169,7 @@ describe('NewSeriesInterceptorService.tryParseParams', () => {
 
   it('uses the bare interval as aggKey when no aggregationFunction is present', () => {
     const result = parse(service, makeReq(SERIES_URL, validParams()));
+
     expect(result.aggKey).toBe('PT1H');
   });
 
@@ -150,6 +178,7 @@ describe('NewSeriesInterceptorService.tryParseParams', () => {
       service,
       makeReq(SERIES_URL, { ...validParams(), aggregationFunction: 'avg' })
     );
+
     expect(result.aggKey).toBe('PT1H|avg');
   });
 
@@ -158,9 +187,9 @@ describe('NewSeriesInterceptorService.tryParseParams', () => {
       service,
       makeReq(SERIES_URL, { ...validParams(), aggregationFunction: ['sum', 'avg', 'count'] })
     );
+
     expect(result.aggKey).toBe('PT1H|avg,count,sum');
   });
-
 });
 
 // ─── aggregationIntervalMs ────────────────────────────────────────────────────

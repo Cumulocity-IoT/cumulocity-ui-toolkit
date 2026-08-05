@@ -136,10 +136,10 @@ export class OldSeriesInterceptorService implements HttpInterceptor {
       return null;
     }
 
-    const source = get(params, 'source') as string;
-    const dateFromStr = get(params, 'dateFrom') as string;
-    const dateToStr = get(params, 'dateTo') as string;
-    const aggregationType = get(params, 'aggregationType') as string;
+    const source = get(params, 'source') as string | undefined;
+    const dateFromStr = get(params, 'dateFrom') as string | undefined;
+    const dateToStr = get(params, 'dateTo') as string | undefined;
+    const aggregationType = get(params, 'aggregationType') as string | undefined;
     const seriesRaw = get(params, 'series');
     const seriesKeys = Array.isArray(seriesRaw)
       ? (seriesRaw as string[])
@@ -266,10 +266,17 @@ export class OldSeriesInterceptorService implements HttpInterceptor {
     // Response `series[i]` must describe `values[ts][i]`, i.e. follow the
     // column order used above (seriesKeys). Serve metadata only when it is
     // complete — a partial array would misalign the correspondence.
-    const metas = seriesKeys.map((k) => this.metaCache.get(`${source}|${aggregationType}|${k}`));
+    const metas: SeriesResponse['series'] = [];
+
+    for (const k of seriesKeys) {
+      const meta = this.metaCache.get(`${source}|${aggregationType}|${k}`);
+
+      if (meta) metas.push(meta);
+    }
+
     const responseBody: SeriesResponse = {
       values: orderValues(cachedValues),
-      series: metas.every(Boolean) ? metas : [],
+      series: metas.length === seriesKeys.length ? metas : [],
       truncated: false,
     };
     const cachedBytes = JSON.stringify(responseBody).length;

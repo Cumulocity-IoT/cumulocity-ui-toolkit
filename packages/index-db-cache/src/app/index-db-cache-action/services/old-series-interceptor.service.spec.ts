@@ -36,11 +36,15 @@ describe('OldSeriesInterceptorService.tryParseParams', () => {
   // ─── URL matching ────────────────────────────────────────────────────────────
 
   it('returns null when URL ends with measurement/measurements (list endpoint)', () => {
-    expect(parse(service, makeReq('https://example.com/measurement/measurements', validParams()))).toBeNull();
+    expect(
+      parse(service, makeReq('https://example.com/measurement/measurements', validParams()))
+    ).toBeNull();
   });
 
   it('returns null for an unrelated URL', () => {
-    expect(parse(service, makeReq('https://example.com/inventory/managedObjects', validParams()))).toBeNull();
+    expect(
+      parse(service, makeReq('https://example.com/inventory/managedObjects', validParams()))
+    ).toBeNull();
   });
 
   it('accepts a URL ending with measurement/measurements/series', () => {
@@ -57,72 +61,97 @@ describe('OldSeriesInterceptorService.tryParseParams', () => {
 
   it('returns null when source is missing', () => {
     const { source: _, ...rest } = validParams();
+
     expect(parse(service, makeReq(SERIES_URL, rest))).toBeNull();
   });
 
   it('returns null when dateFrom is missing', () => {
     const { dateFrom: _, ...rest } = validParams();
+
     expect(parse(service, makeReq(SERIES_URL, rest))).toBeNull();
   });
 
   it('returns null when dateTo is missing', () => {
     const { dateTo: _, ...rest } = validParams();
+
     expect(parse(service, makeReq(SERIES_URL, rest))).toBeNull();
   });
 
   it('returns null when aggregationType is missing', () => {
     const { aggregationType: _, ...rest } = validParams();
+
     expect(parse(service, makeReq(SERIES_URL, rest))).toBeNull();
   });
 
   it('returns null when series param is absent', () => {
     const { series: _, ...rest } = validParams();
+
     expect(parse(service, makeReq(SERIES_URL, rest))).toBeNull();
   });
 
   // ─── aggregationType validation ──────────────────────────────────────────────
 
   it('accepts DAILY aggregationType', () => {
-    expect(parse(service, makeReq(SERIES_URL, { ...validParams(), aggregationType: 'DAILY' }))).not.toBeNull();
+    expect(
+      parse(service, makeReq(SERIES_URL, { ...validParams(), aggregationType: 'DAILY' }))
+    ).not.toBeNull();
   });
 
   it('accepts HOURLY aggregationType', () => {
-    expect(parse(service, makeReq(SERIES_URL, { ...validParams(), aggregationType: 'HOURLY' }))).not.toBeNull();
+    expect(
+      parse(service, makeReq(SERIES_URL, { ...validParams(), aggregationType: 'HOURLY' }))
+    ).not.toBeNull();
   });
 
   it('accepts MINUTELY aggregationType', () => {
-    expect(parse(service, makeReq(SERIES_URL, { ...validParams(), aggregationType: 'MINUTELY' }))).not.toBeNull();
+    expect(
+      parse(service, makeReq(SERIES_URL, { ...validParams(), aggregationType: 'MINUTELY' }))
+    ).not.toBeNull();
   });
 
   it('returns null for an unknown aggregationType', () => {
-    expect(parse(service, makeReq(SERIES_URL, { ...validParams(), aggregationType: 'YEARLY' }))).toBeNull();
+    expect(
+      parse(service, makeReq(SERIES_URL, { ...validParams(), aggregationType: 'YEARLY' }))
+    ).toBeNull();
   });
 
   it('returns null for an empty aggregationType string', () => {
-    expect(parse(service, makeReq(SERIES_URL, { ...validParams(), aggregationType: '' }))).toBeNull();
+    expect(
+      parse(service, makeReq(SERIES_URL, { ...validParams(), aggregationType: '' }))
+    ).toBeNull();
   });
 
   // ─── aggregationInterval exclusion guard ─────────────────────────────────────
 
   it('returns null when aggregationInterval is present (defers to new-series interceptor)', () => {
-    expect(parse(service, makeReq(SERIES_URL, {
-      ...validParams(),
-      aggregationInterval: 'PT1H',
-    }))).toBeNull();
+    expect(
+      parse(
+        service,
+        makeReq(SERIES_URL, {
+          ...validParams(),
+          aggregationInterval: 'PT1H',
+        })
+      )
+    ).toBeNull();
   });
 
   // ─── series param normalisation ──────────────────────────────────────────────
 
   it('wraps a single series string into a one-element array', () => {
     const result = parse(service, makeReq(SERIES_URL, validParams()));
+
     expect(result.seriesKeys).toEqual(['c8y_Temperature.T']);
   });
 
   it('preserves an array of series strings', () => {
-    const result = parse(service, makeReq(SERIES_URL, {
-      ...validParams(),
-      series: ['c8y_Temperature.T', 'c8y_Humidity.H'],
-    }));
+    const result = parse(
+      service,
+      makeReq(SERIES_URL, {
+        ...validParams(),
+        series: ['c8y_Temperature.T', 'c8y_Humidity.H'],
+      })
+    );
+
     expect(result.seriesKeys).toEqual(['c8y_Temperature.T', 'c8y_Humidity.H']);
   });
 
@@ -139,10 +168,15 @@ describe('OldSeriesInterceptorService.tryParseParams', () => {
   // ─── Staleness guard ─────────────────────────────────────────────────────────
 
   it('returns null when dateFrom is within 5 minutes of now', () => {
-    expect(parse(service, makeReq(SERIES_URL, {
-      ...validParams(),
-      dateFrom: new Date().toISOString(),
-    }))).toBeNull();
+    expect(
+      parse(
+        service,
+        makeReq(SERIES_URL, {
+          ...validParams(),
+          dateFrom: new Date().toISOString(),
+        })
+      )
+    ).toBeNull();
   });
 
   it('accepts dateFrom well in the past', () => {
@@ -160,7 +194,11 @@ describe('OldSeriesInterceptorService.tryParseParams', () => {
   });
 
   it('returns aggregationType as a typed string', () => {
-    const result = parse(service, makeReq(SERIES_URL, { ...validParams(), aggregationType: 'DAILY' }));
+    const result = parse(
+      service,
+      makeReq(SERIES_URL, { ...validParams(), aggregationType: 'DAILY' })
+    );
+
     expect(result.aggregationType).toBe('DAILY');
   });
 });

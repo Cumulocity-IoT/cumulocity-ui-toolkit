@@ -42,6 +42,8 @@
     "e2e:run:release-notes": "pnpm -C test exec -- cypress run --browser chrome --config-file config/release-notes.config.ts",
     "e2e:run:operations-widget": "pnpm -C test exec -- cypress run --browser chrome --config-file config/operations-widget.config.ts",
     "e2e:run:layered-map-widget": "pnpm -C test exec -- cypress run --browser chrome --config-file config/layered-map-widget.config.ts",
+    "e2e:run:index-db-cache": "pnpm -C test exec -- cypress run --browser chrome --config-file config/index-db-cache.config.ts",
+    "e2e:open:index-db-cache": "pnpm -C test exec -- cypress open --config-file config/index-db-cache.config.ts",
     "e2e:run:tenant-option-management": "pnpm -C test exec -- cypress run --browser chrome --config-file config/tenant-option-management.config.ts",
     "e2e:open:tenant-option-management": "pnpm -C test exec -- cypress open --config-file config/tenant-option-management.config.ts",
     "e2e:open:favorites-manager": "pnpm -C test exec -- cypress open --config-file config/favorites-manager.config.ts",

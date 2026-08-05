@@ -103,10 +103,10 @@ export class MeasurementInterceptorService implements HttpInterceptor {
 
     // Match the list endpoint only — the series endpoint ends with /series
 
-    const source = get(params, 'source') as string;
-    const dateFromStr = get(params, 'dateFrom') as string;
-    const dateToStr = get(params, 'dateTo') as string;
-    const pageSizeStr = get(params, 'pageSize') as string;
+    const source = get(params, 'source') as string | undefined;
+    const dateFromStr = get(params, 'dateFrom') as string | undefined;
+    const dateToStr = get(params, 'dateTo') as string | undefined;
+    const pageSizeStr = get(params, 'pageSize') as string | undefined;
 
     if (!source || !dateFromStr || !dateToStr) return null;
 
