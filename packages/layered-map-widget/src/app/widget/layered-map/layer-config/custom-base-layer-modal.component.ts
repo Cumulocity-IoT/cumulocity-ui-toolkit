@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { inject, Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CoreModule, ModalLabels } from '@c8y/ngx-components';
 import { BsModalRef } from 'ngx-bootstrap/modal';
@@ -100,7 +100,7 @@ export class CustomBaseLayerModalComponent {
 
   closeSubject = new Subject<CustomBaseTileLayerEntry | undefined>();
 
-  constructor(public bsModalRef: BsModalRef) {}
+  public bsModalRef = inject(BsModalRef);
 
   setEntry(entry: CustomBaseTileLayerEntry): void {
     this.entry = { ...entry };

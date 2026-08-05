@@ -9,7 +9,7 @@ export interface FilterPipeValue {
   standalone: true,
 })
 export class FilterPipe implements PipeTransform {
-  transform<T>(data: T[], filterValue: FilterPipeValue[]): T[] {
+  transform<T extends Record<string, unknown>>(data: T[], filterValue: FilterPipeValue[]): T[] {
     if (!filterValue || !filterValue.length) {
       return data;
     }
@@ -37,15 +37,11 @@ export class FilterPipe implements PipeTransform {
     }
   }
 
-  private filterBy<T>(item: T, filter: FilterPipeValue[]): T {
-    let check = true;
-
-    filter.forEach((f) => {
-      if (check === true) {
-        check = check && this.unify(item[f.attr]).includes(this.unify(f.value));
-      }
-    });
-
-    return check ? item : null;
+  /**
+   * Returns whether the item matches every filter. Previously returned the item
+   * or `null` while declaring `T`, even though the caller used it as a boolean.
+   */
+  private filterBy<T extends Record<string, unknown>>(item: T, filter: FilterPipeValue[]): boolean {
+    return filter.every((f) => this.unify(item[f.attr]).includes(this.unify(f.value)));
   }
 }

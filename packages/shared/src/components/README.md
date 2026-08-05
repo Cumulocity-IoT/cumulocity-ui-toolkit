@@ -15,7 +15,7 @@ TODO: Add image here
     <ps-auto-refresh
       [isLoading$]="isLoading$"
       [isIntervalToggleEnabled]="true"
-      (onCountdownEnded)="refresh()">
+      (countdownEnded)="refresh()">
     </ps-auto-refresh>
   </div>
 </div>

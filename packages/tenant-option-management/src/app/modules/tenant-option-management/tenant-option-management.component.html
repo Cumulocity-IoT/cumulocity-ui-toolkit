@@ -43,8 +43,9 @@
     <c8y-loading></c8y-loading>
   }
   @if(!isLoading && !rows?.length) {
-    <c8y-ui-empty-state [title]="'No Tenant Option created or imported yet.'" [subtitle]="
+    <c8y-ui-empty-state [title]="'No Tenant Option created or imported yet.' | translate" [subtitle]="
         'You can add existing Tenant Options, import a JSON file from a previous export, or create a new Tenant Option.'
+          | translate
       " [horizontal]="true">
     </c8y-ui-empty-state>
   }

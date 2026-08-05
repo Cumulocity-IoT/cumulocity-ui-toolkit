@@ -8,8 +8,6 @@
   "useTabs": false,
   "bracketSpacing": true,
   "bracketSameLine": false,
-  "jsxBracketSameLine": false,
-  "editor.formatOnSave": true,
   "endOfLine": "auto",
   "plugins": ["prettier-plugin-organize-attributes"]
 }

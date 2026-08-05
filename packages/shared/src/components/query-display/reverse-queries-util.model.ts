@@ -1,20 +1,25 @@
-export type TokenType =
-  | 'AND'
-  | 'OR'
-  | 'NOT'
-  | 'LPAREN'
-  | 'RPAREN'
-  | 'OP'
-  | 'IDENT'
-  | 'NUMBER'
-  | 'STRING'
-  | 'COMMA'
-  | 'EOF';
+/** Token kinds that are fully described by their type. */
+export type StructuralTokenType = 'AND' | 'OR' | 'NOT' | 'LPAREN' | 'RPAREN' | 'COMMA' | 'EOF';
 
-export interface Token {
-  type: TokenType;
-  value?: string;
-}
+/** Token kinds that always carry the matched text. */
+export type ValueTokenType = 'OP' | 'IDENT' | 'NUMBER' | 'STRING';
+
+export type TokenType = StructuralTokenType | ValueTokenType;
+
+/**
+ * A discriminated union rather than `{ type; value?: string }`: consumers such as
+ * `QueryParser.parsePredicate()` read `expect('IDENT').value` as a plain `string`,
+ * which an optional property could not guarantee.
+ */
+type StructuralToken = { [K in StructuralTokenType]: { type: K } }[StructuralTokenType];
+type ValueToken = { [K in ValueTokenType]: { type: K; value: string } }[ValueTokenType];
+
+// Distributed per member (rather than `{ type: ValueTokenType; value: string }`)
+// so that `Extract<Token, { type: 'IDENT' }>` resolves to a single token shape.
+export type Token = StructuralToken | ValueToken;
+
+/** Narrows a token type to its matching token shape. */
+export type TokenOfType<T extends TokenType> = Extract<Token, { type: T }>;
 
 export type AstNode =
   | AndNode

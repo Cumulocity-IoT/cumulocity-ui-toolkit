@@ -1,6 +1,7 @@
-import { Component, inject, Input } from '@angular/core';
+import { Component, inject, Input, OnInit } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { AlertService, CoreModule } from '@c8y/ngx-components';
+import { gettext } from '@c8y/ngx-components/gettext';
 import { FormlyModule } from '@ngx-formly/core';
 import { CollapseModule } from 'ngx-bootstrap/collapse';
 import { FormlyFieldConfig } from '@ngx-formly/core';
@@ -15,8 +16,8 @@ import { ReleaseNotesService } from '../../services/release-notes.service';
   standalone: true,
   imports: [CoreModule, ReactiveFormsModule, FormlyModule, CollapseModule],
 })
-export class ReminderNotesAdminModalComponent {
-  private releaseNoteServive = inject(ReleaseNotesService);
+export class ReminderNotesAdminModalComponent implements OnInit {
+  private releaseNotesService = inject(ReleaseNotesService);
   private bsModalRef = inject(BsModalRef);
   private translateService = inject(TranslateService);
   private alertService = inject(AlertService);
@@ -38,43 +39,58 @@ export class ReminderNotesAdminModalComponent {
 
   preview = false;
   form = new FormGroup({});
-  fields: FormlyFieldConfig[] = [
-    {
-      fieldGroup: [
-        {
-          key: 'version',
-          type: 'input',
-          props: {
-            label: this.translateService.instant('Version') as string,
-            required: true,
-          },
-        },
-        {
-          key: 'published',
-          type: 'checkbox',
-          defaultValue: false,
-          props: {
-            label: this.translateService.instant('Published') as string,
-          },
-        },
-        {
-          key: 'body',
-          type: 'textarea',
-          props: {
-            label: this.translateService.instant('Body') as string,
-          },
-        },
-      ],
-    },
-  ];
+  /**
+   * Built in `ngOnInit` rather than as a field initialiser: no formly translate
+   * extension is registered in this workspace, so the labels have to be resolved
+   * eagerly — but a field initialiser runs before the translation bundle is
+   * guaranteed to be loaded.
+   */
+  fields: FormlyFieldConfig[] = [];
 
   isLoading = false;
 
-  get body(): string {
-    return (this.form.value['body'] as string) || '';
+  ngOnInit(): void {
+    this.fields = [
+      {
+        fieldGroup: [
+          {
+            key: 'version',
+            type: 'input',
+            props: {
+              label: this.translateService.instant(gettext('Version')) as string,
+              required: true,
+            },
+          },
+          {
+            key: 'published',
+            type: 'checkbox',
+            defaultValue: false,
+            props: {
+              label: this.translateService.instant(gettext('Published')) as string,
+            },
+          },
+          {
+            key: 'body',
+            type: 'textarea',
+            props: {
+              label: this.translateService.instant(gettext('Body')) as string,
+            },
+          },
+        ],
+      },
+    ];
   }
 
-  private _release: ReleaseNote;
+  /** Formly drives the control set, so the value is read through the model shape. */
+  private get formValue(): Partial<ReleaseNote> {
+    return this.form.value;
+  }
+
+  get body(): string {
+    return this.formValue.body || '';
+  }
+
+  private _release!: ReleaseNote;
 
   close(): void {
     this.bsModalRef.hide();
@@ -90,7 +106,7 @@ export class ReminderNotesAdminModalComponent {
         release.id = this.release.id;
         release.publicationTime = this.release.publicationTime;
 
-        await this.releaseNoteServive.update(release);
+        await this.releaseNotesService.update(release);
 
         this.alertService.success(
           this.translateService.instant('Release {{version}} updated', {
@@ -107,9 +123,9 @@ export class ReminderNotesAdminModalComponent {
     } else {
       // create
       try {
-        if (this.form.value['published']) release.publicationTime = new Date();
+        if (this.formValue.published) release.publicationTime = new Date();
 
-        await this.releaseNoteServive.create(release);
+        await this.releaseNotesService.create(release);
 
         this.alertService.success(
           this.translateService.instant('Release {{version}} created', {

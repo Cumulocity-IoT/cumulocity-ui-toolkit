@@ -1,12 +1,13 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { IMeasurement, MeasurementService } from '@c8y/client';
 import { saveAs } from 'file-saver';
 import { concatMap, from, map, Observable, switchMap } from 'rxjs';
 import { get, isNil } from 'lodash';
+import { detectMeasurementPaths } from '../helpers/measurement-paths';
 
 @Injectable()
 export class MeasurementDownloadService {
-  constructor(private measurementService: MeasurementService) {}
+  private measurementService = inject(MeasurementService);
 
   private createBaseFilter(source: string) {
     return {
@@ -24,7 +25,7 @@ export class MeasurementDownloadService {
       pageSize: 1,
     });
 
-    const totalMeasurements = measurementPaging.totalPages;
+    const totalMeasurements = measurementPaging?.totalPages ?? 0;
     const maxPageSize = 2000;
 
     const requestsNeeded = Math.ceil(totalMeasurements / maxPageSize);
@@ -64,7 +65,7 @@ export class MeasurementDownloadService {
   prepare(measurements: IMeasurement[]): string {
     const jsonRows = measurements.map((m) => {
       const json: Record<string, unknown> = {};
-      const paths = this.detectMeasurementPaths(m);
+      const paths = detectMeasurementPaths(m);
 
       for (const path of paths) {
         const measurementValue = get(m, path) as { value: unknown };
@@ -76,27 +77,6 @@ export class MeasurementDownloadService {
     });
     const csv = this.jsonToCsv(jsonRows);
     return csv;
-  }
-
-  private detectMeasurementPaths(m: IMeasurement): string[] {
-    const nope = ['id', 'type', 'time', 'self', 'source'];
-    const result: string[] = [];
-    const fragmentCandidates = Object.keys(m).filter((key) => !nope.includes(key));
-
-    for (const key of fragmentCandidates) {
-      const fragment = get(m, key) as Record<string, unknown>;
-      const nestedKeys = Object.keys(fragment);
-
-      for (const nestedKey of nestedKeys) {
-        const nestedValue = get(fragment, nestedKey) as Record<string, unknown>;
-
-        if (nestedValue && Object.hasOwn(nestedValue, 'value')) {
-          result.push(`${key}.${nestedKey}`);
-        }
-      }
-    }
-
-    return result;
   }
 
   private jsonToCsv(jsonData: Record<string, unknown>[]): string {

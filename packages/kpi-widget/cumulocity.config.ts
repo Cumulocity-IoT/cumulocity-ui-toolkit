@@ -7,7 +7,7 @@ export default {
     author,
     description,
     version,
-    name: 'KPI Aggeregator Widget',
+    name: 'KPI Aggregator Widget',
     contentSecurityPolicy:
       "base-uri 'none'; default-src 'self' 'unsafe-inline' http: https: ws: wss:; connect-src 'self' http: https: ws: wss:;  script-src 'self' *.bugherd.com *.twitter.com *.twimg.com *.aptrinsic.com 'unsafe-inline' 'unsafe-eval' data:; style-src * 'unsafe-inline' blob:; img-src * data: blob:; font-src * data:; frame-src *; worker-src 'self' blob:;",
     dynamicOptionsUrl: true,
@@ -24,7 +24,8 @@ export default {
         module: 'KpiAggregatorWidgetPluginProviders',
         path: './src/app/kpi-widget/kpi-aggregator-widget.module.ts',
         readmePath: './src/README.md',
-        description: '',
+        description:
+          'Aggregates inventory managed objects matching a configurable query and displays the results as bar charts, pie charts, or lists.',
       },
     ],
     license,

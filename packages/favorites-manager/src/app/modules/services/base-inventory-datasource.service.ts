@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { InventoryService, IResultList, IManagedObject, QueriesUtil } from '@c8y/client';
 import { Column, Pagination } from '@c8y/ngx-components';
 import { cloneDeep } from 'lodash';
@@ -10,7 +10,7 @@ export interface QueryJSON {
   __orderby: { [key: string]: 1 | -1 }[];
 }
 
-export class QueryJSONRepresenation {
+export class QueryJSONRepresentation {
   private readonly queriesUtil = new QueriesUtil();
 
   __filter: QueryFilter = {};
@@ -24,10 +24,13 @@ export class QueryJSONRepresenation {
   }
 
   toString(): string {
-    return this.queriesUtil.buildQuery({ __filter: this.__filter, __orderby: this.__orderby });
+    return this.queriesUtil.buildQuery({
+      __filter: this.__filter as Record<string, unknown>,
+      __orderby: this.__orderby,
+    });
   }
 
-  addFilterAttribute(attribute: object) {
+  addFilterAttribute(attribute: Record<string, unknown> | undefined) {
     this.__filter = { ...this.__filter, ...attribute };
 
     return this;
@@ -42,7 +45,7 @@ export class QueryJSONRepresenation {
 
 @Injectable({ providedIn: 'root' })
 export class BaseInventoryDatasourceService {
-  constructor(private inventoryService: InventoryService) {}
+  protected inventoryService = inject(InventoryService);
 
   fetchManagedObjectsForPage(
     query: string,
@@ -64,11 +67,11 @@ export class BaseInventoryDatasourceService {
       currentPage: 1,
       withTotalPages: true,
     };
-    return this.inventoryService.list(filter).then((result) => result.paging.totalPages);
+    return this.inventoryService.list(filter).then((result) => result.paging?.totalPages ?? 0);
   }
 
-  createQueryJSON(columns: Column[], baseQuery: QueryFilter = {}): QueryJSONRepresenation {
-    const json = new QueryJSONRepresenation(baseQuery);
+  createQueryJSON(columns: Column[], baseQuery: QueryFilter = {}): QueryJSONRepresentation {
+    const json = new QueryJSONRepresentation(baseQuery);
 
     for (const column of columns) {
       this.extendQueryByColumn(json, column);
@@ -84,13 +87,14 @@ export class BaseInventoryDatasourceService {
       }
 
       if (column.externalFilterQuery && column.filteringConfig) {
+        json.__filter.__and ??= [];
         json.__filter.__and.push(
           column.filteringConfig.getFilter(column.externalFilterQuery) as Record<string, unknown>
         );
       }
     }
 
-    if (column.sortOrder) {
+    if (column.sortOrder && column.path) {
       const sortOrder: { [key: string]: 1 | -1 } = {
         [column.path]: column.sortOrder === 'asc' ? 1 : -1,
       };

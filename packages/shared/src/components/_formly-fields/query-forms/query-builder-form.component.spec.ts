@@ -48,6 +48,7 @@ describe('QueryBuilderFormComponent', () => {
     create({});
     component.addChild(component.root);
     const cmp = component.root.children![0];
+
     cmp.field = 'type';
     cmp.value = 'Pump';
     component.emit();

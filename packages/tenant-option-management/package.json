@@ -1,8 +1,8 @@
 {
   "name": "cumulocity-tenant-option-management-plugin",
   "version": "1.0.5",
-  "description": "",
-  "author": "Hendrik Naether",
+  "description": "Easily create, edit and delete tenant options. You can configure an option as encrypted and can decide between text or JSON input.",
+  "author": "Hendrik Näther",
   "homepage": "https://github.com/Cumulocity-IoT/cumulocity-ui-toolkit/tree/main/packages/tenant-option-management",
   "dependencies": {
     "jsoneditor": "^9.10.5",

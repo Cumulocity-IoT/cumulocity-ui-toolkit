@@ -1,28 +1,29 @@
 import { Observable, Subscription, Subject } from 'rxjs';
 import { IManagedObject, InventoryService } from '@c8y/client';
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { subMinutes } from 'date-fns';
 
-const FETCH_INTERVAL = 5;
+/** Polling interval in milliseconds. */
+const FETCH_INTERVAL = 5000;
 const FAILURE_LIMIT = 10;
 
 @Injectable()
 export class ManagedObjectUpdatePollingService {
   private subject = new Subject<IManagedObject[]>();
   readonly update$ = this.subject.asObservable();
-  private loop: Subject<void>;
-  private counter: Subscription;
+  private loop: Subject<void> | null = null;
+  private counter: Subscription | null = null;
   private running = false;
-  private currentDate: string;
+  private currentDate = '';
   private failureCount = 0;
   private interval = FETCH_INTERVAL;
 
-  constructor(private inventory: InventoryService) {}
+  private inventory = inject(InventoryService);
 
   /**
    *
    * @param queryExtension for instructions how queries are built - check https://cumulocity.com/api/core/2024/#tag/Query-language
-   * @param interval
+   * @param interval polling interval in milliseconds
    * @returns
    */
   startListening(queryExtension: string, interval = FETCH_INTERVAL): Observable<IManagedObject[]> {
@@ -43,7 +44,10 @@ export class ManagedObjectUpdatePollingService {
 
   private iterateAfter() {
     setTimeout(() => {
-      this.loop.next();
+      // `stopListening()` may have run while this timer was pending.
+      if (this.running && this.loop) {
+        this.loop.next();
+      }
     }, this.interval);
   }
 
@@ -61,7 +65,7 @@ export class ManagedObjectUpdatePollingService {
   }
 
   private checkForUpdates(queryExtension: string) {
-    const query = `$filter=(lastUpdated.date gt '${this.currentDate}' and ${queryExtension}')`;
+    const query = `$filter=(lastUpdated.date gt '${this.currentDate}' and ${queryExtension})`;
     const filter = {
       pageSize: 200,
       withTotalPages: false,

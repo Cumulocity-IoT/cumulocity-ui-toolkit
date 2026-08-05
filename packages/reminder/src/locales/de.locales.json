@@ -15,6 +15,13 @@
       "none": "Keine Erinnerung fällig",
       "one": "Eine Erinnerung fällig"
     },
+    "error": {
+      "invalidConfig": "Die Erinnerungs-Konfiguration ist ungültig und wurde ignoriert.",
+      "load": "Die Erinnerungen konnten nicht geladen werden.",
+      "loadTypes": "Die Erinnerungstypen konnten nicht geladen werden.",
+      "responsibilityFilter": "Der Zuständigkeitsfilter konnte nicht geladen werden. Es werden alle Erinnerungen angezeigt.",
+      "update": "Die Erinnerung konnte nicht aktualisiert werden."
+    },
     "feedback": {
       "created": "Die Erinnerung wurde erstellt.",
       "not-created": "Die Erinnerung konnte nicht erstellt werden."

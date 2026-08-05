@@ -1,4 +1,5 @@
 import {
+  inject,
   ApplicationRef,
   ComponentFactoryResolver,
   ComponentRef,
@@ -14,11 +15,9 @@ import {
  */
 @Injectable()
 export class DomService {
-  constructor(
-    private componentFactoryResolver: ComponentFactoryResolver,
-    private appRef: ApplicationRef,
-    private injector: Injector
-  ) {}
+  private componentFactoryResolver = inject(ComponentFactoryResolver);
+  private appRef = inject(ApplicationRef);
+  private injector = inject(Injector);
 
   /**
    * Dynamically creates a component and appends it to the document body.

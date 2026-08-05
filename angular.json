@@ -64,8 +64,7 @@
               {
                 "glob": "**/*",
                 "input": "packages/reminder/public"
-              },
-              "packages/reminder/src/assets"
+              }
             ],
             "inlineStyleLanguage": "less",
             "scripts": [],
@@ -170,8 +169,7 @@
               {
                 "glob": "**/*",
                 "input": "packages/kpi-widget/public"
-              },
-              "packages/kpi-widget/src/assets"
+              }
             ],
             "inlineStyleLanguage": "less",
             "styles": [
@@ -279,8 +277,7 @@
               {
                 "glob": "**/*",
                 "input": "packages/release-notes/public"
-              },
-              "packages/release-notes/src/assets"
+              }
             ],
             "inlineStyleLanguage": "less",
             "styles": [
@@ -384,13 +381,7 @@
             "polyfills": [
               "zone.js"
             ],
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "packages/energy-consumption-widget/public"
-              },
-              "packages/energy-consumption-widget/src/assets"
-            ],
+            "assets": [],
             "inlineStyleLanguage": "less",
             "styles": [
               "packages/energy-consumption-widget/src/styles.less"
@@ -496,7 +487,7 @@
             "assets": [
               {
                 "glob": "**/*",
-                "input": "assets",
+                "input": "packages/favorites-manager/assets",
                 "output": "assets"
               }
             ],
@@ -602,7 +593,7 @@
             "assets": [
               {
                 "glob": "**/*",
-                "input": "assets",
+                "input": "packages/tenant-option-management/assets",
                 "output": "assets"
               }
             ],

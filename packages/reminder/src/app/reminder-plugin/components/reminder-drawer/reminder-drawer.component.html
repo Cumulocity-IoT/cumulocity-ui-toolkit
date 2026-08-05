@@ -1,4 +1,4 @@
-<aside [class.open]="open">
+<aside [class.open]="open()">
   <header>
     <h2 translate>Reminder</h2>
     <small class="text-muted" title="{{ lastUpdate | c8yDate }}">
@@ -133,10 +133,8 @@
 <ng-template #reminderItem let-reminder="reminder">
   <li
     class="reminder-item"
-    [ngClass]="{
-      active: reminder.status !== reminderStatus.active,
-      changed: reminder.changed,
-    }"
+    [class.active]="reminder.status !== reminderStatus.active"
+    [class.changed]="reminder.changed"
     >
     <header>
       <i

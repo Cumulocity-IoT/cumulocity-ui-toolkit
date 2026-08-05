@@ -3,17 +3,12 @@ import { ITenantOption } from '@c8y/client';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Subject } from 'rxjs';
 import { TenantOptionManagementService } from '../tenant-option-management.service';
-import { TenantOptionRow } from '../model';
+import { TenantOptionRow } from '../tenant-option-management.model';
 import { CoreModule } from '@c8y/ngx-components';
 import { JsonEditorComponent } from '../editor/jsoneditor.component';
+import { ModalTab } from '~models/modal-tab.model';
 
-interface Tab {
-  id: 'text' | 'json';
-  label: string;
-  icon?: string;
-  active?: boolean;
-  disabled?: boolean;
-}
+type Tab = ModalTab<'text' | 'json'>;
 
 @Component({
   templateUrl: './add-option-modal.component.html',
@@ -22,7 +17,7 @@ interface Tab {
   imports: [CoreModule, JsonEditorComponent],
 })
 export class AddOptionModalComponent {
-  closeSubject: Subject<TenantOptionRow> = new Subject();
+  closeSubject: Subject<TenantOptionRow | undefined> = new Subject();
 
   option: ITenantOption | TenantOptionRow = {
     key: '',
@@ -48,7 +43,7 @@ export class AddOptionModalComponent {
   currentTab: Tab['id'] = this.tabs.find((t) => t.active)?.id ?? this.tabs[0].id;
 
   jsonEditorData: object = {};
-  jsonErrorMessage: string;
+  jsonErrorMessage?: string;
   isEditing = false;
   ids: string[];
   showConflictError = false;
@@ -66,11 +61,13 @@ export class AddOptionModalComponent {
 
     try {
       // boolean values and numberic values should be handled as text
-      if (this.isBooleanValue(this.option.value) || this.isNumberValue(this.option.value)) {
+      const value = this.option.value ?? '';
+
+      if (this.isBooleanValue(value) || this.isNumberValue(value)) {
         throw new Error('Not valid JSON!');
       }
 
-      this.jsonEditorData = JSON.parse(this.option.value) as object;
+      this.jsonEditorData = JSON.parse(value) as object;
     } catch (e) {
       tabId = 'text';
     }
@@ -88,7 +85,7 @@ export class AddOptionModalComponent {
     this.currentTab = tabId;
     this.option.value = '';
 
-    delete this.jsonErrorMessage;
+    this.jsonErrorMessage = undefined;
   }
 
   onJSONChange(text: string) {
@@ -135,7 +132,7 @@ export class AddOptionModalComponent {
   }
 
   close() {
-    this.closeSubject.next(null);
+    this.closeSubject.next(undefined);
     this.modal.hide();
   }
 

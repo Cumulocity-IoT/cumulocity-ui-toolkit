@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { inject, Component } from '@angular/core';
 import { IIdentified } from '@c8y/client';
 import { CoreModule } from '@c8y/ngx-components';
 import {
@@ -34,7 +34,7 @@ export class DeviceSelectorModalComponent {
 
   closeSubject: Subject<IIdentified[] | undefined> = new Subject();
 
-  constructor(private modal: BsModalRef) {}
+  private modal = inject(BsModalRef);
 
   selectionChanged(event: AssetSelectionChangeEvent) {
     this.selectedItems = event.items as IIdentified[];

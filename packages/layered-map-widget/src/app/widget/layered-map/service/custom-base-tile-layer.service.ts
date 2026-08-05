@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { InventoryService } from '@c8y/client';
 import { CustomBaseTileLayerEntry } from '../base-tile-layers';
 
@@ -11,7 +11,7 @@ export class CustomBaseTileLayerService {
   private moId: string | null = null;
   private cache: CustomBaseTileLayerEntry[] | null = null;
 
-  constructor(private inventory: InventoryService) {}
+  private inventory = inject(InventoryService);
 
   async load(): Promise<CustomBaseTileLayerEntry[]> {
     if (this.cache) {

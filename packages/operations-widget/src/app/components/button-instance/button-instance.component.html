@@ -4,7 +4,7 @@
 
 <button
   class="btn"
-  [ngClass]="config?.buttonClasses"
+  [class]="config?.buttonClasses"
   [title]="config?.description"
   (click)="openModal(confirm, 'modal-sm')"
 >
@@ -24,7 +24,7 @@
           <span ng-show="title">{{ config?.modalText }}</span>
         </h3>
         <div class="alert-footer">
-          <button class="btn btn-default" (click)="modalRef.hide()" title="Cancel">Cancel</button>
+          <button class="btn btn-default" (click)="modalRef.hide()" title="Cancel">{{ 'Cancel' | translate }}</button>
           <button class="btn btn-primary" (click)="createOperation($event)" title="Confirm">
             Confirm
           </button>

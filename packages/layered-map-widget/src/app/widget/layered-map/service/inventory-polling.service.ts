@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { IManagedObject, InventoryService } from '@c8y/client';
 import { MyLayer } from '../layered-map-widget.model';
-import { Observable, timer } from 'rxjs';
-import { exhaustMap, filter } from 'rxjs/operators';
+import { EMPTY, from, Observable, timer } from 'rxjs';
+import { catchError, exhaustMap, filter } from 'rxjs/operators';
 import { normalizeQueryFilter } from '~components/_formly-fields/query-forms/formly-query-blocks';
 
 const FETCH_INTERVAL = 5000;
@@ -13,7 +13,7 @@ export type InventoryDelta = {
 };
 @Injectable()
 export class InventoryPollingService {
-  constructor(private inventory: InventoryService) {}
+  private inventory = inject(InventoryService);
 
   createPolling$(
     layerFilter: object,
@@ -21,7 +21,11 @@ export class InventoryPollingService {
     interval = FETCH_INTERVAL
   ): Observable<InventoryDelta> {
     return timer(interval, interval).pipe(
-      exhaustMap(() => this.checkForUpdates(layerFilter, layer)),
+      // Catching inside the projection keeps the outer timer alive: a failed
+      // request skips this tick instead of terminating the polling for good.
+      exhaustMap(() =>
+        from(this.checkForUpdates(layerFilter, layer)).pipe(catchError(() => EMPTY))
+      ),
       filter((delta) => delta.add.length > 0 || delta.remove.length > 0)
     );
   }

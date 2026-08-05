@@ -1,16 +1,15 @@
 import { inject, Injectable } from '@angular/core';
-import { IManagedObject, IOperation, ITenantOption, OperationService } from '@c8y/client';
+import { IOperation, OperationService } from '@c8y/client';
 import { AlertService } from '@c8y/ngx-components';
+import { gettext } from '@c8y/ngx-components/gettext';
+import { TranslateService } from '@ngx-translate/core';
 import { OperationButtonConfig } from '../models/operations-widget-config.model';
 
-export interface TenantOptionConfiguration extends IManagedObject {
-  type: 'tenant_option_plugin_config';
-  options: ITenantOption[];
-}
 @Injectable()
 export class OperationsWidgetService {
   private operationsService = inject(OperationService);
   private alertService = inject(AlertService);
+  private translateService = inject(TranslateService);
 
   /**
    * Sends a Cumulocity operation built from `operationValue` merged with the
@@ -28,10 +27,18 @@ export class OperationsWidgetService {
 
     try {
       await this.operationsService.create(operation);
-      this.alertService.success(`Operation '${button.label}' successfully created.`);
+      this.alertService.success(
+        this.translateService.instant(gettext(`Operation '{{ label }}' successfully created.`), {
+          label: button.label,
+        }) as string
+      );
     } catch (error) {
-      console.error('Error creating operation:', error);
-      this.alertService.danger(`Failed to create '${button.label}' operation.`);
+      this.alertService.danger(
+        this.translateService.instant(gettext(`Failed to create '{{ label }}' operation.`), {
+          label: button.label,
+        }) as string,
+        error as string
+      );
     }
   }
 }

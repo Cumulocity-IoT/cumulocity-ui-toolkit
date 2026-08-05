@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { TenantOptionsService } from '@c8y/client';
 
 @Injectable({
@@ -10,7 +10,7 @@ import { TenantOptionsService } from '@c8y/client';
 export class TenantOptionCredentialsService {
   private readonly CATEGORY = 'my-custom.credentials';
 
-  constructor(private tenantOptions: TenantOptionsService) {}
+  private tenantOptions = inject(TenantOptionsService);
 
   /**
    * Saves the provided credentials and returns a token.

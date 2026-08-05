@@ -11,8 +11,10 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IMeasurement, IMeasurementValue, MeasurementService } from '@c8y/client';
-import { CoreModule } from '@c8y/ngx-components';
-import { Chart, ChartConfiguration, ChartData, registerables } from 'chart.js';
+import { AlertService, CoreModule } from '@c8y/ngx-components';
+import { gettext } from '@c8y/ngx-components/gettext';
+import { TranslateService } from '@ngx-translate/core';
+import { Chart, ChartData, ChartOptions, registerables, TooltipItem } from 'chart.js';
 import { cloneDeep, sortBy } from 'lodash';
 import moment from 'moment';
 import {
@@ -55,12 +57,14 @@ let chartJsRegistered = false;
 })
 export class EnergyConsumptionWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
   private measurementService = inject(MeasurementService);
+  private alertService = inject(AlertService);
+  private translateService = inject(TranslateService);
 
   @Input() config!: EnergyConsumptionWidgetConfig;
 
   readonly dateRangeSelect = ENERGY_CONSUMPTION_WIDGET__DATE_RANGE;
 
-  barChartOptions!: ChartConfiguration<'bar'>['options'];
+  barChartOptions!: ChartOptions<'bar'>;
   barChartData?: ChartData<'bar'>;
   loading: boolean = true;
   dateRange!: string;
@@ -99,11 +103,22 @@ export class EnergyConsumptionWidgetComponent implements OnInit, AfterViewInit, 
   private async fetchData(dateRange = this.dateRange): Promise<void> {
     this.loading = true;
     this.milestones = this.generateMilestones(dateRange);
-    // TODO fetch data point - needed?
-    // TODO if events: fetch events
-    this.measurements = await this.loadMeasurements();
-    this.barChartData = this.setChartConfig(this.digestMeasurements());
-    this.loading = false;
+
+    try {
+      // TODO fetch data point - needed?
+      // TODO if events: fetch events
+      this.measurements = await this.loadMeasurements();
+      this.barChartData = this.setChartConfig(this.digestMeasurements());
+    } catch (error) {
+      // Without this the widget would sit in its loading state indefinitely.
+      this.alertService.danger(
+        this.translateService.instant(gettext('Could not load the measurements.')) as string,
+        error as string
+      );
+    } finally {
+      this.loading = false;
+    }
+
     setTimeout(() => this.renderChart());
   }
 
@@ -115,7 +130,7 @@ export class EnergyConsumptionWidgetComponent implements OnInit, AfterViewInit, 
     }
 
     this.barChart?.destroy();
-    this.barChart = new Chart(canvas, {
+    this.barChart = new Chart<'bar'>(canvas, {
       type: 'bar',
       data: this.barChartData,
       options: this.barChartOptions,
@@ -344,27 +359,27 @@ export class EnergyConsumptionWidgetComponent implements OnInit, AfterViewInit, 
     }
   }
 
-  private setChartOptions(): ChartConfiguration<'bar'>['options'] {
+  private setChartOptions(): ChartOptions<'bar'> {
+    // `ChartConfiguration['options']` is optional; this builder always returns a
+    // value, so the non-optional `ChartOptions` is the accurate return type.
     const options = cloneDeep(
       ENERGY_CONSUMPTION_WIDGET__DEFAULT_CHART_CONFIG
-    ) as ChartConfiguration<'bar'>['options'];
+    ) as ChartOptions<'bar'>;
 
-    const tooltip = {
+    options.plugins = {
+      ...options.plugins,
       tooltip: {
         callbacks: {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          label: (context) => `${context.formattedValue} ${this.unit}`,
+          label: (context: TooltipItem<'bar'>) => `${context.formattedValue} ${this.unit}`,
         },
       },
     };
 
-    options.plugins = {
-      ...options.plugins,
-      ...tooltip,
-    };
-
-    options.scales.y = {
-      beginAtZero: this.config.beginAtZero || false,
+    options.scales = {
+      ...options.scales,
+      y: {
+        beginAtZero: this.config.beginAtZero || false,
+      },
     };
     options.responsive = true;
     options.maintainAspectRatio = false;

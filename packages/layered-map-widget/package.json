@@ -1,9 +1,9 @@
 {
   "name": "cumulocity-layered-map-widget",
   "version": "7.0.0",
-  "description": "",
+  "description": "Displays a map with position markers for selected devices. Support for configuration of additional layers and custom markers.",
   "author": "Hendrik Näther",
-  "homepage": "___TODO___",
+  "homepage": "https://github.com/Cumulocity-IoT/cumulocity-ui-toolkit/tree/main/packages/layered-map-widget",
   "dependencies": {
     "leaflet": "^1.9.4",
     "shared": "workspace:*"

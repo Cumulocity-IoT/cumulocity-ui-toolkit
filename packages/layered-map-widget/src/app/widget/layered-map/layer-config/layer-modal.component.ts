@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
-import { CoreModule, ModalLabels } from '@c8y/ngx-components';
+import { Component, inject } from '@angular/core';
+import { AlertService, CoreModule, ModalLabels } from '@c8y/ngx-components';
+import { gettext } from '@c8y/ngx-components/gettext';
 import { IconSelectorService } from '@c8y/ngx-components/icon-selector';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Subject } from 'rxjs';
@@ -41,11 +42,13 @@ export class LayerModalComponent {
   /** Toggled to force a re-mount of the query form when the asset type changes. */
   queryFormVisible = true;
 
-  constructor(
-    public bsModalRef: BsModalRef,
-    private iconSelector: IconSelectorService,
-    private dtm: DtmService
-  ) {}
+  private readonly alert = inject(AlertService);
+
+  public bsModalRef = inject(BsModalRef);
+
+  private iconSelector = inject(IconSelectorService);
+
+  private dtm = inject(DtmService);
 
   setLayer(layer: BasicLayerConfig) {
     this.layer = layer;
@@ -81,8 +84,10 @@ export class LayerModalComponent {
     try {
       this.assetTypes = await this.dtm.getAssetTypes();
     } catch (e) {
-      console.warn('Failed to load DTM asset types', e);
       this.assetTypes = [];
+      // Without this the asset-type picker just renders empty, which reads as
+      // "no asset types exist" rather than "we could not load them".
+      this.alert.danger(gettext('Could not load the asset types.'), e as string);
     } finally {
       this.loadingAssetTypes = false;
     }

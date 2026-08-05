@@ -7,6 +7,7 @@ import {
   TemplateRef,
   ViewChild,
 } from '@angular/core';
+import { gettext } from '@c8y/ngx-components/gettext';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormGroup } from '@angular/forms';
 import { CoreModule, OptionsService } from '@c8y/ngx-components';
@@ -14,15 +15,16 @@ import { FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
 import { cloneDeep } from 'lodash';
 import { debounceTime, Subject } from 'rxjs';
 import {
-  KPI_AGGREGAOR_WIDGET__CHART_LEGEND_POSITION_OPTIONS,
-  KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG,
-  KPI_AGGREGAOR_WIDGET__DISPLAY_OPTIONS,
-  KPI_AGGREGAOR_WIDGET__SORT_OPTIONS,
-  KPI_AGGREGAOR_WIDGET_ORDER_OPTIONS,
+  KPI_AGGREGATOR_WIDGET__CHART_LEGEND_POSITION_OPTIONS,
+  KPI_AGGREGATOR_WIDGET__DEFAULT_CONFIG,
+  KPI_AGGREGATOR_WIDGET__DISPLAY_OPTIONS,
+  KPI_AGGREGATOR_WIDGET__SORT_OPTIONS,
+  KPI_AGGREGATOR_WIDGET_ORDER_OPTIONS,
 } from '../../models/kpi-aggregator-widget.const';
 import { KpiAggregatorWidgetConfig } from '../../models/kpi-aggregator-widget.model';
 import { KpiAggregatorWidgetComponent } from '../kpi-aggregator-widget/kpi-aggregator-widget.component';
 import { WidgetConfigService } from '@c8y/ngx-components/context-dashboard';
+import { setWidgetPreview } from '~helpers/widget-preview.helper';
 
 @Component({
   selector: 'c8y-kpi-aggregator-widget-config',
@@ -39,12 +41,7 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
 
   @ViewChild('widgetPreview')
   set previewMapSet(template: TemplateRef<unknown>) {
-    if (template) {
-      this.widgetConfigService.setPreview(template);
-
-      return;
-    }
-    this.widgetConfigService.setPreview(null);
+    setWidgetPreview(this.widgetConfigService, template);
   }
 
   @Input() set config(config: KpiAggregatorWidgetConfig) {
@@ -57,8 +54,8 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
   }
 
   form = new FormGroup({});
-  formModel: KpiAggregatorWidgetConfig = cloneDeep(KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG);
-  previewConfig: KpiAggregatorWidgetConfig = cloneDeep(KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG);
+  formModel: KpiAggregatorWidgetConfig = cloneDeep(KPI_AGGREGATOR_WIDGET__DEFAULT_CONFIG);
+  previewConfig: KpiAggregatorWidgetConfig = cloneDeep(KPI_AGGREGATOR_WIDGET__DEFAULT_CONFIG);
   previewRenderKey = 0;
 
   fields: FormlyFieldConfig[] = [
@@ -69,10 +66,11 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
           key: 'query',
           type: 'input',
           props: {
-            label: 'Query',
+            label: gettext('Query'),
             required: true,
-            description:
-              'Placeholders (<code>[foo]</code>) can be used to set query parameters based on the current dashboards context.<br>For example: <code>(kpi_Group.groupId eq [kpi_GroupId]).',
+            description: gettext(
+              'Placeholders (<code>[foo]</code>) can be used to set query parameters based on the current dashboards context.<br>For example: <code>(kpi_Group.groupId eq [kpi_GroupId]).'
+            ),
           },
         },
         {
@@ -83,13 +81,14 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
               type: 'number',
               className: 'col-md-4',
               props: {
-                label: 'Page Size',
+                label: gettext('Page Size'),
                 required: true,
                 min: 1,
                 max: 2000,
                 step: 250,
-                description:
-                  'The <b>number of items</b> you want to load per request.<br>The lower the number, the quicker the response.',
+                description: gettext(
+                  'The <b>number of items</b> you want to load per request.<br>The lower the number, the quicker the response.'
+                ),
               },
             },
             {
@@ -97,11 +96,12 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
               type: 'number',
               className: 'col-md-4',
               props: {
-                label: 'Page Limit',
+                label: gettext('Page Limit'),
                 min: 0,
                 step: 1,
-                description:
-                  'The <b>maximal number of pages</b> you want to load initially.<br>Set it to <code>0</code>, to use the maximal supported number of pages.',
+                description: gettext(
+                  'The <b>maximal number of pages</b> you want to load initially.<br>Set it to <code>0</code>, to use the maximal supported number of pages.'
+                ),
               },
             },
             {
@@ -109,12 +109,13 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
               type: 'number',
               className: 'col-md-4',
               props: {
-                label: 'Number of parallel requests',
+                label: gettext('Number of parallel requests'),
                 min: 1,
                 max: 10,
                 step: 1,
-                description:
-                  'If you want to load pages in parallel, instead of one after another.<br>This can reduce the time for the overall process to finish, but might also stress the tenant.',
+                description: gettext(
+                  'If you want to load pages in parallel, instead of one after another.<br>This can reduce the time for the overall process to finish, but might also stress the tenant.'
+                ),
               },
             },
           ],
@@ -128,9 +129,9 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
           key: 'display',
           type: 'select',
           props: {
-            label: 'Display Mode',
+            label: gettext('Display Mode'),
             required: true,
-            options: KPI_AGGREGAOR_WIDGET__DISPLAY_OPTIONS,
+            options: KPI_AGGREGATOR_WIDGET__DISPLAY_OPTIONS,
           },
         },
         {
@@ -140,10 +141,11 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
           key: 'kpiFragment',
           type: 'input',
           props: {
-            label: 'KPI Fragment',
+            label: gettext('KPI Fragment'),
             required: true,
-            description:
-              'The inventory managed object fragment, that serves as the basis of the aggregation e.g. <code>c8y_ActiveAlarmsStatus.major</code>',
+            description: gettext(
+              'The inventory managed object fragment, that serves as the basis of the aggregation e.g. <code>c8y_ActiveAlarmsStatus.major</code>'
+            ),
           },
           expressions: {
             hide: 'model.display == "list"',
@@ -153,8 +155,8 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
           key: 'groupBy',
           type: 'input',
           props: {
-            label: 'Group by',
-            placeholder: 'c8y_Hardware.model',
+            label: gettext('Group by'),
+            placeholder: gettext('c8y_Hardware.model'),
           },
           expressions: {
             hide: 'model.display == "list"',
@@ -164,10 +166,11 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
           key: 'label',
           type: 'input',
           props: {
-            label: 'Label',
-            placeholder: 'type',
-            description:
-              'The fragment of the inventory managed object that should be displayed in the output; e.g. <code>type</code>.',
+            label: gettext('Label'),
+            placeholder: gettext('type'),
+            description: gettext(
+              'The fragment of the inventory managed object that should be displayed in the output; e.g. <code>type</code>.'
+            ),
           },
           expressions: {
             hide: 'model.display != "aggregate" && model.display != "pieAggregate"',
@@ -177,8 +180,8 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
           key: 'sort',
           type: 'select',
           props: {
-            label: 'Sort',
-            options: KPI_AGGREGAOR_WIDGET__SORT_OPTIONS,
+            label: gettext('Sort'),
+            options: KPI_AGGREGATOR_WIDGET__SORT_OPTIONS,
           },
           expressions: {
             hide: 'model.display == "pieCount" || model.display == "pieAggregate"',
@@ -188,8 +191,8 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
           key: 'order',
           type: 'select',
           props: {
-            label: 'Order',
-            options: KPI_AGGREGAOR_WIDGET_ORDER_OPTIONS,
+            label: gettext('Order'),
+            options: KPI_AGGREGATOR_WIDGET_ORDER_OPTIONS,
           },
           expressions: {
             hide: 'model.display == "pieCount" || model.display == "pieAggregate"',
@@ -207,8 +210,8 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
           key: 'chartLegendPosition',
           type: 'select',
           props: {
-            label: 'Chart Legend Position',
-            options: KPI_AGGREGAOR_WIDGET__CHART_LEGEND_POSITION_OPTIONS,
+            label: gettext('Chart Legend Position'),
+            options: KPI_AGGREGATOR_WIDGET__CHART_LEGEND_POSITION_OPTIONS,
           },
           expressions: {
             hide: 'model.display != "pieCount" && model.display != "pieAggregate"',
@@ -222,10 +225,11 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
               type: 'input',
               className: 'col-md-9',
               props: {
-                label: 'Background Color',
+                label: gettext('Background Color'),
                 type: 'color',
-                description:
-                  'Color as Hex, e.g. <code>#FF0000</code>.<br>By default the primary brand theme color will be used.',
+                description: gettext(
+                  'Color as Hex, e.g. <code>#FF0000</code>.<br>By default the primary brand theme color will be used.'
+                ),
               },
               expressions: {
                 hide: 'model.display == "pieCount" || model.display == "pieAggregate"',
@@ -236,15 +240,16 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
               type: 'number',
               className: 'col-md-3',
               props: {
-                label: 'Background Opacity',
+                label: gettext('Background Opacity'),
                 min: 0,
                 max: 100,
                 step: 10,
                 addonRight: {
                   text: '%',
                 },
-                description:
-                  'The opacity of the item background color in percent. <code>10</code>% means the item item chart background will be mostly tanslucent.',
+                description: gettext(
+                  'The opacity of the item background color in percent. <code>10</code>% means the item item chart background will be mostly tanslucent.'
+                ),
               },
               expressions: {
                 hide: 'model.display == "pieCount" || model.display == "pieAggregate"',
@@ -264,7 +269,7 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
           key: 'percent',
           type: 'checkbox',
           props: {
-            label: 'Show Percent',
+            label: gettext('Show Percent'),
           },
           expressions: {
             hide: 'model.display == "list"',
@@ -274,23 +279,25 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
           key: 'showMeta',
           type: 'checkbox',
           props: {
-            label: 'Show Meta Info',
-            description: 'Dispalys query duration and paging information.',
+            label: gettext('Show Meta Info'),
+            description: gettext('Displays query duration and paging information.'),
           },
         },
         {
           key: 'runOnLoad',
           type: 'checkbox',
           props: {
-            label: 'Run on Load',
-            description: 'If active, starts to query on page load. Otherwise triggered manually.',
+            label: gettext('Run on Load'),
+            description: gettext(
+              'If active, starts to query on page load. Otherwise triggered manually.'
+            ),
           },
         },
       ],
     },
   ];
 
-  private defaultConfig = cloneDeep(KPI_AGGREGAOR_WIDGET__DEFAULT_CONFIG);
+  private defaultConfig = cloneDeep(KPI_AGGREGATOR_WIDGET__DEFAULT_CONFIG);
   private _config!: KpiAggregatorWidgetConfig;
 
   ngOnInit(): void {
@@ -325,8 +332,10 @@ export class KpiAggregatorWidgetConfigComponent implements OnInit {
 
   private setTenantConfigs() {
     // override default with branding
-    if (Object.hasOwn(this.optionsService.brandingCssVars, 'brand-primary')) {
-      this.defaultConfig.color = this.optionsService.brandingCssVars['brand-primary'];
+    const branding = this.optionsService.brandingCssVars;
+
+    if (branding && Object.hasOwn(branding, 'brand-primary')) {
+      this.defaultConfig.color = branding['brand-primary'];
     }
   }
 

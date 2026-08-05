@@ -1,4 +1,4 @@
-import { Component, effect, inject, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { CoreModule } from '@c8y/ngx-components';
 import { Reminder, ReminderType } from '../../models/reminder.model';
 import { ReminderService } from '../../services/reminder.service';
@@ -16,22 +16,14 @@ export class ReminderTypeComponent {
   readonly reminder = input<Reminder | undefined>();
   readonly id = input<ReminderType['id'] | undefined>();
 
-  type?: ReminderType;
+  /** Derived from the inputs, so no effect and no field to keep in sync. */
+  readonly type = computed<ReminderType | undefined>(() => {
+    const id = this.id() ?? this.reminder()?.reminderType;
 
-  constructor() {
-    effect(() => {
-      const id = this.id() ?? this.reminder()?.reminderType;
+    if (id == null) {
+      return undefined;
+    }
 
-      if (id == null) {
-        this.type = undefined;
-
-        return;
-      }
-
-      this.type = {
-        id,
-        name: this.reminderService.getReminderTypeName(id),
-      };
-    });
-  }
+    return { id, name: this.reminderService.getReminderTypeName(id) };
+  });
 }

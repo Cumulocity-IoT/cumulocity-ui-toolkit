@@ -1,11 +1,12 @@
-import { ComponentRef, Injectable, signal } from '@angular/core';
+import { inject, signal, ComponentRef, Injectable } from '@angular/core';
 import { EventService, IEvent, IResult, TenantOptionsService } from '@c8y/client';
 import { AlertService, EventRealtimeService, RealtimeMessage } from '@c8y/ngx-components';
 import { TranslateService } from '@ngx-translate/core';
 import { filter as _filter, cloneDeep, debounce, has, orderBy, sortBy } from 'lodash';
 import moment from 'moment';
-import { BehaviorSubject, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
+import { escapeHtml } from '~helpers/escape-html';
 import { ActiveTabService } from '~services/active-tab.service';
 import { AssetAccessService, AssetFilterConfig } from '~services/asset-access.service';
 import { DomService } from '~services/dom.service';
@@ -37,12 +38,16 @@ export class ReminderService {
 
   contextFilterAvailable = signal<boolean>(false);
 
-  config$ = new BehaviorSubject<ReminderConfig>({});
-  filters$ = new BehaviorSubject<ReminderGroupFilter>({});
-  open$ = new BehaviorSubject<boolean>(false);
-  reminders$ = new BehaviorSubject<Reminder[]>([]);
-  reminderCounter$ = new BehaviorSubject<number>(0);
-  responsibilityFilterEnabled$ = new BehaviorSubject<boolean>(false);
+  /**
+   * Synchronous state, exposed as signals. These were `BehaviorSubject`s, which
+   * forced `getValue()` reads in the service and manual subscriptions in every
+   * consuming component. (`filters$` was declared but never read, and is gone.)
+   */
+  readonly config = signal<ReminderConfig>({});
+  readonly open = signal(false);
+  readonly reminders = signal<Reminder[]>([]);
+  readonly reminderCounter = signal(0);
+  readonly responsibilityFilterEnabled = signal(false);
 
   get types(): ReminderType[] {
     return this._types;
@@ -58,46 +63,42 @@ export class ReminderService {
   private subscriptions = new Subscription();
   private debouncedSetUpdateTimer = debounce(() => this.setUpdateTimer(), 300);
 
-  private _reminderCounter = 0;
-  private _reminders: Reminder[] = [];
   private _types: ReminderType[] = [];
 
-  private get reminderCounter(): number {
-    return this._reminderCounter;
-  }
-
-  private set reminderCounter(count: number) {
-    this._reminderCounter = count;
-    this.reminderCounter$.next(this._reminderCounter);
-  }
-
-  private get reminders(): Reminder[] {
-    return this._reminders;
-  }
-
-  private set reminders(reminders: Reminder[]) {
-    this._reminders = reminders;
-    this.reminders$.next(this._reminders);
+  /**
+   * Replaces the former `reminders` setter: updating the list also refreshes the
+   * due counter and reschedules the update timer.
+   */
+  private setReminders(reminders: Reminder[]): void {
+    this.reminders.set(reminders);
     this.updateCounter();
     this.debouncedSetUpdateTimer();
   }
 
-  constructor(
-    private alertService: AlertService,
-    private eventService: EventService,
-    private eventRealtimeService: EventRealtimeService,
-    private tenantOptionService: TenantOptionsService,
-    private translateService: TranslateService,
-    private localStorageService: LocalStorageService,
-    private activeTabService: ActiveTabService,
-    private domService: DomService,
-    private assetAccessService: AssetAccessService
-  ) {
+  private alertService = inject(AlertService);
+
+  private eventService = inject(EventService);
+
+  private eventRealtimeService = inject(EventRealtimeService);
+
+  private tenantOptionService = inject(TenantOptionsService);
+
+  private translateService = inject(TranslateService);
+
+  private localStorageService = inject(LocalStorageService);
+
+  private activeTabService = inject(ActiveTabService);
+
+  private domService = inject(DomService);
+
+  private assetAccessService = inject(AssetAccessService);
+
+  constructor() {
     this.activeTabService.init();
   }
 
   clear(): void {
-    this.reminders = [];
+    this.setReminders([]);
   }
 
   destroy() {
@@ -121,20 +122,20 @@ export class ReminderService {
 
     this.contextFilterAvailable.set(tenantConfig.useContext ?? false);
 
-    if (!this.contextFilterAvailable() && this.config$.getValue().useContext) {
+    if (!this.contextFilterAvailable() && this.config().useContext) {
       this.setConfig('useContext', false);
     }
 
     // Initialize responsibility filter
     if (tenantConfig.responsibilityFilter?.enabled) {
       this.responsibilityFilter = tenantConfig.responsibilityFilter;
-      this.responsibilityFilterEnabled$.next(true);
+      this.responsibilityFilterEnabled.set(true);
       await this.loadResponsibilityIds();
     }
 
     this._types = types;
     this.createDrawer();
-    this.reminders = await this.fetchReminders(REMINDER__INITIAL_QUERY_SIZE);
+    this.setReminders(await this.fetchReminders(REMINDER__INITIAL_QUERY_SIZE));
     void this.fetchActiveReminderCounter();
     this.setupReminderSubscription();
     this.setupConfigSubscription();
@@ -202,25 +203,24 @@ export class ReminderService {
    * @returns {void}
    */
   resetFilterConfig(): void {
-    const config = this.config$.getValue();
+    // A new object rather than a mutated one: signals compare by reference, so
+    // mutating in place would not notify subscribers.
+    const { filter: _removed, ...rest } = this.config();
 
-    delete config.filter;
-    this.config$.next(config);
+    this.config.set(rest);
   }
 
   /**
    * Updates the configuration with a new key-value pair.
    * @param {string} key - The configuration key to update.
-   * @param {object | boolean} value - The value to set for the configuration key.
+   * @param value - The value to set for the configuration key.
    * @returns {void}
    */
-  setConfig(key: string, value: object | boolean): void {
-    const config = this.config$.getValue();
-
-    config[key] = value;
+  setConfig<K extends keyof ReminderConfig>(key: K, value: ReminderConfig[K]): void {
+    const config = { ...this.config(), [key]: value };
 
     this.localStorageService.set(REMINDER__LOCAL_STORAGE__CONFIG, config);
-    this.config$.next(config);
+    this.config.set(config);
   }
 
   /**
@@ -249,7 +249,7 @@ export class ReminderService {
   }
 
   private applyContextFilter(groups: ReminderGroup[], context?: string): ReminderGroup[] {
-    const config = this.config$.getValue();
+    const config = this.config();
 
     if (!Object.hasOwn(config, 'useContext') || !config.useContext || !context) return groups;
 
@@ -288,9 +288,9 @@ export class ReminderService {
     return keys.every((key) => reminder[key] === filters[key]);
   }
 
-  private buildTypeFilter(): ReminderGroupFilter {
+  private buildTypeFilter(): ReminderGroupFilter | null {
     const filters: ReminderGroupFilter = {};
-    const config = this.config$.getValue();
+    const config = this.config();
 
     // populate filters
     if (config.filter && Object.hasOwn(config.filter, 'reminderType'))
@@ -302,19 +302,16 @@ export class ReminderService {
   private createDrawer() {
     this.drawerRef = this.domService.appendComponentToBody(ReminderDrawerComponent);
     this.drawer = this.drawerRef.instance as ReminderDrawerComponent;
-    this.open$.next(this.drawer.open$.value);
-    this.subscriptions.add(
-      this.drawer.open$.subscribe((open) => {
-        this.open$.next(open);
-      })
-    );
+    // The drawer owns its open state; mirror it into the service signal.
+    this.open.set(this.drawer.open());
+    this.drawer.openChange.subscribe((open) => this.open.set(open));
   }
 
   private deleteReminderFromList(
     message: Partial<RealtimeMessage<Reminder>>,
     reminders: Reminder[]
-  ): Reminder {
-    let deleted: Reminder;
+  ): Reminder | undefined {
+    let deleted: Reminder | undefined;
 
     reminders = reminders.filter((r) => {
       if (r.id === message.data) {
@@ -326,9 +323,10 @@ export class ReminderService {
       }
     });
 
-    if (deleted && deleted.status === ReminderStatus.active) this.reminderCounter--;
+    if (deleted && deleted.status === ReminderStatus.active)
+      this.reminderCounter.update((count) => count - 1);
 
-    this.reminders = this.digestReminders(reminders);
+    this.setReminders(this.digestReminders(reminders));
 
     return deleted;
   }
@@ -350,11 +348,10 @@ export class ReminderService {
         key: REMINDER__TENANT_OPTION__CONFIG_KEY,
       });
 
-      if (response.data) {
+      if (response.data?.value) {
         try {
           return this.parseJSON<ReminderTenantConfig>(response.data.value);
-        } catch (parseError) {
-          console.error('[R.S:5] Failed to parse tenant config JSON.', parseError);
+        } catch {
           this.alertService.add({
             type: 'danger',
             text: this.translateService.instant('reminder.error.invalidConfig') as string,
@@ -364,11 +361,27 @@ export class ReminderService {
           return {};
         }
       }
-    } catch {
-      // tenant option not configured — context filter unavailable
+    } catch (error) {
+      // A missing tenant option just means the context filter was never
+      // configured; anything else is a real failure the user should see.
+      if (!this.isNotFound(error)) {
+        this.alertService.danger(
+          this.translateService.instant('reminder.error.invalidConfig') as string,
+          error as string
+        );
+      }
     }
 
     return {};
+  }
+
+  /** Distinguishes "tenant option not configured" from an actual request failure. */
+  private isNotFound(error: unknown): boolean {
+    const status =
+      (error as { res?: { status?: number } } | null)?.res?.status ??
+      (error as { status?: number } | null)?.status;
+
+    return status === 404;
   }
 
   private async fetchReminderTypes(): Promise<ReminderType[]> {
@@ -380,13 +393,19 @@ export class ReminderService {
         key: REMINDER__TENANT_OPTION__TYPE_KEY,
       });
 
-      if (response.data)
+      if (response.data?.value)
         types = this.parseJSON<ReminderType[]>(response.data.value).map((type) => ({
           id: type.id,
           name: this.translateService.instant(type.name) as string,
         }));
     } catch (error) {
-      console.error('[R.S:1] No reminder type config found.', error);
+      // Reminder types are optional, so a missing option is not an error.
+      if (!this.isNotFound(error)) {
+        this.alertService.danger(
+          this.translateService.instant('reminder.error.loadTypes') as string,
+          error as string
+        );
+      }
     }
 
     return orderBy(types, 'name');
@@ -408,9 +427,18 @@ export class ReminderService {
       cacheTtl,
     };
 
-    const ids = await this.assetAccessService.getAssetIdsFromConfigAsync(assetFilterConfig);
+    try {
+      const ids = await this.assetAccessService.getAssetIdsFromConfigAsync(assetFilterConfig);
 
-    ids.forEach((id) => this.responsibilityIds.add(id));
+      ids.forEach((id) => this.responsibilityIds.add(id));
+    } catch (error) {
+      // Without the responsibility list the filter would silently hide reminders,
+      // so tell the user rather than showing an incomplete list as if it were complete.
+      this.alertService.danger(
+        this.translateService.instant('reminder.error.responsibilityFilter') as string,
+        error as string
+      );
+    }
   }
 
   private getAssetUrlFromReminder(reminder: Reminder, absoluteUrl = false): string {
@@ -427,8 +455,8 @@ export class ReminderService {
     return url;
   }
 
-  private handleReminderUpdate(message: Partial<RealtimeMessage<Reminder>>): Reminder {
-    let reminders = cloneDeep(this.reminders);
+  private handleReminderUpdate(message: Partial<RealtimeMessage<Reminder>>): Reminder | undefined {
+    let reminders = cloneDeep(this.reminders());
     const now = moment();
 
     if (message.realtimeAction === 'DELETE') return this.deleteReminderFromList(message, reminders);
@@ -437,7 +465,7 @@ export class ReminderService {
 
     switch (message.realtimeAction) {
       case 'UPDATE':
-        reminders = this._reminders.map((r) => {
+        reminders = this.reminders().map((r) => {
           if (r.id === reminder.id) r = reminder;
 
           return r;
@@ -457,12 +485,12 @@ export class ReminderService {
               r.id === reminder.id && r.status === ReminderStatus.active && moment(r.time) <= now
           )
         )
-          this.reminderCounter++;
+          this.reminderCounter.update((count) => count + 1);
         break;
     }
 
     // update order & diff
-    this.reminders = this.digestReminders(reminders);
+    this.setReminders(this.digestReminders(reminders));
 
     return reminder;
   }
@@ -473,11 +501,11 @@ export class ReminderService {
     // user's responsibility scope. Count from the already-filtered in-memory list instead.
     if (this.responsibilityFilter.enabled) {
       const now = new Date().getTime();
-      const counter = this._reminders.filter(
+      const counter = this.reminders().filter(
         (r) => r.status === ReminderStatus.active && new Date(r.time).getTime() <= now
       ).length;
 
-      this.reminderCounter = counter;
+      this.reminderCounter.set(counter);
 
       return counter;
     }
@@ -497,10 +525,13 @@ export class ReminderService {
 
       counter = response?.paging?.totalPages || 0;
     } catch (error) {
-      console.error(error); // TODO better error handling
+      this.alertService.danger(
+        this.translateService.instant('reminder.error.load') as string,
+        error as string
+      );
     }
 
-    this.reminderCounter = counter;
+    this.reminderCounter.set(counter);
 
     return counter;
   }
@@ -518,7 +549,10 @@ export class ReminderService {
 
       reminders = response.data as Reminder[];
     } catch (error) {
-      console.error(error); // TODO better error handling
+      this.alertService.danger(
+        this.translateService.instant('reminder.error.load') as string,
+        error as string
+      );
     }
 
     // Apply responsibility filter before digest & grouping
@@ -531,14 +565,15 @@ export class ReminderService {
     // store filter setting to local storage
     const filter = this.buildTypeFilter();
 
-    this.setConfig('filter', filter);
+    this.setConfig('filter', filter ?? undefined);
 
-    const config = this.config$.getValue();
+    const config = this.config();
 
     groups = this.applyContextFilter(groups, context);
 
     // type filter
     if (
+      !filter ||
       !config?.filter ||
       !Object.hasOwn(config.filter, 'reminderType') ||
       filter[REMINDER__TYPE_FRAGMENT] === ''
@@ -553,7 +588,8 @@ export class ReminderService {
       group.reminders = group.reminders.filter((reminder) =>
         this.applyReminderFilter(reminder, filter)
       );
-      if (!Object.hasOwn(group, 'total') || group.total > group.count) group.total = group.count;
+      if (!Object.hasOwn(group, 'total') || (group.total ?? 0) > group.count)
+        group.total = group.count;
       group.count = group.reminders.length;
     });
 
@@ -561,7 +597,7 @@ export class ReminderService {
   }
 
   private loadConfig(): void {
-    this.config$.next(
+    this.config.set(
       this.localStorageService.getOrDefault<ReminderConfig>(
         REMINDER__LOCAL_STORAGE__CONFIG,
         REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG
@@ -571,8 +607,7 @@ export class ReminderService {
 
   private async requestNotificationPermission(): Promise<boolean> {
     if (!('Notification' in window)) {
-      console.error('[R.S:3] This browser does not support notifications.');
-
+      // Not an error: the browser simply does not support notifications.
       return false;
     }
 
@@ -584,7 +619,7 @@ export class ReminderService {
   private sendNotification(reminder: Reminder): void {
     if (!this.activeTabService.isActive()) return;
 
-    const config = this.config$.getValue();
+    const config = this.config();
 
     if (config.browser) this.sendBrowserNotification(reminder);
     if (config.toast) this.sendToast(reminder);
@@ -592,8 +627,7 @@ export class ReminderService {
 
   private sendBrowserNotification(reminder: Reminder): void {
     if (!this.hasNotificationPermission) {
-      console.error('[R.S:2] Could not send browser notification, missing permission.');
-
+      // Expected when the user declined notifications; the toast still fires.
       return;
     }
 
@@ -603,9 +637,9 @@ export class ReminderService {
       tag: 'reminder.due',
     });
 
-    notification.addEventListener('click', (event) => {
-      const reminder = event.currentTarget['data'] as Reminder;
-
+    notification.addEventListener('click', () => {
+      // `data` was read off the event target; the notification instance carries
+      // the same payload and is properly typed.
       window.open(this.getAssetUrlFromReminder(reminder, true), '_blank');
       notification.close();
     });
@@ -613,12 +647,18 @@ export class ReminderService {
 
   private sendToast(reminder: Reminder): void {
     const url = this.getAssetUrlFromReminder(reminder);
-    const icon = `<i [c8yIcon]="${reminder.isGroup ? 'c8y-group-open' : 'c8y-device'}"></i>`;
+    // `[c8yIcon]` is an Angular binding and inert in a raw HTML string; the icon
+    // has to be applied as a plain class here.
+    const icon = `<i class="${reminder.isGroup ? 'dlt-c8y-icon-group-open' : 'dlt-c8y-icon-device'}"></i>`;
+    // `source.name` and `text` are platform data, so they must be escaped before
+    // going into an `allowHtml` alert.
+    const name = escapeHtml(reminder.source.name ?? '');
+    const text = escapeHtml(this.translateService.instant(reminder.text) as string);
 
     this.alertService.add({
       type: 'warning',
-      text: `<a href="#${url}" class="full-click">${icon} ${reminder.source.name}</a><br />
-        <small>[${this.translateService.instant('reminder.status.DUE')}] ${this.translateService.instant(reminder.text)}</small>`,
+      text: `<a href="#${encodeURI(url)}" class="full-click">${icon} ${name}</a><br />
+        <small>[${this.translateService.instant('reminder.status.DUE')}] ${text}</small>`,
       allowHtml: true,
     });
   }
@@ -628,10 +668,10 @@ export class ReminderService {
 
     clearTimeout(this.updateTimer);
 
-    if (!this.reminders || !this.reminders.length) return;
+    if (!this.reminders().length) return;
 
     const dueReminders = _filter(
-      this.reminders,
+      this.reminders(),
       (r) => r.status !== ReminderStatus.cleared && moment(r.time) > now
     );
     const closestReminder: Reminder = sortBy(dueReminders, 'time')[0];
@@ -643,23 +683,32 @@ export class ReminderService {
     const timeout = diff > this.DAY_IN_MS ? this.DAY_IN_MS : diff;
 
     this.updateTimer = setTimeout(() => {
-      this.reminders = this.digestReminders(this.reminders);
+      this.setReminders(this.digestReminders(this.reminders()));
       this.sendNotification(closestReminder);
     }, timeout);
   }
 
   private setupConfigSubscription(): void {
-    this.localStorageService.storage$
-      .pipe(
-        map((config) => {
-          if (has(config, REMINDER__LOCAL_STORAGE__CONFIG))
-            return this.parseJSON<ReminderConfig>(
-              config[REMINDER__LOCAL_STORAGE__CONFIG] as string
-            );
-        }),
-        filter((config): config is ReminderConfig => config !== undefined)
-      )
-      .subscribe((config) => this.config$.next(config));
+    this.subscriptions.add(
+      this.localStorageService.storage$
+        .pipe(
+          map((config) => {
+            if (!has(config, REMINDER__LOCAL_STORAGE__CONFIG)) return undefined;
+
+            try {
+              return this.parseJSON<ReminderConfig>(
+                config[REMINDER__LOCAL_STORAGE__CONFIG] as string
+              );
+            } catch {
+              // Corrupt local storage must not tear down the subscription;
+              // the previous config stays in effect.
+              return undefined;
+            }
+          }),
+          filter((config): config is ReminderConfig => config !== undefined)
+        )
+        .subscribe((config) => this.config.set(config))
+    );
   }
 
   private setupReminderSubscription(): void {
@@ -695,21 +744,19 @@ export class ReminderService {
     let count = 0;
     let dueDate: number;
 
-    this.reminders.forEach((reminder) => {
+    this.reminders().forEach((reminder) => {
       dueDate = new Date(reminder.time).getTime();
       if (dueDate <= now && reminder.status === ReminderStatus.active) count++;
     });
 
-    this.reminderCounter = count;
+    this.reminderCounter.set(count);
   }
 
+  /**
+   * Parses JSON, propagating malformed input to the caller. Returning `undefined`
+   * while claiming `T` used to let invalid data flow on as a config object.
+   */
   private parseJSON<T>(data: string): T {
-    try {
-      return JSON.parse(data) as T;
-    } catch (error) {
-      console.error('Failed to parse JSON:', error);
-
-      return undefined;
-    }
+    return JSON.parse(data) as T;
   }
 }

@@ -1,6 +1,8 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AlertService, CoreModule } from '@c8y/ngx-components';
 import { BsModalService } from 'ngx-bootstrap/modal';
+import { take } from 'rxjs/operators';
 import { ReleaseNote } from '../../models/release-notes.model';
 import { ReleaseNotesService } from '../../services/release-notes.service';
 import { ReminderNotesAdminModalComponent } from '../admin-modal/admin-modal.component';
@@ -14,12 +16,13 @@ import { TranslateService } from '@ngx-translate/core';
   imports: [CoreModule],
 })
 export class ReminderNotesAdminListComponent implements OnInit {
-  private releaseNoteServive = inject(ReleaseNotesService);
+  private releaseNotesService = inject(ReleaseNotesService);
   private alertService = inject(AlertService);
   private modalService = inject(BsModalService);
   private translateService = inject(TranslateService);
+  private destroyRef = inject(DestroyRef);
 
-  releaseNotes: ReleaseNote[];
+  releaseNotes: ReleaseNote[] = [];
   isLoading = false;
 
   ngOnInit(): void {
@@ -31,14 +34,14 @@ export class ReminderNotesAdminListComponent implements OnInit {
       class: 'modal-md',
     });
 
-    ref.onHidden.subscribe(() => {
+    ref.onHidden?.pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       void this.reload();
     });
   }
 
   async delete(release: ReleaseNote): Promise<void> {
     try {
-      await this.releaseNoteServive.delete(release.id);
+      await this.releaseNotesService.delete(release.id);
       this.alertService.success(
         this.translateService.instant('Release {{version}} deleted', {
           version: release.version,
@@ -58,7 +61,7 @@ export class ReminderNotesAdminListComponent implements OnInit {
       initialState: { release },
     });
 
-    ref.onHidden.subscribe(() => {
+    ref.onHidden?.pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       void this.reload();
     });
   }
@@ -66,13 +69,23 @@ export class ReminderNotesAdminListComponent implements OnInit {
   async reload(): Promise<void> {
     this.isLoading = true;
     this.releaseNotes = [];
-    this.releaseNotes = await this.releaseNoteServive.list(false, false, 2000);
-    this.isLoading = false;
+
+    try {
+      this.releaseNotes = await this.releaseNotesService.list(false, false, 2000);
+    } catch (error) {
+      // An empty list plus a spinner that never stops reads as "no release notes".
+      this.alertService.danger(
+        this.translateService.instant('Could not load the release notes') as string,
+        error as string
+      );
+    } finally {
+      this.isLoading = false;
+    }
   }
 
   async publish(release: ReleaseNote, isPublished: boolean): Promise<void> {
     try {
-      await this.releaseNoteServive.publish(release, isPublished);
+      await this.releaseNotesService.publish(release, isPublished);
       this.alertService.success(
         isPublished
           ? (this.translateService.instant('Release note {{version}} published', {
@@ -83,7 +96,12 @@ export class ReminderNotesAdminListComponent implements OnInit {
             }) as string)
       );
     } catch (error) {
-      console.error(error);
+      // Mirrors the handling in `delete()` — the user has to know the publish
+      // state did not change.
+      this.alertService.danger(
+        this.translateService.instant('Could not update release note') as string,
+        error as string
+      );
     }
   }
 }
