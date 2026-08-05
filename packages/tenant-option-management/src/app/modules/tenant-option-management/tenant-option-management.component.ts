@@ -1,6 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import {
   ActionControl,
+  AlertService,
   BuiltInActionType,
   Column,
   ColumnDataType,
@@ -20,7 +21,7 @@ import { TenantOptionManagementService } from './tenant-option-management.servic
 import { ImportOptionModalComponent } from './import-option/import-option-modal.component';
 import { ExportModalComponent } from './export-modal/export-modal.component';
 import { FileImportModalComponent } from './file-import-modal/file-import-modal.component';
-import { TenantOptionRow } from './model';
+import { TenantOptionRow } from './tenant-option-management.model';
 import { ButtonsModule } from 'ngx-bootstrap/buttons';
 
 @Component({
@@ -63,6 +64,7 @@ export class TenantOptionManagementComponent implements OnInit {
   private bsModalService = inject(BsModalService);
   protected modal = inject(ModalService);
   protected translateService = inject(TranslateService);
+  private alertService = inject(AlertService);
 
   constructor() {
     this.columns = this.getDefaultColumns();
@@ -136,12 +138,19 @@ export class TenantOptionManagementComponent implements OnInit {
   openAddModal(row?: TenantOptionRow) {
     const modalRef = this.bsModalService.show(AddOptionModalComponent, { class: 'modal-lg' });
 
-    modalRef.content.ids = this.rows.map((r) => r.id);
+    const content = modalRef.content;
+
+    if (!content) {
+      return;
+    }
+
+    content.ids = this.rows.map((r) => r.id);
 
     if (row) {
-      modalRef.content.setOption(row);
+      content.setOption(row);
     }
-    modalRef.content.closeSubject.pipe(take(1)).subscribe((option) => {
+
+    content.closeSubject.pipe(take(1)).subscribe((option) => {
       if (option) {
         const index = this.rows.findIndex((r) => r.id === option.id);
 
@@ -158,7 +167,7 @@ export class TenantOptionManagementComponent implements OnInit {
   openImportFromFileModal() {
     const modalRef = this.bsModalService.show(FileImportModalComponent, { class: 'modal-lg' });
 
-    modalRef.content.closeSubject.pipe(take(1)).subscribe(() => {
+    modalRef.content?.closeSubject.pipe(take(1)).subscribe(() => {
       void this.reload();
     });
   }
@@ -166,7 +175,7 @@ export class TenantOptionManagementComponent implements OnInit {
   openAllowListModal() {
     const modalRef = this.bsModalService.show(ImportOptionModalComponent, { class: 'modal-lg' });
 
-    modalRef.content.closeSubject.pipe(take(1)).subscribe((row) => {
+    modalRef.content?.closeSubject.pipe(take(1)).subscribe((row) => {
       if (row) {
         this.rows.push(row);
         this.rows = [...this.rows]; // trigger binding
@@ -177,7 +186,7 @@ export class TenantOptionManagementComponent implements OnInit {
   openExportModal() {
     const modalRef = this.bsModalService.show(ExportModalComponent, { class: 'modal-lg' });
 
-    modalRef.content.closeSubject.pipe(take(1)).subscribe();
+    modalRef.content?.closeSubject.pipe(take(1)).subscribe();
   }
 
   onEditRow(row: TenantOptionRow): void {
@@ -185,18 +194,28 @@ export class TenantOptionManagementComponent implements OnInit {
   }
 
   async onDeleteRow(row: TenantOptionRow) {
-    await this.modal.confirm(
-      gettext('Delete Tenant Option'),
-      this.translateService.instant(
-        gettext(
-          `You are about to delete Tenant Option with Category "{{ category }}" and Key "{{ key }}". Do you want to proceed?`
-        ),
-        { category: row.category, key: row.key }
-      ) as string,
-      Status.DANGER,
-      { ok: gettext('Delete'), cancel: gettext('Cancel') }
-    );
-    await this.optionsManagement.deleteOption(row);
-    this.rows = this.rows.filter((r) => r.category !== row.category || r.key !== row.key);
+    try {
+      await this.modal.confirm(
+        gettext('Delete Tenant Option'),
+        this.translateService.instant(
+          gettext(
+            `You are about to delete Tenant Option with Category "{{ category }}" and Key "{{ key }}". Do you want to proceed?`
+          ),
+          { category: row.category, key: row.key }
+        ) as string,
+        Status.DANGER,
+        { ok: gettext('Delete'), cancel: gettext('Cancel') }
+      );
+    } catch {
+      // `confirm()` rejects when the user cancels — that is not an error.
+      return;
+    }
+
+    try {
+      await this.optionsManagement.deleteOption(row);
+      this.rows = this.rows.filter((r) => r.category !== row.category || r.key !== row.key);
+    } catch (error) {
+      this.alertService.danger(gettext('Could not delete the tenant option.'), error as string);
+    }
   }
 }

@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy } from '@angular/core';
+import { Component, effect, inject, OnDestroy, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router } from '@angular/router';
 import { AlertService, CoreModule, HeaderService } from '@c8y/ngx-components';
@@ -7,7 +7,7 @@ import { CollapseModule } from 'ngx-bootstrap/collapse';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { MomentModule } from 'ngx-moment';
-import { BehaviorSubject, Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import {
   Reminder,
   REMINDER__ASSET_CONTEXT_ROOTS,
@@ -47,14 +47,17 @@ export class ReminderDrawerComponent implements OnDestroy {
   private router = inject(Router);
   reminderService = inject(ReminderService); // used in template
 
-  open$ = new BehaviorSubject<boolean>(this.open);
+  /** Current drawer state; the service mirrors it into its own `open` signal. */
+  readonly open = signal(false);
+  readonly openChange = new Subject<boolean>();
   reminders: Reminder[] = [];
   reminderGroups: ReminderGroup[] = [];
   lastUpdate?: Date;
   types: ReminderType[] = [];
 
   // for template
-  reminderTypeFilter: string = REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG.filter.reminderType;
+  reminderTypeFilter: string = REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG.filter?.reminderType ?? '';
+
   toastNotificationsEnabled: ReminderConfig['toast'] =
     REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG.toast;
 
@@ -75,22 +78,12 @@ export class ReminderDrawerComponent implements OnDestroy {
     this.filterByType();
   }
 
-  get open(): boolean {
-    return this._open;
-  }
-
-  set open(openStatus: boolean) {
-    this._open = openStatus;
-    this.open$.next(openStatus);
-  }
-
   private context?: string;
   private subscriptions = new Subscription();
   private rightDrawerOpen = false;
   private updateTimer?: NodeJS.Timeout;
-  private _open = false;
   private _previousState: Reminder['id'][][] = [];
-  private _contextFilterEnabled = REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG.useContext;
+  private _contextFilterEnabled = REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG.useContext ?? false;
 
   constructor() {
     this.getReminderTypes();
@@ -134,7 +127,7 @@ export class ReminderDrawerComponent implements OnDestroy {
 
     this.reminderGroups = this.reminderService.groupReminders(
       this.reminders,
-      this.contextFilterEnabled ? this.context : null
+      this.contextFilterEnabled ? this.context : undefined
     );
   }
 
@@ -143,27 +136,28 @@ export class ReminderDrawerComponent implements OnDestroy {
    * @param configOption - The configuration option to update (e.g., 'filter', 'useContext').
    * @returns void
    */
-  setConfig(configOption: string): void {
-    let value;
-
+  setConfig(configOption: keyof ReminderConfig): void {
+    // Each branch calls through separately so the key and value types stay paired.
     switch (configOption) {
       case 'filter':
-        value = {
-          reminderType: this.reminderTypeFilter,
-        };
+        this.reminderService.setConfig('filter', { reminderType: this.reminderTypeFilter });
         break;
       case 'useContext':
-        value = this._contextFilterEnabled;
+        this.reminderService.setConfig('useContext', this._contextFilterEnabled);
         break;
       case 'toast':
-        value = this.toastNotificationsEnabled;
+        this.reminderService.setConfig('toast', this.toastNotificationsEnabled);
         break;
       case 'browser':
-        value = this.browserNotificationsEnabled;
+        this.reminderService.setConfig('browser', this.browserNotificationsEnabled);
         break;
     }
+  }
 
-    this.reminderService.setConfig(configOption, value as object);
+  /** Sets the drawer state and notifies the service. */
+  private setOpen(open: boolean): void {
+    this.open.set(open);
+    this.openChange.next(open);
   }
 
   /**
@@ -172,12 +166,12 @@ export class ReminderDrawerComponent implements OnDestroy {
    * @returns The updated open state of the drawer.
    */
   toggleDrawer(open?: boolean): boolean {
-    open = typeof open === 'boolean' ? open : !this.open;
+    open = typeof open === 'boolean' ? open : !this.open();
 
-    this.open = open;
+    this.setOpen(open);
     this.toggleRightDrawer(open);
 
-    return this.open;
+    return this.open();
   }
 
   /**
@@ -236,7 +230,7 @@ export class ReminderDrawerComponent implements OnDestroy {
       this.filterByType();
     }
 
-    this._contextFilterEnabled = config.useContext;
+    this._contextFilterEnabled = config.useContext ?? false;
     this.toastNotificationsEnabled = config.toast;
     this.browserNotificationsEnabled = config.browser;
   }
@@ -300,22 +294,16 @@ export class ReminderDrawerComponent implements OnDestroy {
       this.headerService.rightDrawerOpen$.subscribe((open) => {
         this.rightDrawerOpen = open;
 
-        if (open && this.open) {
+        if (open && this.open()) {
           // close the reminders, if the user menu opened
-          this.open = false;
+          this.setOpen(false);
         }
       })
     );
 
-    // get live updates on reminders from service
-    this.subscriptions.add(
-      this.reminderService.reminders$.subscribe((reminders) => this.digestReminders(reminders))
-    );
-
-    // get config updates
-    this.subscriptions.add(
-      this.reminderService.config$.subscribe((config) => this.handleConfigChange(config))
-    );
+    // Live updates on reminders and config come from the service signals.
+    effect(() => this.digestReminders(this.reminderService.reminders()));
+    effect(() => this.handleConfigChange(this.reminderService.config()));
 
     // route change for context
     this.subscriptions.add(
@@ -334,17 +322,18 @@ export class ReminderDrawerComponent implements OnDestroy {
    * @returns void
    */
   private toggleRightDrawer(open: boolean): void {
+    // The header belongs to the shell, so it may legitimately be absent.
     const drawer = document.getElementsByClassName(REMINDER__MAIN_HEADER_CLASS)[0];
 
-    if (open) drawer.classList.add(REMINDER__DRAWER_OPEN_CLASS);
-    else drawer.classList.remove(REMINDER__DRAWER_OPEN_CLASS);
+    if (open) drawer?.classList.add(REMINDER__DRAWER_OPEN_CLASS);
+    else drawer?.classList.remove(REMINDER__DRAWER_OPEN_CLASS);
 
     if (this.rightDrawerOpen) {
       // set user menu drawer status closed, if it is still open
       this.headerService.closeRightDrawer();
       setTimeout(() => {
         // minimal delay needed to override closing animation and keep drawer open
-        if (open) drawer.classList.add(REMINDER__DRAWER_OPEN_CLASS);
+        if (open) drawer?.classList.add(REMINDER__DRAWER_OPEN_CLASS);
       }, 1);
     }
   }

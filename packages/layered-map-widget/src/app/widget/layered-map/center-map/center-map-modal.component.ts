@@ -1,4 +1,12 @@
-import { AfterViewInit, Component, ElementRef, model, OnDestroy, ViewChild } from '@angular/core';
+import {
+  inject,
+  model,
+  AfterViewInit,
+  Component,
+  ElementRef,
+  OnDestroy,
+  ViewChild,
+} from '@angular/core';
 import { fromEvent, Subject, takeUntil } from 'rxjs';
 import { CoreModule, ModalLabels } from '@c8y/ngx-components';
 import { BsModalRef } from 'ngx-bootstrap/modal';
@@ -6,6 +14,7 @@ import { LocationGeocoderService } from '~services/location-geocoder.service';
 import type * as L from 'leaflet';
 import { isNil } from 'lodash';
 import { MapService } from '@c8y/ngx-components/map';
+import { OSM_TILE_OPTIONS, OSM_TILE_URL } from '../base-tile-layers';
 
 @Component({
   providers: [LocationGeocoderService],
@@ -41,11 +50,11 @@ export class CenterMapModalComponent implements AfterViewInit, OnDestroy {
     zoomLevel: number;
   }>({ lat: 51.505, long: -0.09, zoomLevel: 13 });
 
-  constructor(
-    public bsModalRef: BsModalRef,
-    private geo: LocationGeocoderService,
-    private mapService: MapService
-  ) {}
+  public bsModalRef = inject(BsModalRef);
+
+  private geo = inject(LocationGeocoderService);
+
+  private mapService = inject(MapService);
 
   ngAfterViewInit(): void {
     void this.initAfterView();
@@ -55,14 +64,7 @@ export class CenterMapModalComponent implements AfterViewInit, OnDestroy {
     this.leaf = await this.mapService.getLeaflet();
     const options: L.MapOptions = {
       zoom: 15,
-      layers: [
-        this.leaf.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 22,
-          maxNativeZoom: 19,
-          detectRetina: true,
-          referrerPolicy: 'strict-origin-when-cross-origin',
-        }),
-      ],
+      layers: [this.leaf.tileLayer(OSM_TILE_URL, { ...OSM_TILE_OPTIONS })],
       center: this.leaf.latLng(51.23544, 6.79599), // Düsseldorf
       attributionControl: false,
       scrollWheelZoom: false,
@@ -83,23 +85,32 @@ export class CenterMapModalComponent implements AfterViewInit, OnDestroy {
     fromEvent<L.LeafletEvent>(this.map, 'zoomend')
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
-        const zoom = this.map.getZoom();
+        const zoom = this.map?.getZoom();
 
-        this.patchCenter({ zoomLevel: zoom });
+        if (zoom !== undefined) {
+          this.patchCenter({ zoomLevel: zoom });
+        }
       });
 
     fromEvent<L.DragEndEvent>(this.map, 'dragend')
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
-        const center = this.map.getCenter();
+        const center = this.map?.getCenter();
 
-        this.patchCenter({ lat: center.lat, long: center.lng });
+        if (center) {
+          this.patchCenter({ lat: center.lat, long: center.lng });
+        }
       });
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+
+    // The component creates this map itself, so it also has to release it —
+    // otherwise every open/close of the dialog leaks a Leaflet instance.
+    this.map?.remove();
+    this.map = undefined;
   }
 
   onMapReady(map: L.Map): void {

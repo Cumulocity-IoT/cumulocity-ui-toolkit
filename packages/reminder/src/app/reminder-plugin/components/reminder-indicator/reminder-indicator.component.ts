@@ -1,12 +1,12 @@
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { CoreModule } from '@c8y/ngx-components';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { TranslateService } from '@ngx-translate/core';
-import { Subscription } from 'rxjs';
 import { REMINDER__COUNTER_DISPLAY_THRESHOLD } from '../../models/reminder.model';
 import { ReminderService } from '../../services/reminder.service';
 
-const ReminderStatus = {
+/** CSS modifier applied to the indicator for a given due-reminder count. */
+const INDICATOR_STATUS_CLASS = {
   default: '',
   warning: 'status-warning',
   danger: 'status-danger',
@@ -19,66 +19,39 @@ const ReminderStatus = {
   standalone: true,
   imports: [CoreModule, TooltipModule],
 })
-export class ReminderIndicatorComponent implements OnInit, OnDestroy {
+export class ReminderIndicatorComponent {
   private reminderService = inject(ReminderService);
   private translateService = inject(TranslateService);
 
   readonly maxCounter = REMINDER__COUNTER_DISPLAY_THRESHOLD;
 
-  open = signal<boolean>(false);
-  counter = signal<number>(0);
-  status = ReminderStatus.default;
-  tooltipText!: string;
+  // Everything here derives from the service signals, so there is no local state
+  // to keep in sync and nothing to subscribe to or tear down.
+  readonly open = this.reminderService.open;
+  readonly counter = this.reminderService.reminderCounter;
 
-  private subscription = new Subscription();
+  readonly status = computed(() => {
+    const counter = this.counter();
 
-  ngOnInit(): void {
-    // use open status from service
-    this.subscription.add(
-      this.reminderService.open$.subscribe((open) => {
-        this.open.set(open);
-      })
-    );
+    if (counter >= this.maxCounter) return INDICATOR_STATUS_CLASS.danger;
+    if (counter >= 1) return INDICATOR_STATUS_CLASS.warning;
 
-    // use reminder counter from service
-    this.subscription.add(
-      this.reminderService.reminderCounter$.subscribe((counter) => {
-        this.setCounterStatus(counter);
-        this.setCounterText();
-      })
-    );
-  }
+    return INDICATOR_STATUS_CLASS.default;
+  });
 
-  ngOnDestroy(): void {
-    this.subscription.unsubscribe();
-  }
+  readonly tooltipText = computed(() => {
+    const counter = this.counter();
+    const key =
+      counter === 0
+        ? 'reminder.counter.none'
+        : counter === 1
+          ? 'reminder.counter.one'
+          : 'reminder.counter.multiple';
+
+    return this.translateService.instant(key, { counter }) as string;
+  });
 
   toggleDrawer(): void {
     this.reminderService.toggleDrawer();
-  }
-
-  private setCounterStatus(counter: number): void {
-    this.counter.set(counter);
-
-    if (counter >= this.maxCounter) this.status = ReminderStatus.danger;
-    else if (counter >= 1) this.status = ReminderStatus.warning;
-    else this.status = ReminderStatus.default;
-  }
-
-  private setCounterText(counter = this.counter()): void {
-    let txt: string;
-
-    switch (counter) {
-      case 0:
-        txt = 'reminder.counter.none';
-        break;
-      case 1:
-        txt = 'reminder.counter.one';
-        break;
-      default:
-        txt = 'reminder.counter.multiple';
-    }
-
-    this.tooltipText = this.translateService.instant(txt, { counter }) as string;
   }
 }

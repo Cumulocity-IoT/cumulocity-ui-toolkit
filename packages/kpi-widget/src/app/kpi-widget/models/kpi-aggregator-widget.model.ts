@@ -57,9 +57,5 @@ export const KpiAggregatorWidgetChartLegendPosition = {
 export type KpiAggregatorWidgetChartLegendPosition =
   (typeof KpiAggregatorWidgetChartLegendPosition)[keyof typeof KpiAggregatorWidgetChartLegendPosition];
 
-// form elements
-export type KpiAggregatorWidgetOptions = {
-  label: string;
-  value: string | number | boolean;
-  group?: string;
-};
+// form elements: re-exported so existing imports keep working
+export type { FormlySelectOption as KpiAggregatorWidgetOptions } from '~models/formly.model';

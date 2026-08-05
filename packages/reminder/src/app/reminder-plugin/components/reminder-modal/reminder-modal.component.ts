@@ -2,12 +2,13 @@ import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/cor
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CoreModule } from '@c8y/ngx-components';
 import { FormlyModule } from '@ngx-formly/core';
-import { ActivatedRoute, ActivatedRouteSnapshot } from '@angular/router';
-import { EventService, IEvent, IManagedObject, InventoryService, IResult } from '@c8y/client';
+import { ActivatedRoute } from '@angular/router';
+import { EventService, IEvent, IManagedObject, InventoryService } from '@c8y/client';
 import { AlertService } from '@c8y/ngx-components';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { TranslateService } from '@ngx-translate/core';
-import { cloneDeep, has } from 'lodash';
+import { getContextDeviceOrAsset } from '~helpers/route-context.helper';
+import { FormlySelectOption } from '~models/formly.model';
 import moment from 'moment';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import {
@@ -19,12 +20,6 @@ import {
   ReminderType,
 } from '../../models/reminder.model';
 import { ReminderService } from '../../services/reminder.service';
-
-interface FormlySelectOptions {
-  label: string;
-  value: string;
-  group?: string;
-}
 
 @Component({
   selector: 'c8y-reminder-modal',
@@ -43,7 +38,7 @@ export class ReminderModalComponent implements OnInit {
   private translateService = inject(TranslateService);
 
   asset!: Partial<IManagedObject>;
-  typeOptions!: FormlySelectOptions[];
+  typeOptions!: FormlySelectOption[];
   isLoading = false;
   form = new FormGroup({});
 
@@ -95,13 +90,17 @@ export class ReminderModalComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const asset = this.getAssetFromRoute(this.activatedRoute.snapshot);
+    const asset = getContextDeviceOrAsset(this.activatedRoute.snapshot);
 
     if (asset && asset.id) {
       this.asset = asset;
       this.reminder.source = { id: asset.id, name: this.asset['name'] as string };
 
-      this.fields[0].fieldGroup[0].props['asset'] = this.reminder.source;
+      const assetField = this.fields[0]?.fieldGroup?.[0];
+
+      if (assetField?.props) {
+        assetField.props['asset'] = this.reminder.source;
+      }
     }
   }
 
@@ -140,74 +139,25 @@ export class ReminderModalComponent implements OnInit {
       this.reminder.source.id === this.asset?.id
         ? this.asset
         : (await this.inventoryService.detail(this.reminder.source.id)).data;
-    let request: IResult<IEvent>;
 
     if (source && Object.hasOwn(source, 'c8y_IsDeviceGroup')) reminder['isGroup'] = {};
 
+    // A resolved @c8y/client promise means the call succeeded, so there is no
+    // status to check — failures arrive as a rejection.
     try {
-      request = await this.eventService.create(reminder);
-    } catch (error) {
-      console.error(error);
-    }
-
-    this.isLoading = false;
-
-    if (!request) return;
-
-    if (request.res.status === 201) {
+      await this.eventService.create(reminder);
       this.alertService.success(
         this.translateService.instant('reminder.feedback.created') as string
       );
       this.close();
-    } else {
+    } catch (error) {
       this.alertService.danger(
-        this.translateService.instant('reminder.feedback.not-created') as string
+        this.translateService.instant('reminder.feedback.not-created') as string,
+        error as string
       );
+    } finally {
+      this.isLoading = false;
     }
-  }
-
-  /**
-   * Recursively searches for context data in the route hierarchy.
-   * @param {ActivatedRouteSnapshot} route - The current route snapshot.
-   * @param {number} [numberOfCheckedParents=0] - The number of parent routes checked so far.
-   * @returns {IManagedObject} The managed object context data, if found.
-   */
-  private recursiveContextSearch(
-    route: ActivatedRouteSnapshot,
-    numberOfCheckedParents = 0
-  ): IManagedObject {
-    let context: { contextData: IManagedObject } = undefined;
-
-    if (route?.data['contextData']) {
-      context = route.data as { contextData: IManagedObject };
-    } else if (route?.firstChild?.data['contextData']) {
-      context = route.firstChild.data as { contextData: IManagedObject };
-    }
-
-    if (!context) return undefined;
-
-    return context['contextData']
-      ? cloneDeep(context['contextData'])
-      : route.parent && numberOfCheckedParents < 3
-        ? this.recursiveContextSearch(route.parent, numberOfCheckedParents + 1)
-        : undefined;
-  }
-
-  /**
-   * Retrieves the asset from the current route.
-   * @param {ActivatedRouteSnapshot} route - The current route snapshot.
-   * @returns {IManagedObject} The managed object representing the asset, if found.
-   */
-  private getAssetFromRoute(route: ActivatedRouteSnapshot): IManagedObject {
-    if (!route)
-      console.error('No Route provided'); // dev feedback, not translated on purpose
-    else {
-      const mo = this.recursiveContextSearch(route);
-
-      if (mo && (Object.hasOwn(mo, 'c8y_IsDevice') || has(mo, 'c8y_IsDeviceGroup'))) return mo;
-    }
-
-    return undefined;
   }
 
   /**

@@ -98,7 +98,7 @@ describe('ReleaseNotesService', () => {
       const notes = await service.list();
 
       expect(notes[0].publicationTime).toBeInstanceOf(Date);
-      expect(notes[0].publicationTime.getFullYear()).toBe(2024);
+      expect(notes[0].publicationTime?.getFullYear()).toBe(2024);
     });
 
     it('sets published=false when the published fragment is absent', async () => {
@@ -161,7 +161,6 @@ describe('ReleaseNotesService', () => {
 
   describe('delete()', () => {
     it('delegates to eventService.delete with the release id', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       eventService.delete.and.returnValue(Promise.resolve({ data: null as any, res: FETCH_RES }));
 
       await service.delete('evt-42');

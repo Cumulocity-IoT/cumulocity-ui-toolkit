@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, input } from '@angular/core';
+import { input, output, Component } from '@angular/core';
 import { CoreModule } from '@c8y/ngx-components';
 import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
 
@@ -15,7 +15,7 @@ export class ActionBarDropdown {
 
   items = input<ActionBarDropdownItem[]>([]);
 
-  @Output() selectionChange = new EventEmitter<ActionBarDropdownItem>();
+  readonly selectionChange = output<ActionBarDropdownItem>();
 
   changeSelection(item: ActionBarDropdownItem) {
     item.selected = true;

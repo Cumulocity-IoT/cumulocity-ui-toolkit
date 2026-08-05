@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, ViewChild } from '@angular/core';
+import { inject, output, Component, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IManagedObjectBinary, InventoryBinaryService } from '@c8y/client';
 import { AlertService, CoreModule, DropAreaComponent, DroppedFile } from '@c8y/ngx-components';
@@ -16,12 +16,11 @@ export class ImageUploadComponent {
   @ViewChild('fileUpload') fileUpload!: DropAreaComponent;
   FILE_SIZE_LIMIT = 1024 * 1024 * 100;
 
-  @Output() imageUploaded = new EventEmitter<IManagedObjectBinary>();
+  readonly imageUploaded = output<IManagedObjectBinary>();
 
-  constructor(
-    private binaryService: InventoryBinaryService,
-    private alert: AlertService
-  ) {}
+  private binaryService = inject(InventoryBinaryService);
+
+  private alert = inject(AlertService);
 
   onFileDropped(droppedFiles?: DroppedFile[]) {
     if (isNil(droppedFiles)) {

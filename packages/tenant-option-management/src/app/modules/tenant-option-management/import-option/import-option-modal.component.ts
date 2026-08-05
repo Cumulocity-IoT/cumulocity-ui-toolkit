@@ -4,7 +4,7 @@ import { AlertService, CoreModule } from '@c8y/ngx-components';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Subject } from 'rxjs';
 import { TenantOptionManagementService } from '../tenant-option-management.service';
-import { TenantOptionRow } from '../model';
+import { TenantOptionRow } from '../tenant-option-management.model';
 
 @Component({
   templateUrl: './import-option-modal.component.html',

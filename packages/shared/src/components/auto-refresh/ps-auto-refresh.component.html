@@ -24,8 +24,8 @@
         />
       @if (isIntervalToggleEnabled) {
         <c8y-countdown-interval
-          [countdownInterval]="toggleIntervalForm.value.refreshInterval"
-          (countdownEnded)="onCountdownEnded.emit()"
+          [countdownInterval]="refreshInterval"
+          (countdownEnded)="countdownEnded.emit()"
         ></c8y-countdown-interval>
       }
       @if (!isIntervalToggleEnabled) {
@@ -66,13 +66,13 @@
         type="button"
         [adaptivePosition]="false"
         [delay]="500"
-        [disabled]="isLoading$() | async"
-        (click)="onCountdownEnded.emit()"
+        [disabled]="isLoading()"
+        (click)="countdownEnded.emit()"
         data-cy="c8y-alarms-reload-button"
         >
         <i
           c8yIcon="refresh"
-          [ngClass]="{ 'icon-spin': isLoading$() | async }"
+          [class.icon-spin]="isLoading()"
         ></i>
       </button>
     </div>

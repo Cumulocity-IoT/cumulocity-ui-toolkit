@@ -30,16 +30,16 @@
           <!-- ── Station ─────────────────────────────────────────────────── -->
           <div
             class="ql-station"
-            [ngClass]="'ql-station--' + clause.clauseType"
+            [class]="'ql-station--' + clause.clauseType"
           >
             <!-- Type label -->
             <span
               class="text-uppercase text-bold text-10 m-b-4"
               style="display: block; opacity: 0.75;"
-              [ngClass]="{
-                'text-danger': clause.clauseType === 'exclusion',
-                'text-info':   clause.clauseType === 'filter' || clause.clauseType === 'inclusion'
-              }"
+              [class.text-danger]="clause.clauseType === 'exclusion'"
+              [class.text-info]="
+                clause.clauseType === 'filter' || clause.clauseType === 'inclusion'
+              "
             >{{ getStationTypeLabel(clause.clauseType) | translate }}</span>
 
             <!-- Inclusion clause → vertical OR stack -->

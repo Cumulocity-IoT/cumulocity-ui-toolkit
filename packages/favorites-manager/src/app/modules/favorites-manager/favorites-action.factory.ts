@@ -12,9 +12,12 @@ export class FavoritesActionFactory implements ActionBarFactory {
     template: FavoritesActionComponent,
   };
 
-  get(activatedRoute?: ActivatedRoute) {
+  // `ExtensionFactory.get` is typed `T[] | T` (plus async variants) — an empty
+  // array is the documented way to contribute nothing; `undefined` only ever
+  // type-checked because strictNullChecks was off.
+  get(activatedRoute?: ActivatedRoute): ActionBarItem[] {
     if (!activatedRoute) {
-      return undefined;
+      return [];
     }
 
     const managedObject = activatedRoute.parent?.snapshot?.data
@@ -26,9 +29,9 @@ export class FavoritesActionFactory implements ActionBarFactory {
         !managedObject.c8y_IsAsset &&
         !managedObject.c8y_IsDeviceGroup)
     ) {
-      return undefined;
+      return [];
     }
 
-    return this.FAVORITES_ACTION;
+    return [this.FAVORITES_ACTION];
   }
 }

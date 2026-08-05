@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { ApplicationService, IApplication } from '@c8y/client';
 
 /**
@@ -11,7 +11,7 @@ import { ApplicationService, IApplication } from '@c8y/client';
 export class ApplicationAvailabilityService {
   private cache = new Map<string, Promise<boolean>>();
 
-  constructor(private applicationService: ApplicationService) {}
+  private applicationService = inject(ApplicationService);
 
   /**
    * Resolves to `true` if an application/microservice matching the given name or
@@ -19,11 +19,13 @@ export class ApplicationAvailabilityService {
    * @param nameOrContextPath Application name or context path (e.g. `'dtm'`).
    */
   isAvailable(nameOrContextPath: string): Promise<boolean> {
-    if (!this.cache.has(nameOrContextPath)) {
-      this.cache.set(nameOrContextPath, this.checkAvailability(nameOrContextPath));
-    }
+    // Held in a local so the returned value is a `Promise<boolean>` rather than
+    // `Map.get()`'s `Promise<boolean> | undefined`.
+    const cached = this.cache.get(nameOrContextPath) ?? this.checkAvailability(nameOrContextPath);
 
-    return this.cache.get(nameOrContextPath);
+    this.cache.set(nameOrContextPath, cached);
+
+    return cached;
   }
 
   private async checkAvailability(nameOrContextPath: string): Promise<boolean> {

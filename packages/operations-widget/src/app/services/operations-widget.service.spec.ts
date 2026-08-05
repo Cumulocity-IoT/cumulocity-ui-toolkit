@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { IFetchResponse, OperationService } from '@c8y/client';
 import { AlertService } from '@c8y/ngx-components';
+import { TranslateService } from '@ngx-translate/core';
 import { provideMock } from '~helpers/auto-mock.helper';
 import { OperationButtonConfig } from '../models/operations-widget-config.model';
 import { OperationsWidgetService } from './operations-widget.service';
@@ -26,12 +27,22 @@ describe('OperationsWidgetService', () => {
         OperationsWidgetService,
         provideMock(OperationService),
         provideMock(AlertService),
+        provideMock(TranslateService),
       ],
     });
 
     service = TestBed.inject(OperationsWidgetService);
     operationService = TestBed.inject(OperationService) as jasmine.SpyObj<OperationService>;
     alertService = TestBed.inject(AlertService) as jasmine.SpyObj<AlertService>;
+
+    // Resolve messages to "<key>|<interpolated label>" so the assertions can show
+    // both the translated key and the value substituted into it.
+    const translateService = TestBed.inject(TranslateService) as jasmine.SpyObj<TranslateService>;
+
+    (translateService.instant as unknown as jasmine.Spy).and.callFake(
+      (key: string, params?: Record<string, unknown>) =>
+        params ? `${key}|${String(params['label'])}` : key
+    );
   });
 
   it('should be created', () => {
@@ -41,7 +52,6 @@ describe('OperationsWidgetService', () => {
   describe('createOperation()', () => {
     it('creates the operation with the button description merged in', async () => {
       operationService.create.and.returnValue(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         Promise.resolve({ data: {} as any, res: {} as IFetchResponse })
       );
 
@@ -55,14 +65,13 @@ describe('OperationsWidgetService', () => {
 
     it('shows a success alert when the API call resolves', async () => {
       operationService.create.and.returnValue(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         Promise.resolve({ data: {} as any, res: {} as IFetchResponse })
       );
 
       await service.createOperation(mockButton, mockPayload);
 
       expect(alertService.success).toHaveBeenCalledWith(
-        `Operation '${mockButton.label}' successfully created.`
+        `Operation '{{ label }}' successfully created.|${mockButton.label}`
       );
     });
 
@@ -72,7 +81,8 @@ describe('OperationsWidgetService', () => {
       await service.createOperation(mockButton, mockPayload);
 
       expect(alertService.danger).toHaveBeenCalledWith(
-        `Failed to create '${mockButton.label}' operation.`
+        `Failed to create '{{ label }}' operation.|${mockButton.label}`,
+        jasmine.anything()
       );
     });
 

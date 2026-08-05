@@ -1,6 +1,6 @@
 <button
-  class="{{ status }}"
-  [tooltip]="tooltipText"
+  [class]="status()"
+  [tooltip]="tooltipText()"
   [container]="'body'"
   [placement]="'bottom'"
   [class.open]="open()"

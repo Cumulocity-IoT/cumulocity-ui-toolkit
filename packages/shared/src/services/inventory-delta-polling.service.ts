@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { IManagedObject, InventoryService } from '@c8y/client';
 import { Observable, Subscriber } from 'rxjs';
 
@@ -10,7 +10,7 @@ export type InventoryDelta = {
 };
 @Injectable()
 export class InventoryDeltaPollingService {
-  constructor(private inventory: InventoryService) {}
+  private inventory = inject(InventoryService);
 
   createPolling$(
     filter: object,

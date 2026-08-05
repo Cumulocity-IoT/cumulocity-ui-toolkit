@@ -3,8 +3,8 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { CoreModule, RouterModule } from '@c8y/ngx-components';
 import { CockpitDashboardModule } from '@c8y/ngx-components/context-dashboard/cockpit-home-dashboard';
 import { FormlyModule } from '@ngx-formly/core';
-import { AssetFieldType } from '~components/_formly-fields/asset.formly/asset.formly.component';
-import { TimeFieldType } from '~components/_formly-fields/time.formly/time.formly.component';
+import { AssetFieldType } from '~components/_formly-fields/asset-formly/asset-formly.component';
+import { TimeFieldType } from '~components/_formly-fields/time-formly/time-formly.component';
 
 export const appConfig: ApplicationConfig = {
   providers: [

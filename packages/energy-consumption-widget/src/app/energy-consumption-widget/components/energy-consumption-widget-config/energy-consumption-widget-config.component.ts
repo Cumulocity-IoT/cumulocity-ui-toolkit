@@ -1,7 +1,9 @@
 import { Component, inject, Input, TemplateRef, ViewChild } from '@angular/core';
+import { gettext } from '@c8y/ngx-components/gettext';
 import { FormGroup } from '@angular/forms';
 import { CoreModule } from '@c8y/ngx-components';
 import { WidgetConfigService } from '@c8y/ngx-components/context-dashboard';
+import { setWidgetPreview } from '~helpers/widget-preview.helper';
 import { FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
 import {
   ENERGY_CONSUMPTION_WIDGET__DATE_RANGE,
@@ -30,12 +32,7 @@ export class EnergyConsumptionWidgetConfigComponent {
 
   @ViewChild('widgetPreview')
   set previewMapSet(template: TemplateRef<unknown>) {
-    if (template) {
-      this.widgetConfigService.setPreview(template);
-
-      return;
-    }
-    this.widgetConfigService.setPreview(null);
+    setWidgetPreview(this.widgetConfigService, template);
   }
 
   form = new FormGroup({});
@@ -50,7 +47,7 @@ export class EnergyConsumptionWidgetConfigComponent {
           className: 'col-sm-12',
           defaultValue: EnergyWidgetRangeType.DATE,
           props: {
-            label: 'Range Type',
+            label: gettext('Range Type'),
             required: true,
             options: ENERGY_CONSUMPTION_WIDGET__RANGE_TYPE_OPTIONS,
           },
@@ -65,7 +62,7 @@ export class EnergyConsumptionWidgetConfigComponent {
               className: 'col-sm-12',
               hideExpression: (model: EnergyConsumptionWidgetConfig) => model.rangeType !== 'event',
               props: {
-                label: 'Event Type',
+                label: gettext('Event Type'),
                 required: true,
               },
             },
@@ -81,7 +78,7 @@ export class EnergyConsumptionWidgetConfigComponent {
               className: 'col-sm-4',
               defaultValue: EnergyWidgetDateDisplayMode.TOTAL,
               props: {
-                label: 'Display Mode',
+                label: gettext('Display Mode'),
                 required: true,
                 options: ENERGY_CONSUMPTION_WIDGET__DISPLAY_CONFIG_OPTIONS,
               },
@@ -92,7 +89,7 @@ export class EnergyConsumptionWidgetConfigComponent {
               className: 'col-sm-4',
               defaultValue: ENERGY_CONSUMPTION_WIDGET__DEFAULT_DATE_RANGE,
               props: {
-                label: 'Default Range',
+                label: gettext('Default Range'),
                 required: true,
                 options: ENERGY_CONSUMPTION_WIDGET__DATE_RANGE,
               },
@@ -103,7 +100,7 @@ export class EnergyConsumptionWidgetConfigComponent {
               className: 'col-sm-4 checkbox-field',
               defaultValue: false,
               props: {
-                label: 'Expose Range Select',
+                label: gettext('Expose Range Select'),
               },
             },
           ],
@@ -116,7 +113,7 @@ export class EnergyConsumptionWidgetConfigComponent {
               type: 'input',
               className: 'col-sm-4',
               props: {
-                label: 'Measurement Type',
+                label: gettext('Measurement Type'),
                 required: true,
               },
             },
@@ -125,7 +122,7 @@ export class EnergyConsumptionWidgetConfigComponent {
               type: 'input',
               className: 'col-sm-4',
               props: {
-                label: 'Fragment',
+                label: gettext('Fragment'),
                 required: true,
               },
             },
@@ -134,7 +131,7 @@ export class EnergyConsumptionWidgetConfigComponent {
               type: 'input',
               className: 'col-sm-4',
               props: {
-                label: 'Series',
+                label: gettext('Series'),
                 required: false,
               },
             },
@@ -149,7 +146,7 @@ export class EnergyConsumptionWidgetConfigComponent {
               className: 'col-sm-4',
               defaultValue: 2,
               props: {
-                label: 'Rounding Digits',
+                label: gettext('Rounding Digits'),
                 required: true,
               },
             },
@@ -158,10 +155,10 @@ export class EnergyConsumptionWidgetConfigComponent {
               type: 'input',
               className: 'col-sm-4',
               props: {
-                label: 'Bar Color',
+                label: gettext('Bar Color'),
                 required: false,
-                placeholder: '#000000',
-                description: 'If empty "brand light" is used as a fallback"',
+                placeholder: gettext('#000000'),
+                description: gettext('If empty "brand light" is used as a fallback"'),
               },
             },
             {
@@ -172,7 +169,7 @@ export class EnergyConsumptionWidgetConfigComponent {
                 model.displayMode !== 'total',
               defaultValue: true,
               props: {
-                label: 'Begin Scale at Zero',
+                label: gettext('Begin Scale at Zero'),
               },
             },
           ],

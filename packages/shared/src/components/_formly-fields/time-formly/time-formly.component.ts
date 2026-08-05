@@ -7,7 +7,7 @@ import { TimepickerModule } from 'ngx-bootstrap/timepicker';
 
 @Component({
   selector: 'formly-time',
-  templateUrl: './time.formly.component.html',
+  templateUrl: './time-formly.component.html',
   standalone: true,
   imports: [
     DateTimePickerModule,
@@ -20,8 +20,9 @@ import { TimepickerModule } from 'ngx-bootstrap/timepicker';
 })
 export class TimeFieldType extends FieldType<FieldTypeConfig> implements OnInit {
   now = new Date();
-  day: Date;
-  time: Date;
+  // Assigned in ngOnInit from the form control value.
+  day!: Date;
+  time!: Date;
 
   get date(): Date {
     return this._date;
@@ -32,7 +33,7 @@ export class TimeFieldType extends FieldType<FieldTypeConfig> implements OnInit 
     this.formControl.setValue(date.toISOString());
   }
 
-  private _date: Date;
+  private _date!: Date;
 
   ngOnInit(): void {
     const dateTime = this.formControl.value

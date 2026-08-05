@@ -1,4 +1,10 @@
-import { AstNode, Token, TokenType } from './reverse-queries-util.model';
+import {
+  AstNode,
+  Token,
+  TokenOfType,
+  TokenType,
+  ValueTokenType,
+} from './reverse-queries-util.model';
 import { Tokenizer } from './string-tokenizer';
 
 export class QueryParser {
@@ -38,12 +44,26 @@ export class QueryParser {
     return false;
   }
 
-  private expect(type: TokenType): Token {
+  /**
+   * Matches a value-carrying token and returns its text, or `undefined` when the
+   * current token is of a different type. Keeps the value narrowing local instead
+   * of re-reading `previousToken` as a wide union.
+   */
+  private matchValue(type: ValueTokenType): string | undefined {
+    if (this.current.type !== type) {
+      return undefined;
+    }
+
+    return this.expect(type).value;
+  }
+
+  /** Generic so that `expect('IDENT')` is narrowed to the value-carrying token. */
+  private expect<T extends TokenType>(type: T): TokenOfType<T> {
     if (this.current.type !== type) {
       throw new Error(`Expected ${type}, got ${this.current.type}`);
     }
 
-    return this.advance();
+    return this.advance() as TokenOfType<T>;
   }
 
   private parseOr(): AstNode {
@@ -167,12 +187,16 @@ export class QueryParser {
   }
 
   private parseLiteral(): string | number | null {
-    if (this.match('STRING')) {
-      return this.previousToken.value;
+    const stringValue = this.matchValue('STRING');
+
+    if (stringValue !== undefined) {
+      return stringValue;
     }
 
-    if (this.match('NUMBER')) {
-      return Number(this.previousToken.value);
+    const numberValue = this.matchValue('NUMBER');
+
+    if (numberValue !== undefined) {
+      return Number(numberValue);
     }
 
     // null literal

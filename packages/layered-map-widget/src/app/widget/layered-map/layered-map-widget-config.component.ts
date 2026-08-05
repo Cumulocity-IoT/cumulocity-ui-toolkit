@@ -1,6 +1,7 @@
-import { CoreModule, DynamicComponent, OnBeforeSave } from '@c8y/ngx-components';
+import { AlertService, CoreModule, DynamicComponent, OnBeforeSave } from '@c8y/ngx-components';
+import { gettext } from '@c8y/ngx-components/gettext';
 import { IManagedObject } from '@c8y/client';
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, inject, Input, OnInit } from '@angular/core';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { ApplicationAvailabilityService } from '~services/application-availability.service';
 import { DTM_CONTEXT_PATH } from '~services/dtm.service';
@@ -51,11 +52,13 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
   /** Resolves once we know whether the DTM microservice is installed. */
   private dtmInstalled = Promise.resolve(false);
 
-  constructor(
-    private bsModalService: BsModalService,
-    private applicationAvailability: ApplicationAvailabilityService,
-    private customBaseTileLayerService: CustomBaseTileLayerService
-  ) {}
+  private readonly alert = inject(AlertService);
+
+  private bsModalService = inject(BsModalService);
+
+  private applicationAvailability = inject(ApplicationAvailabilityService);
+
+  private customBaseTileLayerService = inject(CustomBaseTileLayerService);
 
   ngOnInit(): void {
     this.mode = this.config.saved ? 'UPDATE' : 'CREATE';
@@ -80,7 +83,9 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
       (this.config as ILayeredMapWidgetConfig).manualCenter = { lat: 0, long: 0, zoomLevel: 15 };
     }
 
-    if (!('positionPolling' in this.config)) {
+    const positionPolling = this.config.positionPolling;
+
+    if (!positionPolling) {
       // Disabled by default: only devices that actually move need position
       // polling. For stationary devices it just produces needless requests.
       this.config.positionPolling = {
@@ -88,7 +93,8 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
         interval: 10,
       };
     } else {
-      this.config.positionPolling.enabled = `${this.config.positionPolling.enabled}` === 'true';
+      // Persisted configs may store the flag as the string 'true'.
+      positionPolling.enabled = `${String(positionPolling.enabled)}` === 'true';
     }
 
     this.config.layers.forEach((layer) => {
@@ -99,12 +105,15 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
   async openLayerModal(layer?: LayerConfig<BasicLayerConfig>) {
     const dtmInstalled = await this.dtmInstalled;
     const modalRef = this.bsModalService.show(LayerModalComponent, {});
+    const content = modalRef.content;
 
-    if (modalRef.content) {
-      modalRef.content.dtmInstalled = dtmInstalled;
+    if (!content) {
+      return;
     }
 
-    const close = lastValueFrom(modalRef.content?.closeSubject.pipe(take(1)));
+    content.dtmInstalled = dtmInstalled;
+
+    const close = lastValueFrom(content.closeSubject.pipe(take(1)));
 
     if (!layer) {
       // create mode
@@ -118,7 +127,7 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
       // edit mode
       const original = structuredClone(layer.config);
 
-      modalRef.content?.setLayer(layer.config);
+      content.setLayer(layer.config);
       const updated = await close;
 
       if (updated) {
@@ -132,16 +141,19 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
 
   async openPopoverModal(layer: LayerConfig<BasicLayerConfig>) {
     const modalRef = this.bsModalService.show(PopoverModalComponent);
+    const content = modalRef.content;
 
-    if (modalRef.content) {
-      if (isQueryLayerConfig(layer.config)) {
-        modalRef.content.assetType = layer.config.assetType;
-      }
-
-      modalRef.content.cfg.set(structuredClone(layer.config.popoverConfig));
+    if (!content) {
+      return;
     }
 
-    const close = lastValueFrom(modalRef.content?.closeSubject.pipe(take(1)));
+    if (isQueryLayerConfig(layer.config)) {
+      content.assetType = layer.config.assetType;
+    }
+
+    content.cfg.set(structuredClone(layer.config.popoverConfig));
+
+    const close = lastValueFrom(content.closeSubject.pipe(take(1)));
     const popoverConfig = await close;
 
     if (popoverConfig) {
@@ -151,11 +163,17 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
 
   async openCenterMapModal() {
     const modalRef = this.bsModalService.show(CenterMapModalComponent);
+    const content = modalRef.content;
+
+    if (!content) {
+      return;
+    }
 
     if (this.config.manualCenter) {
-      modalRef.content?.center.set(structuredClone(this.config.manualCenter));
+      content.center.set(structuredClone(this.config.manualCenter));
     }
-    const modal = lastValueFrom(modalRef.content?.closeSubject.pipe(take(1)));
+
+    const modal = lastValueFrom(content.closeSubject.pipe(take(1)));
     const center = await modal;
 
     if (center) {
@@ -177,9 +195,15 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
 
   async openEventTrackCreatorModal() {
     const modalRef = this.bsModalService.show(EventLineCreatorModalComponent, {});
+    const content = modalRef.content;
 
-    modalRef.content.items = [...(this.config.devices ?? [])]; // TODO: remove this and add device selection in event modal
-    const openExportTemplateModal = lastValueFrom(modalRef.content?.closeSubject.pipe(take(1)));
+    if (!content) {
+      return;
+    }
+
+    content.items = [...(this.config.devices ?? [])]; // TODO: remove this and add device selection in event modal
+
+    const openExportTemplateModal = lastValueFrom(content.closeSubject.pipe(take(1)));
     const track = await openExportTemplateModal;
 
     if (track) {
@@ -191,7 +215,13 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
     const modalRef = this.bsModalService.show(DrawLineCreatorModalComponent, {
       class: 'modal-lg',
     });
-    const openExportTemplateModal = lastValueFrom(modalRef.content.closeSubject.pipe(take(1)));
+    const content = modalRef.content;
+
+    if (!content) {
+      return;
+    }
+
+    const openExportTemplateModal = lastValueFrom(content.closeSubject.pipe(take(1)));
     const track = await openExportTemplateModal;
 
     if (track) {
@@ -231,18 +261,29 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
 
   private async loadCustomLayers(): Promise<void> {
     this.customLayersLoading = true;
-    this.customTileLayers = await this.customBaseTileLayerService.load();
-    this.customLayersLoading = false;
+
+    try {
+      this.customTileLayers = await this.customBaseTileLayerService.load();
+    } catch (error) {
+      this.alert.danger(gettext('Could not load the custom base layers.'), error as string);
+    } finally {
+      this.customLayersLoading = false;
+    }
   }
 
   async openCustomBaseLayerModal(existing?: CustomBaseTileLayerEntry): Promise<void> {
     const modalRef = this.bsModalService.show(CustomBaseLayerModalComponent);
+    const content = modalRef.content;
 
-    if (existing && modalRef.content) {
-      modalRef.content.setEntry(existing);
+    if (!content) {
+      return;
     }
 
-    const result = await lastValueFrom(modalRef.content?.closeSubject.pipe(take(1)));
+    if (existing) {
+      content.setEntry(existing);
+    }
+
+    const result = await lastValueFrom(content.closeSubject.pipe(take(1)));
 
     if (!result) {
       return;
@@ -252,8 +293,14 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
       ? this.customTileLayers.map((l) => (l.id === existing.id ? result : l))
       : [...this.customTileLayers, { ...result, id: crypto.randomUUID() }];
 
-    await this.customBaseTileLayerService.save(updated);
-    this.customTileLayers = updated;
+    try {
+      await this.customBaseTileLayerService.save(updated);
+      // Only adopt the new list once it is persisted, otherwise the UI would show
+      // layers that are gone after a reload.
+      this.customTileLayers = updated;
+    } catch (error) {
+      this.alert.danger(gettext('Could not save the custom base layer.'), error as string);
+    }
   }
 
   async deleteCustomBaseLayer(entry: CustomBaseTileLayerEntry): Promise<void> {
@@ -263,8 +310,12 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
       this.config.baseTileLayerId = DEFAULT_BASE_TILE_LAYER_ID;
     }
 
-    await this.customBaseTileLayerService.save(updated);
-    this.customTileLayers = updated;
+    try {
+      await this.customBaseTileLayerService.save(updated);
+      this.customTileLayers = updated;
+    } catch (error) {
+      this.alert.danger(gettext('Could not delete the custom base layer.'), error as string);
+    }
   }
 
   onBeforeSave(config?: ILayeredMapWidgetConfig): Promise<boolean> {

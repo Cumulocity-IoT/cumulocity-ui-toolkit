@@ -1,4 +1,4 @@
-import { Component, EventEmitter, input, model, OnInit, Output } from '@angular/core';
+import { input, model, output, Component, OnInit } from '@angular/core';
 import { InventoryQueryFormComponent } from './inventory-query-form.component';
 import { CoreModule } from '@c8y/ngx-components';
 import { AlarmQueryFormComponent } from './alarm-query-form.component';
@@ -23,7 +23,7 @@ export type QueryResult = { filter: object } & (
   ],
 })
 export class QueryFormsTabComponent implements OnInit {
-  @Output() tabChange = new EventEmitter<'Inventory' | 'Alarm' | 'Event'>();
+  readonly tabChange = output<'Inventory' | 'Alarm' | 'Event'>();
   filter = model<Record<string, unknown>>({});
   hiddenAutoRun = input(false);
   queryType = model<'Inventory' | 'Alarm' | 'Event'>('Inventory');

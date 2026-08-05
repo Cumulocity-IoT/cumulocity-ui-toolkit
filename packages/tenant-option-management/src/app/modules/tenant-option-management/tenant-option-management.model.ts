@@ -27,6 +27,23 @@ export interface TenantOptionImportRow extends ITenantOption {
   status: ImportStatus;
 }
 
+/**
+ * Narrows an entry of a user-supplied import file. The file is arbitrary JSON,
+ * so `category` and `key` must be verified before they are used to build
+ * tenant-option requests.
+ */
+export function isImportableTenantOption(
+  value: unknown
+): value is Pick<ITenantOption, 'category' | 'key' | 'value'> {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const { category, key } = value as Partial<ITenantOption>;
+
+  return typeof category === 'string' && !!category && typeof key === 'string' && !!key;
+}
+
 export interface TenantOptionConfiguration extends IManagedObject {
   type: 'tenant_option_plugin_config';
   options: TenantOptionConfigurationItem[];

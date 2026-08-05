@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, input } from '@angular/core';
+import { input, output, Component } from '@angular/core';
 import { CoreModule } from '@c8y/ngx-components';
 import { ITrack } from '../layered-map-widget.model';
 
@@ -14,8 +14,8 @@ export class TrackListComponent {
   selectedTrackName = input('');
   selectable = input(false);
 
-  @Output() deleteTrack = new EventEmitter<ITrack>();
-  @Output() userChangedSelection = new EventEmitter<{
+  readonly deleteTrack = output<ITrack>();
+  readonly userChangedSelection = output<{
     checked: boolean;
     track: ITrack;
   }>();

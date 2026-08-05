@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, input, Output } from '@angular/core';
+import { input, output, ChangeDetectionStrategy, Component } from '@angular/core';
 import { CoreModule } from '@c8y/ngx-components';
 import { PSQueryDisplayComponent } from '~components/query-display/ps-query-display.component';
 import { BasicLayerConfig, isQueryLayerConfig, LayerConfig } from '../layered-map-widget.model';
@@ -11,11 +11,11 @@ import { filterToQueryString } from '../utils/filter-to-query';
   imports: [CoreModule, PSQueryDisplayComponent],
 })
 export class LayerListComponent {
-  @Output() deleteLayer = new EventEmitter<LayerConfig<BasicLayerConfig>>();
-  @Output() editLayer = new EventEmitter<LayerConfig<BasicLayerConfig>>();
-  @Output() editPopover = new EventEmitter<LayerConfig<BasicLayerConfig>>();
+  readonly deleteLayer = output<LayerConfig<BasicLayerConfig>>();
+  readonly editLayer = output<LayerConfig<BasicLayerConfig>>();
+  readonly editPopover = output<LayerConfig<BasicLayerConfig>>();
 
-  @Output() activeLayerChange = new EventEmitter<{
+  readonly activeLayerChange = output<{
     checked: boolean;
     config: LayerConfig<BasicLayerConfig>;
   }>();

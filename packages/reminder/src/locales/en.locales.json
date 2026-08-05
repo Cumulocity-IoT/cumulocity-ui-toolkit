@@ -15,6 +15,13 @@
       "none": "No Reminder is due",
       "one": "One Reminder is due"
     },
+    "error": {
+      "invalidConfig": "The reminder configuration is invalid and was ignored.",
+      "load": "Could not load the reminders.",
+      "loadTypes": "Could not load the reminder types.",
+      "responsibilityFilter": "Could not load the responsibility filter. Showing all reminders.",
+      "update": "Could not update the reminder."
+    },
     "feedback": {
       "created": "The reminder has been created.",
       "not-created": "Could not create the reminder."

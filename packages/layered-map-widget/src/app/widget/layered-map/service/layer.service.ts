@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { IManagedObject } from '@c8y/client';
 import { FeatureGroup, LatLng, latLng, Marker } from 'leaflet';
 import { has, isEmpty, set } from 'lodash';
@@ -18,11 +18,9 @@ type AlarmStatus = { critical?: number; major?: number; minor?: number; warning?
 
 @Injectable({ providedIn: 'root' })
 export class LayerService {
-  constructor(
-    private popupService: PopUpService,
-    private markerIconService: MarkerIconService,
-    private queryLayerService: QueryLayerService
-  ) {}
+  private popupService = inject(PopUpService);
+  private markerIconService = inject(MarkerIconService);
+  private queryLayerService = inject(QueryLayerService);
 
   createLayers(configs: LayerConfig<BasicLayerConfig>[]): MyLayer[] {
     return configs.map((cfg) => this.createLayer(cfg));
@@ -32,7 +30,7 @@ export class LayerService {
     const cfg = layer.config;
 
     if (isQueryLayerConfig(cfg)) {
-      layer.initialLoad = this.fechtRequestForType(cfg.type, cfg.filter).then((devices) =>
+      layer.initialLoad = this.fetchRequestForType(cfg.type, cfg.filter).then((devices) =>
         this.responseHandlerForType(cfg.type, devices, layer)
       );
     }
@@ -110,9 +108,9 @@ export class LayerService {
         layer.coordinates.delete(toDeleteId);
       }
 
-      if (layer.markerCache.has(toDeleteId)) {
-        const markerToDelete = layer.markerCache.get(toDeleteId);
+      const markerToDelete = layer.markerCache.get(toDeleteId);
 
+      if (markerToDelete) {
         this.popupService.destroyPopup(markerToDelete);
         layer.group.removeLayer(markerToDelete);
         layer.markerCache.delete(toDeleteId);
@@ -135,9 +133,7 @@ export class LayerService {
   }
 
   createLayerGroup(layer: MyLayer): void {
-    const markers = [...layer.coordinates.keys()].map((key) => {
-      const coord = layer.coordinates.get(key);
-
+    const markers = [...layer.coordinates.entries()].map(([key, coord]) => {
       const marker = this.createMarker(key, coord, layer);
 
       layer.markerCache.set(key, marker);
@@ -158,7 +154,7 @@ export class LayerService {
     return new FeatureGroup(markers).getBounds();
   }
 
-  private fechtRequestForType(type: string, filter: object) {
+  private fetchRequestForType(type: string, filter: object) {
     switch (type) {
       case 'Alarm':
         return this.queryLayerService.fetchByAlarmQuery(filter);
@@ -207,7 +203,11 @@ export class LayerService {
       maxWidth: 280,
       autoPan: true,
     });
-    set(marker.getPopup(), 'ref', popup.ref);
+    const attachedPopup = marker.getPopup();
+
+    if (attachedPopup) {
+      set(attachedPopup, 'ref', popup.ref);
+    }
 
     return marker;
   }
@@ -249,7 +249,7 @@ export class LayerService {
 
       marker = layer.markerCache.get(id);
 
-      if (oldCoord.distanceTo(newCoord) > 0) {
+      if (marker && oldCoord && oldCoord.distanceTo(newCoord) > 0) {
         layer.coordinates.set(id, newCoord);
         marker.setLatLng(newCoord);
       }

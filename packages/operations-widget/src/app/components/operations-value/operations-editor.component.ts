@@ -1,12 +1,11 @@
 import {
-  Component,
   effect,
-  EventEmitter,
+  output,
+  signal,
+  Component,
   Input,
   OnChanges,
   OnInit,
-  Output,
-  signal,
   SimpleChanges,
   ViewChild,
 } from '@angular/core';
@@ -29,7 +28,7 @@ import { EditorComponent, MonacoEditorMarkerValidatorDirective } from '@c8y/ngx-
 export class OperationsEditorComponent implements OnInit, OnChanges {
   @Input() supportedOperation: string;
   @Input() value: string;
-  @Output() valueChange = new EventEmitter<string>();
+  readonly valueChange = output<string>();
 
   protected code = signal<string>('');
   private timeout: NodeJS.Timeout;
@@ -139,8 +138,8 @@ export class OperationsEditorComponent implements OnInit, OnChanges {
       try {
         JSON.parse(value);
         this.valueChange.emit(value);
-      } catch (e) {
-        console.warn('JSON parse failed for value: ' + value, e);
+      } catch {
+        // Invalid while the user is still typing; no change is emitted.
       }
     }
   }

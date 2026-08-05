@@ -1,5 +1,5 @@
-import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Subscription } from 'rxjs';
+import { inject, signal, Injectable, OnDestroy } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { LocalStorageService } from './local-storage.service';
 
 export const ACTIVE_TAB_STORAGE_KEY = 'c8y_rpActiveTab';
@@ -11,8 +11,12 @@ export const ACTIVE_TAB_STORAGE_KEY = 'c8y_rpActiveTab';
  */
 @Injectable()
 export class ActiveTabService implements OnDestroy {
-  active$?: BehaviorSubject<boolean>;
-  lastActive$?: BehaviorSubject<boolean>;
+  /**
+   * Created eagerly: as optional `BehaviorSubject`s these were `undefined` until
+   * `init()` ran, which forced a null guard at every read.
+   */
+  readonly active = signal(false);
+  readonly lastActive = signal(false);
 
   private tabId?: string;
   private subscriptions = new Subscription();
@@ -24,7 +28,9 @@ export class ActiveTabService implements OnDestroy {
    * Creates an instance of ActiveTabService.
    * @param localStorageService - Service for managing localStorage operations
    */
-  constructor(private localStorageService: LocalStorageService) {
+  private localStorageService = inject(LocalStorageService);
+
+  constructor() {
     this.subscriptions.add(
       this.localStorageService.storage$.subscribe(() => this.handleStorageUpdate())
     );
@@ -37,8 +43,6 @@ export class ActiveTabService implements OnDestroy {
   ngOnDestroy(): void {
     this.removeEventListeners();
     this.subscriptions.unsubscribe();
-    this.active$?.complete();
-    this.lastActive$?.complete();
   }
 
   /**
@@ -52,8 +56,8 @@ export class ActiveTabService implements OnDestroy {
     const tabActive = !document.hidden;
 
     this.tabId = crypto.randomUUID();
-    this.active$ = new BehaviorSubject(tabActive);
-    this.lastActive$ = new BehaviorSubject(tabActive);
+    this.active.set(tabActive);
+    this.lastActive.set(tabActive);
     if (tabActive) this.setCurrentTabActive();
     this.addEventListeners();
   }
@@ -70,18 +74,16 @@ export class ActiveTabService implements OnDestroy {
 
   /**
    * Handles storage updates triggered by changes in localStorage.
-   * Updates the lastActive$ observable if the active tab state has changed.
+   * Updates the `lastActive` signal if the active tab state has changed.
    * @private
    */
   private handleStorageUpdate(): void {
-    if (!this.tabId || !this.active$ || !this.lastActive$) return;
+    if (!this.tabId) return;
 
     const isActive = this.localStorageService.get(ACTIVE_TAB_STORAGE_KEY) === this.tabId;
 
-    // update lastActive, if it has changed
-    if (isActive !== this.lastActive$.getValue()) {
-      this.lastActive$.next(isActive);
-    }
+    // `set` on an unchanged value is a no-op for signals, so no guard is needed.
+    this.lastActive.set(isActive);
   }
 
   /**
@@ -104,26 +106,21 @@ export class ActiveTabService implements OnDestroy {
 
   /**
    * Handles the window focus event.
-   * Marks this tab as active and updates the active$ observable.
+   * Marks this tab as active and updates the `active` signal.
    * @private
    */
   private onWindowFocus(): void {
     this.setCurrentTabActive();
-
-    if (this.active$ && !this.active$.getValue()) {
-      this.active$.next(true);
-    }
+    this.active.set(true);
   }
 
   /**
    * Handles the window blur event.
-   * Marks this tab as inactive and updates the active$ observable.
+   * Marks this tab as inactive and updates the `active` signal.
    * @private
    */
   private onWindowBlur(): void {
-    if (this.active$) {
-      this.active$.next(false);
-    }
+    this.active.set(false);
   }
 
   /**

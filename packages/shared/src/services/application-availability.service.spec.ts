@@ -3,7 +3,7 @@ import { ApplicationService, IApplication } from '@c8y/client';
 import { ApplicationAvailabilityService } from './application-availability.service';
 
 function makeApp(overrides: Partial<IApplication> = {}): IApplication {
-  return { id: '1', name: 'app', contextPath: 'app', ...overrides } as IApplication;
+  return { id: '1', name: 'app', contextPath: 'app', ...overrides };
 }
 
 describe('ApplicationAvailabilityService', () => {
@@ -54,7 +54,7 @@ describe('ApplicationAvailabilityService', () => {
     });
 
     it('falls back to list() when listByName rejects', async () => {
-      appServiceSpy.listByName.and.returnValue(Promise.reject(new Error('network')) as never);
+      appServiceSpy.listByName.and.returnValue(Promise.reject(new Error('network')));
       appServiceSpy.list.and.returnValue(
         Promise.resolve({ data: [makeApp({ name: 'dtm', contextPath: 'dtm' })] } as never)
       );
@@ -63,8 +63,8 @@ describe('ApplicationAvailabilityService', () => {
     });
 
     it('returns false when both lookups throw', async () => {
-      appServiceSpy.listByName.and.returnValue(Promise.reject(new Error('err')) as never);
-      appServiceSpy.list.and.returnValue(Promise.reject(new Error('err')) as never);
+      appServiceSpy.listByName.and.returnValue(Promise.reject(new Error('err')));
+      appServiceSpy.list.and.returnValue(Promise.reject(new Error('err')));
       expect(await service.isAvailable('dtm')).toBeFalse();
     });
 
@@ -79,12 +79,8 @@ describe('ApplicationAvailabilityService', () => {
     });
 
     it('uses separate cache entries for different keys', async () => {
-      appServiceSpy.listByName.and.returnValue(
-        Promise.resolve({ data: [] } as never)
-      );
-      appServiceSpy.list.and.returnValue(
-        Promise.resolve({ data: [] } as never)
-      );
+      appServiceSpy.listByName.and.returnValue(Promise.resolve({ data: [] } as never));
+      appServiceSpy.list.and.returnValue(Promise.resolve({ data: [] } as never));
       await service.isAvailable('dtm');
       await service.isAvailable('other-app');
       expect(appServiceSpy.listByName).toHaveBeenCalledTimes(2);

@@ -5,7 +5,6 @@
   "license": "Apache-2.0",
   "private": true,
   "packageManager": "pnpm@10.6.0",
-  "config": {},
   "keywords": [
     "cumulocity",
     "cumulocity-package",
@@ -16,7 +15,7 @@
   ],
   "scripts": {
     "build": "run-s build:*",
-    "test": "ng test shared --watch=false --browsers=ChromeHeadlessCI && ng test plugin.energy-consumption-widget --watch=false --browsers=ChromeHeadlessCI && ng test plugin.favorites-manager --watch=false --browsers=ChromeHeadlessCI && ng test plugin.kpi-widget --watch=false --browsers=ChromeHeadlessCI && ng test plugin.operations-widget --watch=false --browsers=ChromeHeadlessCI && ng test plugin.release-notes --watch=false --browsers=ChromeHeadlessCI && ng test plugin.reminder --watch=false --browsers=ChromeHeadlessCI && ng test plugin.tenant-option-management --watch=false --browsers=ChromeHeadlessCI",
+    "test": "ng test shared --watch=false --browsers=ChromeHeadlessCI && ng test plugin.energy-consumption-widget --watch=false --browsers=ChromeHeadlessCI && ng test plugin.favorites-manager --watch=false --browsers=ChromeHeadlessCI && ng test plugin.kpi-widget --watch=false --browsers=ChromeHeadlessCI && ng test plugin.layered-map-widget --watch=false --browsers=ChromeHeadlessCI && ng test plugin.operations-widget --watch=false --browsers=ChromeHeadlessCI && ng test plugin.release-notes --watch=false --browsers=ChromeHeadlessCI && ng test plugin.reminder --watch=false --browsers=ChromeHeadlessCI && ng test plugin.tenant-option-management --watch=false --browsers=ChromeHeadlessCI",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --quiet --fix",
     "--pre/post-----------": "--------------------",
@@ -102,6 +101,7 @@
     "@c8y/ngx-components": "1023.14.132",
     "@c8y/style": "1023.14.132",
     "angular": "1.8.3",
+    "date-fns": "^4.4.0",
     "dotenv": "^17.0.1",
     "monaco-editor": "~0.55.0",
     "ngx-bootstrap": "20.0.2",
@@ -117,6 +117,7 @@
     "@angular/compiler-cli": "^20.3.0",
     "@c8y/devkit": "1023.14.132",
     "@c8y/options": "1023.14.132",
+    "@types/file-saver": "^2.0.7",
     "@types/jasmine": "~5.1.15",
     "@types/lodash": "^4.17.13",
     "@typescript-eslint/eslint-plugin": "^8.60.1",
@@ -138,9 +139,5 @@
     "ts-node": "^10.9.2",
     "typescript": "~5.9.3",
     "wait-on": "^9.0.10"
-  },
-  "overrides": {
-    "globals": "14.0.0",
-    "typescript": "~5.9.2"
   }
 }

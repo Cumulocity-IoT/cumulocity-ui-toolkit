@@ -1,24 +1,26 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { IManagedObject, InventoryService } from '@c8y/client';
-import { Observable, combineLatest, from } from 'rxjs';
+import { Observable, combineLatest, from, of } from 'rxjs';
 import { switchMap, map, startWith, shareReplay } from 'rxjs/operators';
 import { uniq, uniqBy } from 'lodash';
 
 @Injectable({ providedIn: 'root' })
 export class HierarchyAggregationService {
   private cache = new Map<string, Observable<IManagedObject[]>>();
-  constructor(private inventoryService: InventoryService) {}
+  private inventoryService = inject(InventoryService);
 
   getAllChildrenOfManagedObject$(moId: string, cache = true): Observable<IManagedObject[]> {
     const directChildren$ = this.getDirectChildrenOfManagedObject$(moId, cache);
     const allChildren$ = directChildren$.pipe(
-      switchMap((children) =>
-        combineLatest(
-          children
-            .filter((child) => this.hasChildren(child))
-            .map((child) => this.getAllChildrenOfManagedObject$(child.id, cache))
-        )
-      ),
+      switchMap((children) => {
+        const grandChildren$ = children
+          .filter((child) => this.hasChildren(child))
+          .map((child) => this.getAllChildrenOfManagedObject$(child.id, cache));
+
+        // `combineLatest([])` completes without ever emitting, which would stall
+        // the outer combineLatest and drop the direct children entirely.
+        return grandChildren$.length ? combineLatest(grandChildren$) : of<IManagedObject[][]>([]);
+      }),
       map((children) => {
         return children.flat();
       })
@@ -54,8 +56,10 @@ export class HierarchyAggregationService {
     moId: string,
     cache = true
   ): Observable<IManagedObject[]> {
-    if (cache && this.cache.has(moId)) {
-      return this.cache.get(moId);
+    const cached = cache ? this.cache.get(moId) : undefined;
+
+    if (cached) {
+      return cached;
     }
 
     const observable = from(
@@ -76,11 +80,15 @@ export class HierarchyAggregationService {
   }
 
   private hasChildren(mo: IManagedObject): boolean {
-    const { childAdditions, childAssets, childDevices } = mo as IManagedObject & {
-      childAdditions: { count: number };
-      childAssets: { count: number };
-      childDevices: { count: number };
-    };
-    return childAdditions.count > 0 || childAssets.count > 0 || childDevices.count > 0;
+    // The child counts are only present when the request asked for
+    // `withChildrenCount`, and a managed object may omit individual fragments.
+    const { childAdditions, childAssets, childDevices } = mo as IManagedObject &
+      Partial<Record<'childAdditions' | 'childAssets' | 'childDevices', { count?: number }>>;
+
+    return (
+      (childAdditions?.count ?? 0) > 0 ||
+      (childAssets?.count ?? 0) > 0 ||
+      (childDevices?.count ?? 0) > 0
+    );
   }
 }

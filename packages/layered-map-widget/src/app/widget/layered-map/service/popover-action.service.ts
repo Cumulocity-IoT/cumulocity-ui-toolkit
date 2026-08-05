@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import {
   AlarmService,
   EventService,
@@ -19,12 +19,10 @@ import {
 
 @Injectable()
 export class PopoverActionService {
-  constructor(
-    private operationService: OperationService,
-    private alarmService: AlarmService,
-    private eventService: EventService,
-    private alert: AlertService
-  ) {}
+  private operationService = inject(OperationService);
+  private alarmService = inject(AlarmService);
+  private eventService = inject(EventService);
+  private alert = inject(AlertService);
 
   send(action: PopoverAction, mo: IManagedObject) {
     switch (action.type) {
@@ -46,6 +44,15 @@ export class PopoverActionService {
 
   protected sendAlarm(action: AlarmAction, mo: IManagedObject) {
     const partial = action.body;
+
+    // The action body is persisted widget configuration, so the fields the Alarm
+    // API requires are not guaranteed to be present.
+    if (!partial.severity || !partial.type || !partial.text) {
+      return Promise.reject(
+        new Error(`Alarm action "${action.label}" needs a severity, a type and a text.`)
+      );
+    }
+
     let newAlarm: IAlarm = {
       source: mo,
       time: new Date().toISOString(),
@@ -62,6 +69,11 @@ export class PopoverActionService {
 
   protected sendEvent(action: EventAction, mo: IManagedObject) {
     const partial = action.body;
+
+    if (!partial.type || !partial.text) {
+      return Promise.reject(new Error(`Event action "${action.label}" needs a type and a text.`));
+    }
+
     let newEvent: IEvent = {
       source: mo,
       time: new Date().toISOString(),
