@@ -1,7 +1,7 @@
 /// <reference types="cypress" />
 
 describe('Index DB Cache Plugin', () => {
-  before(() => {
+  beforeEach(() => {
     cy.getAuth().login().disableGainsight();
   });
 
