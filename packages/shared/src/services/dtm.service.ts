@@ -1,4 +1,9 @@
 import { Injectable } from '@angular/core';
+import {
+  DtmAssetDefinition,
+  DtmDefinitionsResponse,
+  DtmPropertyDefinition,
+} from '../models/dtm.model';
 import { MicroserviceService } from './microservice.service';
 
 /** Context path of the Digital Twin Manager microservice. */
@@ -79,6 +84,44 @@ export class DtmService extends MicroserviceService {
       name,
       label: property?.title || name,
     }));
+  }
+
+  /**
+   * Retrieves a single Asset Definition by its DTM identifier
+   * (e.g. `"c8y_Windfarm"`).
+   *
+   * GET `service/dtm/definitions/assets/{identifier}`
+   */
+  async getAssetDefinition(identifier: string): Promise<DtmAssetDefinition> {
+    return this.get(
+      `${this.baseUrl}/definitions/assets/${encodeURIComponent(identifier)}`
+    ) as Promise<DtmAssetDefinition>;
+  }
+
+  /**
+   * Retrieves Property Definitions for the given identifiers, filtered to the
+   * `asset` context.
+   *
+   * GET `service/dtm/definitions/properties?identifiers=A,B,C&applicableTo=asset&pageSize=2000`
+   *
+   * Returns an empty array when `identifiers` is empty.
+   */
+  async getPropertyDefinitions(identifiers: string[]): Promise<DtmPropertyDefinition[]> {
+    if (!identifiers.length) {
+      return [];
+    }
+
+    const params = new URLSearchParams({
+      identifiers: identifiers.join(','),
+      applicableTo: 'asset',
+      pageSize: '2000',
+    });
+
+    const response = (await this.get(
+      `${this.baseUrl}/definitions/properties?${params.toString()}`
+    )) as DtmDefinitionsResponse<DtmPropertyDefinition>;
+
+    return response.definitions ?? [];
   }
 
   private toAssetType(definition: Record<string, unknown>): DtmAssetType | undefined {

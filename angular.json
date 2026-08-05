@@ -894,6 +894,111 @@
         }
       }
     },
+    "plugin.smart-views": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "less"
+        }
+      },
+      "root": "packages/smart-views",
+      "sourceRoot": "packages/smart-views/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@c8y/devkit:build",
+          "options": {
+            "outputPath": "dist/cumulocity-smart-views-plugin",
+            "main": "packages/smart-views/src/main.ts",
+            "tsConfig": "packages/smart-views/tsconfig.app.json",
+            "polyfills": [
+              "zone.js"
+            ],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "packages/smart-views/public"
+              }
+            ],
+            "inlineStyleLanguage": "less",
+            "styles": [
+              "packages/smart-views/src/styles.less"
+            ],
+            "scripts": [],
+            "aot": false,
+            "buildOptimizer": false,
+            "allowedCommonJsDependencies": [
+              "regenerator-runtime/runtime",
+              "zone.js/dist/zone"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "all",
+              "buildOptimizer": false
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@c8y/devkit:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.smart-views:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.smart-views:build:development"
+            }
+          },
+          "defaultConfiguration": "development",
+          "options": {
+            "port": 9001,
+            "publicHost": "localhost:9001"
+          }
+        },
+        "deploy": {
+          "builder": "@c8y/devkit:deploy",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.smart-views:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.smart-views:build:development"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:karma",
+          "options": {
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
+            "tsConfig": "packages/smart-views/tsconfig.spec.json",
+            "inlineStyleLanguage": "less",
+            "karmaConfig": "karma.conf.js"
+          }
+        }
+      }
+    },
     "plugin.index-db-cache": {
       "projectType": "application",
       "schematics": {
