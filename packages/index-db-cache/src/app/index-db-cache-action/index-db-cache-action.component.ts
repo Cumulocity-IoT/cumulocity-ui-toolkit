@@ -1,30 +1,47 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { CoreModule } from '@c8y/ngx-components';
 import { CollapseModule } from 'ngx-bootstrap/collapse';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
-import { Observable, Subject, takeUntil } from 'rxjs';
-import {
-  CacheLogEntry,
-  CacheLogService,
-  CacheName,
-  LogEventType,
-} from './services/cache-log.service';
+import { CacheEventsService } from './services/cache-events.service';
+import { CacheName, CacheLogService, LogEventType } from './services/cache-log.service';
 import { CacheStateService } from './services/cache-state.service';
-import { MeasurementCacheService } from './services/measurement-cache.service';
-import { NewSeriesCacheService } from './services/new-series-cache.service';
-import { OldSeriesCacheService } from './services/old-series-cache.service';
-
-interface CacheStats {
-  elementCount: number;
-  storageSizeMB: number;
-}
+import { CacheStatsService } from './services/cache-stats.service';
 
 interface StatRow {
   name: CacheName;
-  label: string;
   shortLabel: string;
-  stats: CacheStats | undefined;
+  elementCount: number;
 }
+
+const CACHE_LABELS: { name: CacheName; shortLabel: string }[] = [
+  { name: 'new-series', shortLabel: 'New Series' },
+  { name: 'old-series', shortLabel: 'Old Series' },
+  { name: 'measurement', shortLabel: 'Measurements' },
+];
+
+const LOG_ICONS: Record<LogEventType, string> = {
+  'cache-hit': 'check-circle',
+  'partial-cache': 'bolt',
+  'gap-skipped': 'forward',
+  passthrough: 'cloud-download',
+};
+
+const LOG_ICON_CLASSES: Record<LogEventType, string> = {
+  'cache-hit': 'text-success',
+  'partial-cache': 'text-warning',
+  'gap-skipped': 'text-muted',
+  passthrough: 'text-info',
+};
+
+/** How long the read-activity indicator stays lit after the last read. */
+const LED_LINGER_MS = 400;
 
 @Component({
   selector: 'index-db-cache-action',
@@ -32,166 +49,80 @@ interface StatRow {
   styleUrl: './index-db-cache-action.component.less',
   standalone: true,
   imports: [CoreModule, CollapseModule, TooltipModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class IndexDbCacheActionComponent implements OnInit, OnDestroy {
-  isVisible = true;
-  isCollapsed = true;
-  priority = 100;
+export class IndexDbCacheActionComponent {
+  readonly isVisible = true;
+  readonly priority = 100;
+  readonly isCollapsed = signal(true);
 
-  /** Current value of the caching-active toggle. */
-  cachingActive = true;
+  readonly logIcons = LOG_ICONS;
+  readonly logIconClasses = LOG_ICON_CLASSES;
 
-  /** Per-cache statistics — `undefined` while not yet loaded. */
-  statsMap: Partial<Record<CacheName, CacheStats>> = {};
-  loadingStats = false;
+  private readonly cacheState = inject(CacheStateService);
+  private readonly cacheStats = inject(CacheStatsService);
+  private readonly logService = inject(CacheLogService);
+  private readonly events = inject(CacheEventsService);
 
-  /** Which cache's `clearAll()` is currently in flight. */
-  clearingCache: CacheName | null = null;
+  readonly cachingActive = this.cacheState.active;
+  readonly stats = this.cacheStats.stats;
+  readonly clearing = this.cacheStats.clearing;
+  readonly logs = this.logService.entries;
+  readonly savedPercent = this.logService.savedPercent;
+  readonly totalSavedKB = this.logService.totalSavedKB;
 
-  /** Observable stream of live log entries (newest first). */
-  logs$!: Observable<CacheLogEntry[]>;
+  /** Lights up briefly on every IndexedDB read — a floppy-drive style indicator. */
+  readonly readingFromDb = signal(false);
 
-  private readonly destroy$ = new Subject<void>();
+  readonly statRows = computed<StatRow[] | undefined>(() => {
+    const counts = this.stats()?.counts;
 
-  constructor(
-    private readonly newSeriesCache: NewSeriesCacheService,
-    private readonly oldSeriesCache: OldSeriesCacheService,
-    private readonly measurementCache: MeasurementCacheService,
-    readonly cacheState: CacheStateService,
-    readonly logService: CacheLogService
-  ) {}
+    if (!counts) return undefined;
 
-  ngOnInit(): void {
-    this.cachingActive = this.cacheState.isActive;
-    this.logs$ = this.logService.entries$;
+    return CACHE_LABELS.map(({ name, shortLabel }) => ({
+      name,
+      shortLabel,
+      elementCount: counts[name],
+    }));
+  });
 
-    // Sync toggle state if changed externally (e.g. another tab)
-    this.cacheState.isActive$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((active) => (this.cachingActive = active));
+  private ledHandle: ReturnType<typeof setTimeout> | null = null;
+
+  constructor() {
+    effect(() => {
+      // Skip the effect's initial run — no read has happened yet.
+      if (this.events.readActivity() > 0) {
+        this.flashReadIndicator();
+      }
+    });
   }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
-  // ─── Action bar item ──────────────────────────────────────────────────────────
 
   toggle(): void {
-    this.isCollapsed = !this.isCollapsed;
-
-    if (!this.isCollapsed && !Object.keys(this.statsMap).length) {
-      void this.refreshStats();
-    }
+    this.isCollapsed.update((collapsed) => !collapsed);
   }
-
-  onCollapsed(): void {
-    /* noop — hook for post-collapse side effects */
-  }
-
-  // ─── Cache Control section ────────────────────────────────────────────────────
 
   onActiveToggle(event: Event): void {
     this.cacheState.setActive((event.target as HTMLInputElement).checked);
   }
 
-  // ─── Statistics section ───────────────────────────────────────────────────────
-
-  get statRows(): StatRow[] {
-    return [
-      {
-        name: 'new-series',
-        label: 'New Series (aggregationInterval)',
-        shortLabel: 'New Series',
-        stats: this.statsMap['new-series'],
-      },
-      {
-        name: 'old-series',
-        label: 'Old Series (aggregationType)',
-        shortLabel: 'Old Series',
-        stats: this.statsMap['old-series'],
-      },
-      {
-        name: 'measurement',
-        label: 'Raw Measurements',
-        shortLabel: 'Measurements',
-        stats: this.statsMap['measurement'],
-      },
-    ];
+  clearAllCaches(): void {
+    void this.cacheStats.clearAll();
   }
-
-  async refreshStats(): Promise<void> {
-    this.loadingStats = true;
-
-    try {
-      const [newSeries, oldSeries, measurement] = await Promise.all([
-        this.newSeriesCache.getStats(),
-        this.oldSeriesCache.getStats(),
-        this.measurementCache.getStats(),
-      ]);
-
-      this.statsMap = { 'new-series': newSeries, 'old-series': oldSeries, measurement };
-    } catch {
-      /* IndexedDB unavailable in this context */
-    } finally {
-      this.loadingStats = false;
-    }
-  }
-
-  async clearCache(name: CacheName): Promise<void> {
-    this.clearingCache = name;
-
-    try {
-      await this.cacheForName(name).clearAll();
-    } finally {
-      this.clearingCache = null;
-      await this.refreshStats();
-    }
-  }
-
-  private cacheForName(
-    name: CacheName
-  ): NewSeriesCacheService | OldSeriesCacheService | MeasurementCacheService {
-    switch (name) {
-      case 'new-series':
-        return this.newSeriesCache;
-      case 'old-series':
-        return this.oldSeriesCache;
-      case 'measurement':
-        return this.measurementCache;
-    }
-  }
-
-  // ─── Live log section ─────────────────────────────────────────────────────────
 
   clearLog(): void {
     this.logService.clearLog();
   }
 
-  logIcon(type: LogEventType): string {
-    switch (type) {
-      case 'cache-hit':
-        return 'check-circle';
-      case 'partial-cache':
-        return 'bolt';
-      case 'gap-skipped':
-        return 'forward';
-      default:
-        return 'cloud-download';
-    }
-  }
+  private flashReadIndicator(): void {
+    this.readingFromDb.set(true);
 
-  logIconClass(type: LogEventType): string {
-    switch (type) {
-      case 'cache-hit':
-        return 'text-success';
-      case 'partial-cache':
-        return 'text-warning';
-      case 'gap-skipped':
-        return 'text-muted';
-      default:
-        return 'text-info';
+    if (this.ledHandle !== null) {
+      clearTimeout(this.ledHandle);
     }
+
+    this.ledHandle = setTimeout(() => {
+      this.ledHandle = null;
+      this.readingFromDb.set(false);
+    }, LED_LINGER_MS);
   }
 }

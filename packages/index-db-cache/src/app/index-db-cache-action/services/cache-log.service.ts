@@ -1,5 +1,4 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { Injectable, computed, signal } from '@angular/core';
 
 // ─── Public types ─────────────────────────────────────────────────────────────
 
@@ -58,40 +57,35 @@ const MAX_ENTRIES = 200;
  */
 @Injectable({ providedIn: 'root' })
 export class CacheLogService {
-  private seq = 0;
-  private _totalCachedBytes = 0;
-  private _totalFetchedBytes = 0;
-
-  private readonly _entries$ = new BehaviorSubject<CacheLogEntry[]>([]);
-
-  /** Observable stream of the current log ring-buffer (newest first). */
-  readonly entries$ = this._entries$.asObservable();
+  /** The current log ring-buffer (newest first). */
+  readonly entries = signal<CacheLogEntry[]>([]);
 
   /** Percentage of total bytes served from cache vs fetched from API (0–100). */
-  get savedPercent(): number {
-    const total = this._totalCachedBytes + this._totalFetchedBytes;
+  readonly savedPercent = computed(() => {
+    const total = this.totalCachedBytes() + this.totalFetchedBytes();
 
-    return total > 0 ? Math.round((this._totalCachedBytes / total) * 100) : 0;
-  }
+    return total > 0 ? Math.round((this.totalCachedBytes() / total) * 100) : 0;
+  });
 
   /** Total bytes served from cache across all tracked requests, in KB. */
-  get totalSavedKB(): number {
-    return Math.round(this._totalCachedBytes / 1024);
-  }
+  readonly totalSavedKB = computed(() => Math.round(this.totalCachedBytes() / 1024));
+
+  private seq = 0;
+  private readonly totalCachedBytes = signal(0);
+  private readonly totalFetchedBytes = signal(0);
 
   push(entry: Omit<CacheLogEntry, 'id' | 'ts'>): void {
-    this._totalCachedBytes += entry.cachedBytes;
-    this._totalFetchedBytes += entry.fetchedBytes;
+    this.totalCachedBytes.update((b) => b + entry.cachedBytes);
+    this.totalFetchedBytes.update((b) => b + entry.fetchedBytes);
 
     const full: CacheLogEntry = { ...entry, id: ++this.seq, ts: new Date() };
-    const prev = this._entries$.value;
 
-    this._entries$.next([full, ...prev].slice(0, MAX_ENTRIES));
+    this.entries.update((prev) => [full, ...prev].slice(0, MAX_ENTRIES));
   }
 
   clearLog(): void {
-    this._totalCachedBytes = 0;
-    this._totalFetchedBytes = 0;
-    this._entries$.next([]);
+    this.totalCachedBytes.set(0);
+    this.totalFetchedBytes.set(0);
+    this.entries.set([]);
   }
 }

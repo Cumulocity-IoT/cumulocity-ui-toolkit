@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AggregatedISeries } from './chart-data.service';
+import { CacheEventsService } from './cache-events.service';
 import { COVERAGE_TTL_MS, asError } from './interceptor-helpers';
 
 // ─── DB constants ─────────────────────────────────────────────────────────────
@@ -65,6 +66,8 @@ interface CoverageRecord {
 export class OldSeriesCacheService {
   private dbPromise: Promise<IDBDatabase> | null = null;
 
+  constructor(private readonly events: CacheEventsService) {}
+
   // ─── Cache reads ─────────────────────────────────────────────────────────────
 
   async getRange(
@@ -104,6 +107,10 @@ export class OldSeriesCacheService {
           ];
           cursor.continue();
         } else {
+          if (Object.keys(values).length) {
+            this.events.notifyRead();
+          }
+
           resolve({ values });
         }
       };
@@ -246,6 +253,8 @@ export class OldSeriesCacheService {
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(asError(tx.error, 'IndexedDB transaction failed'));
     });
+
+    this.events.notifyChanged();
   }
 
   // ─── Cache management ─────────────────────────────────────────────────────────
@@ -281,7 +290,10 @@ export class OldSeriesCacheService {
         new Promise<void>((resolve, reject) => {
           const tx = db.transaction([STORE_DATA, STORE_COVERAGE], 'readwrite');
 
-          tx.oncomplete = () => resolve();
+          tx.oncomplete = () => {
+            this.events.notifyChanged();
+            resolve();
+          };
           tx.onerror = () => reject(asError(tx.error, 'IndexedDB transaction failed'));
           tx.objectStore(STORE_DATA).clear();
           tx.objectStore(STORE_COVERAGE).clear();
@@ -297,7 +309,10 @@ export class OldSeriesCacheService {
         new Promise<void>((resolve, reject) => {
           const tx = db.transaction([STORE_DATA, STORE_COVERAGE], 'readwrite');
 
-          tx.oncomplete = () => resolve();
+          tx.oncomplete = () => {
+            this.events.notifyChanged();
+            resolve();
+          };
           tx.onerror = () => reject(asError(tx.error, 'IndexedDB transaction failed'));
 
           const dataStore = tx.objectStore(STORE_DATA);

@@ -1,3 +1,4 @@
+import { CacheEventsService } from './cache-events.service';
 import { MeasurementCacheService } from './measurement-cache.service';
 
 describe('MeasurementCacheService.computeGaps', () => {
@@ -8,7 +9,7 @@ describe('MeasurementCacheService.computeGaps', () => {
   const d = (s: string): Date => new Date(s);
 
   beforeEach(() => {
-    service = new MeasurementCacheService();
+    service = new MeasurementCacheService(new CacheEventsService());
   });
 
   it('returns the full range as one gap when coverage is empty', () => {

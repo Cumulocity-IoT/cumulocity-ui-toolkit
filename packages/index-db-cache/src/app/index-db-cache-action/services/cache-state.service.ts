@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
 const LS_KEY = 'c8y-idb-cache-active';
@@ -14,6 +14,9 @@ const LS_KEY = 'c8y-idb-cache-active';
 export class CacheStateService {
   readonly isActive$ = new BehaviorSubject<boolean>(this.readStorage());
 
+  /** Signal mirror of {@link isActive$} for template/`computed()` consumers. */
+  readonly active = signal(this.isActive$.value);
+
   get isActive(): boolean {
     return this.isActive$.value;
   }
@@ -26,6 +29,7 @@ export class CacheStateService {
     }
 
     this.isActive$.next(active);
+    this.active.set(active);
   }
 
   private readStorage(): boolean {
