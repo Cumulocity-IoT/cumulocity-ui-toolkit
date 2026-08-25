@@ -181,7 +181,20 @@ Available tools:
 
 Recommended flow: `search_concept` (when unsure of the name) → `resolve_symbol` → `get_node` for details → `find_usage` for patterns. Only fall back to other sources (c8y-docs, web search) if the knowledge server has no answer.
 
-The server is configured at the **user level** in Claude Code (`~/.claude.json` → `mcpServers`), running locally via `tsx` from the `c8y-web-sdk-knowledge` repository:
+The server is distributed as a **GitHub package** (`@cumulocity-iot/c8y-web-sdk-knowledge-mcp`) — no checkout or build needed. One-time setup: add these two lines to your `~/.npmrc` (create the file if it doesn't exist), using a token with `read:packages` access:
+
+```ini
+@cumulocity-iot:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=<your token>
+```
+
+After that it works like a regular npm package. Register it at the **user level** in Claude Code:
+
+```bash
+claude mcp add c8y-web-sdk-knowledge -- npx -y @cumulocity-iot/c8y-web-sdk-knowledge-mcp
+```
+
+Equivalent `~/.claude.json` → `mcpServers` entry:
 
 ```jsonc
 {
@@ -189,7 +202,7 @@ The server is configured at the **user level** in Claude Code (`~/.claude.json` 
     "c8y-web-sdk-knowledge": {
       "type": "stdio",
       "command": "npx",
-      "args": ["tsx", "<path-to>/c8y-web-sdk-knowledge/src/mcp-server.ts"]
+      "args": ["-y", "@cumulocity-iot/c8y-web-sdk-knowledge-mcp"]
     }
   }
 }

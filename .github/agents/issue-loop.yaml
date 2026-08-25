@@ -11,7 +11,11 @@
 # Required environment:
 #   ANTHROPIC_API_KEY    model provider key
 #   GITHUB_PAT           fine-grained PAT (issues:write, contents:write, pull_requests:write)
-#   C8Y_KNOWLEDGE_DIR    absolute path to the checked-out c8y-web-sdk-knowledge repo
+#   ~/.npmrc             must map the @cumulocity-iot scope to GitHub Packages with a
+#                        token that has Packages read access — the c8y_sdk MCP server
+#                        is installed on demand via npx (see AGENTS.md, MCP Servers):
+#                          @cumulocity-iot:registry=https://npm.pkg.github.com
+#                          //npm.pkg.github.com/:_authToken=<token>
 #   C8Y_BASEURL          Cumulocity tenant URL (for `pnpm run serve:<plugin>`)
 #   C8Y_SHELL_TARGET     shell app on the tenant (e.g. cockpit-test-1023)
 #   C8Y_TENANT / C8Y_USERNAME / C8Y_PASSWORD
@@ -161,10 +165,11 @@ agents:
         command: npx
         args: ["-y", "@playwright/mcp@latest", "--headless", "--browser", "chromium"]
       # Cumulocity Web SDK knowledge graph — the FIRST stop for any @c8y/* question.
+      # Installed from GitHub Packages (@cumulocity-iot scope via ~/.npmrc).
       - type: mcp
         name: c8y_sdk
         command: npx
-        args: ["tsx", "${C8Y_KNOWLEDGE_DIR}/src/mcp-server.ts"]
+        args: ["-y", "@cumulocity-iot/c8y-web-sdk-knowledge-mcp"]
     instruction: |
       You are a senior Angular 20 / TypeScript developer working on the
       Cumulocity UI Toolkit monorepo, already checked out in the current
