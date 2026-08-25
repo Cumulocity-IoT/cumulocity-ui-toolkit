@@ -4,10 +4,13 @@
 #
 # Required repository secrets:
 #   ANTHROPIC_API_KEY   model provider key
-#   AGENT_GITHUB_PAT    PAT for this repo (contents:write, issues:write,
-#                       pull_requests:write) that can ALSO read the
-#                       @cumulocity-iot/c8y-web-sdk-knowledge-mcp package from
-#                       GitHub Packages (read:packages / Packages: read)
+#   AGENT_GITHUB_PAT    fine-grained PAT for this repo only:
+#                       contents:write, issues:write, pull_requests:write
+#   C8Y_KNOWLEDGE_NPM_TOKEN
+#                       dedicated read-only token for the GitHub Packages npm
+#                       registry, used solely to install
+#                       @cumulocity-iot/c8y-web-sdk-knowledge-mcp
+#                       (classic PAT with read:packages and nothing else)
 #   C8Y_USERNAME / C8Y_PASSWORD / C8Y_TENANT / C8Y_BASEURL   Cumulocity test tenant
 # Optional repository variable:
 #   C8Y_SHELL_TARGET    shell app on the tenant (default: cockpit-test-1023)
@@ -72,12 +75,13 @@ jobs:
       # The c8y_sdk MCP server is a GitHub package; the agent config starts it
       # with `npx -y @cumulocity-iot/c8y-web-sdk-knowledge-mcp`. Map the scope
       # to GitHub Packages in the user npmrc (kept out of the repo's .npmrc so
-      # the token never lands in the checkout).
+      # the token never lands in the checkout). Uses a dedicated read-only
+      # packages token — NOT the PAT that can write to this repo.
       - name: Configure GitHub Packages registry for @cumulocity-iot
         run: |
           {
             echo "@cumulocity-iot:registry=https://npm.pkg.github.com"
-            echo "//npm.pkg.github.com/:_authToken=${{ secrets.AGENT_GITHUB_PAT }}"
+            echo "//npm.pkg.github.com/:_authToken=${{ secrets.C8Y_KNOWLEDGE_NPM_TOKEN }}"
           } >> ~/.npmrc
 
       - name: Write .env for Cypress
