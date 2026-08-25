@@ -105,6 +105,11 @@ jobs:
         run: |
           npx -y @playwright/mcp@0.0.79 install-browser chrome-for-testing
           npx -y playwright install-deps chromium
+          # Expose the same browser to Cypress: the e2e scripts run with
+          # `--browser chromium`, and the runner image has no chromium on PATH.
+          CHROME_BIN="$(ls -d "$HOME"/.cache/ms-playwright/chromium-*/chrome-linux*/chrome | head -1)"
+          sudo ln -sf "$CHROME_BIN" /usr/local/bin/chromium
+          chromium --version
 
       - name: Install docker-agent
         run: |

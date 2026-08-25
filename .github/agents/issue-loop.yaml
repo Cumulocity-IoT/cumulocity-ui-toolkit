@@ -87,7 +87,10 @@ agents:
       - type: mcp
         name: playwright
         command: npx
-        args: ["-y", "@playwright/mcp@0.0.79", "--headless", "--browser", "chromium"]
+        # --isolated: each agent gets its own in-memory browser profile — the
+        # default persistent profile is locked by whichever agent's browser
+        # starts first ("Browser is already in use").
+        args: ["-y", "@playwright/mcp@0.0.79", "--headless", "--isolated", "--browser", "chromium"]
       - type: mcp
         name: github
         command: npx
@@ -181,7 +184,10 @@ agents:
       - type: mcp
         name: playwright
         command: npx
-        args: ["-y", "@playwright/mcp@0.0.79", "--headless", "--browser", "chromium"]
+        # --isolated: each agent gets its own in-memory browser profile — the
+        # default persistent profile is locked by whichever agent's browser
+        # starts first ("Browser is already in use").
+        args: ["-y", "@playwright/mcp@0.0.79", "--headless", "--isolated", "--browser", "chromium"]
       # Cumulocity Web SDK knowledge graph — the FIRST stop for any @c8y/* question.
       # Installed from GitHub Packages (@cumulocity-iot scope via ~/.npmrc).
       - type: mcp
@@ -276,7 +282,10 @@ agents:
       - type: mcp
         name: playwright
         command: npx
-        args: ["-y", "@playwright/mcp@0.0.79", "--headless", "--browser", "chromium"]
+        # --isolated: each agent gets its own in-memory browser profile — the
+        # default persistent profile is locked by whichever agent's browser
+        # starts first ("Browser is already in use").
+        args: ["-y", "@playwright/mcp@0.0.79", "--headless", "--isolated", "--browser", "chromium"]
       - type: mcp
         name: github
         command: npx
@@ -338,6 +347,12 @@ agents:
       fields — never in specs, commits, issue comments, PR bodies, or replies.
 
       Constraints:
+      - NEVER delete existing tests, setup/teardown code, or assertions to
+        get a green run — you may only ADD coverage. The single exception:
+        an existing assertion that directly contradicts the issue's expected
+        behaviour may be updated to the new expectation, and you must call
+        that out explicitly in your report. If existing tests fail for any
+        other reason, the verdict is RED — report it, do not edit around it.
       - All mutating requests (POST/PUT/DELETE) in new or changed tests must
         be intercepted — a test must never write to the real tenant.
       - Never include credentials, tokens, or raw run logs in issue comments,
