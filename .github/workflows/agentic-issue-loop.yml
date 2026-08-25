@@ -97,10 +97,14 @@ jobs:
             echo "C8Y_SHELL_TARGET=${{ vars.C8Y_SHELL_TARGET || 'cockpit-test-1023' }}"
           } > .env
 
-      - name: Install Playwright browser (agents' playwright MCP)
-        # The agents each run @playwright/mcp headlessly; pre-install Chromium
-        # and its system deps so the first browser tool call doesn't stall.
-        run: npx -y playwright install --with-deps chromium
+      - name: Install browser for the agents' playwright MCP
+        # Use the SAME pinned @playwright/mcp version as issue-loop.yaml and its
+        # own installer, so the downloaded browser revision always matches what
+        # the MCP server expects at runtime. install-deps adds the system
+        # libraries headless Chromium needs (uses the runner's passwordless sudo).
+        run: |
+          npx -y @playwright/mcp@0.0.79 install-browser chrome-for-testing
+          npx -y playwright install-deps chromium
 
       - name: Install docker-agent
         run: |

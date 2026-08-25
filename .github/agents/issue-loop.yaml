@@ -83,7 +83,7 @@ agents:
       - type: mcp
         name: playwright
         command: npx
-        args: ["-y", "@playwright/mcp@latest", "--headless", "--browser", "chromium"]
+        args: ["-y", "@playwright/mcp@0.0.79", "--headless", "--browser", "chromium"]
       - type: mcp
         name: github
         command: npx
@@ -163,7 +163,7 @@ agents:
       - type: mcp
         name: playwright
         command: npx
-        args: ["-y", "@playwright/mcp@latest", "--headless", "--browser", "chromium"]
+        args: ["-y", "@playwright/mcp@0.0.79", "--headless", "--browser", "chromium"]
       # Cumulocity Web SDK knowledge graph — the FIRST stop for any @c8y/* question.
       # Installed from GitHub Packages (@cumulocity-iot scope via ~/.npmrc).
       - type: mcp
@@ -240,7 +240,7 @@ agents:
       - type: mcp
         name: playwright
         command: npx
-        args: ["-y", "@playwright/mcp@latest", "--headless", "--browser", "chromium"]
+        args: ["-y", "@playwright/mcp@0.0.79", "--headless", "--browser", "chromium"]
       - type: mcp
         name: github
         command: npx
