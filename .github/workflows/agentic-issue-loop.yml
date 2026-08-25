@@ -60,7 +60,9 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          # Node 24: Angular 20 supports it, and the knowledge MCP package
+          # (@cumulocity-iot/c8y-web-sdk-knowledge-mcp) requires node >= 24.
+          node-version: 24
           cache: pnpm
           cache-dependency-path: |
             toolkit/pnpm-lock.yaml

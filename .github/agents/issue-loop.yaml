@@ -29,7 +29,7 @@
 # playwright MCP browser to reproduce, inspect, and visually verify the issue.
 # Cypress remains the only authority for the GREEN verdict.
 # ============================================================================
-version: "2"
+version: "12"
 
 # One shared ceiling for the whole run — root and both sub-agents spend
 # against the same budget; exceeding any limit stops the run.
