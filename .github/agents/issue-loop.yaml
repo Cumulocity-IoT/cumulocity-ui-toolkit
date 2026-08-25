@@ -115,7 +115,8 @@ agents:
          - Record exact repro steps, observed vs. expected behaviour, and any
            console/network errors you see. If reproduction requires the locally
            served plugin build, note that — the developer and validator have a
-           browser too and reproduce against http://localhost:9001/.
+           browser too and reproduce against the locally served build (their
+           dev server prints the exact URL to open).
       3. BRIEF
          - Write an implementation brief: repro steps and observations from
            step 2, suspected root cause, files to change, exact changes, and
@@ -192,23 +193,37 @@ agents:
          find_usage. Never grep minified bundles in node_modules and never
          write Cumulocity API calls from memory.
       3. Reproduce the bug yourself before changing code, unless the brief
-         already contains a confirmed reproduction: start the dev server in
-         the background (`pnpm run serve:<plugin>`, wait until
-         http://localhost:9001/apps/$C8Y_SHELL_TARGET/index.html returns 200),
-         open it with the playwright browser tools and log in (see "Browser
-         login" below).
+         already contains a confirmed reproduction. Dev-server rules:
+         - Free the port first: `fuser -k 9001/tcp 2>/dev/null || true`
+           (a stale server from an earlier run keeps 9001 occupied and the
+           new server then silently moves to a random port, which breaks the
+           validator's Cypress run).
+         - Start it in the background with output captured:
+           `pnpm run serve:<plugin> > /tmp/serve-<plugin>.log 2>&1 &`
+         - Poll the log until the server prints the URL to open (the first
+           compile can take minutes). That printed URL contains the ACTUAL
+           port and a `?remotes=...` query parameter that makes the shell
+           load YOUR locally served plugin via Module Federation.
+         - Browse with the playwright tools using EXACTLY that printed URL —
+           never a hand-built http://localhost:9001/... one. Without the
+           `?remotes=` parameter the shell loads the unmodified plugin from
+           the tenant, so anything you observe proves nothing.
+         - Confirm the printed port is 9001; if not, something else holds
+           the port — find and kill it, then restart the server.
+         - Log in (see "Browser login" below).
       4. Implement the change with the filesystem tools.
       5. Verify locally with the shell, iterating until green:
          - `pnpm run lint` (use `pnpm run lint:fix` for auto-fixable findings)
          - `pnpm run test:<plugin>` for the affected plugin, and
            `pnpm run test:shared` if you touched packages/shared
-         - Re-check the reproduction from step 3 in the playwright browser:
-           the reported behaviour must be gone (the dev server rebuilds on
-           save; reload the page).
+         - Re-check the reproduction from step 3 in the playwright browser,
+           at the same printed URL (with `?remotes=`): the reported behaviour
+           must be gone (the dev server rebuilds on save; reload the page).
       6. Commit on the current branch with a conventional message referencing
          the issue, e.g. "fix(<plugin>): <summary> (#<issue>)". Do NOT push.
-         Leave the dev server running and mention that in your report — the
-         validator reuses it.
+         Leave the dev server running; include its log file path and the
+         printed browse URL (with `?remotes=`) in your report — the validator
+         reuses both.
 
       Browser login (playwright tools): on the Cumulocity login screen fill
       tenant '${env.C8Y_TENANT}', username '${env.C8Y_USERNAME}', password
@@ -260,18 +275,25 @@ agents:
       2. Environment specifics for this repository (AGENTS.md is injected into
          your context as a prompt file — see its E2E section, and read
          test/AGENTS.md for the support library):
-         - The developer usually leaves the dev server running — check with
+         - The developer usually leaves the dev server running ON PORT 9001
+           (Cypress requires that port) — check with
            `curl -s -o /dev/null -w "%{http_code}" "http://localhost:9001/apps/$C8Y_SHELL_TARGET/index.html"`.
-           If it is not up (200), start it yourself in the background:
-           `pnpm run serve:<plugin>` (C8Y_BASEURL and C8Y_SHELL_TARGET are
-           already set in the environment) and wait for the 200 (the first
-           compile can take a few minutes).
+           If it is not up (200): free the port (`fuser -k 9001/tcp
+           2>/dev/null || true` — a stale server on 9001 silently pushes a
+           new one to a random port), then start it in the background with
+           output captured: `pnpm run serve:<plugin> > /tmp/serve-<plugin>.log 2>&1 &`
+           (C8Y_BASEURL and C8Y_SHELL_TARGET are already set in the
+           environment) and poll the log until it prints the URL to open
+           (the first compile can take a few minutes).
          - For the skill's discovery phase (walking the flow in a live
            browser) and for diagnosing failing runs, use the playwright
-           browser tools against http://localhost:9001/apps/$C8Y_SHELL_TARGET/
-           — log in as described under "Browser login" below. What you observe
-           there is diagnosis, never a verdict: only a headless Cypress run
-           counts.
+           browser tools with EXACTLY the URL the dev server printed (the
+           developer's report names it; otherwise read the serve log). It
+           carries a `?remotes=...` query parameter — without it the shell
+           loads the unmodified plugin from the tenant and you are looking
+           at the wrong build. Log in as described under "Browser login"
+           below. What you observe there is diagnosis, never a verdict:
+           only a headless Cypress run counts.
          - Specs live in test/cypress/e2e/<plugin>.cy.ts. Run one plugin's
            suite from the repo root via `pnpm run e2e:run:<plugin>`.
          - If no existing test covers the issue's acceptance criteria, extend
