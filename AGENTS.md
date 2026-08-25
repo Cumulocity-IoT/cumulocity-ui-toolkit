@@ -33,11 +33,13 @@ cumulocity-ui-toolkit/
 │   │   └── src/index.ts      # Barrel export – the public API of shared/
 │   ├── energy-consumption-widget/
 │   ├── favorites-manager/
+│   ├── index-db-cache/
 │   ├── kpi-widget/
 │   ├── layered-map-widget/
 │   ├── operations-widget/
 │   ├── release-notes/
 │   ├── reminder/
+│   ├── smart-views/          # NOT registered in angular.json (no build/test targets)
 │   └── tenant-option-management/
 │
 ├── test/                     # Cypress e2e suite (own pnpm workspace)
@@ -66,7 +68,7 @@ All commands run from the **repository root** unless noted.
 | Build a single plugin | `pnpm run build:<name>` (e.g. `build:kpi-widget`) |
 | Serve a plugin locally | `pnpm run serve:<name>` (requires `C8Y_BASEURL` + `C8Y_SHELL_TARGET` env vars) |
 | Run all unit tests | `pnpm test` |
-| Run unit tests for one plugin (CI) | `pnpm run test:<name>` (e.g. `test:favorites`) |
+| Run unit tests for one plugin (CI) | `pnpm run test:<name>` (e.g. `test:favorites-manager`) |
 | Run unit tests for one plugin (watch) | `pnpm run test:watch:<name>` |
 | Lint | `pnpm run lint` |
 | Lint with auto-fix | `pnpm run lint:fix` |
@@ -103,7 +105,7 @@ All commands run from the **repository root** unless noted.
 - Test files: `**/*.spec.ts` inside `packages/`.
 - The root `karma.conf.js` is shared by all projects.
 - Each package has a `tsconfig.spec.json` with `"types": ["jasmine", "node"]`.
-- All 9 Angular projects in `angular.json` (`shared` + 8 plugins) have a `test` architect target.
+- All 10 Angular projects in `angular.json` (`shared` + 9 plugins; `smart-views` is not registered) have a `test` architect target.
 - Run a single project: `pnpm exec ng test <project> --watch=false --browsers=ChromeHeadlessCI`
 - `ChromeHeadlessCI` custom launcher (defined in `karma.conf.js`) adds `--no-sandbox --disable-gpu --disable-dev-shm-usage` — required in CI.
 - Test helper for creating Jasmine spies: `packages/shared/src/helpers/auto-mock.helper.ts`.
@@ -113,11 +115,14 @@ All commands run from the **repository root** unless noted.
 
 ## E2E Testing (Cypress)
 
+- **When writing, fixing, or verifying e2e tests, follow the project skill `.claude/skills/write-e2e-cumulocity-cypress-test/SKILL.md`** — it defines the mandatory workflow (preflight → discover → write → verify-in-a-loop → finish). A test is not done until it has passed a headless run.
+- Detailed suite documentation lives in **`test/AGENTS.md`** (support library, factories, intercepts, page objects, selectors, cleanup pattern). Read it before writing any spec.
 - Located in `test/` (separate pnpm workspace — run `pnpm install` inside `test/` if needed).
 - One spec file per plugin: `test/cypress/e2e/<plugin-name>.cy.ts`.
-- Per-plugin configs in `test/config/<plugin-name>.config.ts` import `cumulocity.config.ts` from the plugin and derive the `C8Y_SHELL_EXTENSION` (Module Federation remotes) dynamically from `runTime.remotes`.
+- Per-plugin configs in `test/config/<plugin-name>.config.ts` import `cumulocity.config.ts` from the plugin and derive the `C8Y_SHELL_EXTENSION` (Module Federation remotes) dynamically from `runTime.remotes`. All delegate to `test/config/base.config.ts`.
+- Reusable test infrastructure lives in `test/cypress/support/` (`commands.ts` with `cy.visitShellAndWaitForSelector`, plus `api/`, `factories/`, `intercepts/`, `page-objects/`, `selectors/`, `utils/`). `cypress-terminal-report` is installed — failed runs print the full request trace.
 - `test/tsconfig.json` has `resolveJsonModule: true` and `skipLibCheck: true`.
-- Requires a running Cumulocity backend and shell. Set `C8Y_BASEURL`, `C8Y_SHELL_TARGET`, `C8Y_USERNAME`, `C8Y_PASSWORD` in the environment or a `.env` file.
+- Requires a live Cumulocity tenant plus the plugin served locally (`pnpm run serve:<plugin>`). Environment comes from a **`.env` file at the repository root**, loaded by `base.config.ts` via `dotenv`. Keys (the config file is the authority on the mapping): required `C8Y_USERNAME`, `C8Y_PASSWORD`, `C8Y_TENANT`; optional `C8Y_CYPRESS_URL` (dev-server URL, default `http://localhost:9001/`, exposed to specs as `C8Y_BASEURL`) and `C8Y_SHELL_TARGET` (default `cockpit-test-1023`). `C8Y_TOKEN` is populated automatically via `oauthLogin` at startup.
 
 ---
 
@@ -147,21 +152,54 @@ All commands run from the **repository root** unless noted.
 
 The `tools/generate-scripts.mts` file is an **ESM TypeScript** script (`.mts` extension — run with `node --experimental-strip-types`). It reads all projects from `angular.json` and regenerates the `build:*`, `serve:*`, `test:*`, and `test:watch:*` entries in `package.json`. The source of truth for which projects get test scripts is whether the project has a `@angular/build:karma` test target in `angular.json`.
 
-The root `test` script (which chains all 9 suites sequentially) is also regenerated. Do **not** hand-edit anything after the `--generated----------` marker in `package.json`. CI verifies this: a change to root configuration re-runs `generate:scripts` and fails if `package.json` is stale.
+The root `test` script (which chains all 10 suites sequentially) is also regenerated. Do **not** hand-edit anything after the `--generated----------` marker in `package.json`. CI verifies this: a change to root configuration re-runs `generate:scripts` and fails if `package.json` is stale.
 
 ---
 
 ## Build Artifacts
 
-- Output: `dist/<plugin-package-name>/` (e.g. `dist/cumulocity-kpi-widget-plugin/`).
-- Post-build, `tools/postbuild.js` renames the generated ZIP to include the version from the plugin's `package.json`.
+- Output: a ZIP archive per plugin in `dist/` (e.g. `dist/cumulocity-kpi-widget-plugin.zip`).
+- Post-build, `tools/postbuild.js` renames the generated ZIP to include the version from the plugin's `package.json` (e.g. `dist/cumulocity-kpi-widget-plugin_1.0.4.zip`).
 - The `clean` script removes the entire `dist/` directory before each build.
 
 ---
 
-## MCP Server Setup
+## MCP Servers
 
-This project has a dedicated **Cumulocity documentation MCP server** that gives agents access to the official Cumulocity IoT API and SDK docs. Configure it in your editor's MCP settings (e.g. `.vscode/mcp.json`) if it is not already present:
+### `c8y-web-sdk-knowledge` — use FIRST for all Cumulocity development
+
+A local knowledge-graph MCP server over the Cumulocity Web SDK source. **For any development task that touches Cumulocity APIs — `@c8y/client`, `@c8y/ngx-components`, hooks, widgets, services, models — query this server FIRST, before web search, before grepping `node_modules`, and before writing code from memory.** SDK bundles in `node_modules` are minified; grepping them wastes time and produces wrong answers, while this server resolves the real, version-accurate API surface.
+
+Available tools:
+
+| Tool | Use for |
+|---|---|
+| `resolve_symbol` | Resolve an exact SDK symbol (class, service, interface, hook) to its definition |
+| `get_node` | Fetch full details of a known node (members, signatures, docs) |
+| `find_usage` | Find where a symbol is used across the SDK — real-world usage patterns |
+| `search_concept` | Semantic search when you only know the concept, not the symbol name |
+
+Recommended flow: `search_concept` (when unsure of the name) → `resolve_symbol` → `get_node` for details → `find_usage` for patterns. Only fall back to other sources (c8y-docs, web search) if the knowledge server has no answer.
+
+The server is configured at the **user level** in Claude Code (`~/.claude.json` → `mcpServers`), running locally via `tsx` from the `c8y-web-sdk-knowledge` repository:
+
+```jsonc
+{
+  "mcpServers": {
+    "c8y-web-sdk-knowledge": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["tsx", "<path-to>/c8y-web-sdk-knowledge/src/mcp-server.ts"]
+    }
+  }
+}
+```
+
+If its tools (`mcp__c8y-web-sdk-knowledge__*`) are not available in your session, tell the user instead of silently falling back.
+
+### `c8y-docs` — official documentation (secondary)
+
+Hosted MCP server for the official Cumulocity IoT API and SDK docs. Use it as a complement to `c8y-web-sdk-knowledge` for REST API endpoint documentation and conceptual guides. Configure in your editor's MCP settings (e.g. `.vscode/mcp.json`) if not already present:
 
 ```jsonc
 {
@@ -173,8 +211,6 @@ This project has a dedicated **Cumulocity documentation MCP server** that gives 
   }
 }
 ```
-
-Use the `c8y-docs` tools when you need to look up Cumulocity REST API endpoints, `@c8y/client` service methods, or `@c8y/ngx-components` APIs before writing or modifying code.
 
 ---
 

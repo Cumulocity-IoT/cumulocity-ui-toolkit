@@ -70,3 +70,5 @@ test/cypress/videos
 test/cypress/screenshots
 test/cypress/downloads
 test/cypress/logs
+# Claude Code local (per-machine) settings
+.claude/settings.local.json
