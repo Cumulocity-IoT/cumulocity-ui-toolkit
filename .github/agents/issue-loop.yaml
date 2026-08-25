@@ -79,7 +79,11 @@ agents:
     toolsets:
       - type: filesystem
         tools: [read_file, list_directory, directory_tree]
-      # Headless browser for reproducing the reported behaviour on the live tenant.
+      # Shell ONLY for managing the local dev server during reproduction and
+      # for read-only git commands — never for modifying code.
+      - type: shell
+      # Headless browser for reproducing the reported behaviour against the
+      # locally served plugin build.
       - type: mcp
         name: playwright
         command: npx
@@ -104,19 +108,30 @@ agents:
            context as a prompt file — follow it, do not re-read it.
          - Identify the affected plugin under packages/<plugin> (or packages/shared).
          - Comment on the issue that automated processing has started, naming
-           the work branch (from `git branch --show-current` via the developer
-           if needed — you have no shell; the branch name is also derivable
-           from the issue number: agent/issue-<N>-r<run>).
+           the work branch (`git branch --show-current`).
       2. REPRODUCE
-         - Try to reproduce the reported behaviour yourself with the playwright
-           browser tools against the live tenant shell:
-           ${env.C8Y_BASEURL}/apps/${env.C8Y_SHELL_TARGET}/
-           Log in as described under "Browser login" below.
+         - Reproduce the reported behaviour against the LOCALLY SERVED build
+           of the affected plugin — never against the plugin version deployed
+           on the tenant (it may differ from the code in this checkout).
+           Dev-server rules:
+           * Free the port first: `fuser -k 9001/tcp 2>/dev/null || true`
+             (a stale server on 9001 silently pushes a new one to a random
+             port, which breaks the validator's Cypress run later).
+           * Start it in the background with output captured:
+             `pnpm run serve:<plugin> > /tmp/serve-<plugin>.log 2>&1 &`
+           * Poll the log until the server prints the URL to open (the first
+             compile can take minutes). That printed URL contains the ACTUAL
+             port and a `?remotes=...` query parameter that makes the shell
+             load the locally served plugin via Module Federation.
+           * Browse with the playwright tools using EXACTLY that printed URL —
+             never a hand-built http://localhost:9001/... one. Without the
+             `?remotes=` parameter you are looking at the tenant's deployed
+             plugin, not this checkout.
+           * Log in as described under "Browser login" below.
          - Record exact repro steps, observed vs. expected behaviour, and any
-           console/network errors you see. If reproduction requires the locally
-           served plugin build, note that — the developer and validator have a
-           browser too and reproduce against the locally served build (their
-           dev server prints the exact URL to open).
+           console/network errors you see. Leave the dev server running and
+           pass its log file path and the printed browse URL along in the
+           brief — the developer and validator reuse them.
       3. BRIEF
          - Write an implementation brief: repro steps and observations from
            step 2, suspected root cause, files to change, exact changes, and
@@ -142,7 +157,9 @@ agents:
       fields — never in issue comments, briefs, or your replies.
 
       Constraints:
-      - Never modify code yourself — that is the developer's job.
+      - Never modify code yourself — that is the developer's job. Your shell
+        is ONLY for the dev server (start, poll its log, free the port) and
+        read-only git/inspection commands — never edits, commits, or pushes.
       - Keep issue comments concise and factual. Never include credentials,
         tokens, or raw test-run logs in comments.
       - Your final answer must be a short machine-readable summary:
@@ -194,7 +211,11 @@ agents:
          write Cumulocity API calls from memory.
       3. Reproduce the bug yourself before changing code, unless the brief
          already contains a confirmed reproduction. Dev-server rules:
-         - Free the port first: `fuser -k 9001/tcp 2>/dev/null || true`
+         - If the brief names a running dev server (log path + browse URL),
+           REUSE it — verify with
+           `curl -s -o /dev/null -w "%{http_code}"` on the browse URL (expect
+           200) and skip the start steps below.
+         - Otherwise free the port first: `fuser -k 9001/tcp 2>/dev/null || true`
            (a stale server from an earlier run keeps 9001 occupied and the
            new server then silently moves to a random port, which breaks the
            validator's Cypress run).
