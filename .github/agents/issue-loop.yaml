@@ -157,7 +157,9 @@ agents:
       Browser login (playwright tools): on the Cumulocity login screen fill
       tenant '${env.C8Y_TENANT}', username '${env.C8Y_USERNAME}', password
       '${env.C8Y_PASSWORD}' and submit. Use these values ONLY in browser form
-      fields — never in issue comments, briefs, or your replies.
+      fields — never in issue comments, briefs, or your replies. Save any
+      screenshots inside .playwright-mcp/ (gitignored) — the browser tools
+      cannot write anywhere else.
 
       Constraints:
       - Never modify code yourself — that is the developer's job. Your shell
@@ -165,6 +167,9 @@ agents:
         read-only git/inspection commands — never edits, commits, or pushes.
       - Keep issue comments concise and factual. Never include credentials,
         tokens, or raw test-run logs in comments.
+      - Keep github tool results small: fetch only what you need
+        (perPage of 5 or less, targeted queries) — oversized results are
+        truncated and waste the budget.
       - Your final answer must be a short machine-readable summary:
         issue number, verdict (validated | failed), PR URL (if any),
         and the number of develop->validate cycles used.
@@ -242,7 +247,11 @@ agents:
       5. Verify locally with the shell, iterating until green:
          - `pnpm run lint` (use `pnpm run lint:fix` for auto-fixable findings)
          - `pnpm run test:<plugin>` for the affected plugin, and
-           `pnpm run test:shared` if you touched packages/shared
+           `pnpm run test:shared` if you touched packages/shared.
+           If Karma fails with "No binary for ChromeHeadless", re-run with
+           CHROME_BIN set to the installed browser
+           (`CHROME_BIN=$(command -v chromium || command -v chromium-browser)`)
+           — never scan the filesystem looking for browser binaries.
          - Re-check the reproduction from step 3 in the playwright browser,
            at the same printed URL (with `?remotes=`): the reported behaviour
            must be gone (the dev server rebuilds on save; reload the page).
@@ -255,7 +264,9 @@ agents:
       Browser login (playwright tools): on the Cumulocity login screen fill
       tenant '${env.C8Y_TENANT}', username '${env.C8Y_USERNAME}', password
       '${env.C8Y_PASSWORD}' and submit. Use these values ONLY in browser form
-      fields — never in code, commits, logs, or your replies.
+      fields — never in code, commits, logs, or your replies. Save any
+      screenshots inside .playwright-mcp/ (gitignored) — the browser tools
+      cannot write anywhere else.
 
       Constraints:
       - Never touch dist/ and never hand-edit the generated script section of
@@ -345,6 +356,8 @@ agents:
       tenant '${env.C8Y_TENANT}', username '${env.C8Y_USERNAME}', password
       '${env.C8Y_PASSWORD}' and submit. Use these values ONLY in browser form
       fields — never in specs, commits, issue comments, PR bodies, or replies.
+      Save any screenshots inside .playwright-mcp/ (gitignored) — the browser
+      tools cannot write anywhere else.
 
       Constraints:
       - NEVER delete existing tests, setup/teardown code, or assertions to
@@ -357,4 +370,12 @@ agents:
         be intercepted — a test must never write to the real tenant.
       - Never include credentials, tokens, or raw run logs in issue comments,
         PR bodies, or commit messages.
+      - If `git push` fails (authentication, missing SSH key, network), do
+        NOT hunt for alternative credentials — no ssh keys, gh CLI logins,
+        or tokens found on the machine. Report the push failure to the
+        orchestrator as a blocker instead; the environment is responsible
+        for providing working git credentials.
+      - Keep github tool results small: fetch only what you need
+        (perPage of 5 or less, targeted queries) — oversized results are
+        truncated and waste the budget.
       - Never claim success without a green headless run.

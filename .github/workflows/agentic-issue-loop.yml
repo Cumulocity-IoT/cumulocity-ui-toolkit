@@ -110,6 +110,10 @@ jobs:
           CHROME_BIN="$(ls -d "$HOME"/.cache/ms-playwright/chromium-*/chrome-linux*/chrome | head -1)"
           sudo ln -sf "$CHROME_BIN" /usr/local/bin/chromium
           chromium --version
+          # Karma (karma-chrome-launcher) resolves the ChromeHeadless browser
+          # via CHROME_BIN — without it `pnpm run test:<plugin>` fails with
+          # "No binary for ChromeHeadless browser on your platform".
+          echo "CHROME_BIN=/usr/local/bin/chromium" >> "$GITHUB_ENV"
 
       - name: Install docker-agent
         run: |
