@@ -11,9 +11,11 @@
 #                       registry, used solely to install
 #                       @cumulocity-iot/c8y-web-sdk-knowledge-mcp
 #                       (classic PAT with read:packages and nothing else)
-#   C8Y_USERNAME / C8Y_PASSWORD / C8Y_TENANT / C8Y_BASEURL   Cumulocity test tenant
+#   C8Y_PASSWORD        password of the Cumulocity test tenant user
+# Required repository variables:
+#   C8Y_BASEURL / C8Y_TENANT / C8Y_USERNAME   Cumulocity test tenant (non-sensitive)
 # Optional repository variable:
-#   C8Y_SHELL_TARGET    shell app on the tenant (default: cockpit-test-1023)
+#   C8Y_SHELL_TARGET    shell app on the tenant (default: cockpit)
 name: Agentic issue loop
 
 on:
@@ -90,11 +92,11 @@ jobs:
         working-directory: toolkit
         run: |
           {
-            echo "C8Y_USERNAME=${{ secrets.C8Y_USERNAME }}"
+            echo "C8Y_USERNAME=${{ vars.C8Y_USERNAME }}"
             echo "C8Y_PASSWORD=${{ secrets.C8Y_PASSWORD }}"
-            echo "C8Y_TENANT=${{ secrets.C8Y_TENANT }}"
+            echo "C8Y_TENANT=${{ vars.C8Y_TENANT }}"
             echo "C8Y_CYPRESS_URL=http://localhost:9001/"
-            echo "C8Y_SHELL_TARGET=${{ vars.C8Y_SHELL_TARGET || 'cockpit-test-1023' }}"
+            echo "C8Y_SHELL_TARGET=${{ vars.C8Y_SHELL_TARGET || 'cockpit' }}"
           } > .env
 
       # Tenant credentials for the agents' playwright browser login. The MCP
@@ -106,8 +108,8 @@ jobs:
       - name: Write playwright secrets file
         run: |
           {
-            echo "C8Y_TENANT=${{ secrets.C8Y_TENANT }}"
-            echo "C8Y_USERNAME=${{ secrets.C8Y_USERNAME }}"
+            echo "C8Y_TENANT=${{ vars.C8Y_TENANT }}"
+            echo "C8Y_USERNAME=${{ vars.C8Y_USERNAME }}"
             echo "C8Y_PASSWORD=${{ secrets.C8Y_PASSWORD }}"
           } > /tmp/c8y-playwright-secrets.env
           chmod 600 /tmp/c8y-playwright-secrets.env
@@ -151,8 +153,8 @@ jobs:
           GITHUB_PAT: ${{ secrets.AGENT_GITHUB_PAT }}
           # `pnpm run serve:<plugin>` reads these from the process environment
           # (from-env), not from .env:
-          C8Y_BASEURL: ${{ secrets.C8Y_BASEURL }}
-          C8Y_SHELL_TARGET: ${{ vars.C8Y_SHELL_TARGET || 'cockpit-test-1023' }}
+          C8Y_BASEURL: ${{ vars.C8Y_BASEURL }}
+          C8Y_SHELL_TARGET: ${{ vars.C8Y_SHELL_TARGET || 'cockpit' }}
           # Tenant credentials are deliberately NOT in this environment: the
           # agents' playwright browsers read them from the --secrets file
           # (/tmp/c8y-playwright-secrets.env) and Cypress reads them from the
@@ -164,14 +166,15 @@ jobs:
 
       # GitHub masks secrets in step logs, but NOT inside artifact files.
       # With the playwright --secrets hardening the transcript should no
-      # longer contain tenant credentials (agents only ever handle secret
+      # longer contain the tenant password (agents only ever handle secret
       # NAMES) — but a failed Cypress login can still dump the .env values
       # into the request trace, so keep scrubbing as defense in depth.
+      # Only the password is scrubbed: tenant/username are plain repository
+      # variables and not treated as sensitive.
       - name: Scrub credentials from transcript
         if: always()
         env:
           C8Y_PW: ${{ secrets.C8Y_PASSWORD }}
-          C8Y_UN: ${{ secrets.C8Y_USERNAME }}
         run: |
           FILE="$RUNNER_TEMP/agent-events.ndjson"
           [ -f "$FILE" ] || exit 0
@@ -179,10 +182,9 @@ jobs:
           import os, sys
           path = sys.argv[1]
           data = open(path, encoding="utf-8", errors="surrogateescape").read()
-          for var in ("C8Y_PW", "C8Y_UN"):
-              value = os.environ.get(var)
-              if value:
-                  data = data.replace(value, "***REDACTED***")
+          value = os.environ.get("C8Y_PW")
+          if value:
+              data = data.replace(value, "***REDACTED***")
           open(path, "w", encoding="utf-8", errors="surrogateescape").write(data)
           EOF
 
