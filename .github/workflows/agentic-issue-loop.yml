@@ -97,6 +97,21 @@ jobs:
             echo "C8Y_SHELL_TARGET=${{ vars.C8Y_SHELL_TARGET || 'cockpit-test-1023' }}"
           } > .env
 
+      # Tenant credentials for the agents' playwright browser login. The MCP
+      # servers load this file via --secrets (see issue-loop.yaml): agents type
+      # the secret NAMES into the login form and the server substitutes the
+      # values, so the credentials never enter the model context or the
+      # transcript. Written OUTSIDE the checkout so no filesystem tool ever
+      # lists it among project files.
+      - name: Write playwright secrets file
+        run: |
+          {
+            echo "C8Y_TENANT=${{ secrets.C8Y_TENANT }}"
+            echo "C8Y_USERNAME=${{ secrets.C8Y_USERNAME }}"
+            echo "C8Y_PASSWORD=${{ secrets.C8Y_PASSWORD }}"
+          } > /tmp/c8y-playwright-secrets.env
+          chmod 600 /tmp/c8y-playwright-secrets.env
+
       - name: Install browser for the agents' playwright MCP
         # Use the SAME pinned @playwright/mcp version as issue-loop.yaml and its
         # own installer, so the downloaded browser revision always matches what
@@ -138,23 +153,20 @@ jobs:
           # (from-env), not from .env:
           C8Y_BASEURL: ${{ secrets.C8Y_BASEURL }}
           C8Y_SHELL_TARGET: ${{ vars.C8Y_SHELL_TARGET || 'cockpit-test-1023' }}
-          # Interpolated (${env.*}) into the agent instructions in
-          # issue-loop.yaml so the agents can log in via their playwright
-          # browser. The password lands in the transcript by design — the
-          # scrub step below redacts it before upload.
-          C8Y_TENANT: ${{ secrets.C8Y_TENANT }}
-          C8Y_USERNAME: ${{ secrets.C8Y_USERNAME }}
-          C8Y_PASSWORD: ${{ secrets.C8Y_PASSWORD }}
+          # Tenant credentials are deliberately NOT in this environment: the
+          # agents' playwright browsers read them from the --secrets file
+          # (/tmp/c8y-playwright-secrets.env) and Cypress reads them from the
+          # repo-root .env — the agent processes never need them.
         run: |
           docker-agent run --exec --safety restricted .github/agents/issue-loop.yaml --json \
             "Work on issue #${ISSUE_NUMBER} of Cumulocity-IoT/cumulocity-ui-toolkit." \
             | tee "$RUNNER_TEMP/agent-events.ndjson"
 
       # GitHub masks secrets in step logs, but NOT inside artifact files.
-      # The transcript is EXPECTED to contain the tenant credentials: they are
-      # interpolated into the agent instructions for playwright browser login,
-      # and a failed Cypress login also dumps them into the request trace.
-      # Always scrub before uploading.
+      # With the playwright --secrets hardening the transcript should no
+      # longer contain tenant credentials (agents only ever handle secret
+      # NAMES) — but a failed Cypress login can still dump the .env values
+      # into the request trace, so keep scrubbing as defense in depth.
       - name: Scrub credentials from transcript
         if: always()
         env:
@@ -173,6 +185,33 @@ jobs:
                   data = data.replace(value, "***REDACTED***")
           open(path, "w", encoding="utf-8", errors="surrogateescape").write(data)
           EOF
+
+      # A budget or max_iterations stop is terminal for the agents and
+      # docker-agent still exits 0 — root never gets to post its failure diagnosis, so the
+      # issue would go silently stale. Detect the stop events in the transcript
+      # and leave a status comment + label instead. Skipped when the validator
+      # already reported success (the 'agent:validated' label add is in the
+      # transcript).
+      - name: Report guardrail stop on the issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.AGENT_GITHUB_PAT }}
+        run: |
+          FILE="$RUNNER_TEMP/agent-events.ndjson"
+          [ -f "$FILE" ] || exit 0
+          grep -q 'agent:validated' "$FILE" && exit 0
+          if grep -q '"type":"budget_exceeded"' "$FILE"; then
+            REASON="a budget ceiling (time/cost limit)"
+          elif grep -q '"type":"max_iterations_reached"' "$FILE"; then
+            REASON="the max_iterations guardrail"
+          else
+            exit 0
+          fi
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" \
+            --body "🤖 The automated fix run was stopped by ${REASON} before completing. No PR was opened. See the [workflow run](${RUN_URL}) and its transcript artifact for details."
+          gh issue edit "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" \
+            --add-label 'agent:failed' || true
 
       - name: Upload transcript and Cypress screenshots
         if: always()
