@@ -26,7 +26,16 @@
 #   C8Y_SHELL_TARGET     shell app on the tenant (e.g. cockpit-test-1023)
 #   /tmp/c8y-playwright-secrets.env
 #                        dotenv file with C8Y_TENANT / C8Y_USERNAME /
-#                        C8Y_PASSWORD, written by CI OUTSIDE the checkout. The
+#                        C8Y_PASSWORD, written by CI OUTSIDE the checkout.
+#                        MUST exist before starting — @playwright/mcp exits
+#                        with ENOENT on a missing --secrets file, which
+#                        surfaces as "mcp(...) start failed: server
+#                        unavailable" for every agent. For a LOCAL run create
+#                        it from your env file first, e.g.:
+#                          grep -E '^C8Y_(TENANT|USERNAME|PASSWORD)=' \
+#                            ~/agent-test.env > /tmp/c8y-playwright-secrets.env
+#                          chmod 600 /tmp/c8y-playwright-secrets.env
+#                        The
 #                        playwright MCP servers load it via --secrets: agents
 #                        type the secret NAMES into the login form and the
 #                        browser substitutes the values server-side, so the
