@@ -161,6 +161,10 @@ agents:
 
       1. TRIAGE
          - Fetch the issue (title, body, comments, labels) via the github tools.
+         - Remove any stale outcome labels left by a previous run
+           ('agent:validated', 'agent:failed', 'agent:needs-info',
+           'agent:cannot-reproduce') using the label protocol below — the
+           final label state of this run must be unambiguous.
          - AGENTS.md (repository conventions) is already injected into your
            context as a prompt file — follow it, do not re-read it.
          - Identify the affected plugin under packages/<plugin> (or packages/shared).
@@ -222,12 +226,32 @@ agents:
          - If validation fails, send the validator's failure analysis back to
            'developer' for another attempt. Maximum 3 develop->validate cycles.
          - If still red after 3 cycles: comment the full diagnosis on the issue,
-           add the label 'agent:failed', and stop. Never open a PR for a fix
+           add the label 'agent:failed' and remove 'agent:fix' (so re-adding
+           it re-triggers the workflow), and stop. Never open a PR for a fix
            that did not validate.
+      7. FINISH — before your final answer, whatever the outcome, fetch the
+         issue one last time and verify its label state matches the verdict:
+         EXACTLY ONE of 'agent:validated' / 'agent:failed' /
+         'agent:needs-info' / 'agent:cannot-reproduce' is present, and
+         'agent:fix' is removed. If it does not match (e.g. the validator
+         could not update labels), correct it yourself via the label
+         protocol. The issue must never end the run still labeled only
+         'agent:fix'.
+
+      Label protocol (github tools): there is NO tool that adds or removes a
+      single label. The only label-capable tool is update_issue, and its
+      'labels' field REPLACES the issue's ENTIRE label set. Never call it
+      with only the label you want to add — that silently deletes all other
+      labels. To add or remove labels: get_issue first, take the current
+      label names, compute the complete new list (apply your additions and
+      removals, keep everything else, e.g. 'bug' or 'toolkit: ...'), then
+      call update_issue with that full list. Re-fetch the issue to verify
+      the result.
 
       Early exits — both END the run immediately (never continue into
       DEVELOP), and both remove the label 'agent:fix' so that re-adding it
-      after the issue is updated re-triggers this workflow:
+      after the issue is updated re-triggers this workflow. All label
+      changes follow the label protocol above:
       - NEEDS-INFO: comment a short checklist naming exactly which pieces of
         information are missing and why each one blocks automated processing,
         and that re-adding 'agent:fix' after updating the issue restarts the
@@ -457,11 +481,19 @@ agents:
              "fix(<plugin>): <summary> (#<issue>)" whose body summarises root
              cause, fix, and validation results (pass/fail counts) and ends
              with "Closes #<issue>".
-           * Comment the pass/fail counts and the PR link on the issue and add
-             the label 'agent:validated'.
-         - RED: do NOT push and do NOT open a PR. Reply to the orchestrator
-           with a precise failure analysis (failing spec, request-trace
-           findings, suspected cause) so the developer can iterate.
+           * Comment the pass/fail counts and the PR link on the issue, add
+             the label 'agent:validated' and remove 'agent:fix'.
+             Label protocol: there is NO tool that adds or removes a single
+             label — update_issue's 'labels' field REPLACES the issue's
+             ENTIRE label set. get_issue first, take the current label
+             names, compute the complete new list (add 'agent:validated',
+             drop 'agent:fix', keep everything else), then call update_issue
+             with that full list and re-fetch to verify.
+         - RED: do NOT push and do NOT open a PR. Do NOT touch the issue's
+           labels — the orchestrator owns the failure verdict. Reply to the
+           orchestrator with a precise failure analysis (failing spec,
+           request-trace findings, suspected cause) so the developer can
+           iterate.
 
       Browser login (playwright tools): on the Cumulocity login screen fill
       the form fields with the LITERAL strings 'C8Y_TENANT' (tenant field),

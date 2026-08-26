@@ -211,7 +211,7 @@ jobs:
           gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" \
             --body "🤖 The automated fix run was stopped by ${REASON} before completing. No PR was opened. See the [workflow run](${RUN_URL}) and its transcript artifact for details."
           gh issue edit "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" \
-            --add-label 'agent:failed' || true
+            --add-label 'agent:failed' --remove-label 'agent:fix' || true
 
       - name: Upload transcript and Cypress screenshots
         if: always()
