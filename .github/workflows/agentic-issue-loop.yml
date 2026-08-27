@@ -11,8 +11,10 @@
 #                       registry, used solely to install
 #                       @cumulocity-iot/c8y-web-sdk-knowledge-mcp
 #                       (classic PAT with read:packages and nothing else)
+# Required 'e2e' ENVIRONMENT secret (the job declares `environment: e2e` —
+# without that declaration these resolve to empty strings):
 #   C8Y_PASSWORD        password of the Cumulocity test tenant user
-# Required repository variables:
+# Required 'e2e' environment variables:
 #   C8Y_BASEURL / C8Y_TENANT / C8Y_USERNAME   Cumulocity test tenant (non-sensitive)
 # Optional repository variable:
 #   C8Y_SHELL_TARGET    shell app on the tenant (default: cockpit)
@@ -40,6 +42,10 @@ jobs:
   agent:
     if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'agent:fix'
     runs-on: ubuntu-latest
+    # The Cumulocity tenant config (C8Y_BASEURL/C8Y_TENANT/C8Y_USERNAME vars,
+    # C8Y_PASSWORD secret) is scoped to the 'e2e' environment; GitHub only
+    # exposes environment-scoped vars/secrets to jobs that declare it.
+    environment: e2e
     timeout-minutes: 90
     env:
       ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
