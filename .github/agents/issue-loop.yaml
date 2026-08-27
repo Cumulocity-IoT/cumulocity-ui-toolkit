@@ -4,6 +4,12 @@
 # Three agents: root (triage/orchestration) -> developer (implementation)
 #            -> validator (Cypress e2e per project skill + GitHub issue update)
 #
+# Scope: bug fixes AND small features, but always within ONE existing plugin
+# (or packages/shared) — everything is keyed on serve:<plugin> /
+# test:<plugin> / e2e:run:<plugin>. Out of scope: creating new packages
+# (angular.json + scripts + Cypress scaffolding is not covered) and features
+# spanning multiple plugins; the budgets below are sized for small changes.
+#
 # Root ends the run early — before any develop cycle — when the issue lacks
 # essential information (label 'agent:needs-info') or the reported behaviour
 # cannot be reproduced (label 'agent:cannot-reproduce'). Both exits remove
@@ -126,7 +132,7 @@ agents:
   # --------------------------------------------------------------------------
   root:
     model: anthropic/claude-sonnet-5
-    description: Triages a GitHub issue in cumulocity-ui-toolkit and orchestrates fix and validation
+    description: Triages a GitHub issue (bug or feature) in cumulocity-ui-toolkit and orchestrates implementation and validation
     sub_agents: [developer, validator]
     budgets: [triage]
     # Reproduction is iteration-hungry (compile waits, browser steps count one
@@ -226,14 +232,16 @@ agents:
            continue.
       3. BRIEF
          - Write an implementation brief: repro steps and observations from
-           step 2, suspected root cause, files to change, exact changes, and
-           acceptance criteria derived from the issue.
+           step 2, the change type (bug fix or feature), the suspected root
+           cause (for bugs) or the current behaviour being changed (for
+           features), files to change, exact changes, and acceptance criteria
+           derived from the issue.
       4. DEVELOP
          - Hand the brief to the 'developer' agent. It implements, lints and
            unit-tests the change locally and commits it.
       5. VALIDATE
          - Hand the developer's report (affected plugin, changed files, test
-           results, issue number) to the 'validator' agent. It proves the fix
+           results, issue number) to the 'validator' agent. It proves the change
            with a headless Cypress e2e run and, on success, pushes the branch,
            opens a pull request and updates the issue.
       6. LOOP
@@ -307,7 +315,7 @@ agents:
   # --------------------------------------------------------------------------
   developer:
     model: anthropic/claude-sonnet-5
-    description: Implements the fix in the local checkout following repository conventions
+    description: Implements the change (bug fix or feature) in the local checkout following repository conventions
     budgets: [implement]
     # Compile/test loops are turn-hungry (dev-server waits, lint, Karma);
     # generous but finite — the budgets backstop the overshoot.
@@ -342,7 +350,8 @@ agents:
       working directory on a work branch.
 
       You receive an implementation brief (or a validation-failure analysis
-      for a previous attempt). Implement the fix locally.
+      for a previous attempt) for a bug fix or a feature — the brief names the
+      change type. Implement the change locally.
 
       Workflow:
       1. AGENTS.md is injected into your context as a prompt file — follow its
@@ -357,8 +366,10 @@ agents:
          c8y_sdk tools FIRST: search_concept -> resolve_symbol -> get_node ->
          find_usage. Never grep minified bundles in node_modules and never
          write Cumulocity API calls from memory.
-      3. Reproduce the bug yourself before changing code, unless the brief
-         already contains a confirmed reproduction. Dev-server rules:
+      3. Observe the baseline yourself before changing code: for a bug,
+         reproduce it; for a feature, confirm the current behaviour the
+         feature will change. Skip this only if the brief already contains a
+         confirmed observation. Dev-server rules:
          - If the brief names a running dev server (log path + browse URL),
            REUSE it — verify with
            `curl -s -o /dev/null -w "%{http_code}"` on the browse URL (expect
@@ -393,11 +404,15 @@ agents:
            CHROME_BIN set to the installed browser
            (`CHROME_BIN=$(command -v chromium || command -v chromium-browser)`)
            — never scan the filesystem looking for browser binaries.
-         - Re-check the reproduction from step 3 in the playwright browser,
-           at the same printed URL (with `?remotes=`): the reported behaviour
-           must be gone (the dev server rebuilds on save; reload the page).
+         - Re-check the baseline from step 3 in the playwright browser, at
+           the same printed URL (with `?remotes=`): for a bug the reported
+           behaviour must be gone; for a feature the acceptance criteria from
+           the brief must now be observable (the dev server rebuilds on save;
+           reload the page).
       6. Commit on the current branch with a conventional message referencing
-         the issue, e.g. "fix(<plugin>): <summary> (#<issue>)". Do NOT push.
+         the issue — type matching the change: "fix(<plugin>): <summary>
+         (#<issue>)" for bugs, "feat(<plugin>): <summary> (#<issue>)" for
+         features. Do NOT push.
          Leave the dev server running; include its log file path and the
          printed browse URL (with `?remotes=`) in your report — the validator
          reuses both.
@@ -424,7 +439,7 @@ agents:
   # --------------------------------------------------------------------------
   validator:
     model: anthropic/claude-sonnet-5
-    description: Validates the fix with a headless Cypress e2e run per the project skill and updates the GitHub issue
+    description: Validates the change with a headless Cypress e2e run per the project skill and updates the GitHub issue
     budgets: [validate]
     # The Cypress verify loop needs many turns; Cypress request traces are the
     # biggest tool results in the whole run — truncation matters most here.
@@ -458,8 +473,9 @@ agents:
           GITHUB_PERSONAL_ACCESS_TOKEN: ${GITHUB_PAT}
     instruction: |
       You are the QA gate for the Cumulocity UI Toolkit. You receive a report
-      about an implemented fix (affected plugin, changed files, issue number).
-      Your job: prove the fix end-to-end with Cypress, then update GitHub.
+      about an implemented change — a bug fix or a feature (affected plugin,
+      changed files, change type, issue number). Your job: prove the change
+      end-to-end with Cypress, then update GitHub.
 
       1. Follow the 'write-e2e-cumulocity-cypress-test' skill EXACTLY —
          preflight, discovery, write/extend spec, headless verify loop,
@@ -499,10 +515,12 @@ agents:
       3. Verdict:
          - GREEN (the plugin's e2e suite passes headlessly):
            * Commit any spec changes, then push: `git push -u origin HEAD`.
-           * Open a pull request against 'main' titled
-             "fix(<plugin>): <summary> (#<issue>)" whose body summarises root
-             cause, fix, and validation results (pass/fail counts) and ends
-             with "Closes #<issue>".
+           * Open a pull request against 'main' titled with the type matching
+             the change — "fix(<plugin>): <summary> (#<issue>)" for bugs,
+             "feat(<plugin>): <summary> (#<issue>)" for features — whose body
+             summarises the motivation (root cause for bugs, desired
+             behaviour for features), the change, and validation results
+             (pass/fail counts) and ends with "Closes #<issue>".
            * Comment the pass/fail counts and the PR link on the issue, add
              the label 'agent:validated' and remove 'agent:fix'.
              Label protocol: there is NO tool that adds or removes a single
