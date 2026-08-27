@@ -106,9 +106,13 @@ permissions:
     - "write_*"
     - "edit_*"
     - "create_*"
-    - "mcp:c8y_sdk:*"
-    - "mcp:github:*"
-    - "mcp:playwright:*"
+    # MCP tools are matched by their QUALIFIED tool names (toolset name +
+    # underscore prefix, e.g. github_get_issue) — an "mcp:<server>:*" scheme
+    # does not exist and silently matches nothing, which under --safety
+    # restricted denies every MCP call.
+    - "c8y_sdk_*"
+    - "github_*"
+    - "playwright_*"
     - "shell:cmd=*"
 
 agents:

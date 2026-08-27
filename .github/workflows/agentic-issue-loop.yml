@@ -147,6 +147,7 @@ jobs:
           git switch -c "agent/issue-${ISSUE_NUMBER}-r${GITHUB_RUN_NUMBER}"
 
       - name: Run agent loop
+        id: agent_loop
         working-directory: toolkit
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -160,6 +161,10 @@ jobs:
           # (/tmp/c8y-playwright-secrets.env) and Cypress reads them from the
           # repo-root .env — the agent processes never need them.
         run: |
+          # pipefail: without it the step's exit code is tee's (always 0) and a
+          # docker-agent crash (e.g. "Error: model failed: ... usage limits")
+          # shows up as a green job.
+          set -o pipefail
           docker-agent run --exec --safety restricted .github/agents/issue-loop.yaml --json \
             "Work on issue #${ISSUE_NUMBER} of Cumulocity-IoT/cumulocity-ui-toolkit." \
             | tee "$RUNNER_TEMP/agent-events.ndjson"
@@ -190,22 +195,26 @@ jobs:
 
       # A budget or max_iterations stop is terminal for the agents and
       # docker-agent still exits 0 — root never gets to post its failure diagnosis, so the
-      # issue would go silently stale. Detect the stop events in the transcript
-      # and leave a status comment + label instead. Skipped when the validator
-      # already reported success (the 'agent:validated' label add is in the
-      # transcript).
-      - name: Report guardrail stop on the issue
+      # issue would go silently stale. The same goes for an outright docker-agent
+      # crash (e.g. "Error: model failed: ... workspace API usage limits"): the
+      # error line goes to stderr and never reaches the transcript, so it is
+      # detected via the step outcome instead. Detect all of these and leave a
+      # status comment + label. Skipped when the validator already reported
+      # success (the 'agent:validated' label add is in the transcript).
+      - name: Report guardrail stop or crash on the issue
         if: always()
         env:
           GH_TOKEN: ${{ secrets.AGENT_GITHUB_PAT }}
+          AGENT_LOOP_OUTCOME: ${{ steps.agent_loop.outcome }}
         run: |
           FILE="$RUNNER_TEMP/agent-events.ndjson"
-          [ -f "$FILE" ] || exit 0
-          grep -q 'agent:validated' "$FILE" && exit 0
-          if grep -q '"type":"budget_exceeded"' "$FILE"; then
+          [ -f "$FILE" ] && grep -q 'agent:validated' "$FILE" && exit 0
+          if [ -f "$FILE" ] && grep -q '"type":"budget_exceeded"' "$FILE"; then
             REASON="a budget ceiling (time/cost limit)"
-          elif grep -q '"type":"max_iterations_reached"' "$FILE"; then
+          elif [ -f "$FILE" ] && grep -q '"type":"max_iterations_reached"' "$FILE"; then
             REASON="the max_iterations guardrail"
+          elif [ "$AGENT_LOOP_OUTCOME" = "failure" ]; then
+            REASON="an unexpected docker-agent error (e.g. a model/provider failure)"
           else
             exit 0
           fi
