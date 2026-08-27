@@ -199,30 +199,32 @@ jobs:
           open(path, "w", encoding="utf-8", errors="surrogateescape").write(data)
           EOF
 
-      # A budget or max_iterations stop is terminal for the agents and
-      # docker-agent still exits 0 — root never gets to post its failure diagnosis, so the
-      # issue would go silently stale. The same goes for an outright docker-agent
-      # crash (e.g. "Error: model failed: ... workspace API usage limits"): the
-      # error line goes to stderr and never reaches the transcript, so it is
-      # detected via the step outcome instead. Detect all of these and leave a
-      # status comment + label. Skipped when the validator already reported
-      # success (the 'agent:validated' label add is in the transcript).
-      - name: Report guardrail stop or crash on the issue
+      # The agents own the issue's verdict labels: a run that finishes leaves
+      # exactly one 'agent:*' outcome label. A run that ends WITHOUT one
+      # stopped prematurely — a budget stop (emits budget_exceeded and exits
+      # 0), a max_iterations stop (docker-agent --exec exits 0 with NO
+      # transcript event at all — observed on v1.127.0), or an outright crash
+      # (stderr only) — and root never gets to post its failure diagnosis, so
+      # the issue would go silently stale. Detect premature ends from the
+      # ISSUE's label state rather than transcript event names, and leave a
+      # status comment + label; the transcript/step outcome only refine the
+      # stated reason.
+      - name: Report unfinished run on the issue
         if: always()
         env:
           GH_TOKEN: ${{ secrets.AGENT_GITHUB_PAT }}
           AGENT_LOOP_OUTCOME: ${{ steps.agent_loop.outcome }}
         run: |
+          LABELS=$(gh issue view "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --json labels -q '.labels[].name')
+          echo "$LABELS" | grep -qE '^agent:(validated|failed|needs-info|cannot-reproduce)$' && exit 0
           FILE="$RUNNER_TEMP/agent-events.ndjson"
-          [ -f "$FILE" ] && grep -q 'agent:validated' "$FILE" && exit 0
+          REASON="a silent stop before reaching a verdict (most likely the max_iterations guardrail, which docker-agent ends without any transcript event)"
           if [ -f "$FILE" ] && grep -q '"type":"budget_exceeded"' "$FILE"; then
             REASON="a budget ceiling (time/cost limit)"
           elif [ -f "$FILE" ] && grep -q '"type":"max_iterations_reached"' "$FILE"; then
             REASON="the max_iterations guardrail"
           elif [ "$AGENT_LOOP_OUTCOME" = "failure" ]; then
             REASON="an unexpected docker-agent error (e.g. a model/provider failure)"
-          else
-            exit 0
           fi
           RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" \

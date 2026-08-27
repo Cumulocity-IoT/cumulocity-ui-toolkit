@@ -54,15 +54,20 @@ version: "12"
 # One shared ceiling for the whole run — root and both sub-agents spend
 # against the same budget; exceeding any limit stops the run.
 #
-# Layered guardrails (a budget/iteration stop is terminal and exits 0 — the
-# workflow's "Report guardrail stop" step detects it in the transcript and
-# comments on the issue, since root gets no chance to):
+# Layered guardrails (a budget/iteration stop is terminal and exits 0; a
+# budget stop emits a budget_exceeded event, but a max_iterations stop in
+# --exec mode ends the run with NO transcript event at all (observed on
+# v1.127.0) — the workflow's "Report unfinished run" step therefore detects
+# premature ends from the ISSUE's label state, since root gets no chance to
+# comment):
 #   budget        run-wide wallet, every agent spends from it
 #   budgets       per-agent pots so one looping agent can't starve the others;
 #                 a named budget is one SHARED pot per name, hence one name per
 #                 agent — the run-wide ceiling still binds first
 #   max_iterations            per-agent cap on tool-calling loops (default is
-#                             unlimited — always set for shell-wielding agents)
+#                             unlimited — always set for shell-wielding agents);
+#                             every model turn counts, so compile waits must be
+#                             ONE blocking shell call, not a poll per turn
 #   max_tool_result_tokens    middle-out truncation of oversized tool results
 #                             (serve logs, Karma output, Cypress request
 #                             traces) — context bloat is what usually sends an
@@ -124,9 +129,10 @@ agents:
     description: Triages a GitHub issue in cumulocity-ui-toolkit and orchestrates fix and validation
     sub_agents: [developer, validator]
     budgets: [triage]
-    # Triage + repro + up to 3 delegation cycles fit comfortably; a stop here
-    # ends the run without root's failure comment — the workflow step covers it.
-    max_iterations: 50
+    # Reproduction is iteration-hungry (compile waits, browser steps count one
+    # turn each): a cap of 50 died before root ever delegated. The cost
+    # budgets are the real spend backstop — this only catches degenerate loops.
+    max_iterations: 150
     max_tool_result_tokens: 8000
     # Repository conventions are injected into every turn — no need to read the file.
     add_prompt_files: ["AGENTS.md"]
@@ -193,10 +199,14 @@ agents:
              port, which breaks the validator's Cypress run later).
            * Start it in the background with output captured:
              `pnpm run serve:<plugin> > /tmp/serve-<plugin>.log 2>&1 &`
-           * Poll the log until the server prints the URL to open (the first
-             compile can take minutes). That printed URL contains the ACTUAL
-             port and a `?remotes=...` query parameter that makes the shell
-             load the locally served plugin via Module Federation.
+           * Wait for the first compile with ONE blocking shell call — it can
+             take minutes, every model turn counts against max_iterations, and
+             repeating an identical short poll gets the agent terminated:
+             `timeout 600 bash -c 'until grep -q "remotes=" /tmp/serve-<plugin>.log; do sleep 5; done'; tail -20 /tmp/serve-<plugin>.log`
+             (set the shell tool's timeout parameter to 620). The log then
+             contains the URL to open: it has the ACTUAL port and a
+             `?remotes=...` query parameter that makes the shell load the
+             locally served plugin via Module Federation.
            * Browse with the playwright tools using EXACTLY that printed URL —
              never a hand-built http://localhost:9001/... one. Without the
              `?remotes=` parameter you are looking at the tenant's deployed
@@ -299,9 +309,9 @@ agents:
     model: anthropic/claude-sonnet-5
     description: Implements the fix in the local checkout following repository conventions
     budgets: [implement]
-    # Compile/test loops are turn-hungry (dev-server polling, lint, Karma);
+    # Compile/test loops are turn-hungry (dev-server waits, lint, Karma);
     # generous but finite — the budgets backstop the overshoot.
-    max_iterations: 75
+    max_iterations: 150
     max_tool_result_tokens: 8000
     add_prompt_files: ["AGENTS.md"]
     toolsets:
@@ -359,10 +369,14 @@ agents:
            validator's Cypress run).
          - Start it in the background with output captured:
            `pnpm run serve:<plugin> > /tmp/serve-<plugin>.log 2>&1 &`
-         - Poll the log until the server prints the URL to open (the first
-           compile can take minutes). That printed URL contains the ACTUAL
-           port and a `?remotes=...` query parameter that makes the shell
-           load YOUR locally served plugin via Module Federation.
+         - Wait for the first compile with ONE blocking shell call — it can
+           take minutes, every model turn counts against max_iterations, and
+           repeating an identical short poll gets the agent terminated:
+           `timeout 600 bash -c 'until grep -q "remotes=" /tmp/serve-<plugin>.log; do sleep 5; done'; tail -20 /tmp/serve-<plugin>.log`
+           (set the shell tool's timeout parameter to 620). The log then
+           contains the URL to open: it has the ACTUAL port and a
+           `?remotes=...` query parameter that makes the shell load YOUR
+           locally served plugin via Module Federation.
          - Browse with the playwright tools using EXACTLY that printed URL —
            never a hand-built http://localhost:9001/... one. Without the
            `?remotes=` parameter the shell loads the unmodified plugin from
@@ -414,7 +428,7 @@ agents:
     budgets: [validate]
     # The Cypress verify loop needs many turns; Cypress request traces are the
     # biggest tool results in the whole run — truncation matters most here.
-    max_iterations: 75
+    max_iterations: 150
     max_tool_result_tokens: 8000
     # Loads .claude/skills/write-e2e-cumulocity-cypress-test/SKILL.md from the checkout.
     skills:
@@ -463,8 +477,12 @@ agents:
            new one to a random port), then start it in the background with
            output captured: `pnpm run serve:<plugin> > /tmp/serve-<plugin>.log 2>&1 &`
            (C8Y_BASEURL and C8Y_SHELL_TARGET are already set in the
-           environment) and poll the log until it prints the URL to open
-           (the first compile can take a few minutes).
+           environment) and wait for the compile with ONE blocking shell
+           call — it can take minutes, every model turn counts against
+           max_iterations, and repeating an identical short poll gets the
+           agent terminated:
+           `timeout 600 bash -c 'until grep -q "remotes=" /tmp/serve-<plugin>.log; do sleep 5; done'; tail -20 /tmp/serve-<plugin>.log`
+           (set the shell tool's timeout parameter to 620).
          - For the skill's discovery phase (walking the flow in a live
            browser) and for diagnosing failing runs, use the playwright
            browser tools with EXACTLY the URL the dev server printed (the
