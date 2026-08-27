@@ -1,0 +1,227 @@
+# Agentic issue loop: triage -> develop -> validate (Cypress e2e) -> update issue.
+# Driven by docker-agent (https://github.com/docker/docker-agent) running the
+# three-agent config in .github/agents/issue-loop.yaml.
+#
+# Required repository secrets:
+#   ANTHROPIC_API_KEY   model provider key
+#   AGENT_GITHUB_PAT    fine-grained PAT for this repo only:
+#                       contents:write, issues:write, pull_requests:write
+#   C8Y_KNOWLEDGE_NPM_TOKEN
+#                       dedicated read-only token for the GitHub Packages npm
+#                       registry, used solely to install
+#                       @cumulocity-iot/c8y-web-sdk-knowledge-mcp
+#                       (classic PAT with read:packages and nothing else)
+#   C8Y_PASSWORD        password of the Cumulocity test tenant user
+# Required repository variables:
+#   C8Y_BASEURL / C8Y_TENANT / C8Y_USERNAME   Cumulocity test tenant (non-sensitive)
+# Optional repository variable:
+#   C8Y_SHELL_TARGET    shell app on the tenant (default: cockpit)
+name: Agentic issue loop
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Issue number to work on
+        required: true
+        type: number
+
+# All GitHub writes (push, PR, issue comments) go through the PAT, never GITHUB_TOKEN.
+permissions:
+  contents: read
+
+concurrency:
+  group: agent-issue-${{ github.event.issue.number || inputs.issue_number }}
+  cancel-in-progress: false
+
+jobs:
+  agent:
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'agent:fix'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
+      TELEMETRY_ENABLED: "false"
+    steps:
+      - name: Check out cumulocity-ui-toolkit
+        uses: actions/checkout@v4
+        with:
+          path: toolkit
+          # PAT-backed credentials are persisted intentionally: the validator
+          # agent pushes the work branch with plain `git push`.
+          token: ${{ secrets.AGENT_GITHUB_PAT }}
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          package_json_file: toolkit/package.json
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          # Node 24: Angular 20 supports it, and the knowledge MCP package
+          # (@cumulocity-iot/c8y-web-sdk-knowledge-mcp) requires node >= 24.
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: |
+            toolkit/pnpm-lock.yaml
+            toolkit/test/pnpm-lock.yaml
+
+      - name: Install toolkit dependencies
+        working-directory: toolkit
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm -C test install --frozen-lockfile
+
+      # The c8y_sdk MCP server is a GitHub package; the agent config starts it
+      # with `npx -y @cumulocity-iot/c8y-web-sdk-knowledge-mcp`. Map the scope
+      # to GitHub Packages in the user npmrc (kept out of the repo's .npmrc so
+      # the token never lands in the checkout). Uses a dedicated read-only
+      # packages token — NOT the PAT that can write to this repo.
+      - name: Configure GitHub Packages registry for @cumulocity-iot
+        run: |
+          {
+            echo "@cumulocity-iot:registry=https://npm.pkg.github.com"
+            echo "//npm.pkg.github.com/:_authToken=${{ secrets.C8Y_KNOWLEDGE_NPM_TOKEN }}"
+          } >> ~/.npmrc
+
+      - name: Write .env for Cypress
+        working-directory: toolkit
+        run: |
+          {
+            echo "C8Y_USERNAME=${{ vars.C8Y_USERNAME }}"
+            echo "C8Y_PASSWORD=${{ secrets.C8Y_PASSWORD }}"
+            echo "C8Y_TENANT=${{ vars.C8Y_TENANT }}"
+            echo "C8Y_CYPRESS_URL=http://localhost:9001/"
+            echo "C8Y_SHELL_TARGET=${{ vars.C8Y_SHELL_TARGET || 'cockpit' }}"
+          } > .env
+
+      # Tenant credentials for the agents' playwright browser login. The MCP
+      # servers load this file via --secrets (see issue-loop.yaml): agents type
+      # the secret NAMES into the login form and the server substitutes the
+      # values, so the credentials never enter the model context or the
+      # transcript. Written OUTSIDE the checkout so no filesystem tool ever
+      # lists it among project files.
+      - name: Write playwright secrets file
+        run: |
+          {
+            echo "C8Y_TENANT=${{ vars.C8Y_TENANT }}"
+            echo "C8Y_USERNAME=${{ vars.C8Y_USERNAME }}"
+            echo "C8Y_PASSWORD=${{ secrets.C8Y_PASSWORD }}"
+          } > /tmp/c8y-playwright-secrets.env
+          chmod 600 /tmp/c8y-playwright-secrets.env
+
+      - name: Install browser for the agents' playwright MCP
+        # Use the SAME pinned @playwright/mcp version as issue-loop.yaml and its
+        # own installer, so the downloaded browser revision always matches what
+        # the MCP server expects at runtime. install-deps adds the system
+        # libraries headless Chromium needs (uses the runner's passwordless sudo).
+        run: |
+          npx -y @playwright/mcp@0.0.79 install-browser chrome-for-testing
+          npx -y playwright install-deps chromium
+          # Expose the same browser to Cypress: the e2e scripts run with
+          # `--browser chromium`, and the runner image has no chromium on PATH.
+          CHROME_BIN="$(ls -d "$HOME"/.cache/ms-playwright/chromium-*/chrome-linux*/chrome | head -1)"
+          sudo ln -sf "$CHROME_BIN" /usr/local/bin/chromium
+          chromium --version
+          # Karma (karma-chrome-launcher) resolves the ChromeHeadless browser
+          # via CHROME_BIN — without it `pnpm run test:<plugin>` fails with
+          # "No binary for ChromeHeadless browser on your platform".
+          echo "CHROME_BIN=/usr/local/bin/chromium" >> "$GITHUB_ENV"
+
+      - name: Install docker-agent
+        run: |
+          curl -fsSL "https://github.com/docker/docker-agent/releases/latest/download/docker-agent-linux-amd64" -o docker-agent
+          chmod +x docker-agent
+          sudo mv docker-agent /usr/local/bin/
+          docker-agent version
+
+      - name: Prepare work branch
+        working-directory: toolkit
+        run: |
+          git config user.name "cumulocity-ui-agent"
+          git config user.email "ui-guild-agent@users.noreply.github.com"
+          git switch -c "agent/issue-${ISSUE_NUMBER}-r${GITHUB_RUN_NUMBER}"
+
+      - name: Run agent loop
+        working-directory: toolkit
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_PAT: ${{ secrets.AGENT_GITHUB_PAT }}
+          # `pnpm run serve:<plugin>` reads these from the process environment
+          # (from-env), not from .env:
+          C8Y_BASEURL: ${{ vars.C8Y_BASEURL }}
+          C8Y_SHELL_TARGET: ${{ vars.C8Y_SHELL_TARGET || 'cockpit' }}
+          # Tenant credentials are deliberately NOT in this environment: the
+          # agents' playwright browsers read them from the --secrets file
+          # (/tmp/c8y-playwright-secrets.env) and Cypress reads them from the
+          # repo-root .env — the agent processes never need them.
+        run: |
+          docker-agent run --exec --safety restricted .github/agents/issue-loop.yaml --json \
+            "Work on issue #${ISSUE_NUMBER} of Cumulocity-IoT/cumulocity-ui-toolkit." \
+            | tee "$RUNNER_TEMP/agent-events.ndjson"
+
+      # GitHub masks secrets in step logs, but NOT inside artifact files.
+      # With the playwright --secrets hardening the transcript should no
+      # longer contain the tenant password (agents only ever handle secret
+      # NAMES) — but a failed Cypress login can still dump the .env values
+      # into the request trace, so keep scrubbing as defense in depth.
+      # Only the password is scrubbed: tenant/username are plain repository
+      # variables and not treated as sensitive.
+      - name: Scrub credentials from transcript
+        if: always()
+        env:
+          C8Y_PW: ${{ secrets.C8Y_PASSWORD }}
+        run: |
+          FILE="$RUNNER_TEMP/agent-events.ndjson"
+          [ -f "$FILE" ] || exit 0
+          python3 - "$FILE" <<'EOF'
+          import os, sys
+          path = sys.argv[1]
+          data = open(path, encoding="utf-8", errors="surrogateescape").read()
+          value = os.environ.get("C8Y_PW")
+          if value:
+              data = data.replace(value, "***REDACTED***")
+          open(path, "w", encoding="utf-8", errors="surrogateescape").write(data)
+          EOF
+
+      # A budget or max_iterations stop is terminal for the agents and
+      # docker-agent still exits 0 — root never gets to post its failure diagnosis, so the
+      # issue would go silently stale. Detect the stop events in the transcript
+      # and leave a status comment + label instead. Skipped when the validator
+      # already reported success (the 'agent:validated' label add is in the
+      # transcript).
+      - name: Report guardrail stop on the issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.AGENT_GITHUB_PAT }}
+        run: |
+          FILE="$RUNNER_TEMP/agent-events.ndjson"
+          [ -f "$FILE" ] || exit 0
+          grep -q 'agent:validated' "$FILE" && exit 0
+          if grep -q '"type":"budget_exceeded"' "$FILE"; then
+            REASON="a budget ceiling (time/cost limit)"
+          elif grep -q '"type":"max_iterations_reached"' "$FILE"; then
+            REASON="the max_iterations guardrail"
+          else
+            exit 0
+          fi
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" \
+            --body "🤖 The automated fix run was stopped by ${REASON} before completing. No PR was opened. See the [workflow run](${RUN_URL}) and its transcript artifact for details."
+          gh issue edit "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" \
+            --add-label 'agent:failed' --remove-label 'agent:fix' || true
+
+      - name: Upload transcript and Cypress screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-run-issue-${{ env.ISSUE_NUMBER }}
+          path: |
+            ${{ runner.temp }}/agent-events.ndjson
+            toolkit/test/cypress/screenshots/
+          if-no-files-found: ignore
+          retention-days: 14
