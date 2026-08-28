@@ -110,6 +110,81 @@ export class TenantOptionManagementService {
     return { id: `${option.category}-${option.key}`, value: option.value ?? '', ...item };
   }
 
+  /**
+   * Fetches **all** tenant options for the given `category` (paginated, like
+   * {@link getAllOptions}) and registers every one of them in the plugin's
+   * configuration managed object in a single batch.
+   *
+   * Unlike {@link allowListOption}, entries that are already registered are
+   * silently skipped rather than aborting the whole operation, and the
+   * configuration is fetched/persisted exactly once regardless of how many
+   * options are imported.
+   *
+   * Rejects with a clear `Error` when no tenant options exist for `category`.
+   */
+  async allowListOptionsByCategory(category: string): Promise<TenantOptionRow[]> {
+    const options: ITenantOption[] = [];
+    const response = await this.tenantOption.list({
+      category,
+      pageSize: this.MAX_PAGE_SIZE,
+      withTotalPages: true,
+    });
+
+    options.push(...response.data);
+
+    for (
+      let currentPage = (response.paging?.currentPage ?? 1) + 1;
+      currentPage <= (response.paging?.totalPages ?? 0);
+      currentPage++
+    ) {
+      const { data } = await this.tenantOption.list({
+        category,
+        pageSize: this.MAX_PAGE_SIZE,
+        currentPage,
+      });
+
+      options.push(...data);
+    }
+
+    if (!options.length) {
+      return Promise.reject(new Error(`No tenant options found for category "${category}"`));
+    }
+
+    const config = await this.getConfiguration();
+    const user = await this.getUser();
+    const addedRows: TenantOptionRow[] = [];
+
+    for (const option of options) {
+      const alreadyRegistered = config.options.some(
+        (o) => o.category === option.category && o.key === option.key
+      );
+
+      if (alreadyRegistered) {
+        continue;
+      }
+
+      const item: TenantOptionConfigurationItem = {
+        key: option.key,
+        category: option.category,
+        lastUpdated: new Date().toISOString(),
+        user,
+      };
+
+      config.options.push(item);
+      addedRows.push({
+        id: `${option.category}-${option.key}`,
+        value: option.value ?? '',
+        ...item,
+      });
+    }
+
+    if (addedRows.length) {
+      await this.inventory.update({ id: config.id, options: config.options });
+    }
+
+    return addedRows;
+  }
+
   async updateOption(row: ITenantOption & { value: string }): Promise<TenantOptionRow> {
     const option: ITenantOption = {
       category: row.category,

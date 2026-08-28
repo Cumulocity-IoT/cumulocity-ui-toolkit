@@ -221,6 +221,123 @@ describe('TenantOptionManagementService', () => {
     });
   });
 
+  // ─── allowListOptionsByCategory() ───────────────────────────────────────────
+
+  describe('allowListOptionsByCategory()', () => {
+    it('imports every new option of the category in one batch and returns them', async () => {
+      const options: ITenantOption[] = [
+        { category: 'cat', key: 'k1', value: 'v1' },
+        { category: 'cat', key: 'k2', value: 'v2' },
+      ];
+
+      tenantOptionsService.list.and.returnValue(
+        Promise.resolve({
+          data: options,
+          paging: { currentPage: 1, totalPages: 1 } as never,
+          res: FETCH_RES,
+        })
+      );
+
+      const cfg = makeConfig();
+
+      spyOn(service, 'getConfiguration').and.returnValue(Promise.resolve(cfg));
+      inventoryService.update.and.returnValue(Promise.resolve({ data: cfg, res: FETCH_RES }));
+
+      const rows = await service.allowListOptionsByCategory('cat');
+
+      expect(rows).toHaveSize(2);
+      expect(rows.map((r) => r.id)).toEqual(['cat-k1', 'cat-k2']);
+      expect(tenantOptionsService.list).toHaveBeenCalledWith(
+        jasmine.objectContaining({ category: 'cat' })
+      );
+      expect(inventoryService.update).toHaveBeenCalledWith(
+        jasmine.objectContaining({ id: cfg.id })
+      );
+
+      const updateCall = inventoryService.update.calls.mostRecent().args[0] as {
+        options: unknown[];
+      };
+
+      expect(updateCall.options).toHaveSize(2);
+    });
+
+    it('skips options whose category+key already exist in the configuration', async () => {
+      const options: ITenantOption[] = [
+        { category: 'cat', key: 'k1', value: 'v1' },
+        { category: 'cat', key: 'k2', value: 'v2' },
+      ];
+
+      tenantOptionsService.list.and.returnValue(
+        Promise.resolve({
+          data: options,
+          paging: { currentPage: 1, totalPages: 1 } as never,
+          res: FETCH_RES,
+        })
+      );
+
+      const existing = { category: 'cat', key: 'k1', lastUpdated: '', user: '' };
+      const cfg = makeConfig([existing]);
+
+      spyOn(service, 'getConfiguration').and.returnValue(Promise.resolve(cfg));
+      inventoryService.update.and.returnValue(Promise.resolve({ data: cfg, res: FETCH_RES }));
+
+      const rows = await service.allowListOptionsByCategory('cat');
+
+      expect(rows).toHaveSize(1);
+      expect(rows[0].id).toBe('cat-k2');
+
+      const updateCall = inventoryService.update.calls.mostRecent().args[0] as {
+        options: unknown[];
+      };
+
+      expect(updateCall.options).toHaveSize(2);
+    });
+
+    it('rejects with a clear error when the category has no tenant options', async () => {
+      tenantOptionsService.list.and.returnValue(
+        Promise.resolve({
+          data: [],
+          paging: { currentPage: 1, totalPages: 1 } as never,
+          res: FETCH_RES,
+        })
+      );
+
+      await expectAsync(service.allowListOptionsByCategory('missing-cat')).toBeRejectedWithError(
+        'No tenant options found for category "missing-cat"'
+      );
+
+      expect(inventoryService.update).not.toHaveBeenCalled();
+    });
+
+    it('paginates when totalPages > 1', async () => {
+      const page1: ITenantOption[] = [{ category: 'cat', key: 'k1', value: 'v1' }];
+      const page2: ITenantOption[] = [{ category: 'cat', key: 'k2', value: 'v2' }];
+
+      tenantOptionsService.list.and.returnValues(
+        Promise.resolve({
+          data: page1,
+          paging: { currentPage: 1, totalPages: 2 } as never,
+          res: FETCH_RES,
+        }),
+        Promise.resolve({
+          data: page2,
+          paging: { currentPage: 2, totalPages: 2 } as never,
+          res: FETCH_RES,
+        })
+      );
+
+      const cfg = makeConfig();
+
+      spyOn(service, 'getConfiguration').and.returnValue(Promise.resolve(cfg));
+      inventoryService.update.and.returnValue(Promise.resolve({ data: cfg, res: FETCH_RES }));
+
+      const rows = await service.allowListOptionsByCategory('cat');
+
+      expect(rows).toHaveSize(2);
+      expect(tenantOptionsService.list).toHaveBeenCalledTimes(2);
+    });
+  });
+
   // ─── deleteOption() ──────────────────────────────────────────────────────────
 
   describe('deleteOption()', () => {
