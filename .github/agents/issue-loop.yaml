@@ -33,26 +33,31 @@
 #   /tmp/c8y-playwright-secrets.env
 #                        dotenv file with C8Y_TENANT / C8Y_USERNAME /
 #                        C8Y_PASSWORD, written by CI OUTSIDE the checkout.
-#                        MUST exist before starting — @playwright/mcp exits
-#                        with ENOENT on a missing --secrets file, which
-#                        surfaces as "mcp(...) start failed: server
-#                        unavailable" for every agent. For a LOCAL run create
-#                        it from your env file first, e.g.:
+#                        For a LOCAL run create it from your env file first,
+#                        e.g.:
 #                          grep -E '^C8Y_(TENANT|USERNAME|PASSWORD)=' \
 #                            ~/agent-test.env > /tmp/c8y-playwright-secrets.env
 #                          chmod 600 /tmp/c8y-playwright-secrets.env
-#                        The
-#                        playwright MCP servers load it via --secrets: agents
-#                        type the secret NAMES into the login form and the
-#                        browser substitutes the values server-side, so the
+#   PLAYWRIGHT_MCP_SECRETS_FILE
+#                        must point at that file (CI sets it in the run
+#                        step's env). The agents drive a headless browser via
+#                        the playwright-cli shell command; its daemon loads
+#                        the secrets file through this env var: agents type
+#                        the secret NAMES into the login form and the daemon
+#                        substitutes the values server-side, so the
 #                        credentials never enter the model context or the
-#                        transcript. (CI still scrubs the transcript as
-#                        defense in depth — a failed Cypress login can dump
-#                        the .env credentials into the request trace.)
+#                        transcript. Unlike the old @playwright/mcp --secrets
+#                        flag, a missing file does NOT fail the daemon start —
+#                        the symptom is a login form filled with the literal
+#                        string 'C8Y_USERNAME' and a failed login. (CI still
+#                        scrubs the transcript as defense in depth — a failed
+#                        Cypress login can dump the .env credentials into the
+#                        request trace.)
 #   .env at repo root    Cypress credentials (see AGENTS.md, E2E section)
 #
-# Every agent gets AGENTS.md injected each turn (add_prompt_files) and a headless
-# playwright MCP browser to reproduce, inspect, and visually verify the issue.
+# Every agent gets AGENTS.md injected each turn (add_prompt_files) and drives a
+# headless browser through playwright-cli (see the 'playwright-cli' skill) to
+# reproduce, inspect, and visually verify the issue.
 # Cypress remains the only authority for the GREEN verdict.
 # ============================================================================
 version: "12"
@@ -123,7 +128,7 @@ permissions:
     # restricted denies every MCP call.
     - "c8y_sdk_*"
     - "github_*"
-    - "playwright_*"
+    # playwright-cli runs through the shell toolset — covered by shell:cmd=*.
     - "shell:cmd=*"
 
 agents:
@@ -140,27 +145,19 @@ agents:
     # budgets are the real spend backstop — this only catches degenerate loops.
     max_iterations: 150
     max_tool_result_tokens: 8000
+    # How to drive the headless browser (playwright-cli via shell) for
+    # reproducing the reported behaviour against the locally served build.
+    skills:
+      - playwright-cli
     # Repository conventions are injected into every turn — no need to read the file.
     add_prompt_files: ["AGENTS.md"]
     toolsets:
       - type: filesystem
         tools: [read_file, list_directory, directory_tree]
-      # Shell ONLY for managing the local dev server during reproduction and
-      # for read-only git commands — never for modifying code.
+      # Shell for managing the local dev server during reproduction, for the
+      # playwright-cli browser, and for read-only git commands — never for
+      # modifying code.
       - type: shell
-      # Headless browser for reproducing the reported behaviour against the
-      # locally served plugin build.
-      - type: mcp
-        name: playwright
-        command: npx
-        # --isolated: each agent gets its own in-memory browser profile — the
-        # default persistent profile is locked by whichever agent's browser
-        # starts first ("Browser is already in use").
-        # --secrets: tenant credentials live only inside the MCP server. The
-        # agent types the secret NAMES (C8Y_TENANT/C8Y_USERNAME/C8Y_PASSWORD)
-        # into form fields; the server fills the real values and logs
-        # SECRET_<name> instead, and redacts the values from tool output.
-        args: ["-y", "@playwright/mcp@0.0.79", "--headless", "--isolated", "--browser", "chromium", "--secrets", "/tmp/c8y-playwright-secrets.env"]
       - type: mcp
         name: github
         command: npx
@@ -213,11 +210,13 @@ agents:
              contains the URL to open: it has the ACTUAL port and a
              `?remotes=...` query parameter that makes the shell load the
              locally served plugin via Module Federation.
-           * Browse with the playwright tools using EXACTLY that printed URL —
-             never a hand-built http://localhost:9001/... one. Without the
+           * Browse with playwright-cli using EXACTLY that printed URL,
+             quoted (it contains `&` characters):
+             `playwright-cli -s=root open "<printed URL>"` — never a
+             hand-built http://localhost:9001/... one. Without the
              `?remotes=` parameter you are looking at the tenant's deployed
              plugin, not this checkout.
-           * Log in as described under "Browser login" below.
+           * Log in as described under "Browser rules" below.
          - Record exact repro steps, observed vs. expected behaviour, and any
            console/network errors you see. Leave the dev server running and
            pass its log file path and the printed browse URL along in the
@@ -286,20 +285,31 @@ agents:
         'agent:fix' restarts the run. Add the label 'agent:cannot-reproduce',
         remove 'agent:fix'. Verdict: cannot-reproduce.
 
-      Browser login (playwright tools): on the Cumulocity login screen fill
-      the form fields with the LITERAL strings 'C8Y_TENANT' (tenant field),
-      'C8Y_USERNAME' (username field), 'C8Y_PASSWORD' (password field) and
-      submit. These are secret NAMES — the browser substitutes the real
-      values server-side from its secrets file; you never see or handle the
-      actual credentials. If the login fails anyway, report it as an
-      environment blocker — never search for credential values on the
-      machine. Save any screenshots inside .playwright-mcp/ (gitignored) —
-      the browser tools cannot write anywhere else.
+      Browser rules (playwright-cli): drive the browser with the
+      playwright-cli shell command per the 'playwright-cli' skill, ALWAYS
+      with your own named session — prefix every command with `-s=root`
+      (e.g. `playwright-cli -s=root snapshot`) — so your browser never
+      clashes with another agent's. Keep tool output small: prefer
+      `playwright-cli -s=root find "<text>"` and element-scoped or
+      depth-limited snapshots (`snapshot --depth=4`) over repeated
+      full-page snapshots. Screenshots and snapshot files land in
+      .playwright-cli/ (gitignored). Close your browser when you no longer
+      need it: `playwright-cli -s=root close`.
+      Login: on the Cumulocity login screen fill the form fields with the
+      LITERAL strings 'C8Y_TENANT' (tenant field), 'C8Y_USERNAME' (username
+      field), 'C8Y_PASSWORD' (password field) and submit. These are secret
+      NAMES — the browser daemon substitutes the real values server-side
+      from its secrets file (PLAYWRIGHT_MCP_SECRETS_FILE); you never see or
+      handle the actual credentials. If the login fails anyway (e.g. a
+      field still shows the literal secret name after submit — the secrets
+      file is missing), report it as an environment blocker — never search
+      for credential values on the machine.
 
       Constraints:
       - Never modify code yourself — that is the developer's job. Your shell
-        is ONLY for the dev server (start, poll its log, free the port) and
-        read-only git/inspection commands — never edits, commits, or pushes.
+        is ONLY for the dev server (start, poll its log, free the port), the
+        playwright-cli browser, and read-only git/inspection commands —
+        never edits, commits, or pushes.
       - Keep issue comments concise and factual. Never include credentials,
         tokens, or raw test-run logs in comments.
       - Keep github tool results small: fetch only what you need
@@ -321,23 +331,15 @@ agents:
     # generous but finite — the budgets backstop the overshoot.
     max_iterations: 150
     max_tool_result_tokens: 8000
+    # How to drive the headless browser (playwright-cli via shell) to
+    # reproduce the bug and visually confirm the fix against the locally
+    # served plugin.
+    skills:
+      - playwright-cli
     add_prompt_files: ["AGENTS.md"]
     toolsets:
       - type: filesystem
       - type: shell
-      # Headless browser to reproduce the bug and visually confirm the fix
-      # against the locally served plugin.
-      - type: mcp
-        name: playwright
-        command: npx
-        # --isolated: each agent gets its own in-memory browser profile — the
-        # default persistent profile is locked by whichever agent's browser
-        # starts first ("Browser is already in use").
-        # --secrets: tenant credentials live only inside the MCP server. The
-        # agent types the secret NAMES (C8Y_TENANT/C8Y_USERNAME/C8Y_PASSWORD)
-        # into form fields; the server fills the real values and logs
-        # SECRET_<name> instead, and redacts the values from tool output.
-        args: ["-y", "@playwright/mcp@0.0.79", "--headless", "--isolated", "--browser", "chromium", "--secrets", "/tmp/c8y-playwright-secrets.env"]
       # Cumulocity Web SDK knowledge graph — the FIRST stop for any @c8y/* question.
       # Installed from GitHub Packages (@cumulocity-iot scope via ~/.npmrc).
       - type: mcp
@@ -388,13 +390,15 @@ agents:
            contains the URL to open: it has the ACTUAL port and a
            `?remotes=...` query parameter that makes the shell load YOUR
            locally served plugin via Module Federation.
-         - Browse with the playwright tools using EXACTLY that printed URL —
-           never a hand-built http://localhost:9001/... one. Without the
+         - Browse with playwright-cli using EXACTLY that printed URL,
+           quoted (it contains `&` characters):
+           `playwright-cli -s=developer open "<printed URL>"` — never a
+           hand-built http://localhost:9001/... one. Without the
            `?remotes=` parameter the shell loads the unmodified plugin from
            the tenant, so anything you observe proves nothing.
          - Confirm the printed port is 9001; if not, something else holds
            the port — find and kill it, then restart the server.
-         - Log in (see "Browser login" below).
+         - Log in (see "Browser rules" below).
       4. Implement the change with the filesystem tools.
       5. Verify locally with the shell, iterating until green:
          - `pnpm run lint` (use `pnpm run lint:fix` for auto-fixable findings)
@@ -404,8 +408,8 @@ agents:
            CHROME_BIN set to the installed browser
            (`CHROME_BIN=$(command -v chromium || command -v chromium-browser)`)
            — never scan the filesystem looking for browser binaries.
-         - Re-check the baseline from step 3 in the playwright browser, at
-           the same printed URL (with `?remotes=`): for a bug the reported
+         - Re-check the baseline from step 3 in the playwright-cli browser,
+           at the same printed URL (with `?remotes=`): for a bug the reported
            behaviour must be gone; for a feature the acceptance criteria from
            the brief must now be observable (the dev server rebuilds on save;
            reload the page).
@@ -417,15 +421,25 @@ agents:
          printed browse URL (with `?remotes=`) in your report — the validator
          reuses both.
 
-      Browser login (playwright tools): on the Cumulocity login screen fill
-      the form fields with the LITERAL strings 'C8Y_TENANT' (tenant field),
-      'C8Y_USERNAME' (username field), 'C8Y_PASSWORD' (password field) and
-      submit. These are secret NAMES — the browser substitutes the real
-      values server-side from its secrets file; you never see or handle the
-      actual credentials. If the login fails anyway, report it as an
-      environment blocker — never search for credential values on the
-      machine. Save any screenshots inside .playwright-mcp/ (gitignored) —
-      the browser tools cannot write anywhere else.
+      Browser rules (playwright-cli): drive the browser with the
+      playwright-cli shell command per the 'playwright-cli' skill, ALWAYS
+      with your own named session — prefix every command with
+      `-s=developer` (e.g. `playwright-cli -s=developer snapshot`) — so
+      your browser never clashes with another agent's. Keep tool output
+      small: prefer `playwright-cli -s=developer find "<text>"` and
+      element-scoped or depth-limited snapshots (`snapshot --depth=4`) over
+      repeated full-page snapshots. Screenshots and snapshot files land in
+      .playwright-cli/ (gitignored). Close your browser when you no longer
+      need it: `playwright-cli -s=developer close`.
+      Login: on the Cumulocity login screen fill the form fields with the
+      LITERAL strings 'C8Y_TENANT' (tenant field), 'C8Y_USERNAME' (username
+      field), 'C8Y_PASSWORD' (password field) and submit. These are secret
+      NAMES — the browser daemon substitutes the real values server-side
+      from its secrets file (PLAYWRIGHT_MCP_SECRETS_FILE); you never see or
+      handle the actual credentials. If the login fails anyway (e.g. a
+      field still shows the literal secret name after submit — the secrets
+      file is missing), report it as an environment blocker — never search
+      for credential values on the machine.
 
       Constraints:
       - Never touch dist/ and never hand-edit the generated script section of
@@ -445,26 +459,17 @@ agents:
     # biggest tool results in the whole run — truncation matters most here.
     max_iterations: 150
     max_tool_result_tokens: 8000
-    # Loads .claude/skills/write-e2e-cumulocity-cypress-test/SKILL.md from the checkout.
+    # Loads SKILL.md files from .claude/skills/<name>/ in the checkout.
+    # playwright-cli drives the headless browser (via shell) for the skill's
+    # discovery phase and for diagnosing red Cypress runs. NOT a substitute
+    # for the headless Cypress verdict.
     skills:
       - write-e2e-cumulocity-cypress-test
+      - playwright-cli
     add_prompt_files: ["AGENTS.md"]
     toolsets:
       - type: filesystem # required for reading skill files
       - type: shell
-      # Headless browser for the skill's discovery phase and for diagnosing
-      # red Cypress runs. NOT a substitute for the headless Cypress verdict.
-      - type: mcp
-        name: playwright
-        command: npx
-        # --isolated: each agent gets its own in-memory browser profile — the
-        # default persistent profile is locked by whichever agent's browser
-        # starts first ("Browser is already in use").
-        # --secrets: tenant credentials live only inside the MCP server. The
-        # agent types the secret NAMES (C8Y_TENANT/C8Y_USERNAME/C8Y_PASSWORD)
-        # into form fields; the server fills the real values and logs
-        # SECRET_<name> instead, and redacts the values from tool output.
-        args: ["-y", "@playwright/mcp@0.0.79", "--headless", "--isolated", "--browser", "chromium", "--secrets", "/tmp/c8y-playwright-secrets.env"]
       - type: mcp
         name: github
         command: npx
@@ -500,14 +505,15 @@ agents:
            `timeout 600 bash -c 'until grep -q "remotes=" /tmp/serve-<plugin>.log; do sleep 5; done'; tail -20 /tmp/serve-<plugin>.log`
            (set the shell tool's timeout parameter to 620).
          - For the skill's discovery phase (walking the flow in a live
-           browser) and for diagnosing failing runs, use the playwright
-           browser tools with EXACTLY the URL the dev server printed (the
-           developer's report names it; otherwise read the serve log). It
-           carries a `?remotes=...` query parameter — without it the shell
-           loads the unmodified plugin from the tenant and you are looking
-           at the wrong build. Log in as described under "Browser login"
-           below. What you observe there is diagnosis, never a verdict:
-           only a headless Cypress run counts.
+           browser) and for diagnosing failing runs, use playwright-cli
+           with EXACTLY the URL the dev server printed, quoted (it contains
+           `&` characters): `playwright-cli -s=validator open "<printed
+           URL>"` (the developer's report names it; otherwise read the
+           serve log). It carries a `?remotes=...` query parameter —
+           without it the shell loads the unmodified plugin from the tenant
+           and you are looking at the wrong build. Log in as described
+           under "Browser rules" below. What you observe there is
+           diagnosis, never a verdict: only a headless Cypress run counts.
          - Specs live in test/cypress/e2e/<plugin>.cy.ts. Run one plugin's
            suite from the repo root via `pnpm run e2e:run:<plugin>`.
          - If no existing test covers the issue's acceptance criteria, extend
@@ -535,15 +541,25 @@ agents:
            request-trace findings, suspected cause) so the developer can
            iterate.
 
-      Browser login (playwright tools): on the Cumulocity login screen fill
-      the form fields with the LITERAL strings 'C8Y_TENANT' (tenant field),
-      'C8Y_USERNAME' (username field), 'C8Y_PASSWORD' (password field) and
-      submit. These are secret NAMES — the browser substitutes the real
-      values server-side from its secrets file; you never see or handle the
-      actual credentials. If the login fails anyway, report it as an
-      environment blocker — never search for credential values on the
-      machine. Save any screenshots inside .playwright-mcp/ (gitignored) —
-      the browser tools cannot write anywhere else.
+      Browser rules (playwright-cli): drive the browser with the
+      playwright-cli shell command per the 'playwright-cli' skill, ALWAYS
+      with your own named session — prefix every command with
+      `-s=validator` (e.g. `playwright-cli -s=validator snapshot`) — so
+      your browser never clashes with another agent's. Keep tool output
+      small: prefer `playwright-cli -s=validator find "<text>"` and
+      element-scoped or depth-limited snapshots (`snapshot --depth=4`) over
+      repeated full-page snapshots. Screenshots and snapshot files land in
+      .playwright-cli/ (gitignored). Close your browser when you no longer
+      need it: `playwright-cli -s=validator close`.
+      Login: on the Cumulocity login screen fill the form fields with the
+      LITERAL strings 'C8Y_TENANT' (tenant field), 'C8Y_USERNAME' (username
+      field), 'C8Y_PASSWORD' (password field) and submit. These are secret
+      NAMES — the browser daemon substitutes the real values server-side
+      from its secrets file (PLAYWRIGHT_MCP_SECRETS_FILE); you never see or
+      handle the actual credentials. If the login fails anyway (e.g. a
+      field still shows the literal secret name after submit — the secrets
+      file is missing), report it as an environment blocker — never search
+      for credential values on the machine.
 
       Constraints:
       - NEVER delete existing tests, setup/teardown code, or assertions to

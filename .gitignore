@@ -75,3 +75,6 @@ test/cypress/logs
 
 # playwright MCP output (screenshots/traces from agent browser sessions)
 .playwright-mcp/
+
+# playwright-cli output (screenshots/snapshots/traces from agent browser sessions)
+.playwright-cli/
