@@ -105,12 +105,13 @@ jobs:
             echo "C8Y_SHELL_TARGET=${{ vars.C8Y_SHELL_TARGET || 'cockpit' }}"
           } > .env
 
-      # Tenant credentials for the agents' playwright browser login. The MCP
-      # servers load this file via --secrets (see issue-loop.yaml): agents type
-      # the secret NAMES into the login form and the server substitutes the
-      # values, so the credentials never enter the model context or the
-      # transcript. Written OUTSIDE the checkout so no filesystem tool ever
-      # lists it among project files.
+      # Tenant credentials for the agents' playwright-cli browser login. The
+      # CLI's browser daemon loads this file via the PLAYWRIGHT_MCP_SECRETS_FILE
+      # env var (set on the agent-loop step below): agents type the secret
+      # NAMES into the login form and the daemon substitutes the values, so
+      # the credentials never enter the model context or the transcript.
+      # Written OUTSIDE the checkout so no filesystem tool ever lists it
+      # among project files.
       - name: Write playwright secrets file
         run: |
           {
@@ -120,14 +121,16 @@ jobs:
           } > /tmp/c8y-playwright-secrets.env
           chmod 600 /tmp/c8y-playwright-secrets.env
 
-      - name: Install browser for the agents' playwright MCP
-        # Use the SAME pinned @playwright/mcp version as issue-loop.yaml and its
-        # own installer, so the downloaded browser revision always matches what
-        # the MCP server expects at runtime. install-deps adds the system
-        # libraries headless Chromium needs (uses the runner's passwordless sudo).
+      - name: Install playwright-cli and its browser for the agents
+        # The agents drive their headless browser through the playwright-cli
+        # shell command (see issue-loop.yaml and the playwright-cli skill).
+        # Install it globally at a PINNED version so the downloaded browser
+        # revision always matches what the CLI daemon expects at runtime.
+        # --with-deps adds the system libraries headless Chromium needs
+        # (uses the runner's passwordless sudo).
         run: |
-          npx -y @playwright/mcp@0.0.79 install-browser chrome-for-testing
-          npx -y playwright install-deps chromium
+          npm install -g @playwright/cli@0.1.18
+          playwright-cli install-browser chromium --with-deps
           # Expose the same browser to Cypress: the e2e scripts run with
           # `--browser chromium`, and the runner image has no chromium on PATH.
           CHROME_BIN="$(ls -d "$HOME"/.cache/ms-playwright/chromium-*/chrome-linux*/chrome | head -1)"
@@ -162,10 +165,14 @@ jobs:
           # (from-env), not from .env:
           C8Y_BASEURL: ${{ vars.C8Y_BASEURL }}
           C8Y_SHELL_TARGET: ${{ vars.C8Y_SHELL_TARGET || 'cockpit' }}
+          # The playwright-cli browser daemon (spawned by the agents' shells)
+          # loads the tenant credentials from this file and substitutes them
+          # for the secret NAMES the agents type into the login form:
+          PLAYWRIGHT_MCP_SECRETS_FILE: /tmp/c8y-playwright-secrets.env
           # Tenant credentials are deliberately NOT in this environment: the
-          # agents' playwright browsers read them from the --secrets file
-          # (/tmp/c8y-playwright-secrets.env) and Cypress reads them from the
-          # repo-root .env — the agent processes never need them.
+          # agents' playwright-cli browsers read them from the secrets file
+          # above and Cypress reads them from the repo-root .env — the agent
+          # processes never need them.
         run: |
           # pipefail: without it the step's exit code is tee's (always 0) and a
           # docker-agent crash (e.g. "Error: model failed: ... usage limits")
@@ -176,7 +183,7 @@ jobs:
             | tee "$RUNNER_TEMP/agent-events.ndjson"
 
       # GitHub masks secrets in step logs, but NOT inside artifact files.
-      # With the playwright --secrets hardening the transcript should no
+      # With the playwright-cli secrets hardening the transcript should no
       # longer contain the tenant password (agents only ever handle secret
       # NAMES) — but a failed Cypress login can still dump the .env values
       # into the request trace, so keep scrubbing as defense in depth.
