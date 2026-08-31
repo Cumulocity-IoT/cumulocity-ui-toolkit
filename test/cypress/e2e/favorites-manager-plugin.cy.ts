@@ -14,12 +14,19 @@ describe('Favorites Manager', () => {
     // and wait for the navigator menu to be visible
     cy.visitShellAndWaitForSelector('', 'en', '#navigator');
 
-    // check for the favorites menu item and click on it
+    // check for the favorites menu item, verify it renders with the correct icon
+    // (regression check for #89 — the entry previously used the 'mark-as-favorite' icon)
+    // and click on it
     cy.get('c8y-navigator-node button[data-cy="favorites.title"]', { timeout: 60000 })
       .should('exist')
       .should('be.visible')
       .contains('Favorites')
-      .click();
+      .closest('.link')
+      .find('i.icon')
+      .should('have.class', 'dlt-c8y-icon-search-in-list')
+      .and('not.have.class', 'dlt-c8y-icon-mark-as-favorite');
+
+    cy.get('c8y-navigator-node button[data-cy="favorites.title"]').click();
 
     // expect the favorites list component to be visible
     cy.get('c8y-favorites-manager').should('exist').should('be.visible');
