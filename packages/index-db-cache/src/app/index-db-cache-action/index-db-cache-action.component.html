@@ -69,6 +69,39 @@
         </span>
       </div>
 
+      <div class="d-flex a-i-center gap-default m-b-8">
+        <label class="c8y-switch m-b-0">
+          <input
+            type="checkbox"
+            [checked]="abortOnNavigation()"
+            (change)="onAbortToggle($event)"
+            data-cy="index-db-cache--abort-toggle"
+          />
+          <span></span>
+        </label>
+        <span [class]="abortOnNavigation() ? 'text-success' : 'text-muted'">
+          <i [c8yIcon]="abortOnNavigation() ? 'check-circle' : 'minus-circle'"></i>
+          <strong translate> Cancel requests on navigation</strong>
+        </span>
+        <button
+          class="btn btn-clean btn-xs text-muted"
+          type="button"
+          [attr.aria-label]="'About cancelling requests on navigation' | translate"
+          tooltip="{{ abortHelp | translate }}"
+          placement="left"
+          container="body"
+        >
+          <i c8yIcon="help"></i>
+        </button>
+      </div>
+
+      @if (abortOnNavigation() && cancelledCount() > 0) {
+        <small class="text-muted d-block m-b-8">
+          <span translate>Requests cancelled since page load</span>:
+          <strong>{{ cancelledCount() | number }}</strong>
+        </small>
+      }
+
       <small class="text-muted" translate>State is persisted in localStorage.</small>
     </fieldset>
 
