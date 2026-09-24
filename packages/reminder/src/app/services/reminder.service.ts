@@ -34,6 +34,16 @@ import {
 
 @Injectable()
 export class ReminderService {
+  private alertService = inject(AlertService);
+  private eventService = inject(EventService);
+  private eventRealtimeService = inject(EventRealtimeService);
+  private tenantOptionService = inject(TenantOptionsService);
+  private translateService = inject(TranslateService);
+  private localStorageService = inject(LocalStorageService);
+  private activeTabService = inject(ActiveTabService);
+  private domService = inject(DomService);
+  private assetAccessService = inject(AssetAccessService);
+
   readonly DAY_IN_MS = 24 * 60 * 60 * 1000;
 
   contextFilterAvailable = signal<boolean>(false);
@@ -65,34 +75,6 @@ export class ReminderService {
 
   private _types: ReminderType[] = [];
 
-  /**
-   * Replaces the former `reminders` setter: updating the list also refreshes the
-   * due counter and reschedules the update timer.
-   */
-  private setReminders(reminders: Reminder[]): void {
-    this.reminders.set(reminders);
-    this.updateCounter();
-    this.debouncedSetUpdateTimer();
-  }
-
-  private alertService = inject(AlertService);
-
-  private eventService = inject(EventService);
-
-  private eventRealtimeService = inject(EventRealtimeService);
-
-  private tenantOptionService = inject(TenantOptionsService);
-
-  private translateService = inject(TranslateService);
-
-  private localStorageService = inject(LocalStorageService);
-
-  private activeTabService = inject(ActiveTabService);
-
-  private domService = inject(DomService);
-
-  private assetAccessService = inject(AssetAccessService);
-
   constructor() {
     this.activeTabService.init();
   }
@@ -114,7 +96,11 @@ export class ReminderService {
     if (this.drawer) return;
 
     this.loadConfig();
-    void this.requestNotificationPermission();
+    this.hasNotificationPermission =
+      'Notification' in window && Notification.permission === 'granted';
+    if (this.config().browser && !this.hasNotificationPermission) {
+      this.setConfig('browser', false);
+    }
     const [tenantConfig, types] = await Promise.all([
       this.fetchTenantConfig(),
       this.fetchReminderTypes(),
@@ -134,7 +120,6 @@ export class ReminderService {
     }
 
     this._types = types;
-    this.createDrawer();
     this.setReminders(await this.fetchReminders(REMINDER__INITIAL_QUERY_SIZE));
     void this.fetchActiveReminderCounter();
     this.setupReminderSubscription();
@@ -223,11 +208,18 @@ export class ReminderService {
     this.config.set(config);
   }
 
+  async setBrowserNotifications(enabled: boolean): Promise<void> {
+    const permissionGranted = enabled ? await this.requestNotificationPermission() : false;
+
+    this.setConfig('browser', enabled && permissionGranted);
+  }
+
   /**
    * Toggles the visibility of the reminder drawer.
    * @returns {void}
    */
   toggleDrawer(): void {
+    if (!this.drawer) this.createDrawer();
     this.drawer?.toggleDrawer();
   }
 
@@ -562,11 +554,7 @@ export class ReminderService {
   }
 
   private filterReminder(groups: ReminderGroup[], context?: string): ReminderGroup[] {
-    // store filter setting to local storage
     const filter = this.buildTypeFilter();
-
-    this.setConfig('filter', filter ?? undefined);
-
     const config = this.config();
 
     groups = this.applyContextFilter(groups, context);
@@ -661,6 +649,16 @@ export class ReminderService {
         <small>[${this.translateService.instant('reminder.status.DUE')}] ${text}</small>`,
       allowHtml: true,
     });
+  }
+
+  /**
+   * Replaces the former `reminders` setter: updating the list also refreshes the
+   * due counter and reschedules the update timer.
+   */
+  private setReminders(reminders: Reminder[]): void {
+    this.reminders.set(reminders);
+    this.updateCounter();
+    this.debouncedSetUpdateTimer();
   }
 
   private setUpdateTimer(): void {

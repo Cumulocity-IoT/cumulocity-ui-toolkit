@@ -1,5 +1,9 @@
 # Reminder Plugin Changelog
 
+## 1.5.0
+
+- update to c8y 1023.14 (2026-lts)
+
 ## 1.4.5
 
 ### Features

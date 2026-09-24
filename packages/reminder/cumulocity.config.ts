@@ -1,14 +1,16 @@
 import type { ConfigurationOptions } from '@c8y/devkit';
-import { author, name, description, version } from './package.json';
-import { license } from '../../package.json';
+import pkg from './package.json';
+import rootPkg from '../../package.json';
+
+const { author, description, version } = pkg;
+const { license } = rootPkg;
 
 export default {
   runTime: {
     author,
     description,
     version,
-    name: 'Reminder',
-    contextPath: 'reminder-plugin',
+    name: 'Reminder Plugin',
     contentSecurityPolicy:
       "base-uri 'none'; default-src 'self' 'unsafe-inline' http: https: ws: wss:; connect-src 'self' http: https: ws: wss:;  script-src 'self' *.bugherd.com *.twitter.com *.twimg.com *.aptrinsic.com 'unsafe-inline' 'unsafe-eval' data:; style-src * 'unsafe-inline' blob:; img-src * data: blob:; font-src * data:; frame-src *; worker-src 'self' blob:;",
     dynamicOptionsUrl: true,
@@ -23,7 +25,7 @@ export default {
       {
         name: 'Reminder Plugin',
         module: 'ReminderPluginProviders',
-        path: './src/app/reminder-plugin/reminder-plugin.module.ts',
+        path: './src/app/index.ts',
         readmePath: './src/README.md',
         description: 'Adds a simple manual reminder functionality to Cumulocity',
       },

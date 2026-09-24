@@ -1,4 +1,4 @@
-# Cumulocity UI Critical Alarm Reminder Plugin
+# Cumulocity UI Reminder Plugin
 
 [![Node.js CI](https://github.com/cumulocity/cumulocity-reminder-plugin/actions/workflows/test.yml/badge.svg)](https://github.com/cumulocity/cumulocity-reminder-plugin/actions/workflows/test.yml)
 

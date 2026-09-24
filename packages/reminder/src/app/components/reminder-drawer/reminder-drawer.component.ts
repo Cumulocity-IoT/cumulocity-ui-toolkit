@@ -149,15 +149,11 @@ export class ReminderDrawerComponent implements OnDestroy {
         this.reminderService.setConfig('toast', this.toastNotificationsEnabled);
         break;
       case 'browser':
-        this.reminderService.setConfig('browser', this.browserNotificationsEnabled);
+        void this.reminderService.setBrowserNotifications(
+          Boolean(this.browserNotificationsEnabled)
+        );
         break;
     }
-  }
-
-  /** Sets the drawer state and notifies the service. */
-  private setOpen(open: boolean): void {
-    this.open.set(open);
-    this.openChange.next(open);
   }
 
   /**
@@ -345,5 +341,11 @@ export class ReminderDrawerComponent implements OnDestroy {
    */
   private sleep(milliseconds: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, milliseconds));
+  }
+
+  /** Sets the drawer state and notifies the service. */
+  private setOpen(open: boolean): void {
+    this.open.set(open);
+    this.openChange.next(open);
   }
 }

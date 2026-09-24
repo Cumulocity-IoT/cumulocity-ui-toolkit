@@ -1,5 +1,5 @@
-import { ENVIRONMENT_INITIALIZER, inject, importProvidersFrom } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
+import { ENVIRONMENT_INITIALIZER, importProvidersFrom, inject } from '@angular/core';
 import { AlertModule, CoreModule, EventRealtimeService, hookAction } from '@c8y/ngx-components';
 import { AssetSelectorModule } from '@c8y/ngx-components/assets-navigator';
 import { FormlyModule } from '@ngx-formly/core';
@@ -50,6 +50,3 @@ export const ReminderPluginProviders = [
     },
   },
 ];
-
-/** @deprecated Use ReminderPluginProviders instead */
-export const ReminderPluginModule = ReminderPluginProviders;
