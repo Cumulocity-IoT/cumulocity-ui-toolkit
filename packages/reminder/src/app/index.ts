@@ -1,5 +1,5 @@
-import { ENVIRONMENT_INITIALIZER, inject, importProvidersFrom } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
+import { ENVIRONMENT_INITIALIZER, importProvidersFrom, inject } from '@angular/core';
 import { AlertModule, CoreModule, EventRealtimeService, hookAction } from '@c8y/ngx-components';
 import { AssetSelectorModule } from '@c8y/ngx-components/assets-navigator';
 import { FormlyModule } from '@ngx-formly/core';
@@ -12,10 +12,11 @@ import { ActiveTabService } from '~services/active-tab.service';
 import { AssetAccessService } from '~services/asset-access.service';
 import { DomService } from '~services/dom.service';
 import { LocalStorageService } from '~services/local-storage.service';
+import { TenantOptionHelperService } from '~services/tenant-options-helper.service';
 import { ReminderIndicatorComponent } from './components/reminder-indicator/reminder-indicator.component';
 import { ReminderService } from './services/reminder.service';
 
-export const ReminderPluginProviders = [
+export const ReminderPlugin = [
   // dependencies: api services
   provideHttpClient(),
   EventRealtimeService,
@@ -25,6 +26,7 @@ export const ReminderPluginProviders = [
   DomService,
   LocalStorageService,
   ReminderService,
+  TenantOptionHelperService,
   importProvidersFrom(
     AssetSelectorModule,
     AlertModule,
@@ -50,6 +52,3 @@ export const ReminderPluginProviders = [
     },
   },
 ];
-
-/** @deprecated Use ReminderPluginProviders instead */
-export const ReminderPluginModule = ReminderPluginProviders;

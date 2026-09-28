@@ -303,6 +303,14 @@ describe('ReminderService', () => {
       expect(dueGroup?.reminders[0].id).toBe('b');
       expect(service.config().filter).toEqual({ reminderType: 'type-b' });
     });
+
+    it('does not rewrite configuration while grouping reminders', () => {
+      service.config.set({ filter: { reminderType: 'maintenance' } });
+
+      service.groupReminders([makeReminder({ reminderType: 'maintenance' })]);
+
+      expect(localStorageService.set).not.toHaveBeenCalled();
+    });
   });
 
   describe('update()', () => {
@@ -349,7 +357,7 @@ describe('ReminderService', () => {
       spyOn(privateService, 'setupReminderSubscription').and.callFake(() => undefined);
     });
 
-    it('loads config, creates drawer, and initializes reminders', async () => {
+    it('loads config and reminders without creating the drawer', async () => {
       const typesResponse = {
         data: {
           value: JSON.stringify([
@@ -374,8 +382,19 @@ describe('ReminderService', () => {
 
       expect(service.contextFilterAvailable()).toBeTrue();
       expect(service.types.map((type) => type.id)).toEqual(['a', 'b']);
-      expect(domService.appendComponentToBody.calls.count()).toBe(1);
+      expect(domService.appendComponentToBody).not.toHaveBeenCalled();
       expect(service.reminders()).toEqual([]);
+    });
+
+    it('creates and opens the drawer on first toggle', () => {
+      service.toggleDrawer();
+
+      expect(domService.appendComponentToBody.calls.count()).toBe(1);
+      expect(
+        (domService.appendComponentToBody.calls.mostRecent().returnValue.instance as {
+          toggleDrawer: jasmine.Spy;
+        }).toggleDrawer
+      ).toHaveBeenCalled();
     });
 
     it('resets useContext config when tenant disallows context filtering', async () => {
@@ -435,6 +454,24 @@ describe('ReminderService', () => {
 
       expect(createDrawerSpy.calls.count()).toBe(0);
       expect(tenantOptionsService.detail.calls.count()).toBe(0);
+    });
+
+    it('enables browser notifications after permission is granted', async () => {
+      await service.setBrowserNotifications(true);
+
+      expect(service.config().browser).toBeTrue();
+      expect(localStorageService.set).toHaveBeenCalledWith(REMINDER__LOCAL_STORAGE__CONFIG, {
+        browser: true,
+      });
+    });
+
+    it('disables browser notifications without requesting permission', async () => {
+      const privateService = service as unknown as ReminderServicePrivateForInit;
+
+      await service.setBrowserNotifications(false);
+
+      expect(privateService.requestNotificationPermission).not.toHaveBeenCalled();
+      expect(service.config().browser).toBeFalse();
     });
   });
 
