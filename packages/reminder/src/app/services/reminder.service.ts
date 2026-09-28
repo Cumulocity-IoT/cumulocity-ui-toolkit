@@ -1,5 +1,5 @@
-import { inject, signal, ComponentRef, Injectable } from '@angular/core';
-import { EventService, IEvent, IResult, TenantOptionsService } from '@c8y/client';
+import { ComponentRef, inject, Injectable, signal } from '@angular/core';
+import { EventService, IEvent, IResult } from '@c8y/client';
 import { AlertService, EventRealtimeService, RealtimeMessage } from '@c8y/ngx-components';
 import { TranslateService } from '@ngx-translate/core';
 import { filter as _filter, cloneDeep, debounce, has, orderBy, sortBy } from 'lodash';
@@ -11,6 +11,7 @@ import { ActiveTabService } from '~services/active-tab.service';
 import { AssetAccessService, AssetFilterConfig } from '~services/asset-access.service';
 import { DomService } from '~services/dom.service';
 import { LocalStorageService } from '~services/local-storage.service';
+import { TenantOptionHelperService } from '~services/tenant-options-helper.service';
 import { ReminderDrawerComponent } from '../components/reminder-drawer/reminder-drawer.component';
 import {
   Reminder,
@@ -18,8 +19,6 @@ import {
   REMINDER__LOCAL_STORAGE__CONFIG,
   REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG,
   REMINDER__TENANT_OPTION__CATEGORY,
-  REMINDER__TENANT_OPTION__CONFIG_KEY,
-  REMINDER__TENANT_OPTION__TYPE_KEY,
   REMINDER__TYPE,
   REMINDER__TYPE_FRAGMENT,
   ReminderConfig,
@@ -28,6 +27,7 @@ import {
   ReminderGroupStatus,
   ReminderStatus,
   ReminderTenantConfig,
+  ReminderTenantOptions,
   ReminderType,
   ResponsibilityFilter,
 } from '../models/reminder.model';
@@ -37,7 +37,7 @@ export class ReminderService {
   private alertService = inject(AlertService);
   private eventService = inject(EventService);
   private eventRealtimeService = inject(EventRealtimeService);
-  private tenantOptionService = inject(TenantOptionsService);
+  private tenantOptionHelperService = inject(TenantOptionHelperService);
   private translateService = inject(TranslateService);
   private localStorageService = inject(LocalStorageService);
   private activeTabService = inject(ActiveTabService);
@@ -60,7 +60,7 @@ export class ReminderService {
   readonly responsibilityFilterEnabled = signal(false);
 
   get types(): ReminderType[] {
-    return this._types;
+    return this._reminderTypes;
   }
 
   private hasNotificationPermission = false;
@@ -73,7 +73,10 @@ export class ReminderService {
   private subscriptions = new Subscription();
   private debouncedSetUpdateTimer = debounce(() => this.setUpdateTimer(), 300);
 
-  private _types: ReminderType[] = [];
+  private _reminderTypes: ReminderType[] = [];
+  private _reminderTenantConfig: ReminderTenantConfig | null = null;
+  // private _assetFilterConfig: AssetFilterConfig | null = null;
+  private _reminderDefaults: ReminderConfig | null = null;
 
   constructor() {
     this.activeTabService.init();
@@ -95,31 +98,28 @@ export class ReminderService {
   async init(): Promise<void> {
     if (this.drawer) return;
 
+    await this.fetchTenantOptions();
     this.loadConfig();
     this.hasNotificationPermission =
       'Notification' in window && Notification.permission === 'granted';
+
     if (this.config().browser && !this.hasNotificationPermission) {
       this.setConfig('browser', false);
     }
-    const [tenantConfig, types] = await Promise.all([
-      this.fetchTenantConfig(),
-      this.fetchReminderTypes(),
-    ]);
 
-    this.contextFilterAvailable.set(tenantConfig.useContext ?? false);
+    this.contextFilterAvailable.set(this._reminderTenantConfig?.useContext ?? false);
 
     if (!this.contextFilterAvailable() && this.config().useContext) {
       this.setConfig('useContext', false);
     }
 
     // Initialize responsibility filter
-    if (tenantConfig.responsibilityFilter?.enabled) {
-      this.responsibilityFilter = tenantConfig.responsibilityFilter;
+    if (this._reminderTenantConfig?.responsibilityFilter?.enabled) {
+      this.responsibilityFilter = this._reminderTenantConfig?.responsibilityFilter;
       this.responsibilityFilterEnabled.set(true);
       await this.loadResponsibilityIds();
     }
 
-    this._types = types;
     this.setReminders(await this.fetchReminders(REMINDER__INITIAL_QUERY_SIZE));
     void this.fetchActiveReminderCounter();
     this.setupReminderSubscription();
@@ -333,74 +333,16 @@ export class ReminderService {
     });
   }
 
-  private async fetchTenantConfig(): Promise<ReminderTenantConfig> {
-    try {
-      const response = await this.tenantOptionService.detail({
-        category: REMINDER__TENANT_OPTION__CATEGORY,
-        key: REMINDER__TENANT_OPTION__CONFIG_KEY,
-      });
+  private async fetchTenantOptions(): Promise<void> {
+    const options =
+      await this.tenantOptionHelperService.getOptionsByCategory<ReminderTenantOptions>(
+        REMINDER__TENANT_OPTION__CATEGORY
+      );
 
-      if (response.data?.value) {
-        try {
-          return this.parseJSON<ReminderTenantConfig>(response.data.value);
-        } catch {
-          this.alertService.add({
-            type: 'danger',
-            text: this.translateService.instant('reminder.error.invalidConfig') as string,
-            timeout: 5000,
-          });
-
-          return {};
-        }
-      }
-    } catch (error) {
-      // A missing tenant option just means the context filter was never
-      // configured; anything else is a real failure the user should see.
-      if (!this.isNotFound(error)) {
-        this.alertService.danger(
-          this.translateService.instant('reminder.error.invalidConfig') as string,
-          error as string
-        );
-      }
-    }
-
-    return {};
-  }
-
-  /** Distinguishes "tenant option not configured" from an actual request failure. */
-  private isNotFound(error: unknown): boolean {
-    const status =
-      (error as { res?: { status?: number } } | null)?.res?.status ??
-      (error as { status?: number } | null)?.status;
-
-    return status === 404;
-  }
-
-  private async fetchReminderTypes(): Promise<ReminderType[]> {
-    let types: ReminderType[] = [];
-
-    try {
-      const response = await this.tenantOptionService.detail({
-        category: REMINDER__TENANT_OPTION__CATEGORY,
-        key: REMINDER__TENANT_OPTION__TYPE_KEY,
-      });
-
-      if (response.data?.value)
-        types = this.parseJSON<ReminderType[]>(response.data.value).map((type) => ({
-          id: type.id,
-          name: this.translateService.instant(type.name) as string,
-        }));
-    } catch (error) {
-      // Reminder types are optional, so a missing option is not an error.
-      if (!this.isNotFound(error)) {
-        this.alertService.danger(
-          this.translateService.instant('reminder.error.loadTypes') as string,
-          error as string
-        );
-      }
-    }
-
-    return orderBy(types, 'name');
+    this._reminderTypes = orderBy(options.types ?? [], 'name');
+    this._reminderTenantConfig = options.config ?? null;
+    // this._assetFilterConfig = options.assetFilter ?? null;
+    this._reminderDefaults = options.defaults ?? null;
   }
 
   private async loadResponsibilityIds(): Promise<void> {
@@ -585,10 +527,17 @@ export class ReminderService {
   }
 
   private loadConfig(): void {
+    const defaults = REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG;
+
+    if (this._reminderDefaults) {
+      if (this._reminderDefaults.browser) defaults.browser = this._reminderDefaults.browser;
+      if (this._reminderDefaults.toast) defaults.toast = this._reminderDefaults.toast;
+    }
+
     this.config.set(
       this.localStorageService.getOrDefault<ReminderConfig>(
         REMINDER__LOCAL_STORAGE__CONFIG,
-        REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG
+        defaults
       )
     );
   }
