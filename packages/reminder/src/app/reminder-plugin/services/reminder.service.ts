@@ -1,5 +1,5 @@
 import { ComponentRef, Injectable, signal } from '@angular/core';
-import { EventService, IEvent, IResult, TenantOptionsService } from '@c8y/client';
+import { EventService, IEvent, IResult } from '@c8y/client';
 import { AlertService, EventRealtimeService, RealtimeMessage } from '@c8y/ngx-components';
 import { TranslateService } from '@ngx-translate/core';
 import { filter as _filter, cloneDeep, debounce, has, orderBy, sortBy } from 'lodash';
@@ -10,6 +10,7 @@ import { ActiveTabService } from '~services/active-tab.service';
 import { AssetAccessService, AssetFilterConfig } from '~services/asset-access.service';
 import { DomService } from '~services/dom.service';
 import { LocalStorageService } from '~services/local-storage.service';
+import { TenantOptionHelperService } from '~services/tenant-options-helper.service';
 import { ReminderDrawerComponent } from '../components/reminder-drawer/reminder-drawer.component';
 import {
   Reminder,
@@ -17,8 +18,6 @@ import {
   REMINDER__LOCAL_STORAGE__CONFIG,
   REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG,
   REMINDER__TENANT_OPTION__CATEGORY,
-  REMINDER__TENANT_OPTION__CONFIG_KEY,
-  REMINDER__TENANT_OPTION__TYPE_KEY,
   REMINDER__TYPE,
   REMINDER__TYPE_FRAGMENT,
   ReminderConfig,
@@ -27,6 +26,7 @@ import {
   ReminderGroupStatus,
   ReminderStatus,
   ReminderTenantConfig,
+  ReminderTenantOptions,
   ReminderType,
   ResponsibilityFilter,
 } from '../models/reminder.model';
@@ -45,7 +45,7 @@ export class ReminderService {
   responsibilityFilterEnabled$ = new BehaviorSubject<boolean>(false);
 
   get types(): ReminderType[] {
-    return this._types;
+    return this._reminderTypes;
   }
 
   private hasNotificationPermission = false;
@@ -60,7 +60,9 @@ export class ReminderService {
 
   private _reminderCounter = 0;
   private _reminders: Reminder[] = [];
-  private _types: ReminderType[] = [];
+  private _reminderTypes: ReminderType[] = [];
+  private _reminderTenantConfig: ReminderTenantConfig | null = null;
+  private _reminderDefaults: ReminderConfig | null = null;
 
   private get reminderCounter(): number {
     return this._reminderCounter;
@@ -86,12 +88,12 @@ export class ReminderService {
     private alertService: AlertService,
     private eventService: EventService,
     private eventRealtimeService: EventRealtimeService,
-    private tenantOptionService: TenantOptionsService,
     private translateService: TranslateService,
     private localStorageService: LocalStorageService,
     private activeTabService: ActiveTabService,
     private domService: DomService,
-    private assetAccessService: AssetAccessService
+    private assetAccessService: AssetAccessService,
+    private tenantOptionHelperService: TenantOptionHelperService
   ) {
     this.activeTabService.init();
   }
@@ -112,27 +114,23 @@ export class ReminderService {
   async init(): Promise<void> {
     if (this.drawer) return;
 
+    await this.fetchTenantOptions();
     this.loadConfig();
     void this.requestNotificationPermission();
-    const [tenantConfig, types] = await Promise.all([
-      this.fetchTenantConfig(),
-      this.fetchReminderTypes(),
-    ]);
 
-    this.contextFilterAvailable.set(tenantConfig.useContext ?? false);
+    this.contextFilterAvailable.set(this._reminderTenantConfig.useContext ?? false);
 
     if (!this.contextFilterAvailable() && this.config$.getValue().useContext) {
       this.setConfig('useContext', false);
     }
 
     // Initialize responsibility filter
-    if (tenantConfig.responsibilityFilter?.enabled) {
-      this.responsibilityFilter = tenantConfig.responsibilityFilter;
+    if (this._reminderTenantConfig.responsibilityFilter?.enabled) {
+      this.responsibilityFilter = this._reminderTenantConfig.responsibilityFilter;
       this.responsibilityFilterEnabled$.next(true);
       await this.loadResponsibilityIds();
     }
 
-    this._types = types;
     this.createDrawer();
     this.reminders = await this.fetchReminders(REMINDER__INITIAL_QUERY_SIZE);
     void this.fetchActiveReminderCounter();
@@ -343,53 +341,15 @@ export class ReminderService {
     });
   }
 
-  private async fetchTenantConfig(): Promise<ReminderTenantConfig> {
-    try {
-      const response = await this.tenantOptionService.detail({
-        category: REMINDER__TENANT_OPTION__CATEGORY,
-        key: REMINDER__TENANT_OPTION__CONFIG_KEY,
-      });
+  private async fetchTenantOptions(): Promise<void> {
+    const options =
+      await this.tenantOptionHelperService.getOptionsByCategory<ReminderTenantOptions>(
+        REMINDER__TENANT_OPTION__CATEGORY
+      );
 
-      if (response.data) {
-        try {
-          return this.parseJSON<ReminderTenantConfig>(response.data.value);
-        } catch (parseError) {
-          console.error('[R.S:5] Failed to parse tenant config JSON.', parseError);
-          this.alertService.add({
-            type: 'danger',
-            text: this.translateService.instant('reminder.error.invalidConfig') as string,
-            timeout: 5000,
-          });
-
-          return {};
-        }
-      }
-    } catch {
-      // tenant option not configured — context filter unavailable
-    }
-
-    return {};
-  }
-
-  private async fetchReminderTypes(): Promise<ReminderType[]> {
-    let types: ReminderType[] = [];
-
-    try {
-      const response = await this.tenantOptionService.detail({
-        category: REMINDER__TENANT_OPTION__CATEGORY,
-        key: REMINDER__TENANT_OPTION__TYPE_KEY,
-      });
-
-      if (response.data)
-        types = this.parseJSON<ReminderType[]>(response.data.value).map((type) => ({
-          id: type.id,
-          name: this.translateService.instant(type.name) as string,
-        }));
-    } catch (error) {
-      console.error('[R.S:1] No reminder type config found.', error);
-    }
-
-    return orderBy(types, 'name');
+    this._reminderTypes = orderBy(options.types ?? [], 'name');
+    this._reminderTenantConfig = options.config ?? null;
+    this._reminderDefaults = options.defaults ?? null;
   }
 
   private async loadResponsibilityIds(): Promise<void> {
@@ -557,10 +517,17 @@ export class ReminderService {
   }
 
   private loadConfig(): void {
+    const defaults = REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG;
+
+    if (this._reminderDefaults) {
+      if (this._reminderDefaults.browser) defaults.browser = this._reminderDefaults.browser;
+      if (this._reminderDefaults.toast) defaults.toast = this._reminderDefaults.toast;
+    }
+
     this.config$.next(
       this.localStorageService.getOrDefault<ReminderConfig>(
         REMINDER__LOCAL_STORAGE__CONFIG,
-        REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG
+        defaults
       )
     );
   }

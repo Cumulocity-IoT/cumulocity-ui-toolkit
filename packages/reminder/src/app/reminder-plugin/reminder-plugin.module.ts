@@ -14,6 +14,7 @@ import { ActiveTabService } from '~services/active-tab.service';
 import { AssetAccessService } from '~services/asset-access.service';
 import { DomService } from '~services/dom.service';
 import { LocalStorageService } from '~services/local-storage.service';
+import { TenantOptionHelperService } from '~services/tenant-options-helper.service';
 import {
   ReminderDrawerComponent,
   ReminderIndicatorComponent,
@@ -54,6 +55,7 @@ import { ReminderService } from './services/reminder.service';
     LocalStorageService,
     ActiveTabService,
     DomService,
+    TenantOptionHelperService,
     // plugin services
     ReminderService,
     // hooks

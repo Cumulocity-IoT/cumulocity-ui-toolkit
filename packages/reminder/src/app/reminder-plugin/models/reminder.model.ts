@@ -32,6 +32,13 @@ export interface Reminder extends IEvent {
   reminderType?: ReminderType['id'];
 }
 
+export interface ReminderTenantOptions {
+  types?: ReminderType[];
+  config?: ReminderTenantConfig;
+  assetFilter?: AssetFilterConfig;
+  defaults?: ReminderConfig;
+}
+
 export interface ReminderConfig {
   browser?: boolean;
   filter?: ReminderGroupFilter;
