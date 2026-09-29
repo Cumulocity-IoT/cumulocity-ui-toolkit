@@ -3,7 +3,7 @@ import { NavigationEnd, Router } from '@angular/router';
 import { AlertService, HeaderService } from '@c8y/ngx-components';
 import { has, isEmpty } from 'lodash';
 import { BsModalService } from 'ngx-bootstrap/modal';
-import { BehaviorSubject, Subscription } from 'rxjs';
+import { BehaviorSubject, Subscription, auditTime, distinctUntilChanged, map } from 'rxjs';
 import {
   Reminder,
   REMINDER__ASSET_CONTEXT_ROOTS,
@@ -294,7 +294,21 @@ export class ReminderDrawerComponent implements OnDestroy {
 
     // get live updates on reminders from service
     this.subscriptions.add(
-      this.reminderService.reminders$.subscribe((reminders) => this.digestReminders(reminders))
+      this.reminderService.reminders$
+        .pipe(
+          map((reminders) => ({
+            reminders,
+            content: JSON.stringify(reminders, (key, value): unknown =>
+              key === 'changed' ? undefined : (value as unknown)
+            ),
+          })),
+          auditTime(3000),
+          distinctUntilChanged((previous, current) => previous.content !== current.content)
+        )
+        .subscribe(({ reminders }) => {
+          console.log('update');
+          this.digestReminders(reminders);
+        })
     );
 
     // get config updates

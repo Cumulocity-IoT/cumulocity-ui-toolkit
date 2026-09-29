@@ -2,7 +2,7 @@
   <header>
     <h2>{{'reminder.title' | translate }}</h2>
     <small class="text-muted" title="{{ lastUpdate | c8yDate }}">
-      {{ 'reminder.labels.last-update' | translate }}: {{ lastUpdate | c8yDate: 'short' }} <!-- time ago -->
+      {{ 'reminder.labels.last-update' | translate }}: {{ lastUpdate | c8yDate: 'DD.MM.YYYY HH:mm:ss' }} <!-- time ago -->
     </small>
   </header>
 
