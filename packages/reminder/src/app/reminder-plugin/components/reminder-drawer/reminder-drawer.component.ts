@@ -3,7 +3,7 @@ import { NavigationEnd, Router } from '@angular/router';
 import { AlertService, HeaderService } from '@c8y/ngx-components';
 import { has, isEmpty } from 'lodash';
 import { BsModalService } from 'ngx-bootstrap/modal';
-import { BehaviorSubject, Subscription, auditTime, distinctUntilChanged, map } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, map, Subscription } from 'rxjs';
 import {
   Reminder,
   REMINDER__ASSET_CONTEXT_ROOTS,
@@ -298,17 +298,11 @@ export class ReminderDrawerComponent implements OnDestroy {
         .pipe(
           map((reminders) => ({
             reminders,
-            content: JSON.stringify(reminders, (key, value): unknown =>
-              key === 'changed' ? undefined : (value as unknown)
-            ),
+            content: this.stripDiff(reminders),
           })),
-          auditTime(3000),
-          distinctUntilChanged((previous, current) => previous.content !== current.content)
+          distinctUntilChanged((previous, current) => previous.content === current.content)
         )
-        .subscribe(({ reminders }) => {
-          console.log('update');
-          this.digestReminders(reminders);
-        })
+        .subscribe(({ reminders }) => this.digestReminders(reminders))
     );
 
     // get config updates
@@ -355,5 +349,17 @@ export class ReminderDrawerComponent implements OnDestroy {
    */
   private sleep(milliseconds: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, milliseconds));
+  }
+
+  private stripDiff(reminders: Reminder[]): string {
+    return JSON.stringify(
+      reminders.map((r) => {
+        const copy = { ...r };
+
+        delete copy.diff;
+
+        return copy;
+      })
+    );
   }
 }

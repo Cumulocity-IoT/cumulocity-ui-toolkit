@@ -548,9 +548,25 @@ export class ReminderService {
     if (!this.activeTabService.isActive()) return;
 
     const config = this.config$.getValue();
+    const reminders = this.getRemindersForNotification(reminder);
 
-    if (config.browser) this.sendBrowserNotification(reminder);
-    if (config.toast) this.sendToast(reminder);
+    reminders.forEach((r) => {
+      if (config.browser) this.sendBrowserNotification(r);
+      if (config.toast) this.sendToast(r);
+    });
+  }
+
+  private buildBrowserNotificationOptions(reminder: Reminder): NotificationOptions {
+    let body = `[${this.translateService.instant('reminder.status.DUE')}] ${this.translateService.instant(reminder.text)}`;
+
+    if (reminder.reminderType) body += ` [${this.translateService.instant(reminder.reminderType)}]`;
+
+    return {
+      body,
+      requireInteraction: true,
+      data: reminder,
+      tag: `reminder.due-${reminder.source.id}`, // group in notification center by this tag
+    };
   }
 
   private sendBrowserNotification(reminder: Reminder): void {
@@ -560,18 +576,17 @@ export class ReminderService {
       return;
     }
 
-    const notification: Notification = new Notification(`${reminder.source.name}`, {
-      body: `[${this.translateService.instant('reminder.status.DUE')}] ${this.translateService.instant(reminder.text)}`,
-      data: reminder,
-      tag: 'reminder.due',
-    });
+    const title = `${reminder.source.name}`;
+    const options = this.buildBrowserNotificationOptions(reminder);
 
-    notification.addEventListener('click', (event) => {
+    const notification = new Notification(title, options);
+
+    notification.onclick = (event) => {
       const reminder = event.currentTarget['data'] as Reminder;
 
       window.open(this.getAssetUrlFromReminder(reminder, true), '_blank');
       notification.close();
-    });
+    };
   }
 
   private sendToast(reminder: Reminder): void {
@@ -609,6 +624,12 @@ export class ReminderService {
       this.reminders = this.digestReminders(this.reminders);
       this.sendNotification(closestReminder);
     }, timeout);
+  }
+
+  private getRemindersForNotification(reminder: Reminder): Reminder[] {
+    const now = moment(reminder.time);
+
+    return _filter(this.reminders, (r) => moment(r.time).isSame(now));
   }
 
   private setupConfigSubscription(): void {
