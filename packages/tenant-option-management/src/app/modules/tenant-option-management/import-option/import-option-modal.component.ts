@@ -12,7 +12,7 @@ import { TenantOptionRow } from '../tenant-option-management.model';
   imports: [CoreModule],
 })
 export class ImportOptionModalComponent {
-  closeSubject: Subject<TenantOptionRow | null> = new Subject();
+  closeSubject: Subject<TenantOptionRow[] | null> = new Subject();
 
   option: ITenantOption = {
     key: '',
@@ -27,11 +27,15 @@ export class ImportOptionModalComponent {
 
   import() {
     this.isLoading = true;
-    this.tenantOptionMgmt
-      .allowListOption(this.option)
+
+    const importPromise = this.option.key.length
+      ? this.tenantOptionMgmt.allowListOption(this.option).then((row) => [row])
+      : this.tenantOptionMgmt.allowListOptionsByCategory(this.option.category);
+
+    importPromise
       .then(
-        (row) => {
-          this.closeSubject.next(row);
+        (rows) => {
+          this.closeSubject.next(rows);
           this.modal.hide();
         },
         (error) => {
