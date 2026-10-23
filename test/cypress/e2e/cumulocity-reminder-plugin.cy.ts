@@ -267,9 +267,11 @@ describe('Reminder', () => {
     visit();
     openDrawer();
     cy.get('[data-cy="reminder--toast-toggle"]').check({ force: true });
-    // due a few seconds from now → the service timer fires a warning toast
-    seedReminder('Toast me', { time: new Date(Date.now() + 3000).toISOString() });
-    cy.get('c8y-alert-outlet .alert-warning', { timeout: 20000 })
+    // due shortly after it reaches the UI → the service timer fires a warning toast. Leave enough
+    // headroom for realtime delivery on slow runners: a reminder that arrives already due never
+    // "becomes" due, so no toast would fire.
+    seedReminder('Toast me', { time: new Date(Date.now() + 15000).toISOString() });
+    cy.get('c8y-alert-outlet .alert-warning', { timeout: 45000 })
       .should('contain.text', 'Toast me')
       .and('contain.text', device.name);
   });
@@ -309,7 +311,8 @@ describe('Reminder', () => {
         .first()
         .type('Typed reminder');
       cy.get(`${MODAL} select`).select('Inspection');
-      cy.get('[data-cy="reminder-modal--submit"]').click();
+      // the device page preselects the asset asynchronously; Create is enabled once it is set
+      cy.get('[data-cy="reminder-modal--submit"]', { timeout: 20000 }).should('be.enabled').click();
       cy.wait('@create').its('request.body.reminderType').should('eq', 'inspection');
     });
   });

@@ -52,6 +52,9 @@ function visitPlugin() {
   cy.intercept('GET', '**/tenant/options?*').as('listOptions');
   cy.visitShellAndWaitForSelector(ROUTE, 'en', '[data-cy="tenant-option-management--create"]');
   cy.wait('@getConfig');
+  // The grid is filled only once the option values are loaded too; acting before that races
+  // the initial load, which replaces the rows when it completes.
+  cy.wait('@listOptions');
 }
 
 /** Aliases only PUTs to the plugin configuration MO (the shell writes other MOs too). */
