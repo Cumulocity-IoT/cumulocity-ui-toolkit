@@ -9,8 +9,8 @@
     "@angular/core": "^20.0.0",
     "@angular/forms": "^20.0.0",
     "@angular/router": "^20.0.0",
-    "@c8y/client": "1023.14.x",
-    "@c8y/ngx-components": "1023.14.x",
+    "@c8y/client": "1023.14.224",
+    "@c8y/ngx-components": "1023.14.224",
     "date-fns": "^4.4.0",
     "rxjs": "^7.8.0"
   }

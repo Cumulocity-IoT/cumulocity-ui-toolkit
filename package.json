@@ -90,22 +90,22 @@
     "test:watch:tenant-option-management": "ng test plugin.tenant-option-management --browsers=ChromeHeadless"
   },
   "dependencies": {
-    "@angular/animations": "^20.2.14",
+    "@angular/animations": "^20.3.34",
     "@angular/cdk": "^20.2.14",
-    "@angular/common": "^20.3.0",
-    "@angular/compiler": "^20.3.0",
-    "@angular/core": "^20.3.0",
-    "@angular/forms": "^20.3.0",
-    "@angular/platform-browser": "^20.3.0",
-    "@angular/platform-browser-dynamic": "^20.3.0",
-    "@angular/router": "^20.3.0",
-    "@angular/upgrade": "^20.3.16",
-    "@c8y/bootstrap": "1023.14.132",
-    "@c8y/client": "1023.14.132",
-    "@c8y/html-repo": "1023.14.132",
-    "@c8y/ng1-modules": "1023.14.132",
-    "@c8y/ngx-components": "1023.14.132",
-    "@c8y/style": "1023.14.132",
+    "@angular/common": "^20.3.34",
+    "@angular/compiler": "^20.3.34",
+    "@angular/core": "^20.3.34",
+    "@angular/forms": "^20.3.34",
+    "@angular/platform-browser": "^20.3.34",
+    "@angular/platform-browser-dynamic": "^20.3.34",
+    "@angular/router": "^20.3.34",
+    "@angular/upgrade": "^20.3.34",
+    "@c8y/bootstrap": "1023.14.224",
+    "@c8y/client": "1023.14.224",
+    "@c8y/html-repo": "1023.14.224",
+    "@c8y/ng1-modules": "1023.14.224",
+    "@c8y/ngx-components": "1023.14.224",
+    "@c8y/style": "1023.14.224",
     "angular": "1.8.3",
     "date-fns": "^4.4.0",
     "dotenv": "^17.0.1",
@@ -118,11 +118,11 @@
   "devDependencies": {
     "@angular-eslint/eslint-plugin-template": "^20.7.0",
     "@angular-eslint/template-parser": "^20.7.0",
-    "@angular/build": "^20.3.16",
-    "@angular/cli": "^20.3.16",
-    "@angular/compiler-cli": "^20.3.0",
-    "@c8y/devkit": "1023.14.132",
-    "@c8y/options": "1023.14.132",
+    "@angular/build": "^20.3.41",
+    "@angular/cli": "^20.3.41",
+    "@angular/compiler-cli": "^20.3.34",
+    "@c8y/devkit": "1023.14.224",
+    "@c8y/options": "1023.14.224",
     "@types/file-saver": "^2.0.7",
     "@types/jasmine": "~5.1.15",
     "@types/lodash": "^4.17.13",
@@ -145,5 +145,25 @@
     "ts-node": "^10.9.2",
     "typescript": "~5.9.3",
     "wait-on": "^9.0.10"
+  },
+  "pnpm": {
+    "overrides": {
+      "dompurify@3": "^3.4.17",
+      "form-data@4": "^4.0.6",
+      "http-proxy-middleware@3": "^3.0.7",
+      "piscina@5": "^5.3.2",
+      "postcss@8": "^8.5.18",
+      "vite@7": "^7.3.5",
+      "webpack-dev-middleware@7": "^7.4.6"
+    },
+    "auditConfig": {
+      "ignoreGhsas": [
+        "GHSA-4w4v-5hc9-xrr2",
+        "GHSA-7x27-g8rg-x87w",
+        "GHSA-jmr9-qjv8-65gv",
+        "GHSA-7pqw-9j4j-h8q3",
+        "GHSA-ch52-4w7c-c8xp"
+      ]
+    }
   }
 }
