@@ -31,6 +31,7 @@ cumulocity-ui-toolkit/
 │   │   ├── tsconfig.json
 │   │   ├── tsconfig.spec.json
 │   │   └── src/index.ts      # Barrel export – the public API of shared/
+│   ├── asset-navigator/      # asset tree explorer drawer + global asset search (⌘K)
 │   ├── energy-consumption-widget/
 │   ├── favorites-manager/
 │   ├── index-db-cache/
@@ -106,7 +107,7 @@ All commands run from the **repository root** unless noted.
 - Test files: `**/*.spec.ts` inside `packages/`.
 - The root `karma.conf.js` is shared by all projects.
 - Each package has a `tsconfig.spec.json` with `"types": ["jasmine", "node"]`.
-- All 10 Angular projects in `angular.json` (`shared` + 9 plugins; `smart-views` is not registered) have a `test` architect target.
+- All 11 Angular projects in `angular.json` (`shared` + 10 plugins; `smart-views` is not registered) have a `test` architect target.
 - Run a single project: `pnpm exec ng test <project> --watch=false --browsers=ChromeHeadlessCI`
 - `ChromeHeadlessCI` custom launcher (defined in `karma.conf.js`) adds `--no-sandbox --disable-gpu --disable-dev-shm-usage` — required in CI.
 - Test helper for creating Jasmine spies: `packages/shared/src/helpers/auto-mock.helper.ts`.
@@ -154,7 +155,7 @@ All commands run from the **repository root** unless noted.
 
 The `tools/generate-scripts.mts` file is an **ESM TypeScript** script (`.mts` extension — run with `node --experimental-strip-types`). It reads all projects from `angular.json` and regenerates the `build:*`, `serve:*`, `test:*`, and `test:watch:*` entries in `package.json`. The source of truth for which projects get test scripts is whether the project has a `@angular/build:karma` test target in `angular.json`.
 
-The root `test` script (which chains all 10 suites sequentially) is also regenerated. Do **not** hand-edit anything after the `--generated----------` marker in `package.json`. CI verifies this: a change to root configuration re-runs `generate:scripts` and fails if `package.json` is stale.
+The root `test` script (which chains all 11 suites sequentially) is also regenerated. Do **not** hand-edit anything after the `--generated----------` marker in `package.json`. CI verifies this: a change to root configuration re-runs `generate:scripts` and fails if `package.json` is stale.
 
 ---
 
@@ -163,6 +164,19 @@ The root `test` script (which chains all 10 suites sequentially) is also regener
 - Output: a ZIP archive per plugin in `dist/` (e.g. `dist/cumulocity-kpi-widget-plugin.zip`).
 - Post-build, `tools/postbuild.js` renames the generated ZIP to include the version from the plugin's `package.json` (e.g. `dist/cumulocity-kpi-widget-plugin_1.0.4.zip`).
 - The `clean` script removes the entire `dist/` directory before each build.
+
+---
+
+## Changelogs
+
+Changelogs are **mandatory**: every change that a user, deployer or contributor would notice is documented in the same PR that makes it.
+
+- **Per plugin:** `packages/<plugin>/CHANGELOG.md` (`# <Plugin name> Changelog`). Create it if the plugin has none yet.
+  - One `## <version>` heading per release; the version matches the plugin's `package.json` `version`. Bumping the version and adding its changelog section go together.
+  - Group entries under `### Features`, `### Bug Fixes`, `### Breaking Changes`, `### Dependencies` (only the groups that apply), one bullet per change, written for the reader of the release — what changed and why it matters, not which files moved.
+- **Repository-wide:** the root `CHANGELOG.md` (`## YYYY.MM.DD` headings) for changes that are not tied to one plugin: shared library, build tooling, CI workflows, test infrastructure, Web SDK / Angular upgrades.
+- A change that touches several plugins (e.g. a Web SDK bump) gets a root entry **and** an entry in each affected plugin's changelog.
+- Pure refactors without behavioral effect, test-only changes inside one plugin, and docs typo fixes need no entry.
 
 ---
 
@@ -243,6 +257,7 @@ Agents should consult these authoritative references when writing or reviewing c
 - Do **not** add Jest, `jest-preset-angular`, or any `jest.*` / `setup-jest.*` files. The test stack is Karma + Jasmine exclusively.
 - Do **not** manually add `serve:*`, `build:*`, `test:*`, or `test:watch:*` scripts to the root `package.json` — use `generate:scripts`.
 - Do **not** edit `dist/` — it is ephemeral build output.
+- Do **not** open a PR with user-facing changes but no changelog entry — see [Changelogs](#changelogs).
 - Do **not** install packages directly into a plugin's `node_modules`; all dependencies are hoisted to the root via pnpm (`.npmrc`: `shamefully-hoist=true`).
 - Do **not** use `CommonJS require()` in Angular source files — this is an ESM workspace.
 - Do **not** create NgModules (`@NgModule`). Use standalone components and provider arrays.
