@@ -118,7 +118,11 @@ export class TenantOptionManagementService {
     };
 
     await this.tenantOption.update(option).then((res) => res.data);
-    const item = await this.updateOptionForConfiguration(option);
+    // An option that exists on the tenant but is not yet managed by the plugin
+    // (e.g. overwritten through a file import) is registered instead of failing.
+    const item = await this.updateOptionForConfiguration(option).catch(() =>
+      this.addOptionToConfiguration(option)
+    );
     return { id: `${option.category}-${option.key}`, value: option.value ?? '', ...item };
   }
 

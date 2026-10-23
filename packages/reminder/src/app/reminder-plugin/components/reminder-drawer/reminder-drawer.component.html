@@ -1,14 +1,14 @@
-<aside [class.open]="open()">
+<aside [class.open]="open()" data-cy="reminder--drawer">
   <header>
     <h2 translate>Reminder</h2>
-    <small class="text-muted" title="{{ lastUpdate | c8yDate }}">
+    <small class="text-muted" title="{{ lastUpdate | c8yDate }}" data-cy="reminder--last-update">
       {{ 'reminder.labels.last-update' | translate }}: {{ lastUpdate | c8yDate: 'short' }} <!-- time ago -->
     </small>
   </header>
 
   <ul class="drawer-actions">
     <li>
-      <button class="btn btn-primary" (click)="createReminder()" type="button">
+      <button class="btn btn-primary" (click)="createReminder()" type="button" data-cy="reminder--create">
         <i [c8yIcon]="'plus-circle'"></i>
         {{ 'Create Reminder' | translate }}
       </button>
@@ -24,6 +24,7 @@
           <select
             class="form-control"
             id="reminder-type-filter"
+            data-cy="reminder--type-filter"
             [(ngModel)]="reminderTypeFilter"
             (change)="setFilter()"
             name="reminder-type"
@@ -41,7 +42,7 @@
     @if (reminderService.contextFilterAvailable()) {
       <div class="filter">
         <label class="c8y-switch">
-          <input [(ngModel)]="contextFilterEnabled" type="checkbox" name="context-filter-enabled" />
+          <input [(ngModel)]="contextFilterEnabled" type="checkbox" name="context-filter-enabled" data-cy="reminder--context-filter" />
           <span></span>
           <span class="text-truncate">{{ 'reminder.actions.filter-by-context' | translate }}</span>
         </label>
@@ -51,7 +52,7 @@
     <!-- list of reminders -->
     <ul class="reminder-group-list">
       @for (group of reminderGroups; track group.status) {
-        <li class="reminder-group-item">
+        <li class="reminder-group-item" [attr.data-cy]="'reminder--group-' + group.status">
           <header>
             <button
               class="btn btn-clean"
@@ -59,8 +60,10 @@
               (click)="groupIsExpanded[$index] = !groupIsExpanded[$index]"
               type="button"
               aria-controls="collapseBasic"
+              data-cy="reminder--group-toggle"
             >
               <span
+                data-cy="reminder--group-count"
                 class="count"
                 [class.text-danger]="group.status === reminderGroupStatus.due && group.count > 0"
               >
@@ -108,6 +111,7 @@
           (change)="setConfig('toast')"
           type="checkbox"
           name="toast-notifications-enabled"
+          data-cy="reminder--toast-toggle"
           />
         <span></span>
         {{ 'Toast Notifications' | translate }}
@@ -121,6 +125,7 @@
           (change)="setConfig('browser')"
           type="checkbox"
           name="browser-notifications-enabled"
+          data-cy="reminder--browser-toggle"
           />
         <span></span>
         {{ 'Browser Notifications' | translate }}
@@ -133,6 +138,8 @@
 <ng-template #reminderItem let-reminder="reminder">
   <li
     class="reminder-item"
+    data-cy="reminder--item"
+    [attr.data-reminder-id]="reminder.id"
     [class.active]="reminder.status !== reminderStatus.active"
     [class.changed]="reminder.changed"
     >
@@ -181,6 +188,7 @@
             (click)="updateReminder(reminder, reminderStatus.acknowledged)"
             type="button"
             title="{{ 'Acknowledge the reminder' | translate }}"
+            data-cy="reminder--acknowledge"
           >
             <i [c8yIcon]="'bell-slash'"></i>
           </button>
@@ -191,6 +199,7 @@
             (click)="updateReminder(reminder, reminderStatus.cleared)"
             type="button"
             title="{{ 'Clear the reminder' | translate }}"
+            data-cy="reminder--clear"
           >
             <i [c8yIcon]="'check-circle'"></i>
           </button>
@@ -201,6 +210,7 @@
             (click)="updateReminder(reminder, reminderStatus.active)"
             type="button"
             title="{{ 'Reactivate the reminder' | translate }}"
+            data-cy="reminder--reactivate"
           >
             <i [c8yIcon]="'bell'"></i>
           </button>
@@ -208,7 +218,7 @@
       </ul>
     </header>
 
-    <p>
+    <p data-cy="reminder--text">
       {{ reminder.text }}
     </p>
 
@@ -220,6 +230,7 @@
           (click)="setFilter(reminder.reminderType)"
           type="button"
           title="{{ 'Filter by this Reminder Type' | translate }}"
+          data-cy="reminder--type-tag"
         >
           <i class="m-r-4" [c8yIcon]="'tag'"></i>
           <c8y-reminder-type [id]="reminder.reminderType"></c8y-reminder-type>
@@ -227,12 +238,12 @@
       }
       <!-- asset reference -->
       @if (reminder.isGroup) {
-        <a [routerLink]="['/group', reminder.source.id]">
+        <a [routerLink]="['/group', reminder.source.id]" data-cy="reminder--asset-link">
           <i [c8yIcon]="'c8y-group-open'"></i>
           {{ reminder.source.name }}
         </a>
       } @else {
-        <a [routerLink]="['/device', reminder.source.id]">
+        <a [routerLink]="['/device', reminder.source.id]" data-cy="reminder--asset-link">
           <!-- arrows-dotted-left-right -->
           <i [c8yIcon]="'c8y-device'"></i>
           {{ reminder.source.name }}

@@ -42,6 +42,7 @@ export class ReminderNotesAdminListComponent implements OnInit {
   async delete(release: ReleaseNote): Promise<void> {
     try {
       await this.releaseNotesService.delete(release.id);
+      this.releaseNotes = this.releaseNotes.filter((r) => r.id !== release.id);
       this.alertService.success(
         this.translateService.instant('Release {{version}} deleted', {
           version: release.version,

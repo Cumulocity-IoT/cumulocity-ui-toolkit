@@ -1,8 +1,8 @@
-import { inject, signal, ComponentRef, Injectable } from '@angular/core';
+import { inject, signal, untracked, ComponentRef, Injectable } from '@angular/core';
 import { EventService, IEvent, IResult, TenantOptionsService } from '@c8y/client';
 import { AlertService, EventRealtimeService, RealtimeMessage } from '@c8y/ngx-components';
 import { TranslateService } from '@ngx-translate/core';
-import { filter as _filter, cloneDeep, debounce, has, orderBy, sortBy } from 'lodash';
+import { filter as _filter, cloneDeep, debounce, has, isEqual, orderBy, sortBy } from 'lodash';
 import moment from 'moment';
 import { Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
@@ -217,7 +217,13 @@ export class ReminderService {
    * @returns {void}
    */
   setConfig<K extends keyof ReminderConfig>(key: K, value: ReminderConfig[K]): void {
-    const config = { ...this.config(), [key]: value };
+    const current = untracked(() => this.config());
+
+    // Grouping writes the filter back on every pass; an unchanged value must not
+    // emit, or effects that group reminders would re-trigger themselves endlessly.
+    if (isEqual(current[key], value)) return;
+
+    const config = { ...current, [key]: value };
 
     this.localStorageService.set(REMINDER__LOCAL_STORAGE__CONFIG, config);
     this.config.set(config);
