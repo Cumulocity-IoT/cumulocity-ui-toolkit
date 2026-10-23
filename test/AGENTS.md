@@ -36,7 +36,7 @@ test/
     ├── support/
     │   ├── e2e.ts                # Global setup: commands, logs, teardown, error handlers
     │   ├── commands.ts           # Custom Cypress command declarations + registrations
-    │   ├── index.ts              # Barrel — import everything from '../../support'
+    │   ├── index.ts              # Barrel — import everything from '../support'
     │   ├── api/                  # Live C8Y API helpers (use cy.c8yclient inside)
     │   ├── factories/            # Pure data builders (no Cypress commands)
     │   ├── intercepts/           # cy.intercept stubs for inventory + dashboard mocking
@@ -81,6 +81,36 @@ back to basic auth when OAuth is unavailable).
 ---
 
 ## Running Tests
+
+### Against the tenant mock (default, used by CI)
+
+No tenant or credentials needed. `scripts/e2e-mock.mts` starts the
+[`@cumulocity-iot/ui-sdk`](https://github.com/Cumulocity-IoT/c8y-ai-ui-sdk) mock with the
+**windy-dev world** (`mock/windy-dev.json`, pulled from the tenant at runtime — never committed, git-ignored) and the **cockpit release build of the Web SDK
+version the workspace is on** (root `package.json` → `@c8y/ngx-components`), serves the plugin
+against it (`ng serve -u <mock>`) and runs the plugin's Cypress config. After a Web SDK bump it
+downloads the new cockpit on the next run and records its checksum in `c8y-ui.json` → commit that.
+
+| Purpose | Root command |
+|---|---|
+| Run one plugin's suite on the mock | `pnpm run e2e:mock <name>` (`--browser=chrome` locally; CI uses chromium) |
+| Same, in the Cypress UI | `pnpm run e2e:mock <name> --open` |
+| Re-pull the world from windy-dev | `pnpm run e2e:world:pull` (`e2e:mock` does it when the file is missing) |
+
+- `c8y-ui.json` — mock config: version (synced automatically), shell `cockpit`, world, ports
+  (mock 8111, dev server 9001), `auth: login` (so `cy.getAuth().login()` works; any password
+  is accepted), shell checksums.
+- The world is windy-dev's energy site "Cuxhaven" (`WORLD_ROOT` overrides the root id): devices,
+  7 days of measurements and alarms, the newest 50 events per source. It is pulled through
+  go-c8y-cli: locally with your session (`C8Y_SESSION=~/.cumulocity/windy-dev…json`), in CI
+  with `C8Y_HOST` / `C8Y_USER` / `C8Y_PASSWORD` from the `e2e` environment (`WINDY_C8Y_*`).
+  Writes from tests stay in the mock until it stops; every run starts from the file.
+- Microservices, smart rules and Notifications 2.0 are not emulated — see the ui-sdk's
+  `docs/mock.md` for what the mock answers.
+- Installing needs read access to GitHub Packages for `@cumulocity-iot` (see the root
+  `AGENTS.md` → MCP Servers for the `~/.npmrc` setup).
+
+### Against a real tenant
 
 All commands run from inside `test/`.
 
@@ -143,15 +173,15 @@ import {
   mockDevice, mockDashboard, stubDeviceDashboard,
   C8yWidgetModal, DashboardSelectors, registerTestId,
   createGroup, createUserWithGlobalRoles,
-} from '../../support';
+} from '../support';
 ```
 
 Or import from the sub-module directly for targeted imports:
 
 ```ts
-import { mockDevice } from '../../support/factories';
-import { DashboardSelectors } from '../../support/selectors';
-import { stubDeviceDashboard } from '../../support/intercepts';
+import { mockDevice } from '../support/factories';
+import { DashboardSelectors } from '../support/selectors';
+import { stubDeviceDashboard } from '../support/intercepts';
 ```
 
 ### `api/` — Live backend helpers
@@ -339,7 +369,7 @@ Commands provided **natively by `cumulocity-cypress` 1.x** (do not redefine):
 // cypress/e2e/my-plugin.cy.ts
 
 import { registerTestId, mockDevice, stubDeviceDashboard, mockWidget,
-         visitDeviceWithWidget, DashboardSelectors } from '../../support';
+         visitDeviceWithWidget, DashboardSelectors } from '../support';
 
 const CYPRESS_TEST_ID = 'my-plugin-tests';
 registerTestId(CYPRESS_TEST_ID); // auto-cleanup after spec

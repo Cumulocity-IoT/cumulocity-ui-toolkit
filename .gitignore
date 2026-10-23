@@ -78,3 +78,6 @@ test/cypress/logs
 
 # playwright-cli output (screenshots/snapshots/traces from agent browser sessions)
 .playwright-cli/
+
+# e2e mock world: pulled from windy-dev at runtime (pnpm run e2e:world:pull), never committed
+test/mock/

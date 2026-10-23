@@ -5,6 +5,7 @@ on:
 
 permissions:
   contents: read
+  packages: read # @cumulocity-iot/ui-sdk from GitHub Packages
   pull-requests: write
 
 jobs:
@@ -61,9 +62,14 @@ jobs:
         with:
           node-version: '24'
           cache: 'pnpm'
+          # the test workspace's @cumulocity-iot/ui-sdk comes from GitHub Packages
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@cumulocity-iot'
 
       - name: Install root dependencies
         run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Audit dependencies (high+)
         run: pnpm audit --audit-level high
@@ -147,9 +153,14 @@ jobs:
         with:
           node-version: '24'
           cache: 'pnpm'
+          # the test workspace's @cumulocity-iot/ui-sdk comes from GitHub Packages
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@cumulocity-iot'
 
       - name: Install root dependencies
         run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Audit dependencies (high+)
         run: pnpm audit --audit-level high

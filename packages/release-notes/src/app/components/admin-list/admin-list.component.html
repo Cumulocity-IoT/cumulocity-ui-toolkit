@@ -1,14 +1,14 @@
 <c8y-title>{{ 'Release Notes' | translate }}</c8y-title>
 
 <c8y-action-bar-item [placement]="'right'">
-  <button class="btn btn-link" (click)="add()" type="button">
+  <button class="btn btn-link" (click)="add()" type="button" data-cy="release-notes-admin--create">
     <i [c8yIcon]="'add'"></i>
     <span class="m-l-4" translate>Create Release Note</span>
   </button>
 </c8y-action-bar-item>
 
 <c8y-action-bar-item [placement]="'right'">
-  <button class="btn btn-link" (click)="reload()" type="button">
+  <button class="btn btn-link" (click)="reload()" type="button" data-cy="release-notes-admin--reload">
     <i [c8yIcon]="'refresh'"></i>
     <span class="m-l-4" translate>Reload</span>
   </button>
@@ -19,13 +19,13 @@
 } @else {
   <c8y-list-group>
     @for (release of releaseNotes; track release.id) {
-      <c8y-li>
+      <c8y-li data-cy="release-notes-admin--item" [attr.data-version]="release.version">
         <c8y-li-icon
           [icon]="release.published ? 'check' : 'cross-circle'"
           [class.text-danger]="!release.published"
         ></c8y-li-icon>
         <strong>{{ release.version }}</strong>
-        <span class="text-muted m-l-16">
+        <span class="text-muted m-l-16" data-cy="release-notes-admin--status">
           @if (release.published) {
             {{ release.publicationTime | c8yDate: 'shortDate' }}
           } @else {
@@ -36,12 +36,12 @@
         <!-- actions: edit -->
         <c8y-li-action (click)="edit(release)">
           <i [c8yIcon]="'pencil'"></i>
-          <span translate>Edit</span>
+          <span data-cy="release-notes-admin--edit" translate>Edit</span>
         </c8y-li-action>
         <!-- actions: (un-)publish -->
         <c8y-li-action (click)="publish(release, !release.published)">
           <i [c8yIcon]="release.published ? 'times' : 'check'"></i>
-          <span translate>
+          <span data-cy="release-notes-admin--publish" translate>
             @if (release.published) {
               Unpublish
             } @else {
@@ -52,12 +52,13 @@
         <!-- actions: delete -->
         <c8y-li-action (click)="delete(release)">
           <i [c8yIcon]="'trash'"></i>
-          <span translate>Delete</span>
+          <span data-cy="release-notes-admin--delete" translate>Delete</span>
         </c8y-li-action>
       </c8y-li>
     } @empty {
       <c8y-li>
         <c8y-ui-empty-state
+          data-cy="release-notes-admin--empty"
           [icon]="'search'"
           [title]="'No release notes available' | translate"
           [subtitle]="'Well… maybe later' | translate"

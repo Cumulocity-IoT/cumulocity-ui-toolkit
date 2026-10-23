@@ -76,13 +76,8 @@ jobs:
             toolkit/pnpm-lock.yaml
             toolkit/test/pnpm-lock.yaml
 
-      - name: Install toolkit dependencies
-        working-directory: toolkit
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm -C test install --frozen-lockfile
-
-      # The c8y_sdk MCP server is a GitHub package; the agent config starts it
+      # The test workspace's @cumulocity-iot/ui-sdk (tenant mock) and the c8y_sdk MCP server are
+      # GitHub packages; install needs them, and the agent config starts the MCP server
       # with `npx -y @cumulocity-iot/c8y-web-sdk-knowledge-mcp`. Map the scope
       # to GitHub Packages in the user npmrc (kept out of the repo's .npmrc so
       # the token never lands in the checkout). Uses a dedicated read-only
@@ -93,6 +88,12 @@ jobs:
             echo "@cumulocity-iot:registry=https://npm.pkg.github.com"
             echo "//npm.pkg.github.com/:_authToken=${{ secrets.C8Y_KNOWLEDGE_NPM_TOKEN }}"
           } >> ~/.npmrc
+
+      - name: Install toolkit dependencies
+        working-directory: toolkit
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm -C test install --frozen-lockfile
 
       - name: Write .env for Cypress
         working-directory: toolkit
