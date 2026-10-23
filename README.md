@@ -37,6 +37,7 @@ cumulocity-ui-toolkit/
 │   │       ├── pipes/
 │   │       └── services/
 │   │
+│   ├── asset-navigator/
 │   ├── energy-consumption-widget/
 │   ├── favorites-manager/
 │   ├── kpi-widget/
@@ -84,6 +85,7 @@ All plugins are registered as Angular projects in the single root `angular.json`
 | Angular project              | Package directory              |
 | ---------------------------- | ------------------------------ |
 | `shared`                     | `packages/shared`              |
+| `plugin.asset-navigator`     | `packages/asset-navigator`    |
 | `plugin.energy-consumption-widget` | `packages/energy-consumption-widget` |
 | `plugin.favorites`           | `packages/favorites-manager`   |
 | `plugin.kpi-widget`          | `packages/kpi-widget`          |

@@ -1,0 +1,524 @@
+import { Injectable, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
+import { UserPreferencesService } from '@c8y/ngx-components';
+import { firstValueFrom } from 'rxjs';
+import { DEFAULT_ASSET_STORE_CONFIG } from '../../services/asset-store/asset-store.model';
+import { AssetStoreService } from '../../services/asset-store/asset-store.service';
+import { detailFieldFor } from './asset-detail-fields';
+import {
+  EMPTY_TREE_FILTER,
+  filterHierarchy,
+  type FilteredHierarchy,
+  type TreeFilter,
+} from './asset-tree.model';
+
+/**
+ * Tree state: expansion, selection, filter, pinned & recent assets, and the detail
+ * panel's field selection (tree design §3, §6.1, §6.3).
+ *
+ * Everything here is parked on `globalThis` for the same reason as `AssetStoreService`
+ * — the drawer and the overlay are separate plugin bundles, each with its own compiled
+ * copy of this class, and they must share one state. That sharing is a stated
+ * acceptance criterion: expand in the drawer, close it, press `⌘K`, and the overlay
+ * shows the same shape and selection (AC-T3).
+ *
+ * v2: `expanded: Set<string>` became `expansion: Map<string, boolean>` — see
+ * {@link AssetTreeService.expansion}. v3: the detail panel's one field list became one
+ * list *per asset type* — see {@link AssetTreeService.detailFieldsByType}. Neither pair is
+ * interchangeable, so the key is versioned: a stale bundle and a current one must not
+ * share a slot. v4 adds {@link AssetTreeService.currentAssetId}, which a v3 slot has no
+ * signal for — reading it would be `undefined()`.
+ */
+const STATE_SYMBOL = Symbol.for('c8y-ps.asset-tree-state.v4');
+
+/** Per-user preference keys. `bookmarks` is the platform's own — see `pinned`. */
+const PREF_BOOKMARKS = 'bookmarks';
+const PREF_RECENT = 'ps.assetNav.recent';
+const PREF_DETAIL_FIELDS = 'ps.assetNav.detailFields';
+
+const MAX_RECENT = 8;
+
+/**
+ * A platform bookmark, as `@c8y/ngx-components/bookmarks` stores it under the
+ * `bookmarks` user preference. Retyped here rather than imported: that entry point
+ * exports only components and the module, not `Bookmark`/`BookmarkService`, and a deep
+ * import into its internals would be a private-API dependency.
+ */
+export interface PlatformBookmark {
+  id: string;
+  label: string;
+  url: string;
+  icon?: string;
+  markToRemove?: boolean;
+}
+
+/**
+ * Configured detail fields, keyed by the asset's managed-object `type`
+ * (`wind_turbine`, `wind_park`, …). A type that is absent has never been configured and
+ * falls back to that kind's default (`resolveDetailFieldKeys`); a type mapped to `[]`
+ * was deliberately emptied by the user.
+ */
+export type DetailFieldsByType = Readonly<Record<string, readonly string[]>>;
+
+/** A pinned or recent asset as the quick-access panel shows it. */
+export interface QuickAccessEntry {
+  assetId: string;
+  /** The label as stored — used when the asset is no longer in the store. */
+  label: string;
+  icon?: string;
+}
+
+interface AssetTreeState {
+  expansion: WritableSignal<ReadonlyMap<string, boolean>>;
+  selectedId: WritableSignal<string | null>;
+  focusedId: WritableSignal<string | null>;
+  filter: WritableSignal<TreeFilter>;
+  pinned: WritableSignal<readonly QuickAccessEntry[]>;
+  recent: WritableSignal<readonly QuickAccessEntry[]>;
+  detailFieldsByType: WritableSignal<DetailFieldsByType>;
+  /** Where the surrounding app already is — a ranking signal, not a selection. */
+  currentAssetId: WritableSignal<string | null>;
+  sparkline: WritableSignal<boolean>;
+  /** Guards the one-time preference read across bundles. */
+  prefsLoaded: boolean;
+}
+
+type GlobalWithState = typeof globalThis & { [STATE_SYMBOL]?: AssetTreeState };
+
+function resolveState(): AssetTreeState {
+  const scope = globalThis as GlobalWithState;
+  return (scope[STATE_SYMBOL] ??= {
+    expansion: signal<ReadonlyMap<string, boolean>>(new Map()),
+    selectedId: signal<string | null>(null),
+    focusedId: signal<string | null>(null),
+    filter: signal<TreeFilter>({ ...EMPTY_TREE_FILTER }),
+    pinned: signal<readonly QuickAccessEntry[]>([]),
+    recent: signal<readonly QuickAccessEntry[]>([]),
+    detailFieldsByType: signal<DetailFieldsByType>({}),
+    currentAssetId: signal<string | null>(null),
+    sparkline: signal(false),
+    prefsLoaded: false,
+  });
+}
+
+/**
+ * A pin, written in the platform's own bookmark form — `${pathname}#${route}` — so it
+ * lands in the right-hand drawer's list as a working link.
+ *
+ * Every asset carries `c8y_IsAsset` + `c8y_IsDeviceGroup`, so the group context
+ * route is right for all of them; a pure device (a turbine controller, an RTU) uses the
+ * device route. `AssetNavigationService.routeFor` decides which, and the route shapes
+ * here have to stay in step with `ViewContext.Group` / `.Device`.
+ */
+export function assetBookmarkUrl(assetId: string, isPureDevice = false): string {
+  const path = typeof location === 'undefined' ? '' : location.pathname;
+  return `${path}#/${isPureDevice ? 'device' : 'group'}/${assetId}`;
+}
+
+/** The asset id inside a bookmark url, or `null` when it does not point at one. */
+export function assetIdFromBookmarkUrl(url: string): string | null {
+  const match = /#\/(?:group|device)\/([^/?#]+)/.exec(url);
+  return match ? match[1] : null;
+}
+
+@Injectable({ providedIn: 'root' })
+export class AssetTreeService {
+  private readonly state = resolveState();
+  private readonly preferences = inject(UserPreferencesService);
+  private readonly assets = inject(AssetStoreService);
+
+  /**
+   * The branches the user has **explicitly** opened or closed — `true` = open, `false` =
+   * closed, absent = "whatever this container's default is"
+   * (`AssetTreeConfig.expandAll`).
+   *
+   * A map of overrides rather than a set of open ids, because the two containers disagree
+   * about the default: the overlay starts fully expanded, the drawer starts on a path. A
+   * set would have to mean "expanded" in one and "collapsed" in the other — and this state
+   * is *shared between them* (AC-T3), so expanding a park in the drawer would have
+   * collapsed it in the overlay. Overrides are mode-independent: `park → true` reads as
+   * open in both, whatever either one defaults to.
+   *
+   * It also removes the set/visual inversion entirely — everything here now speaks in
+   * terms of *open* and *closed*, which is what every caller actually means.
+   */
+  readonly expansion: Signal<ReadonlyMap<string, boolean>> = this.state.expansion.asReadonly();
+  readonly selectedId: Signal<string | null> = this.state.selectedId.asReadonly();
+  readonly focusedId: Signal<string | null> = this.state.focusedId.asReadonly();
+  readonly filter: Signal<TreeFilter> = this.state.filter.asReadonly();
+  readonly pinned: Signal<readonly QuickAccessEntry[]> = this.state.pinned.asReadonly();
+  readonly recent: Signal<readonly QuickAccessEntry[]> = this.state.recent.asReadonly();
+  readonly sparkline: Signal<boolean> = this.state.sparkline.asReadonly();
+
+  /**
+   * The detail panel's configured fields per asset type (§6.3).
+   *
+   * Per type rather than one global list because the panel's subject is not one thing: a
+   * park and a turbine share no useful field beyond their name, so a single list meant
+   * every choice made for one was wrong for the other. Read it through
+   * {@link configuredFieldKeys}, which is a signal read and so stays reactive.
+   */
+  readonly detailFieldsByType: Signal<DetailFieldsByType> =
+    this.state.detailFieldsByType.asReadonly();
+
+  /**
+   * The search term, which the **containers' inputs render from** rather than keeping a
+   * copy of.
+   *
+   * It lives here for the same reason expansion and selection do: the drawer and the
+   * overlay are two views onto one tree state (AC-T3). When each container owned its own
+   * term and pushed it in, closing the overlay left its term applied to a tree whose
+   * visible input was empty — a filtered, sometimes empty tree with no visible way to
+   * clear it — and whichever container mounted second overwrote the other's term with its
+   * own initial `''`.
+   */
+  readonly searchText = computed(() => this.filter().searchText);
+
+  /**
+   * The asset the surrounding app is showing. Pushed in by the tree component from its
+   * `currentAssetId` input, and used as a ranking signal: things near where you already
+   * are beat strangers of equal score.
+   */
+  readonly currentAssetId: Signal<string | null> = this.state.currentAssetId.asReadonly();
+
+  /**
+   * **The** filter evaluation — one search per (fleet, filter, index), shared by every
+   * reader.
+   *
+   * It is a `computed` and not a function for a reason worth keeping: `filterHierarchy`
+   * used to be called four times per keystroke (row list, auto-expansion, the "no exact
+   * match" notice, the overlay's results), each running a full pass over the fleet. Signal
+   * memoisation collapses that to one, and both containers share it because the whole
+   * service is shared.
+   */
+  readonly filtered = computed<FilteredHierarchy | null>(() => {
+    const hierarchy = this.assets.hierarchy();
+
+    if (!hierarchy) return null;
+
+    return filterHierarchy(hierarchy, this.filter(), {
+      index: this.assets.searchIndex(),
+      context: { pinnedIds: this.pinnedIds(), currentId: this.currentAssetId() },
+    });
+  });
+
+  /** Matches best-first (`asset-search.ts` ranking) — the overlay's grid order. */
+  readonly rankedMatches = computed<readonly string[]>(() => this.filtered()?.order ?? []);
+
+  private readonly pinnedIds = computed(() => new Set(this.pinned().map((entry) => entry.assetId)));
+
+  /** Whether a filter is narrowing the tree — what the "clear" affordance keys off. */
+  readonly filtering = computed(() => {
+    const filter = this.filter();
+    return filter.searchText.trim().length > 0 || filter.assetTypes.length > 0 || !!filter.scope;
+  });
+
+  constructor() {
+    void this.loadPreferences();
+  }
+
+  // ── expansion ────────────────────────────────────────────────────────────────
+
+  /** Whether the user has said anything about this branch, and what. */
+  openState(id: string): boolean | undefined {
+    return this.expansion().get(id);
+  }
+
+  setOpen(id: string, open: boolean): void {
+    if (this.expansion().get(id) === open) return;
+    this.state.expansion.set(new Map(this.expansion()).set(id, open));
+  }
+
+  setAllOpen(ids: Iterable<string>, open: boolean): void {
+    const next = new Map(this.expansion());
+
+    for (const id of ids) next.set(id, open);
+    this.state.expansion.set(next);
+  }
+
+  /**
+   * Opens the path to an asset **and the asset itself**, so its own children are visible
+   * without a further click — you land on a park and see its turbines, but not every
+   * turbine's sub-assets (the drawer's opening shape).
+   *
+   * `replace` drops every existing override first. The drawer passes it on the first reveal
+   * of a freshly opened panel: this state is global and outlives the panel, so without it
+   * the "only the path" shape would be polluted by whatever was open the last time —
+   * possibly in the other container. Later reveals in the same panel are additive, because
+   * by then the expansion is the user's own work and resetting it would be destructive.
+   */
+  revealWithChildren(path: readonly { id: string }[], options?: { replace?: boolean }): void {
+    if (!path.length) return;
+    const next = options?.replace ? new Map<string, boolean>() : new Map(this.expansion());
+
+    for (const node of path) next.set(node.id, true);
+    this.state.expansion.set(next);
+  }
+
+  /** Forgets every override, so every branch falls back to the container's default. */
+  resetExpansion(): void {
+    if (!this.expansion().size) return;
+    this.state.expansion.set(new Map());
+  }
+
+  // ── selection & focus ────────────────────────────────────────────────────────
+
+  select(id: string | null): void {
+    this.state.selectedId.set(id);
+  }
+
+  focus(id: string | null): void {
+    this.state.focusedId.set(id);
+  }
+
+  /**
+   * Records where the app is. Guarded against no-op writes: this feeds the search's
+   * ranking context, so an unguarded write would re-run the search on every render pass
+   * of every mounted tree.
+   */
+  setCurrentAssetId(id: string | null): void {
+    if (this.state.currentAssetId() !== id) this.state.currentAssetId.set(id);
+  }
+
+  // ── filter ───────────────────────────────────────────────────────────────────
+
+  /**
+   * Merges `patch` into the filter.
+   *
+   * Two things here are load-bearing, and stay so for any caller that ever drives this
+   * from an `effect()` (the containers now write it straight from their event handlers,
+   * which is why they no longer keep a copy of the term — see {@link searchText}):
+   *
+   * - **`update`, never `set({ ...this.filter() })`.** Reading the signal inside an
+   *   effect subscribes that effect to it, so writing it back re-triggers the same
+   *   effect — an infinite loop that hard-freezes the tab. `update` reads the raw value
+   *   without registering a dependency.
+   * - **No-op writes are dropped.** A fresh object literal is never `===` the previous
+   *   one, so an unguarded write notifies every reader on each keystroke-shaped
+   *   re-evaluation, and two effects patching different keys would ping-pong forever.
+   */
+  setFilter(patch: Partial<TreeFilter>): void {
+    this.state.filter.update((current) => {
+      const next = { ...current, ...patch };
+      const unchanged =
+        next.searchText === current.searchText &&
+        next.matchMode === current.matchMode &&
+        next.scope === current.scope &&
+        next.assetTypes.length === current.assetTypes.length &&
+        next.assetTypes.every((type, index) => type === current.assetTypes[index]);
+      return unchanged ? current : next;
+    });
+  }
+
+  clearFilter(): void {
+    this.state.filter.update((current) => {
+      const empty = { ...EMPTY_TREE_FILTER };
+      return current.searchText === empty.searchText &&
+        current.matchMode === empty.matchMode &&
+        current.scope === empty.scope &&
+        current.assetTypes.length === 0
+        ? current
+        : empty;
+    });
+  }
+
+  // ── pinned (platform bookmarks) & recent ─────────────────────────────────────
+
+  isPinned(assetId: string): boolean {
+    return this.pinned().some((entry) => entry.assetId === assetId);
+  }
+
+  /**
+   * Pins or unpins an asset **as a platform bookmark**: the same
+   * `bookmarks` user preference the right-hand drawer reads, so one list serves both
+   * (the user's decision on OQ-T4). The drawer reads its list on init, so an existing
+   * drawer shows the change after it is reopened.
+   */
+  async togglePin(entry: QuickAccessEntry, isPureDevice = false): Promise<void> {
+    const bookmarks = await this.readBookmarks();
+    const without = bookmarks.filter(
+      (bookmark) => assetIdFromBookmarkUrl(bookmark.url) !== entry.assetId
+    );
+    // Shorter than what we read ⇒ it was pinned, and dropping it is the unpin.
+    const next =
+      without.length < bookmarks.length
+        ? without
+        : [
+            ...bookmarks,
+            {
+              id: crypto.randomUUID(),
+              label: entry.label,
+              url: assetBookmarkUrl(entry.assetId, isPureDevice),
+              icon: entry.icon ?? 'c8y-group',
+            },
+          ];
+
+    await this.preferences.set(PREF_BOOKMARKS, next);
+    this.state.pinned.set(projectPinned(next));
+  }
+
+  /** Records a visit. Most-recent-first, capped, pinned assets excluded (§6.1). */
+  async touchRecent(entry: QuickAccessEntry): Promise<void> {
+    const next = [entry, ...this.recent().filter((item) => item.assetId !== entry.assetId)].slice(
+      0,
+      MAX_RECENT
+    );
+
+    this.state.recent.set(next);
+    await this.preferences.set(PREF_RECENT, next);
+  }
+
+  // ── detail field config (§6.3) ───────────────────────────────────────────────
+
+  /**
+   * What the user configured for this asset type, or `null` when they never did.
+   *
+   * The caller resolves the default, because it depends on something this service has no
+   * business knowing (whether the type is a branch or a leaf) — see
+   * `resolveDetailFieldKeys`.
+   */
+  configuredFieldKeys(assetType: string | undefined): readonly string[] | null {
+    if (!assetType) return null;
+
+    return this.detailFieldsByType()[assetType] ?? null;
+  }
+
+  async setDetailFieldKeys(assetType: string, keys: readonly string[]): Promise<void> {
+    this.state.detailFieldsByType.update((current) => ({
+      ...current,
+      [assetType]: sanitizeFieldKeys(keys),
+    }));
+    await this.persistDetailFields();
+  }
+
+  async setSparkline(enabled: boolean): Promise<void> {
+    this.state.sparkline.set(enabled);
+    await this.persistDetailFields();
+  }
+
+  /** Forgets this type's selection, so it falls back to the default for its kind. */
+  async resetDetailFields(assetType: string): Promise<void> {
+    this.state.detailFieldsByType.update((current) => {
+      const next = { ...current };
+
+      delete next[assetType];
+
+      return next;
+    });
+    await this.persistDetailFields();
+  }
+
+  /**
+   * Per-type field lists and the sparkline toggle share one stored document, so both
+   * writers go through here — writing only one half would silently reset the other.
+   */
+  private async persistDetailFields(): Promise<void> {
+    await this.preferences.set(PREF_DETAIL_FIELDS, {
+      version: 2,
+      byType: this.detailFieldsByType(),
+      sparkline: this.sparkline(),
+    });
+  }
+
+  // ── preferences ──────────────────────────────────────────────────────────────
+
+  private async readBookmarks(): Promise<PlatformBookmark[]> {
+    const raw = await firstValueFrom<unknown>(this.preferences.get(PREF_BOOKMARKS));
+    return Array.isArray(raw) ? (raw as PlatformBookmark[]) : [];
+  }
+
+  /**
+   * One read per session, shared across bundles. Failures are swallowed: preferences
+   * are a convenience, and an unreadable one must degrade to the defaults rather than
+   * keep the tree from rendering.
+   */
+  private async loadPreferences(): Promise<void> {
+    if (this.state.prefsLoaded) return;
+    this.state.prefsLoaded = true;
+
+    try {
+      const [bookmarks, recent, fields] = await Promise.all([
+        this.readBookmarks(),
+        firstValueFrom<unknown>(this.preferences.get(PREF_RECENT)),
+        firstValueFrom<unknown>(this.preferences.get(PREF_DETAIL_FIELDS)),
+      ]);
+
+      this.state.pinned.set(projectPinned(bookmarks));
+      this.state.recent.set(projectRecent(recent));
+      // Migrate-on-read, twice over: keys the vocabulary no longer knows are dropped
+      // rather than rendered (AC-T6), and a v1 document — one flat list, written when the
+      // panel had no per-type configuration — becomes that list *for the leaf type*, which
+      // is the only type its turbine fields ever described.
+      const stored = fields as { byType?: unknown; keys?: unknown; sparkline?: unknown } | null;
+
+      this.state.detailFieldsByType.set(projectFieldsByType(stored));
+      this.state.sparkline.set(stored?.sparkline === true);
+    } catch {
+      // Defaults are already in place.
+    }
+  }
+}
+
+/** Bookmarks that point at an asset, in stored order. */
+function projectPinned(bookmarks: readonly PlatformBookmark[]): QuickAccessEntry[] {
+  const entries: QuickAccessEntry[] = [];
+
+  for (const bookmark of bookmarks) {
+    if (bookmark.markToRemove) continue;
+    const assetId = assetIdFromBookmarkUrl(bookmark.url);
+
+    // A bookmark that points anywhere else (a dashboard, an alarm list) is somebody
+    // else's — leave it in the preference untouched and out of the pinned list.
+    if (!assetId) continue;
+    entries.push({ assetId, label: bookmark.label, icon: bookmark.icon });
+  }
+
+  return entries;
+}
+
+function projectRecent(raw: unknown): QuickAccessEntry[] {
+  if (!Array.isArray(raw)) return [];
+
+  return (raw as unknown[])
+    .filter((entry): entry is QuickAccessEntry => {
+      const candidate = entry as Partial<QuickAccessEntry> | null;
+      return (
+        !!candidate && typeof candidate.assetId === 'string' && typeof candidate.label === 'string'
+      );
+    })
+    .slice(0, MAX_RECENT);
+}
+
+/**
+ * Known keys only, deduped, order preserved.
+ *
+ * Empty is a legal result here, unlike in the pre-per-type version: for a branch it is
+ * the default, and for a leaf `resolveDetailFieldKeys` reads it as "never configured" and
+ * substitutes the turbine set — so the "never show an empty panel" rule now lives at the
+ * one place that knows which kind of asset is being rendered.
+ */
+function sanitizeFieldKeys(keys: readonly string[]): string[] {
+  return [...new Set(keys)].filter((key) => detailFieldFor(key) !== undefined);
+}
+
+/** The stored per-type document, sanitized. Also migrates the flat v1 shape. */
+function projectFieldsByType(
+  stored: { byType?: unknown; keys?: unknown } | null
+): DetailFieldsByType {
+  const byType: Record<string, readonly string[]> = {};
+
+  if (stored?.byType && typeof stored.byType === 'object') {
+    for (const [type, keys] of Object.entries(stored.byType as Record<string, unknown>)) {
+      if (Array.isArray(keys)) byType[type] = sanitizeFieldKeys(keys as string[]);
+    }
+
+    return byType;
+  }
+
+  if (Array.isArray(stored?.keys)) {
+    const migrated = sanitizeFieldKeys(stored.keys as string[]);
+
+    if (migrated.length) byType[DEFAULT_ASSET_STORE_CONFIG.leafType] = migrated;
+  }
+
+  return byType;
+}

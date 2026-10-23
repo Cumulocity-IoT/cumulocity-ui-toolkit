@@ -1,0 +1,124 @@
+<!--
+  One `role="treeitem"`. The whole row is the item (not a nested button), so the
+  roving tabindex the tree owns lands on exactly one element per row (§3.6).
+
+  Structural classes are the platform's own `c8y-asset-selector__*` (see
+  `assets-navigator/asset-selector/asset-selector-node.component.html` in the SDK): the
+  node/button/expander shells, the `btn-dot` twisty and duocolor icons come styled by the
+  c8y CSS bundle, so the tree reads as native furniture rather than as our own widget. The
+  `ps-tree-row*` classes only add what the platform has no equivalent for — the rolled-up
+  status dot, the count badge, and the "you are here" marker.
+-->
+<div
+  class="c8y-asset-selector__node ps-tree-row d-flex a-i-center"
+  [class.c8y-asset-selector__node--open]="row().expanded"
+  [class.ps-tree-row--selected]="selected()"
+  [class.ps-tree-row--focused]="focused()"
+  [class.ps-tree-row--current]="row().current"
+  [class.ps-tree-row--on-path]="row().onCurrentPath"
+  [style.padding-left.px]="indent()"
+  [attr.title]="row().node.name"
+  (click)="onClick($event)"
+  (dblclick)="onDoubleClick()"
+>
+  <div class="c8y-asset-selector__node__btn-spacer ps-tree-row__twisty">
+    @if (row().hasChildren) {
+      <button
+        class="collapse-btn btn-dot" data-cy="asset-navigator--row-toggle"
+        type="button"
+        tabindex="-1"
+        [attr.aria-expanded]="row().expanded"
+        [attr.aria-busy]="branchLoading()"
+        [attr.aria-label]="(row().expanded ? 'Collapse' : 'Expand') | translate"
+        (click)="onToggle($event)"
+      >
+        <!--
+          `high-volume` mode: the twisty is also the loader, so it reports its own progress. An
+          error keeps the caret (retrying is just another click) but says the last attempt failed.
+        -->
+        @if (branchLoading()) {
+          <span class="ps-tree-row__branch-spinner" aria-hidden="true"></span>
+        } @else if (branchFailed()) {
+          <i c8yIcon="exclamation-circle" [attr.title]="'Could not load children — click to retry' | translate"></i>
+        } @else {
+          <i c8yIcon="angle-right"></i>
+        }
+      </button>
+    }
+  </div>
+
+  <i
+    class="c8y-icon c8y-icon-duocolor m-r-4 text-16 ps-tree-row__icon"
+    aria-hidden="true"
+    [c8yIcon]="icon()"
+  ></i>
+
+  <span class="ps-tree-row__name text-truncate" data-cy="asset-navigator--row-name">
+    @for (segment of segments(); track $index) {
+      @if (segment.marked) {
+        <mark>{{ segment.text }}</mark>
+      } @else {
+        <span>{{ segment.text }}</span>
+      }
+    }
+  </span>
+
+  <!-- "You are here" — the row the app is already showing, named in words for a reader. -->
+  @if (row().current) {
+    <span class="label label-info ps-tree-row__here" data-cy="asset-navigator--row-current">{{ 'Current' | translate }}</span>
+  }
+
+  @if (pinned()) {
+    <i
+      class="ps-tree-row__pin text-primary"
+      c8yIcon="star"
+      [attr.title]="'Pinned' | translate"
+    ></i>
+  }
+
+  @if (count()) {
+    <span class="ps-tree-row__count text-muted">{{ count() }}</span>
+  }
+
+  <!--
+    Touch and keyboard reach the detail panel through this button; hover is not the
+    only trigger (§6.5, AC-T9). Hidden from the accessibility tree in the overlay,
+    where there is no cascade to open.
+  -->
+  @if (config().cascade === 'right-edge') {
+    <button
+      class="ps-tree-row__info btn-clean"
+      type="button"
+      tabindex="-1"
+      [attr.aria-label]="'Show details' | translate"
+      (click)="onDetail($event)" data-cy="asset-navigator--row-info"
+    >
+      <i c8yIcon="info-circle"></i>
+    </button>
+  }
+
+  <!--
+    The tree's rule is "no load more, ever" (§3.4) — a user cannot tell absent from unloaded. That
+    holds for real branches; it stops being possible for a group with thousands of direct children,
+    so the count is stated outright instead of the list quietly ending.
+  -->
+  @if (missingChildren() > 0 && row().expanded) {
+    <button
+      class="btn btn-clean ps-tree-row__load-more"
+      type="button"
+      tabindex="-1"
+      [attr.aria-label]="'Load more children' | translate"
+      [attr.title]="'Load more children' | translate"
+      (click)="onLoadMore($event)"
+    >
+      +{{ missingChildren() }}
+    </button>
+  }
+
+  <ps-status-dot
+    [severity]="dot().severity" data-cy="asset-navigator--row-status"
+    [unavailable]="dot().unavailable"
+    [derated]="dot().derated"
+    [description]="dotTitle()"
+  />
+</div>

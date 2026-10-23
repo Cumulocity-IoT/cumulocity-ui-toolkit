@@ -1,0 +1,142 @@
+// See navigator-rail-styles.component.ts — the closed navigator becomes a 48px icon rail.
+//
+// Everything is scoped to the platform's own `$grid-float-breakpoint` (1200px): below it the
+// off-canvas overlay is the correct behaviour for narrow viewports and must stay untouched.
+// The transitions restate the platform's `.4s ease-in-out` so both directions animate together.
+
+:root {
+  --ps-navigator-rail-width: 48px;
+}
+
+@media (min-width: 1200px) {
+  // The rail itself — on screen at 48px instead of off-canvas.
+  .navigator:not(.open) {
+    left: 0;
+    width: var(--ps-navigator-rail-width);
+    overflow: hidden;
+    border-right: 1px solid var(--c8y-navigator-separator-color, rgba(0, 0, 0, 0.1));
+    transition:
+      left 0.4s ease-in-out,
+      width 0.4s ease-in-out;
+
+    // Header slot: small app icon only, no app name.
+    //
+    // Keep the platform's own header height (`.navigator .title` sets `min-height: 108px`) —
+    // shrinking it to the rail width pulled every row up by 60px, so the first entry no longer
+    // lined up with the header rule of the collapsed shell. Only the horizontal padding goes,
+    // so the icon centres in the 48px rail.
+    .title {
+      padding-left: 0;
+      padding-right: 0;
+      gap: 0;
+      justify-content: center;
+
+      // `c8y-app-icon` has no size input — the icon is sized purely by CSS. The legacy
+      // `--navigator-app-icon-size` var wins over the c8y token, so set font-size directly.
+      .c8y-icon {
+        font-size: 28px;
+      }
+
+      .app-noicon {
+        width: 32px;
+        height: 32px;
+        line-height: 32px;
+        font-size: 12px;
+      }
+
+      > span {
+        display: none;
+      }
+    }
+
+    // Rows: icon only, centred. The button keeps its `title`, so labels surface as tooltips.
+    //
+    // The click target needs care. `c8y-navigator-icon` is a *sibling* of `button.btn-clean`,
+    // not a child of it (see `navigator-node.component.html`), and the button's only content is
+    // the label we hide here — so a naively collapsed row leaves the button at ~zero width and
+    // every click lands on the inert icon instead. Stretch the button across the whole row so
+    // the visible icon is always covered by its own control.
+    .navigatorContent {
+      .link {
+        position: relative;
+        justify-content: center;
+        // The row height came from `.root-link.btn-clean`'s min-height; the button is out of
+        // flow now, so the row has to carry it.
+        min-height: 48px;
+      }
+
+      c8y-navigator-icon,
+      device-status {
+        padding: 0;
+        margin: 0 auto;
+      }
+
+      .btn-clean {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        padding: 0;
+
+        > span {
+          display: none;
+        }
+      }
+
+      .expander {
+        display: none;
+      }
+
+      // Expandable groups stay usable in the rail: children render, but flattened. The
+      // platform indents them with a per-level `padding-left` ladder (`.children .link`,
+      // 16px and up), which pushes the icon off-centre — at icon-only width there is no room
+      // for a hierarchy cue, so drop the indent and let the group's own open-state border
+      // (`.link.open` / `.parent.open ~ .children`, already drawn by the platform) mark where
+      // the group starts and ends.
+      //
+      // Note: `.children` is driven by ngx-bootstrap's `[collapse]`, which writes `display`
+      // as an *inline* style — a stylesheet `display` rule here would be ignored. Never try
+      // to hide it that way; only the padding is ours to change.
+      // `!important` because the ladder is written as six nested `.children` selectors, so
+      // levels 2+ outrank anything we can reasonably write here.
+      .children .link {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+    }
+
+    // "powered by Cumulocity" / tenant brand — 136-208px wide, nothing to shrink into 48px.
+    .navigator-slot-bottom {
+      display: none;
+    }
+  }
+
+  // Layout partners: mirror the platform's `.open` offsets at the rail width instead of 0.
+  .mcontainer:not(.open) {
+    margin-left: var(--ps-navigator-rail-width);
+  }
+
+  .app-main-header:not(.open) {
+    left: var(--ps-navigator-rail-width);
+
+    // The header's own app icon collapses when the navigator is open; with the rail always
+    // showing one, keep the duplicate hidden in both states.
+    .app-view {
+      .c8y-app-icon,
+      .app-noicon,
+      .txt {
+        width: 0 !important;
+        margin-left: 0;
+        margin-right: 0;
+        transform: scale(0);
+      }
+    }
+  }
+
+  // The action bar and page tabs key off `.navigator-open`, not `.open`.
+  .c8y-ui-action-bar:not(.navigator-open),
+  .page-tabs:not(.navigator-open),
+  .page-tabs-horizontal:not(.navigator-open),
+  .page-tabs-vertical:not(.navigator-open) {
+    left: var(--ps-navigator-rail-width);
+  }
+}

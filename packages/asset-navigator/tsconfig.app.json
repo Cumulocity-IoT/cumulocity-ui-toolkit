@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/app",
+    "noImplicitOverride": false,
+    "skipLibCheck": true,
+    "strict": false,
+    // Ported from c8y-windy-solution, which compiles without strict null checks.
+    "strictNullChecks": false
+  },
+  "files": ["src/main.ts"],
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts", "src/app/core/testing/**"]
+}

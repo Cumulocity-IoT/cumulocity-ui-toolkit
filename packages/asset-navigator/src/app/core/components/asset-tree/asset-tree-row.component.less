@@ -1,0 +1,223 @@
+// Row styling for `ps-asset-tree-row`. Design-system tokens only — never hard-coded
+// colours, so the row follows the tenant's branding and both themes.
+//
+// The virtual viewport positions rows and sizes each slot from `ROW_HEIGHT`; `:host`
+// only has to fill that slot. Without the `height: 100%` the host collapsed to its
+// content (~24px, the collapse button) and the rest of the slot rendered as dead space,
+// so the row looked shorter than the `itemSize` the scroller was stepping by
+// (§3.4, NFR-T1).
+
+:host {
+  display: block;
+  height: 100%;
+}
+
+.ps-tree-row {
+  height: 100%;
+  gap: 4px;
+  padding-right: 6px;
+  // Neutralises `min-width: fit-content` from `.c8y-asset-selector__node`. That is right
+  // for the asset-selector, which scrolls horizontally; here it would stop the row ever
+  // shrinking, so the name's `text-truncate` would never engage — the row would overflow
+  // and be clipped by the viewport instead, taking the status dot with it (P1, AC-T2).
+  min-width: 0;
+  cursor: pointer;
+  user-select: none;
+  border-left: 2px solid transparent;
+  // No transition: rows scroll through the viewport, and animating their background
+  // makes a fast scroll smear.
+  color: var(--c8y-text-color, inherit);
+
+  // **No `:hover` background.** Hover sets the selection now (see `onRowEnter`), so the row
+  // already changes appearance under the pointer — a grey tint underneath it only muddied the
+  // info tint and made the hovered row read as two half-states at once. The hover-revealed
+  // affordances below (the pin) still key off `:hover`.
+
+  // Selected is the *info* pair, current is the *brand* pair (below). Keeping the bar and
+  // the tint from the same palette in each is what makes the two states tell apart at a
+  // glance; sharing one and differing in the other reads as a rendering glitch.
+  &--selected {
+    background-color: var(--c8y-palette-status-info-light, rgba(5, 106, 214, 0.08));
+    border-left-color: var(--c8y-palette-status-info, #056ad6);
+  }
+
+  // The active-descendant focus ring. Exactly the platform's focus idiom — see
+  // `_c8y-list-group.scss` and `_c8y-asset-selector-miller.scss`: 2px, inset by -2px so it
+  // is not clipped by the viewport, in `--c8y-component-color-focus` (which resolves to the
+  // tenant's brand primary) with the focus radius. Not a colour of our own: a focus ring
+  // that does not match the shell's reads as a rendering artefact.
+  &--focused {
+    outline: 2px solid var(--c8y-component-color-focus, var(--c8y-root-component-color-focus));
+    outline-offset: -2px;
+    border-radius: var(--c8y-component-border-radius-focus, var(--c8y-root-component-border-radius-focus));
+  }
+
+  // "You are here" — where the application already is, as opposed to `--selected`, which
+  // is what the user is pointing at in the tree. Both can be on screen at once and they
+  // must not be confusable, so this one is a filled bar plus a badge, not a tint.
+  // Not `--c8y-palette-status-info-light`: `--selected` above already uses it, and where a
+  // tenant defines the token both would resolve to the *same* colour — the two states would
+  // be told apart only by the badge. The brand tint keeps them distinct in every theme.
+  &--current {
+    background-color: var(--c8y-palette-primary-95, rgba(17, 157, 17, 0.1));
+    border-left-color: var(--c8y-brand-primary, #119d11);
+    font-weight: 600;
+  }
+
+  // The trail of ancestors leading to it. Barely there on purpose: in a fully expanded
+  // tree this is the only thing that makes one highlighted row findable, but it must not
+  // compete with the row itself.
+  &--on-path:not(&--current) {
+    border-left-color: var(--c8y-brand-primary, #119d11);
+    border-left-style: dotted;
+  }
+}
+
+.ps-tree-row__here {
+  flex: 0 0 auto;
+  margin-left: 4px;
+  font-size: var(--ps-tree-font-label, 12px);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+// The platform sizes `.c8y-asset-selector__node .collapse-btn` at 32×32 and
+// `__btn-spacer` at 32 wide — right for the asset-selector's roomy rows, wrong here: our
+// rows are 36px tall (both densities) with a 24px twisty gutter, so the
+// button would overflow its slot horizontally and blow the compact row's fixed height,
+// which the virtual scroller requires to be exact. Both classes are single-class selectors
+// while ours carry the emulated-encapsulation attribute, so ours win on specificity — but
+// only for the properties we actually restate. The button's own box has to be restated too.
+.ps-tree-row__twisty {
+  flex: 0 0 24px;
+  width: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c8y-palette-gray-40, #6f7b8a);
+  background: none;
+  border: 0;
+  padding: 0;
+
+  // The platform's `.collapse-btn`, resized to this row: 24px square, so the hit area is a
+  // real target rather than the ~14px it was. Its 32px default would still overflow the
+  // 36px row once the row's own padding is counted. The `angle-right` glyph and its
+  // 90° rotation when the node is open both still come from the platform's rules.
+  .collapse-btn {
+    width: 24px;
+    height: 24px;
+    min-height: 0;
+    padding: 0;
+    line-height: 1;
+    font-size: var(--ps-tree-font-sm, 14px);
+    border-radius: 3px;
+
+    &:hover {
+      background-color: var(--c8y-palette-gray-80, rgba(0, 0, 0, 0.06));
+      color: var(--c8y-text-color, inherit);
+    }
+  }
+}
+
+.ps-tree-row__icon {
+  flex: 0 0 18px;
+  width: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c8y-palette-gray-40, #6f7b8a);
+  font-size: var(--ps-tree-icon, 16px);
+}
+
+// Unknown asset types fall back to a neutral dot rather than to a wrong icon (§3.2).
+.ps-tree-row__icon-fallback {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--c8y-palette-gray-50, #8f9ba8);
+}
+
+.ps-tree-row__name {
+  flex: 1 1 auto;
+  min-width: 0;
+
+  mark {
+    padding: 0;
+    background-color: var(--c8y-palette-yellow-70, #ffe392);
+    color: inherit;
+  }
+}
+
+.ps-tree-row__pin {
+  flex: 0 0 auto;
+  font-size: var(--ps-tree-font-xs, 13px);
+}
+
+.ps-tree-row__count {
+  flex: 0 0 auto;
+  font-size: var(--ps-tree-font-xs, 13px);
+  font-variant-numeric: tabular-nums;
+}
+
+.ps-tree-row__info {
+  flex: 0 0 auto;
+  background: none;
+  border: 0;
+  padding: 0 2px;
+  font-size: var(--ps-tree-font-sm, 14px);
+  color: var(--c8y-palette-gray-40, #6f7b8a);
+  // Present for touch and keyboard, unobtrusive for the pointer: shown on row hover
+  // or when it has focus, so it never competes with the name for width.
+  opacity: 0;
+
+  .ps-tree-row:hover &,
+  &:focus-visible {
+    opacity: 1;
+  }
+}
+
+// Two independent encodings on one 8px dot (§3.3, OQ-T1 resolved as "both"):
+//
+//   colour = worst active alarm severity in the subtree
+//   shape  = whether anything in the subtree is not producing
+//
+// The severity classes only set `--ps-dot`; the shape modifiers reuse it. That keeps
+// the two orthogonal — a red *ring* is a critical alarm on a stopped turbine, and it
+// stays legible without colour vision (NFR-T3).
+// The status dot is `ps-status-dot` (`components/status-dot/`) — one implementation for
+// the tree row, the quick-access row and the search palette. It brings its own styles.
+
+
+// `high-volume` mode: the twisty doubles as the branch loader, so it needs a progress state and a
+// countdown of what is still unfetched. Both are small and local — the row height must not move,
+// because the virtual scroller is driven by a fixed `itemSize`.
+.ps-tree-row__branch-spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--c8y-root-component-border-color);
+  border-top-color: var(--c8y-brand-primary);
+  border-radius: 50%;
+  animation: ps-tree-branch-spin 0.7s linear infinite;
+}
+
+@keyframes ps-tree-branch-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// A permanently spinning ring is exactly the motion this setting exists to stop.
+@media (prefers-reduced-motion: reduce) {
+  .ps-tree-row__branch-spinner {
+    animation: none;
+  }
+}
+
+.ps-tree-row__load-more {
+  flex: 0 0 auto;
+  padding: 0 4px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--c8y-brand-primary);
+}
