@@ -40,7 +40,7 @@ import { ButtonsModule } from 'ngx-bootstrap/buttons';
 })
 export class TenantOptionManagementComponent implements OnInit {
   columns: Column[];
-  rows: (Row | TenantOptionRow)[];
+  rows: (Row | TenantOptionRow)[] = [];
 
   pagination: Pagination = {
     pageSize: 30,
