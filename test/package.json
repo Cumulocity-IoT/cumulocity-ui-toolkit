@@ -11,7 +11,7 @@
     "cy:open": "TZ=Etc/UTC cypress open"
   },
   "dependencies": {
-    "@angular/common": "~20.3.0",
+    "@angular/common": "~21.2.0",
     "@c8y/client": "^1023.0.0",
     "bignumber.js": "^11.1.1",
     "cumulocity-cypress": "^1.8.4",

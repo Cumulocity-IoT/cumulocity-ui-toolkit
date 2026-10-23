@@ -5,12 +5,12 @@
   "author": "Cumulocity UI Guild",
   "license": "Apache-2.0",
   "peerDependencies": {
-    "@angular/common": "^20.0.0",
-    "@angular/core": "^20.0.0",
-    "@angular/forms": "^20.0.0",
-    "@angular/router": "^20.0.0",
-    "@c8y/client": "1023.14.224",
-    "@c8y/ngx-components": "1023.14.224",
+    "@angular/common": "^21.0.0",
+    "@angular/core": "^21.0.0",
+    "@angular/forms": "^21.0.0",
+    "@angular/router": "^21.0.0",
+    "@c8y/client": "1024.21.3",
+    "@c8y/ngx-components": "1024.21.3",
     "date-fns": "^4.4.0",
     "rxjs": "^7.8.0"
   }
