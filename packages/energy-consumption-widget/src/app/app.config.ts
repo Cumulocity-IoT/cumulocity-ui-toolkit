@@ -1,4 +1,4 @@
-import { ApplicationConfig, importProvidersFrom } from '@angular/core';
+import { ApplicationConfig, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { CoreModule, RouterModule } from '@c8y/ngx-components';
@@ -7,6 +7,7 @@ import { FormlyModule } from '@ngx-formly/core';
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideZoneChangeDetection(),
     provideAnimations(),
     provideCharts(withDefaultRegisterables()),
     importProvidersFrom(RouterModule.forRoot()),

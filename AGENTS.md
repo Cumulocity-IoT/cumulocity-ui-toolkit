@@ -6,9 +6,9 @@ Guidance for AI agents working in this repository.
 
 ## Project Overview
 
-This is a **pnpm monorepo** of Angular 20 UI plugins (widgets) for the Cumulocity IoT platform, maintained by the Cumulocity UI Guild. Each plugin is a self-contained Cumulocity package that can be built and deployed independently.
+This is a **pnpm monorepo** of Angular 21 UI plugins (widgets) for the Cumulocity IoT platform, maintained by the Cumulocity UI Guild. Each plugin is a self-contained Cumulocity package that can be built and deployed independently.
 
-**Tech stack:** Angular 20 · TypeScript 5.9 · pnpm 10 workspaces · Karma + Jasmine (unit) · Cypress (e2e) · ESLint · ng-packagr (shared library build) · `@c8y/devkit` (plugin build) · Cumulocity Web SDK 1023.14.x
+**Tech stack:** Angular 21 · TypeScript 5.9 · pnpm 10 workspaces · Karma + Jasmine (unit) · Cypress (e2e) · ESLint · ng-packagr (shared library build) · `@c8y/devkit` (plugin build) · Cumulocity Web SDK 1024.21.x
 
 ---
 
@@ -128,7 +128,7 @@ All commands run from the **repository root** unless noted.
 
 ## Code Conventions
 
-- **Angular version:** `^20.x`. Do not use APIs from later Angular versions.
+- **Angular version:** `^21.x`. Do not use APIs from later Angular versions.
 - **Standalone components only:** All components and pipes are `standalone: true`. There are **no NgModules** in plugin code.
 - **Provider arrays replace NgModules:** Plugin entrypoints export named provider arrays (e.g. `EnergyConsumptionWidgetPluginProviders`). Deprecated `*Module` aliases may be kept for backward compatibility but must alias the provider array, not a real NgModule class.
 - **`cumulocity.config.ts`:** `exports[].module` and `remotes` entries must reference the provider array name. `exports[].path` must point to the file that exports it.
@@ -142,7 +142,7 @@ All commands run from the **repository root** unless noted.
 - **Style:** LESS (`.less`) for component styles.
 - **Linting:** Flat ESLint config (`eslint.config.mjs`) covers TypeScript and Angular templates.
 - **No cross-package relative imports** — always use the path aliases, never `../../shared/src/...`.
-- **Cumulocity SDK version:** Pinned at `1023.14.x` for all `@c8y/*` packages. Do not bump packages independently; they must be updated together.
+- **Cumulocity SDK version:** Pinned at `1024.21.x` for all `@c8y/*` packages. Do not bump packages independently; they must be updated together.
 - **Barrel files:** Each feature area should have an `index.ts` that re-exports its public surface.
 - **No `console.warn` / `console.log` in production code.**
 
@@ -231,7 +231,7 @@ Hosted MCP server for the official Cumulocity IoT API and SDK docs. Use it as a 
 
 Agents should consult these authoritative references when writing or reviewing code:
 
-- **Angular 20 full API & guide context:** [https://angular.dev/assets/context/llms-full.txt](https://angular.dev/assets/context/llms-full.txt) — use this when working with Angular APIs, decorators, lifecycle hooks, signals, or framework patterns.
+- **Angular 21 full API & guide context:** [https://angular.dev/assets/context/llms-full.txt](https://angular.dev/assets/context/llms-full.txt) — use this when working with Angular APIs, decorators, lifecycle hooks, signals, or framework patterns.
 - **Mastering TypeScript skill:** [https://github.com/SpillwaveSolutions/mastering-typescript-skill/tree/main/mastering-typescript](https://github.com/SpillwaveSolutions/mastering-typescript-skill/tree/main/mastering-typescript) — follow the patterns and conventions described here for all TypeScript code in this repository.
 
 ---
