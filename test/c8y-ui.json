@@ -1,0 +1,16 @@
+{
+  "shells": [
+    "cockpit"
+  ],
+  "world": "mock/windy-dev.json",
+  "port": 8111,
+  "devPort": 9001,
+  "auth": "login",
+  "integrity": {
+    "cockpit@1024.21.3": "sha256-Vz/fIVav/g5YhvZbDIp/2XLhYzRgHiHFW/IoC8CnMyI=",
+    "login@1024.21.3": "sha256-mEhz7dNLYrBj/bEmBtLX94nqTQ/hrZDV/hyrsSgqxFE="
+  },
+  "version": "1024.21.3",
+  "shell": "cockpit",
+  "contextPath": "cockpit"
+}

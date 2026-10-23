@@ -34,6 +34,8 @@
     "--e2e----------------": "--------------------",
     "e2e:run": "pnpm -C test exec -- cypress run --browser chromium",
     "e2e:open": "pnpm -C test exec -- cypress open",
+    "e2e:mock": "node test/scripts/e2e-mock.mts",
+    "e2e:world:pull": "node test/scripts/pull-world.mts",
     "e2e:run:favorites-manager": "pnpm -C test exec -- cypress run --browser chromium --config-file config/favorites-manager.config.ts",
     "e2e:run:reminder": "pnpm -C test exec -- cypress run --browser chromium --config-file config/reminder.config.ts",
     "e2e:open:reminder": "pnpm -C test exec -- cypress open --config-file config/reminder.config.ts",

@@ -73,7 +73,8 @@ All commands run from the **repository root** unless noted.
 | Lint | `pnpm run lint` |
 | Lint with auto-fix | `pnpm run lint:fix` |
 | Run Cypress e2e (all) | `pnpm run e2e:run` |
-| Run Cypress e2e (one plugin) | `pnpm run e2e:run:<name>` |
+| Run Cypress e2e on the tenant mock (one plugin) | `pnpm run e2e:mock <name>` |
+| Run Cypress e2e on a real tenant (one plugin) | `pnpm run e2e:run:<name>` |
 | Open Cypress UI | `pnpm run e2e:open` |
 | Regenerate package.json scripts | `pnpm run generate:scripts` |
 | Clean dist/ | `pnpm run clean` |
@@ -122,7 +123,8 @@ All commands run from the **repository root** unless noted.
 - Per-plugin configs in `test/config/<plugin-name>.config.ts` import `cumulocity.config.ts` from the plugin and derive the `C8Y_SHELL_EXTENSION` (Module Federation remotes) dynamically from `runTime.remotes`. All delegate to `test/config/base.config.ts`.
 - Reusable test infrastructure lives in `test/cypress/support/` (`commands.ts` with `cy.visitShellAndWaitForSelector`, plus `api/`, `factories/`, `intercepts/`, `page-objects/`, `selectors/`, `utils/`). `cypress-terminal-report` is installed — failed runs print the full request trace.
 - `test/tsconfig.json` has `resolveJsonModule: true` and `skipLibCheck: true`.
-- Requires a live Cumulocity tenant plus the plugin served locally (`pnpm run serve:<plugin>`). Environment comes from a **`.env` file at the repository root**, loaded by `base.config.ts` via `dotenv`. Keys (the config file is the authority on the mapping): required `C8Y_USERNAME`, `C8Y_PASSWORD`, `C8Y_TENANT`; optional `C8Y_CYPRESS_URL` (dev-server URL, default `http://localhost:9001/`, exposed to specs as `C8Y_BASEURL`) and `C8Y_SHELL_TARGET` (default `cockpit-test-1023`). `C8Y_TOKEN` is populated automatically via `oauthLogin` at startup.
+- **Default: the tenant mock.** `pnpm run e2e:mock <plugin>` runs the suite against the `@cumulocity-iot/ui-sdk` mock — windy-dev world (pulled at runtime into the git-ignored `test/mock/windy-dev.json` via go-c8y-cli) plus the cockpit release of the workspace's current Web SDK version, picked up from the root `package.json` automatically. CI (`e2e-test.yml`) runs this. Details in `test/AGENTS.md` → Running Tests.
+- Against a real tenant: requires a live Cumulocity tenant plus the plugin served locally (`pnpm run serve:<plugin>`). Environment comes from a **`.env` file at the repository root**, loaded by `base.config.ts` via `dotenv`. Keys (the config file is the authority on the mapping): required `C8Y_USERNAME`, `C8Y_PASSWORD`, `C8Y_TENANT`; optional `C8Y_CYPRESS_URL` (dev-server URL, default `http://localhost:9001/`, exposed to specs as `C8Y_BASEURL`) and `C8Y_SHELL_TARGET` (default `cockpit-test-1023`). `C8Y_TOKEN` is populated automatically via `oauthLogin` at startup.
 
 ---
 
