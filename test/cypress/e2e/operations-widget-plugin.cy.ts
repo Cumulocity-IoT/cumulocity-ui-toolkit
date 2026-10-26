@@ -1,12 +1,7 @@
 /// <reference types="cypress" />
 import { IManagedObject } from '@c8y/client';
-import { registerTestId } from '../support/utils';
-import { C8yAddWidgetDialog } from '../support/page-objects';
-import { openWidgetForEditing } from '../support/intercepts';
-import { DashboardSelectors, WidgetConfigSelectors } from '../support/selectors';
+import { AddWidgetDialog, DashboardSelectors, WidgetConfigSelectors, openWidgetForEditing } from '@cumulocity-iot/ui-sdk/cypress';
 
-const CYPRESS_TEST_ID = 'operations-widget-tests';
-registerTestId(CYPRESS_TEST_ID);
 
 const WIDGET_ID = 'c8y.operations-widget.plugin';
 const WIDGET_SELECTOR = 'c8y-operations-widget';
@@ -27,7 +22,6 @@ interface ButtonConfig {
 function createTestDevice(): Cypress.Chainable<IManagedObject> {
   return cy.createDevice({
     name: `Ops Device ${Date.now()}`,
-    cy_testId: CYPRESS_TEST_ID,
     c8y_SupportedOperations: ['c8y_Restart', 'c8y_Command'],
     // the mock only accepts operations for agents
     com_cumulocity_model_Agent: {},
@@ -56,7 +50,6 @@ function createDashboard(
     .c8yclient((c) =>
       c.inventory.create({
         name: 'Ops Dashboard',
-        cy_testId: CYPRESS_TEST_ID,
         c8y_Dashboard: { name: 'Ops Dashboard', icon: 'th', priority: 10000, children },
         [`c8y_Dashboard!device!${device.id}`]: {},
       })
@@ -87,7 +80,7 @@ function restartButton(device: IManagedObject, overrides: Partial<ButtonConfig> 
 }
 
 function visitDevice(device: IManagedObject, selector = WIDGET_SELECTOR) {
-  cy.visitShellAndWaitForSelector(`device/${device.id}`, 'en', selector);
+  cy.visitApp(`device/${device.id}`, { language: 'en', waitFor: selector });
   // the shell redirects to the dashboard route and re-renders the widget; wait for that
   cy.location('hash').should('include', '/dashboard/');
   cy.get(selector).should('be.visible');
@@ -107,9 +100,9 @@ describe('Operations Widget', () => {
 
   it('is listed in the add-widget dialog and opens its config form', () => {
     createDashboard(device, {}).then(() => {
-      cy.visitShellAndWaitForSelector(`device/${device.id}`, 'en', DashboardSelectors.WIDGET_EDIT_READY);
+      cy.visitApp(`device/${device.id}`, { language: 'en', waitFor: DashboardSelectors.WIDGET_EDIT_READY });
     });
-    C8yAddWidgetDialog.openAndSelect('Operations');
+    AddWidgetDialog.openAndSelect('Operations');
     cy.get('app-operations-widget-config').should('exist');
   });
 
@@ -260,7 +253,7 @@ describe('Operations Widget', () => {
     createDashboard(device, { device: deviceRef(device), buttons: [] }).then((dashboard) => {
       cy.intercept('PUT', `**/inventory/managedObjects/${dashboard.id}`).as('saveDashboard');
     });
-    cy.visitShellAndWaitForSelector(`device/${device.id}`, 'en', DashboardSelectors.EDIT_WIDGETS);
+    cy.visitApp(`device/${device.id}`, { language: 'en', waitFor: DashboardSelectors.EDIT_WIDGETS });
     openWidgetForEditing();
 
     cy.get('app-operations-widget-config').within(() => {

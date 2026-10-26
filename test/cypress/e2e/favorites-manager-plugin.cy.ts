@@ -53,7 +53,7 @@ describe('Favorites Manager', () => {
 
   it('opens the favorites list from the navigator and shows the empty state', () => {
     interceptCurrentUser([]);
-    cy.visitShellAndWaitForSelector('', 'en', '#navigator');
+    cy.visitApp('', { language: 'en', waitFor: '#navigator' });
 
     cy.get(NAV_NODE, { timeout: 60000 }).should('be.visible').contains('Favorites').click();
 
@@ -68,7 +68,7 @@ describe('Favorites Manager', () => {
     interceptCurrentUser([device.id, group.id]);
     cy.intercept('GET', '**/inventory/managedObjects?query=*id%20eq*withParents=true*').as('getFavorites');
 
-    cy.visitShellAndWaitForSelector('favorites', 'en', 'c8y-favorites-manager');
+    cy.visitApp('favorites', { language: 'en', waitFor: 'c8y-favorites-manager' });
 
     cy.wait('@getFavorites').its('request.url').then(decodeURIComponent).should('include', device.id).and('include', group.id);
     cy.get('td[data-cy="data-grid--Name"]').should('have.length', 2);
@@ -80,7 +80,7 @@ describe('Favorites Manager', () => {
     interceptCurrentUser([]);
     cy.intercept('PUT', '**/user/currentUser*').as('updateCurrentUser');
 
-    cy.visitShellAndWaitForSelector(`device/${device.id}`, 'en', ACTION_BUTTON, 60000);
+    cy.visitApp(`device/${device.id}`, { language: 'en', waitFor: ACTION_BUTTON, timeout: 60000 });
     cy.get(ACTION_BUTTON).should('contain', 'Add to favorites').find('i.dlt-c8y-icon-star-outline');
 
     cy.get(ACTION_BUTTON).click();
@@ -101,7 +101,7 @@ describe('Favorites Manager', () => {
   it('shows the favorite state of an already favorited group', () => {
     interceptCurrentUser([group.id]);
 
-    cy.visitShellAndWaitForSelector(`group/${group.id}`, 'en', ACTION_BUTTON, 60000);
+    cy.visitApp(`group/${group.id}`, { language: 'en', waitFor: ACTION_BUTTON, timeout: 60000 });
     cy.get(ACTION_BUTTON).should('contain', 'Remove from favorites').find('i.dlt-c8y-icon-star');
   });
 
@@ -109,7 +109,7 @@ describe('Favorites Manager', () => {
     interceptCurrentUser([]);
     cy.intercept('PUT', '**/user/currentUser*', { statusCode: 500, body: {} }).as('updateFail');
 
-    cy.visitShellAndWaitForSelector(`device/${device.id}`, 'en', ACTION_BUTTON, 60000);
+    cy.visitApp(`device/${device.id}`, { language: 'en', waitFor: ACTION_BUTTON, timeout: 60000 });
     cy.get(ACTION_BUTTON).click();
     cy.wait('@updateFail');
 

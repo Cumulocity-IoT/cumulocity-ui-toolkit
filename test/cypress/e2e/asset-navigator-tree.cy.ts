@@ -78,7 +78,7 @@ function rowNamed(name: string) {
 }
 
 function openDrawer() {
-  cy.visitShellAndWaitForSelector('', 'en', NAV_NODE);
+  cy.visitApp('', { language: 'en', waitFor: NAV_NODE });
   cy.get(NAV_NODE).click();
   cy.get(DRAWER).should('be.visible');
   cy.get(ROW, { timeout: 30000 }).should('have.length.greaterThan', 0);
@@ -98,7 +98,7 @@ describe('Asset Navigator — tree drawer', () => {
   });
 
   it('opens the drawer from the "Tree" navigator entry and closes it via button, backdrop and entry', () => {
-    cy.visitShellAndWaitForSelector('', 'en', '#navigator');
+    cy.visitApp('', { language: 'en', waitFor: '#navigator' });
     cy.get(DRAWER).should('not.exist');
 
     cy.get(NAV_NODE).should('be.visible').click();

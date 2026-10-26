@@ -104,13 +104,13 @@ describe('<Feature name>', () => {
 
 ### Navigation
 
-Check `cypress/support/commands.ts` for an existing project-local shell-visit command before writing navigation code — plugin repos usually define one. The common pattern is a command like `visitShellAndWaitForSelector(url, language, selector)` that prefixes `/apps/<C8Y_SHELL_TARGET>/index.html#/`, appends the plugin `remotes` query string (often from a `C8Y_SHELL_EXTENSION` env var), calls `cy.setLanguage(language)`, visits, and waits for an anchor selector to be visible. If the project has no such command, add one following that pattern rather than inlining `cy.visit` calls in every test.
+In this repo navigate with `cy.visitApp(path, { language, waitFor })` from `@cumulocity-iot/ui-sdk/cypress`: it opens `/apps/<C8Y_SHELL>/index.html?remotes=<C8Y_REMOTES>#/<path>` (both env values set by `test/config/base.config.ts`), sets the UI language and waits for the anchor selector to be visible. Dashboard page objects (`AddWidgetDialog`, `Dashboard`, `WidgetConfigModal`, `openWidgetForEditing`) come from the same module. Don't inline `cy.visit` calls in tests.
 
 ```typescript
 // Shell root (administration/cockpit):
-cy.visitShellAndWaitForSelector('', 'en', '#navigator');
+cy.visitApp('', { language: 'en', waitFor: '#navigator' });
 // Device context:
-cy.visitShellAndWaitForSelector(`device/${deviceId}`, 'en', 'c8y-tabs-outlet');
+cy.visitApp(`device/${deviceId}`, { language: 'en', waitFor: 'c8y-tabs-outlet' });
 ```
 
 Have **one** test navigate by clicking (navigator entry, tab), so `hookNavigator`/`hookTab` registration is covered:
@@ -123,7 +123,7 @@ cy.get('c8y-tabs-outlet span[title="<Tab label>"]').click();
 The remaining tests may deep-link to the route for speed — pass the plugin component's selector as the anchor:
 
 ```typescript
-cy.visitShellAndWaitForSelector('<feature/route>', 'en', '<plugin-component-selector>');
+cy.visitApp('<feature/route>', { language: 'en', waitFor: '<plugin-component-selector>' });
 ```
 
 ### Intercept and wait — the rules

@@ -387,9 +387,9 @@ pnpm run serve:smart-views          # in one terminal
 pnpm run e2e:run:smart-views        # in another
 ```
 
-Cypress configs in `test/config/` import the corresponding `cumulocity.config.ts` from each package and pass `runTime.remotes` as the `C8Y_SHELL_EXTENSION` variable, so the correct Module Federation remotes are loaded automatically. They also pin an explicit `specPattern` so a config only ever runs its own plugin's spec.
+Cypress configs in `test/config/` import the corresponding `cumulocity.config.ts` from each package and pass the remotes as the `C8Y_REMOTES` env (read by `cy.visitApp` from `@cumulocity-iot/ui-sdk/cypress`), so the correct Module Federation remotes are loaded automatically. They also pin an explicit `specPattern` so a config only ever runs its own plugin's spec.
 
-Custom commands live in `test/cypress/support/commands.ts`. The two used by nearly every spec are `cy.getAuth().login()` and `cy.visitShellAndWaitForSelector(url, language, selector)` — the latter rewrites `url` to `/apps/<C8Y_SHELL_TARGET>/index.html#/<url>` and appends the remotes query parameter.
+The two commands used by nearly every spec are `cy.getAuth().login()` (cumulocity-cypress) and `cy.visitApp(url, { language, waitFor })` (ui-sdk) — the latter loads `/apps/<C8Y_SHELL>/index.html#/<url>` with the remotes query parameter and waits for the given selector.
 
 `testIsolation` is at the Cypress default (`true`), so cookies and local storage are cleared between tests. Log in from `beforeEach`, not `before`, in any spec with more than one `it`.
 

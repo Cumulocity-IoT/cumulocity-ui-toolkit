@@ -1,11 +1,7 @@
 /// <reference types="cypress" />
 import { IManagedObject } from '@c8y/client';
-import { registerTestId } from '../support/utils';
-import { C8yAddWidgetDialog, C8yDashboard } from '../support/page-objects';
-import { DashboardSelectors, WidgetConfigSelectors } from '../support/selectors';
+import { AddWidgetDialog, Dashboard, DashboardSelectors, WidgetConfigSelectors } from '@cumulocity-iot/ui-sdk/cypress';
 
-const CYPRESS_TEST_ID = 'energy-consumption-widget-tests';
-registerTestId(CYPRESS_TEST_ID);
 
 const WIDGET_ID = 'energy-comsumption.widget';
 const WIDGET = 'c8y-energy-consumption-widget';
@@ -46,7 +42,6 @@ function createDashboard(
     .c8yclient((c) =>
       c.inventory.create({
         name: 'Energy Dashboard',
-        cy_testId: CYPRESS_TEST_ID,
         c8y_Dashboard: { name: 'Energy Dashboard', icon: 'th', priority: 10000, children },
         [`c8y_Dashboard!device!${device.id}`]: {},
       })
@@ -59,12 +54,12 @@ describe('Energy Consumption Widget', () => {
   let device: IManagedObject;
 
   function visitDashboard(dashboard: IManagedObject, selector: string) {
-    cy.visitShellAndWaitForSelector(`device/${device.id}/dashboard/${dashboard.id}`, 'en', selector);
+    cy.visitApp(`device/${device.id}/dashboard/${dashboard.id}`, { language: 'en', waitFor: selector });
   }
 
   before(() => {
     cy.getAuth().login();
-    cy.createDevice({ name: `Energy Meter ${Date.now()}`, cy_testId: CYPRESS_TEST_ID }).then((d) => {
+    cy.createDevice({ name: `Energy Meter ${Date.now()}` }).then((d) => {
       device = d;
       // a cumulative meter reading per day for the last 10 days
       for (let i = 10; i >= 0; i--) {
@@ -97,7 +92,7 @@ describe('Energy Consumption Widget', () => {
     createDashboard(device, null).then((dashboard) =>
       visitDashboard(dashboard, DashboardSelectors.WIDGET_EDIT_READY)
     );
-    C8yAddWidgetDialog.openAndSelect('Energy Consumption Widget');
+    AddWidgetDialog.openAndSelect('Energy Consumption Widget');
 
     cy.get('c8y-energy-consumption-widget-config').within(() => {
       cy.get('select[id*="_rangeType_"] option:selected').should('contain.text', 'By Date Range');
@@ -119,7 +114,7 @@ describe('Energy Consumption Widget', () => {
       cy.intercept('PUT', `**/inventory/managedObjects/${dashboard.id}`).as('saveDashboard');
       visitDashboard(dashboard, DashboardSelectors.WIDGET_EDIT_READY);
     });
-    C8yAddWidgetDialog.openAndSelect('Energy Consumption Widget');
+    AddWidgetDialog.openAndSelect('Energy Consumption Widget');
 
     cy.get('c8y-energy-consumption-widget-config').within(() => {
       cy.get('select[id*="_displayMode_"]').select('📊 Delta');
@@ -132,7 +127,7 @@ describe('Energy Consumption Widget', () => {
       cy.get('input[id*="_barColor_"]').type('#00ff00');
     });
     cy.get(WidgetConfigSelectors.SAVE).should('be.enabled').click();
-    C8yDashboard.saveLayoutIfVisible();
+    Dashboard.saveIfVisible();
 
     cy.wait('@saveDashboard')
       .its('request.body.c8y_Dashboard.children')

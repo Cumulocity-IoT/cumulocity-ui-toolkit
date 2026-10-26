@@ -1,5 +1,9 @@
 # UI Toolkit Changelog
 
+## 2026.10.26 — ui-sdk Cypress helpers
+
+**Test infrastructure**: the e2e specs use the Cypress helpers of `@cumulocity-iot/ui-sdk` 1.2.0 (`cy.visitApp`, `AddWidgetDialog`, `Dashboard`, dashboard/widget selectors) instead of the suite's own support library, which is removed. `test/config/base.config.ts` passes the shell and the `?remotes=` value as `C8Y_SHELL` / `C8Y_REMOTES`.
+
 ## 2026.10.26 — type-only imports
 
 **Code**: type-only imports and exports are marked with `type` across all packages (`verbatimModuleSyntax` in `tsconfig.json`, ESLint `consistent-type-imports` / `consistent-type-exports`), so the plugins also run under per-file compilers such as a Vite dev server. Rule in `AGENTS.md` → Code Conventions.
