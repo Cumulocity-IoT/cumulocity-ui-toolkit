@@ -3,7 +3,7 @@ import { AlertService } from '@c8y/ngx-components';
 import { TranslateService } from '@ngx-translate/core';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { provideMock } from '~helpers/auto-mock.helper';
-import { TenantOptionRow } from '../tenant-option-management.model';
+import { type TenantOptionRow } from '../tenant-option-management.model';
 import { TenantOptionManagementService } from '../tenant-option-management.service';
 import { ImportOptionModalComponent } from './import-option-modal.component';
 
