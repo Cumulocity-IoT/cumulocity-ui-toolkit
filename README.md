@@ -39,6 +39,7 @@ cumulocity-ui-toolkit/
 │   │
 │   ├── asset-navigator/
 │   ├── energy-consumption-widget/
+│   ├── events-graph-widget/
 │   ├── favorites-manager/
 │   ├── kpi-widget/
 │   ├── operations-widget/
@@ -87,6 +88,7 @@ All plugins are registered as Angular projects in the single root `angular.json`
 | `shared`                     | `packages/shared`              |
 | `plugin.asset-navigator`     | `packages/asset-navigator`    |
 | `plugin.energy-consumption-widget` | `packages/energy-consumption-widget` |
+| `plugin.events-graph-widget` | `packages/events-graph-widget` |
 | `plugin.favorites`           | `packages/favorites-manager`   |
 | `plugin.kpi-widget`          | `packages/kpi-widget`          |
 | `plugin.operations-widget`   | `packages/operations-widget`   |
@@ -257,6 +259,7 @@ pnpm test
 # Run a single suite headless (CI mode):
 pnpm run test:shared
 pnpm run test:energy-consumption-widget
+pnpm run test:events-graph-widget
 pnpm run test:favorites
 pnpm run test:kpi-widget
 pnpm run test:operations-widget

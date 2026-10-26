@@ -1,5 +1,9 @@
 # UI Toolkit Changelog
 
+## 2026.10.26
+
+**New plugin**: `packages/events-graph-widget` — device events as colored state bars on a zoomable timeline, moved into the monorepo from PR #34 and ported to Web SDK 1024 / Angular 21. See `packages/events-graph-widget/CHANGELOG.md`.
+
 ## 2026.10.23
 
 **New plugin**: `packages/asset-navigator` — asset tree explorer drawer in the navigator and a global asset search (`⌘K` / `Ctrl+K`), ported from the windy solution. See `packages/asset-navigator/CHANGELOG.md`.
