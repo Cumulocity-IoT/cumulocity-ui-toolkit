@@ -5,8 +5,8 @@ import {
   type AssetIndexablePropertyMap,
   type IndexableProperty,
 } from './asset-definition.model';
-import { assetTypeLabel } from './asset-store.model';
-import type { AssetHierarchy, AssetNode } from './asset-store.model';
+import { assetTypeLabel, effectiveAvailability } from './asset-store.model';
+import type { AssetHierarchy, AssetNode, AssetRollup } from './asset-store.model';
 
 /**
  * The fast-navigation search: one in-memory inverted index over the cached fleet, plus the
@@ -65,7 +65,8 @@ interface AssetSearchDoc {
   attributes: string;
   // ── stored, not indexed: the ranking signals ───────────────────────────────
   depth: number;
-  turbineCount: number;
+  /** Descendant assets plus devices — how big a landing target this is. */
+  subtreeSize: number;
   severity: number;
   unavailable: boolean;
 }
@@ -104,17 +105,19 @@ const SEVERITY_RANK: Record<string, number> = { critical: 4, major: 3, minor: 2,
 /**
  * Status words, so "unavailable" or "critical" filters the fleet like any other term.
  * Both the asset's own alarms and its subtree's worst are in — searching "critical" from
- * the fleet root should reach the park that contains the critical turbine, not just the
- * turbine.
+ * the root should reach the group that contains the critical device, not just the
+ * device.
  */
-function statusText(node: AssetNode, worst: string | null): string {
-  const words = new Set<string>([node.availability]);
+function statusText(node: AssetNode, rollup: AssetRollup | undefined): string {
+  const availability = rollup ? effectiveAvailability(node, rollup) : node.availability;
+  const worst = rollup?.worst ?? null;
+  const words = new Set<string>([availability]);
 
   for (const key of Object.keys(SEVERITY_RANK)) {
     if (node.alarms[key as keyof typeof node.alarms] > 0) words.add(key);
   }
   if (worst) words.add(worst);
-  if (node.availability === 'unavailable') words.add('stopped');
+  if (availability === 'unavailable') words.add('stopped');
 
   return [...words].join(' ');
 }
@@ -154,7 +157,7 @@ export function buildAssetIndex(
   const fallback = options.fallback ?? true;
   const index = new MiniSearch<AssetSearchDoc>({
     fields: [...SEARCH_FIELDS],
-    storeFields: ['name', 'externalId', 'depth', 'turbineCount', 'severity', 'unavailable'],
+    storeFields: ['name', 'externalId', 'depth', 'subtreeSize', 'severity', 'unavailable'],
     // `-` and `_` split, so "WTG-12" indexes as `wtg` + `12` and both halves are typeable.
     tokenize: (text) => text.split(/[\s\-_./,;:()[\]]+/u).filter(Boolean),
     processTerm: (term) => term.toLowerCase(),
@@ -197,12 +200,12 @@ export function buildAssetIndex(
       externalId: externalIdOf(node.properties),
       type: `${node.type} ${assetTypeLabel(node.type)}`,
       path: pathOf(node),
-      status: statusText(node, rollup?.worst ?? null),
+      status: statusText(node, rollup),
       notes: typeof node.properties['c8y_Notes'] === 'string' ? node.properties['c8y_Notes'] : '',
       keyAttributes: indexableText(node.properties, required),
       attributes: indexableText(node.properties, optional),
       depth: node.depth,
-      turbineCount: rollup?.turbineCount ?? 0,
+      subtreeSize: subtreeSize(rollup),
       severity,
       unavailable,
     });
@@ -306,11 +309,11 @@ export function searchAssets(
       const node = hierarchy.byId.get(hit.id);
 
       if (!node) return null;
-      const turbineCount = hierarchy.rollup.get(node.id)?.turbineCount ?? 0;
+      const size = subtreeSize(hierarchy.rollup.get(node.id));
       return {
         hit,
         node,
-        score: hit.score * documentBoost(node, turbineCount, pinned, onCurrentPath),
+        score: hit.score * documentBoost(node, size, pinned, onCurrentPath),
       };
     })
     .filter((entry): entry is { hit: RankedHit; node: AssetNode; score: number } => entry !== null)
@@ -554,6 +557,11 @@ function nameTier(
   return fields.size ? TIER_OTHER_FIELD : TIER_FUZZY_ONLY;
 }
 
+/** Descendant assets plus every device in the subtree; 0 for an unknown rollup. */
+function subtreeSize(rollup: AssetRollup | undefined): number {
+  return rollup ? rollup.assetCount - 1 + rollup.deviceCount : 0;
+}
+
 /**
  * Multipliers on the relevance score, from what the asset *is* and what the user cares
  * about. Deliberately gentle — the tier ordering above decides the broad strokes, and
@@ -561,7 +569,7 @@ function nameTier(
  */
 function documentBoost(
   node: AssetNode,
-  turbineCount: number,
+  size: number,
   pinned: ReadonlySet<string>,
   onCurrentPath: ReadonlySet<string>
 ): number {
@@ -570,11 +578,11 @@ function documentBoost(
   // The user already told us these matter.
   if (pinned.has(node.id)) boost *= 2.5;
   if (onCurrentPath.has(node.id)) boost *= 1.4;
-  // A park is a better landing target than one of its sixty turbines when both match
+  // A group is a better landing target than one of its sixty members when both match
   // equally — you can always go down, and going up costs a search.
   boost *= 1 + 0.12 * Math.max(0, 4 - node.depth);
-  // …and a park with turbines in it is a bigger target than an empty one.
-  boost *= 1 + 0.2 * Math.log10(1 + turbineCount);
+  // …and a group with things in it is a bigger target than an empty one.
+  boost *= 1 + 0.2 * Math.log10(1 + size);
   // Somebody searching mid-incident is usually hunting the thing that is broken.
   if (node.availability === 'unavailable') boost *= 1.1;
 

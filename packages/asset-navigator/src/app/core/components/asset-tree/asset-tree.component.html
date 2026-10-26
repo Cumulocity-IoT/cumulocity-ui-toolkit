@@ -161,6 +161,7 @@
         [posInSet]="rowIndex + 1"
         [branchStatus]="branchStatusOf(row)"
         [missingChildren]="missingChildrenOf(row)"
+        [countUnit]="countUnit()"
         [pinned]="isPinned(row)"
         (toggle)="onToggle(row)"
         (pick)="onPick(row)"
@@ -181,19 +182,24 @@
         {{ loadedCount() }} {{ 'assets loaded' | translate }}
       </span>
     } @else {
-      <span>{{ summary().turbines }} {{ 'turbines' | translate }}</span>
+      <span data-cy="asset-navigator--footer-count">{{
+        (summary().unit === 'assets' ? '{{ count }} assets' : '{{ count }} devices')
+          | translate: { count: summary().count }
+      }}</span>
     }
     <!--
-      Both numbers count **turbines**, like the one before them — the dot says which
-      condition, the title spells it out. The alarm figure used to be a count of alarms
-      sitting next to a count of turbines, which read as "all 114 have alarms".
+      Both numbers count **units** (assets or devices, like the one before them; unavailability is
+      always about devices) — the dot says which condition, the title spells it out.
     -->
     @if (summary().alarmed && !summary().partial) {
       <span
         class="ps-tree__footer-stat"
+        data-cy="asset-navigator--footer-alarmed"
         [attr.title]="
-          '{{ alarmed }} of {{ turbines }} turbines have a critical or major alarm ({{ alarms }} alarms in total)'
-            | translate: { alarmed: summary().alarmed, turbines: summary().turbines, alarms: summary().alarms }
+          (summary().unit === 'assets'
+            ? '{{ alarmed }} of {{ count }} assets have a critical or major alarm ({{ alarms }} alarms in total)'
+            : '{{ alarmed }} of {{ count }} devices have a critical or major alarm ({{ alarms }} alarms in total)'
+          ) | translate: { alarmed: summary().alarmed, count: summary().count, alarms: summary().alarms }
         "
       >
         <ps-status-dot [severity]="summary().worst" />
@@ -203,9 +209,10 @@
     @if (summary().unavailable && !summary().partial) {
       <span
         class="ps-tree__footer-stat"
+        data-cy="asset-navigator--footer-unavailable"
         [attr.title]="
-          '{{ unavailable }} of {{ turbines }} turbines are not producing'
-            | translate: { unavailable: summary().unavailable, turbines: summary().turbines }
+          '{{ unavailable }} of {{ count }} devices are unavailable'
+            | translate: { unavailable: summary().unavailable, count: summary().devices }
         "
       >
         <ps-status-dot severity="ok" [unavailable]="true" />
@@ -271,6 +278,7 @@
       >
         <ps-detail-field-config
           [assetId]="target.id"
+          [assetType]="assetTypeOf(target.id)"
           (modalOpen)="onConfigModal($event)"
           (closed)="closeConfigPanel()"
         />

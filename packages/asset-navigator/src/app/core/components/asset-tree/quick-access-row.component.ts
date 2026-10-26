@@ -13,6 +13,7 @@ import { CoreModule } from '@c8y/ngx-components';
 import type { DotSeverity } from '../status-dot/status-dot.model';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { AssetIconService } from '../../services/asset-store/asset-icon.service';
+import { effectiveAvailability } from '../../services/asset-store/asset-store.model';
 import { AssetStoreService } from '../../services/asset-store/asset-store.service';
 import { AssetTreeService, type QuickAccessEntry } from './asset-tree.service';
 import { NavigatorSettingsService } from '../../services/settings/navigator-settings.service';
@@ -273,7 +274,7 @@ export class QuickAccessRowComponent {
         icon: this.icons.iconFor(node),
         path: this.assets.pathLabel(entry.assetId),
         severity: rollup.worst ?? 'ok',
-        unavailable: rollup.unavailableCount > 0 || node.availability === 'unavailable',
+        unavailable: effectiveAvailability(node, rollup) === 'unavailable',
       };
     });
   }

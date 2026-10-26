@@ -45,8 +45,7 @@ const turbine = (id: string, name = id) => mo(id, [], name, LEAF);
 function fleet() {
   return buildHierarchy(
     [mo('root', ['park']), mo('park', ['t1', 't2']), turbine('t1'), turbine('t2')],
-    asOf,
-    LEAF
+    asOf
   );
 }
 
@@ -148,8 +147,7 @@ describe('flatten', () => {
     // produce a duplicate row (which would also break `trackBy` and the row ids).
     const hierarchy = buildHierarchy(
       [mo('root', ['a', 'b']), mo('a', ['shared']), mo('b', ['shared']), turbine('shared')],
-      asOf,
-      LEAF
+      asOf
     );
 
     const rows = ids(searched(hierarchy, filter()));
@@ -160,7 +158,7 @@ describe('flatten', () => {
   it('terminates on a childAssets cycle reachable from a root', () => {
     // root → a → b → a. Unguarded, `visit` recurses until the stack blows.
     const hierarchy = withLookupBudget(
-      buildHierarchy([mo('root', ['a']), mo('a', ['b']), mo('b', ['a'])], asOf, LEAF)
+      buildHierarchy([mo('root', ['a']), mo('a', ['b']), mo('b', ['a'])], asOf)
     );
 
     const rows = ids(searched(hierarchy, filter()));
@@ -169,9 +167,7 @@ describe('flatten', () => {
   });
 
   it('terminates on a self-referencing asset', () => {
-    const hierarchy = withLookupBudget(
-      buildHierarchy([mo('root', ['a']), mo('a', ['a'])], asOf, LEAF)
-    );
+    const hierarchy = withLookupBudget(buildHierarchy([mo('root', ['a']), mo('a', ['a'])], asOf));
 
     expect(ids(searched(hierarchy, filter()))).toEqual(['root', 'a']);
   });
@@ -180,9 +176,7 @@ describe('flatten', () => {
     // `a.parentId === b` and `b.parentId === a`, so the ancestor walk has no natural end.
     // The pair is unreachable from any root, so there are no rows to mark — the walk runs
     // regardless of that, which is exactly why the guard cannot live in the row loop.
-    const hierarchy = withLookupBudget(
-      buildHierarchy([mo('a', ['b']), mo('b', ['a'])], asOf, LEAF)
-    );
+    const hierarchy = withLookupBudget(buildHierarchy([mo('a', ['b']), mo('b', ['a'])], asOf));
 
     expect(flatten({ hierarchy, ...expandAll, filter: filter(), currentId: 'a' })).toEqual([]);
   });
@@ -191,7 +185,7 @@ describe('flatten', () => {
     // root → a → b → a, current = b: rows exist *and* the parent chain is cyclic, so both
     // the descent and the ancestor walk are exercised in one pass.
     const hierarchy = withLookupBudget(
-      buildHierarchy([mo('root', ['a']), mo('a', ['b']), mo('b', ['a'])], asOf, LEAF)
+      buildHierarchy([mo('root', ['a']), mo('a', ['b']), mo('b', ['a'])], asOf)
     );
 
     const rows = flatten({ hierarchy, ...expandAll, filter: filter(), currentId: 'b' });
@@ -217,15 +211,14 @@ describe('flatten — filtering', () => {
   it('drops branches with no match below them', () => {
     const hierarchy = buildHierarchy(
       [mo('root', ['park', 'other']), mo('park', ['t1']), turbine('t1'), mo('other', [])],
-      asOf,
-      LEAF
+      asOf
     );
 
     expect(ids(searched(hierarchy, filter({ searchText: 't1' })))).toEqual(['root', 'park', 't1']);
   });
 
   it('reports the matched ranges the row marks', () => {
-    const hierarchy = buildHierarchy([mo('root', ['t1']), turbine('t1', 'Turbine 1')], asOf, LEAF);
+    const hierarchy = buildHierarchy([mo('root', ['t1']), turbine('t1', 'Turbine 1')], asOf);
     const rows = searched(hierarchy, filter({ searchText: 'urb' }));
 
     expect(rows.find((row) => row.node.id === 't1')?.matches).toEqual([{ start: 1, end: 4 }]);
@@ -242,8 +235,7 @@ describe('flatten — fuzzy fallback', () => {
         turbine('t1', 'WTG 12'),
         turbine('t2', 'Nacelle 4'),
       ],
-      asOf,
-      LEAF
+      asOf
     );
   }
 
@@ -299,8 +291,7 @@ describe('flatten — fuzzy fallback', () => {
   function emden() {
     return buildHierarchy(
       [mo('root', ['park'], 'Fleet'), mo('park', ['t1'], 'Emden'), turbine('t1', 'WTG 12')],
-      asOf,
-      LEAF
+      asOf
     );
   }
 
@@ -329,8 +320,7 @@ describe('flatten — fuzzy fallback', () => {
   it('matches a mistyped word inside a longer name', () => {
     const hierarchy = buildHierarchy(
       [mo('root', ['park'], 'Fleet'), mo('park', [], 'North Emden Offshore')],
-      asOf,
-      LEAF
+      asOf
     );
     const rows = searched(hierarchy, filter({ searchText: 'Ermden' }));
 
@@ -339,7 +329,7 @@ describe('flatten — fuzzy fallback', () => {
   });
 
   it('compares a multi-word term against the whole name', () => {
-    const hierarchy = buildHierarchy([mo('root', [], 'North Park')], asOf, LEAF);
+    const hierarchy = buildHierarchy([mo('root', [], 'North Park')], asOf);
     const rows = ids(searched(hierarchy, filter({ searchText: 'nort prak' })));
 
     expect(rows).toEqual(['root']);
@@ -384,7 +374,7 @@ describe('autoExpansionFor', () => {
 
   it('terminates on a cyclic parent chain', () => {
     const hierarchy = withLookupBudget(
-      buildHierarchy([mo('a', ['b'], 'Alpha'), mo('b', ['a'], 'Beta')], asOf, LEAF)
+      buildHierarchy([mo('a', ['b'], 'Alpha'), mo('b', ['a'], 'Beta')], asOf)
     );
 
     const expanded = autoExpansionFor(hierarchy, filter({ searchText: 'alpha' }));
@@ -397,7 +387,7 @@ describe('flatten in high-volume mode', () => {
   const asOf = '2026-08-05T09:00:00.000Z';
 
   function hv(raw: RawManagedObject[]): AssetHierarchy {
-    return buildHierarchy(raw, asOf, 'wind_turbine', null, { highVolume: true });
+    return buildHierarchy(raw, asOf, null, { highVolume: true });
   }
 
   const park = (count: number): RawManagedObject => ({

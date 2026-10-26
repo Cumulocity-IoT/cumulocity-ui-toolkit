@@ -44,8 +44,7 @@ function fleet() {
       }),
       mo('t3', [], 'Emden T3', LEAF, { c8y_ExternalId: 'ENC-0003' }),
     ],
-    asOf,
-    LEAF
+    asOf
   );
 }
 
@@ -84,7 +83,7 @@ describe('searchAssets — what matches', () => {
   });
 
   it('falls back to a subsequence for an abbreviation', () => {
-    const hierarchy = buildHierarchy([mo('t', [], 'WTG 12', LEAF)], asOf, LEAF);
+    const hierarchy = buildHierarchy([mo('t', [], 'WTG 12', LEAF)], asOf);
     const result = search(hierarchy, 'wtg12');
 
     expect(result?.ids.has('t')).toBe(true);
@@ -136,8 +135,7 @@ describe('searchAssets — the fuzzy budget stays tight', () => {
           mo(n, [], `${n} · Enercon E-101`, LEAF)
         ),
       ],
-      asOf,
-      LEAF
+      asOf
     );
   }
 
@@ -191,8 +189,7 @@ describe('searchAssets — ranking', () => {
   it('lifts a bookmarked asset above an equally good stranger', () => {
     const hierarchy = buildHierarchy(
       [mo('a', [], 'Park North', 'wind_park'), mo('b', [], 'Park North', 'wind_park')],
-      asOf,
-      LEAF
+      asOf
     );
 
     expect(search(hierarchy, 'park north')?.order[0]).toBe('a');
@@ -241,7 +238,7 @@ describe('search over a broken hierarchy', () => {
     // in a real tenant. The budget turns "does not terminate" into a named failure instead
     // of a hung runner — these loops are synchronous, so `testTimeout` cannot preempt them.
     const hierarchy = withLookupBudget(
-      buildHierarchy([mo('a', ['b'], 'Alpha'), mo('b', ['a'], 'Beta')], asOf, LEAF)
+      buildHierarchy([mo('a', ['b'], 'Alpha'), mo('b', ['a'], 'Beta')], asOf)
     );
 
     expect(() =>

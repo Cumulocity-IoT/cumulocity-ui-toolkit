@@ -1,7 +1,7 @@
 import { Injectable, Signal, WritableSignal, inject, signal } from '@angular/core';
 import { GroupService } from '@c8y/ngx-components';
 import type { IManagedObject } from '@c8y/client';
-import { ASSET_TYPE_ICONS, type AssetNode } from './asset-store.model';
+import type { AssetNode } from './asset-store.model';
 
 /**
  * Row icons, resolved the way the platform's own group navigation resolves them: through
@@ -11,15 +11,15 @@ import { ASSET_TYPE_ICONS, type AssetNode } from './asset-store.model';
  * For an asset that means the icon declared on its **asset type** (the `c8y_IsAssetType`
  * managed objects, watched for changes by the platform's own realtime service), falling back
  * to the managed object's own `icon.name` and then to a generic glyph. So a tenant that gives
- * `wind_park` a custom icon in the asset-type editor sees it here without us shipping
+ * `building` a custom icon in the asset-type editor sees it here without us shipping
  * anything — which is the point of asking the API instead of hardcoding a map.
  *
  * Resolution is async and per type, so:
  *
  * - `iconFor()` returns a **synchronous best guess immediately** — our static
- *   {@link ASSET_TYPE_ICONS} entry, or a generic fallback — and kicks off the lookup. Rows
+ *   generic fallback — and kicks off the lookup. Rows
  *   must never wait for an icon, and must never render a hole where one will appear.
- * - Results are cached per asset **type**, so one lookup serves a 114-turbine park.
+ * - Results are cached per asset **type**, so one lookup serves a hundred same-typed siblings.
  * - The cache is a signal, so the swap from guess to resolved icon repaints `OnPush` rows
  *   by itself.
  */
@@ -29,7 +29,7 @@ export class AssetIconService {
 
   /** Resolved icons by cache key. A signal so rows repaint when a lookup lands. */
   private readonly resolved: WritableSignal<Readonly<Record<string, string>>> = signal({});
-  /** Keys already requested, so a fleet of turbines triggers one lookup, not 114. */
+  /** Keys already requested, so a fleet of same-typed assets triggers one lookup, not hundreds. */
   private readonly pending = new Set<string>();
 
   readonly icons: Signal<Readonly<Record<string, string>>> = this.resolved.asReadonly();
@@ -45,7 +45,7 @@ export class AssetIconService {
     if (resolved) return resolved;
     this.request(key, node);
 
-    return ASSET_TYPE_ICONS[node.type] ?? FALLBACK_ICON;
+    return FALLBACK_ICON;
   }
 
   private request(key: string, node: AssetNode): void {
@@ -63,7 +63,7 @@ export class AssetIconService {
     } as unknown as IManagedObject;
 
     this.groups
-      .getIcon(mo, false, ASSET_TYPE_ICONS[node.type] ?? FALLBACK_ICON)
+      .getIcon(mo, false, FALLBACK_ICON)
       .then((icon) => {
         if (!icon) return;
         this.resolved.update((current) => ({ ...current, [key]: icon }));
