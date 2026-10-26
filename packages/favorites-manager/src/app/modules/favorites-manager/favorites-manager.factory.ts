@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { NavigatorNode, NavigatorNodeFactory } from '@c8y/ngx-components';
+import { NavigatorNode, type NavigatorNodeFactory } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 
 @Injectable()

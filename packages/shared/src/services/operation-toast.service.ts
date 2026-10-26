@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
-import { IOperation, OperationStatus } from '@c8y/client';
-import { Alert, AlertService, OperationRealtimeService } from '@c8y/ngx-components';
-import { Subscription, filter } from 'rxjs';
+import { type IOperation, OperationStatus } from '@c8y/client';
+import { type Alert, AlertService, OperationRealtimeService } from '@c8y/ngx-components';
+import { type Subscription, filter } from 'rxjs';
 
 export interface OperationAlert extends Alert {
   operationDetails: {

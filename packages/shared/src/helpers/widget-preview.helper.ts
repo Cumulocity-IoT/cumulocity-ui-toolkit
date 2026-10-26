@@ -1,5 +1,5 @@
-import { TemplateRef } from '@angular/core';
-import { WidgetConfigService } from '@c8y/ngx-components/context-dashboard';
+import { type TemplateRef } from '@angular/core';
+import { type WidgetConfigService } from '@c8y/ngx-components/context-dashboard';
 
 /**
  * Registers or clears the widget configuration preview.

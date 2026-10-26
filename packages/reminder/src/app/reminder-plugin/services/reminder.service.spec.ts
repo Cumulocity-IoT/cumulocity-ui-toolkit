@@ -1,7 +1,7 @@
-import { ComponentRef, signal } from '@angular/core';
+import { type ComponentRef, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { EventService, IFetchResponse, IResult, TenantOptionsService } from '@c8y/client';
-import { AlertService, EventRealtimeService, RealtimeMessage } from '@c8y/ngx-components';
+import { EventService, type IFetchResponse, type IResult, TenantOptionsService } from '@c8y/client';
+import { AlertService, EventRealtimeService, type RealtimeMessage } from '@c8y/ngx-components';
 import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, EMPTY, Subject } from 'rxjs';
 import { provideMock } from '~helpers/auto-mock.helper';
@@ -12,10 +12,10 @@ import { LocalStorageService } from '~services/local-storage.service';
 import {
   REMINDER__LOCAL_STORAGE__CONFIG,
   REMINDER__TYPE,
-  Reminder,
+  type Reminder,
   ReminderGroupStatus,
   ReminderStatus,
-  ReminderType,
+  type ReminderType,
 } from '../models/reminder.model';
 import { ReminderService } from './reminder.service';
 

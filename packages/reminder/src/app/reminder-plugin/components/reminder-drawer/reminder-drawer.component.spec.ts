@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { EMPTY, Subject } from 'rxjs';
 import { provideMock } from '~helpers/auto-mock.helper';
-import { Reminder, ReminderConfig } from '../../models/reminder.model';
+import { type Reminder, type ReminderConfig } from '../../models/reminder.model';
 import { ReminderService } from '../../services/reminder.service';
 import { ReminderDrawerComponent } from './reminder-drawer.component';
 

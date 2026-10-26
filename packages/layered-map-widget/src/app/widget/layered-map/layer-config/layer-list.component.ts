@@ -1,7 +1,11 @@
 import { input, output, ChangeDetectionStrategy, Component } from '@angular/core';
 import { CoreModule } from '@c8y/ngx-components';
 import { PSQueryDisplayComponent } from '~components/query-display/ps-query-display.component';
-import { BasicLayerConfig, isQueryLayerConfig, LayerConfig } from '../layered-map-widget.model';
+import {
+  type BasicLayerConfig,
+  isQueryLayerConfig,
+  type LayerConfig,
+} from '../layered-map-widget.model';
 import { filterToQueryString } from '../utils/filter-to-query';
 @Component({
   templateUrl: './layer-list.component.html',

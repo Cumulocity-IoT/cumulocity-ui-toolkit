@@ -7,7 +7,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Provider } from '@angular/core';
+import { type Provider } from '@angular/core';
 
 /**
  * Automatically creates a mock object for the given class type.

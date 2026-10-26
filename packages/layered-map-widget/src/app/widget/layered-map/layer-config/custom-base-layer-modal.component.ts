@@ -1,9 +1,9 @@
 import { inject, Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CoreModule, ModalLabels } from '@c8y/ngx-components';
+import { CoreModule, type ModalLabels } from '@c8y/ngx-components';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Subject } from 'rxjs';
-import { CustomBaseTileLayerEntry } from '../base-tile-layers';
+import { type CustomBaseTileLayerEntry } from '../base-tile-layers';
 
 @Component({
   selector: 'ps-custom-base-layer-modal',

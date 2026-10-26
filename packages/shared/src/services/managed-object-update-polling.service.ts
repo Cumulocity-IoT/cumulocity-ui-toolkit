@@ -1,5 +1,5 @@
-import { Observable, Subscription, Subject } from 'rxjs';
-import { IManagedObject, InventoryService } from '@c8y/client';
+import { type Observable, type Subscription, Subject } from 'rxjs';
+import { type IManagedObject, InventoryService } from '@c8y/client';
 import { inject, Injectable } from '@angular/core';
 import { subMinutes } from 'date-fns';
 

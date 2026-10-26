@@ -1,10 +1,10 @@
 import { TestBed } from '@angular/core/testing';
-import { DataGridComponent, DataGridService } from '@c8y/ngx-components';
-import { Column, ColumnConfig, GridConfig } from '@c8y/ngx-components';
+import { type DataGridComponent, DataGridService } from '@c8y/ngx-components';
+import { type Column, type ColumnConfig, type GridConfig } from '@c8y/ngx-components';
 import { Subject, of } from 'rxjs';
 import { provideMock } from '../helpers/auto-mock.helper';
 import {
-  ExtendedColumnConfig,
+  type ExtendedColumnConfig,
   GridColumnWidthService,
   isExtendedColumnConfig,
 } from './grid-column-width.service';

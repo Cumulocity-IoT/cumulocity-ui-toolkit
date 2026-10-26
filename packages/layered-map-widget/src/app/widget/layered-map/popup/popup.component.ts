@@ -1,9 +1,14 @@
 import { computed, inject, input, signal, Component } from '@angular/core';
-import { EventService, IManagedObject, InventoryService } from '@c8y/client';
-import { CoreModule, PropertiesListComponent, PropertiesListItem } from '@c8y/ngx-components';
-import { DEFAULT_CONFIG, MyLayer, PopoverAction, PopoverConfig } from '../layered-map-widget.model';
+import { EventService, type IManagedObject, InventoryService } from '@c8y/client';
+import { CoreModule, PropertiesListComponent, type PropertiesListItem } from '@c8y/ngx-components';
+import {
+  DEFAULT_CONFIG,
+  type MyLayer,
+  type PopoverAction,
+  type PopoverConfig,
+} from '../layered-map-widget.model';
 import { PopoverActionService } from '../service/popover-action.service';
-import { latLng, LatLng } from 'leaflet';
+import { latLng, type LatLng } from 'leaflet';
 import { get, isEmpty } from 'lodash';
 import { AlarmDisplayComponent } from './alarm-display/alarm-display.component';
 import { ActionIconPipe } from './action-icon.pipe';

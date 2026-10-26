@@ -1,4 +1,4 @@
-import { Injectable, Signal, WritableSignal, inject, signal } from '@angular/core';
+import { Injectable, type Signal, type WritableSignal, inject, signal } from '@angular/core';
 import { GroupService } from '@c8y/ngx-components';
 import type { IManagedObject } from '@c8y/client';
 import { ASSET_TYPE_ICONS, type AssetNode } from './asset-store.model';

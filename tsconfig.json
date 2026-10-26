@@ -13,6 +13,7 @@
     "declaration": false,
     "esModuleInterop": true,
     "emitDecoratorMetadata": false,
+    "verbatimModuleSyntax": true,
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
     "importHelpers": true,

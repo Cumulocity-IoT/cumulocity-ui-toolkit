@@ -1,20 +1,26 @@
 import { CommonModule } from '@angular/common';
 import {
-  AfterViewInit,
+  type AfterViewInit,
   Component,
-  ElementRef,
+  type ElementRef,
   inject,
   Input,
-  OnDestroy,
-  OnInit,
+  type OnDestroy,
+  type OnInit,
   ViewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IMeasurement, IMeasurementValue, MeasurementService } from '@c8y/client';
+import { type IMeasurement, type IMeasurementValue, MeasurementService } from '@c8y/client';
 import { AlertService, CoreModule } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { TranslateService } from '@ngx-translate/core';
-import { Chart, ChartData, ChartOptions, registerables, TooltipItem } from 'chart.js';
+import {
+  Chart,
+  type ChartData,
+  type ChartOptions,
+  registerables,
+  type TooltipItem,
+} from 'chart.js';
 import { cloneDeep, sortBy } from 'lodash';
 import moment from 'moment';
 import {
@@ -22,7 +28,7 @@ import {
   ENERGY_CONSUMPTION_WIDGET__DEFAULT_CHART_CONFIG,
 } from '../../models/energy-consumption-widget.const';
 import {
-  EnergyConsumptionWidgetConfig,
+  type EnergyConsumptionWidgetConfig,
   EnergyWidgetDateDisplayMode,
 } from '../../models/energy-consumption-widget.model';
 

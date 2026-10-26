@@ -1,11 +1,14 @@
 import { Injectable } from '@angular/core';
-import { IFetchResponse } from '@c8y/client';
-import { ApiCall, HttpHandler, HttpInterceptor } from '@c8y/ngx-components/api';
-import { Observable, firstValueFrom, from } from 'rxjs';
-import { CumulocityMeasurement, MeasurementCollection } from './chart-data.service';
+import { type IFetchResponse } from '@c8y/client';
+import { type ApiCall, type HttpHandler, type HttpInterceptor } from '@c8y/ngx-components/api';
+import { type Observable, firstValueFrom, from } from 'rxjs';
+import { type CumulocityMeasurement, type MeasurementCollection } from './chart-data.service';
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- constructor injection: Angular JIT (aot: false) reads parameter types at runtime
 import { CacheLogService } from './cache-log.service';
 import { MIN_HISTORICAL_MS, clampCoverageTo } from './interceptor-helpers';
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- constructor injection: Angular JIT (aot: false) reads parameter types at runtime
 import { CacheStateService } from './cache-state.service';
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- constructor injection: Angular JIT (aot: false) reads parameter types at runtime
 import { MeasurementCacheService } from './measurement-cache.service';
 import { get, has } from 'lodash';
 

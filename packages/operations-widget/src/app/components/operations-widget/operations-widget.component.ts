@@ -1,14 +1,14 @@
-import { Component, inject, Input, TemplateRef } from '@angular/core';
-import { IOperation } from '@c8y/client';
+import { Component, inject, Input, type TemplateRef } from '@angular/core';
+import { type IOperation } from '@c8y/client';
 import { AlertService, CoreModule } from '@c8y/ngx-components';
 import {
-  OperationButtonConfig,
-  OperationParamConfig,
-  OperationWidgetConfig,
+  type OperationButtonConfig,
+  type OperationParamConfig,
+  type OperationWidgetConfig,
 } from '../../models/operations-widget-config.model';
-import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
+import { type BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { FormGroup } from '@angular/forms';
-import { FormlyFieldConfig } from '@ngx-formly/core';
+import { type FormlyFieldConfig } from '@ngx-formly/core';
 import { OperationsWidgetService } from '../../services/operations-widget.service';
 import { ButtonInstanceComponent } from '../button-instance/button-instance.component';
 import { isToCreateIOperation } from '~helpers/domain-model-type.helper';

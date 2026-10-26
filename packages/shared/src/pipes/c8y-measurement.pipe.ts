@@ -1,5 +1,5 @@
-import { inject, Pipe, PipeTransform } from '@angular/core';
-import { IMeasurement } from '@c8y/client';
+import { inject, Pipe, type PipeTransform } from '@angular/core';
+import { type IMeasurement } from '@c8y/client';
 import { get } from 'lodash';
 import { NumberPipe } from '@c8y/ngx-components';
 import { detectMeasurementPaths } from '../helpers/measurement-paths';

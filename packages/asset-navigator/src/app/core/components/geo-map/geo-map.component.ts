@@ -1,10 +1,10 @@
 import {
-  AfterViewInit,
+  type AfterViewInit,
   ChangeDetectionStrategy,
   Component,
-  ComponentRef,
+  type ComponentRef,
   DestroyRef,
-  ElementRef,
+  type ElementRef,
   ViewContainerRef,
   ViewEncapsulation,
   computed,
