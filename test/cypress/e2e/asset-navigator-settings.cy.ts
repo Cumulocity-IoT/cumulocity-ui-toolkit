@@ -1,4 +1,3 @@
-import { interceptAssetNavigatorInventoryQueries } from '../support/intercepts/asset-navigator.intercepts';
 
 /**
  * The explorer drawer's options menu (cog next to the pin), on the tenant mock.
@@ -55,7 +54,6 @@ describe('Asset Navigator — tree options menu', () => {
     cy.request('POST', '/_mock/reset');
     cy.getAuth().login().disableGainsight();
     cy.clearLocalStorage();
-    interceptAssetNavigatorInventoryQueries();
     // Only the settings writes: the tree also stores recents and the drawer's pin/width on the user.
     cy.intercept('PUT', '**/user/currentUser', (req) => {
       if ((req.body as { customProperties?: Record<string, unknown> })?.customProperties?.['ps_AssetNavigatorSettings'] !== undefined) {
