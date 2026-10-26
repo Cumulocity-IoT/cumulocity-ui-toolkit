@@ -20,6 +20,7 @@ import { SmartViewExportModalComponent } from './smart-view-export-modal.compone
       [title]="label"
       [attr.aria-label]="label"
       (click)="openModal()"
+      data-cy="smart-views--export"
       type="button"
     >
       <i c8yIcon="download-archive"></i>

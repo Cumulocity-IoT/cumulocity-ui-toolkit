@@ -10,11 +10,13 @@
 
       @case ('confirm') {
         @if (errorMessage(); as error) {
-          <div class="alert alert-danger" role="alert">{{ error }}</div>
+          <div class="alert alert-danger" role="alert" data-cy="smart-views--export-error">
+            {{ error }}
+          </div>
         } @else {
           <p>
             {{ labels.confirmPre }}
-            <strong>{{ itemCount() }}</strong>
+            <strong data-cy="smart-views--export-count">{{ itemCount() }}</strong>
             {{ labels.confirmPost }}
           </p>
           <p class="text-muted">{{ labels.confirmHint }}</p>
@@ -30,7 +32,7 @@
       }
 
       @case ('done') {
-        <div class="alert alert-success" role="status">
+        <div class="alert alert-success" role="status" data-cy="smart-views--export-done">
           <i c8yIcon="ok-circled2"></i>
           {{ labels.done }}
         </div>
@@ -56,6 +58,7 @@
         class="btn btn-primary"
         [disabled]="state() !== 'confirm' || !!errorMessage() || itemCount() === 0"
         (click)="onConfirm()"
+        data-cy="smart-views--export-confirm"
         type="button"
       >
         <i c8yIcon="download-archive"></i>

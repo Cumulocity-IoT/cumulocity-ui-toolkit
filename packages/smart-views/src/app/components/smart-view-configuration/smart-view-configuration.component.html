@@ -1,7 +1,9 @@
 <c8y-title>{{ labels.title | translate }}</c8y-title>
 
 @if (errorMessage()) {
-  <div class="alert alert-danger">{{ errorMessage() }}</div>
+  <div class="alert alert-danger" data-cy="smart-views--configuration-error">
+    {{ errorMessage() }}
+  </div>
 }
 
 <c8y-data-grid
@@ -11,6 +13,7 @@
   [pagination]="pagination"
   [displayOptions]="displayOptions"
   [actionControls]="actionControls"
+  data-cy="smart-views--configuration-grid"
 >
   <c8y-column name="icon">
     <ng-template c8yCellRendererDef let-context>

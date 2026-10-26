@@ -6,7 +6,7 @@
     <p class="text-muted m-t-8">{{ labels.loading }}</p>
   </div>
 } @else if (errorMessage(); as error) {
-  <div class="alert alert-danger m-16" role="alert">
+  <div class="alert alert-danger m-16" role="alert" data-cy="smart-views--view-error">
     {{ error }}
   </div>
 } @else if (managedObject()) {
@@ -26,6 +26,7 @@
           hover: true,
         }"
         [serverSideDataCallback]="datasource.serverSideDataCallback"
+        data-cy="smart-views--view-grid"
       >
         <c8y-column name="id">
           <ng-container *c8yCellRendererDef="let context">

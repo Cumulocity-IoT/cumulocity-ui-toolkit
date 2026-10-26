@@ -18,6 +18,7 @@ import { CreateSmartViewConfigurationModalComponent } from './create-smart-view-
       [title]="label"
       [attr.aria-label]="label"
       (click)="openModal()"
+      data-cy="smart-views--add-configuration"
       type="button"
     >
       <i c8yIcon="plus-circle"></i>
