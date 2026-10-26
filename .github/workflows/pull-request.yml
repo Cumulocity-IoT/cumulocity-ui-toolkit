@@ -65,6 +65,7 @@ jobs:
       - name: Install root dependencies
         run: pnpm install --frozen-lockfile
 
+      # Fixable advisories get an override, unfixable ones an ignore entry; see AGENTS.md → Dependency Audit.
       - name: Audit dependencies (high+)
         run: pnpm audit --audit-level high
 
@@ -151,6 +152,7 @@ jobs:
       - name: Install root dependencies
         run: pnpm install --frozen-lockfile
 
+      # Fixable advisories get an override, unfixable ones an ignore entry; see AGENTS.md → Dependency Audit.
       - name: Audit dependencies (high+)
         run: pnpm audit --audit-level high
 
