@@ -53,7 +53,7 @@ const EMPTY_RETRY_LIMIT = 4;
  *
  * It is exactly the old truncation point (`MAX_PAGES * PAGE_SIZE`), which is the honest place to
  * draw the line — beyond it the sweep never held the fleet anyway, it held an arbitrary
- * `_id`-ordered slice and rendered the leftovers as thousands of fake roots. A 700k-object tenant
+ * `id`-ordered slice and rendered the leftovers as thousands of fake roots. A 700k-object tenant
  * additionally made this a 24-request burst every 30 seconds for a tree that was wrong.
  *
  * Hardcoded, not a tenant option: it is a property of the platform's page size and the browser's
@@ -574,7 +574,7 @@ export class AssetStoreService {
     if (rootId) {
       this.core.rootId = rootId;
       const response = await this.inventory.list({
-        query: `$filter=(_id eq '${rootId}')`,
+        query: `$filter=(id eq '${rootId}')`,
         pageSize: 1,
         currentPage: 1,
         withChildren: true,
@@ -869,7 +869,7 @@ export class AssetStoreService {
    *
    * - `isinhierarchyof(<id>)` matches the root **and all descendants** in one query, so
    *   the whole fleet is one paged request rather than a per-level walk.
-   * - `_id gt '0'` with `$orderby=_id asc` pins the sweep to the id index. Ordering by
+   * - `id gt '0'` with `$orderby=id asc` pins the sweep to the id index. Ordering by
    *   anything else makes `currentPage` paging unstable across a multi-page collection —
    *   rows shift between pages, so a page can be fetched twice and another missed. This
    *   matters more here than in the backend, because `load()` fetches pages 2..n
@@ -890,11 +890,11 @@ export class AssetStoreService {
     if (rootId) {
       this.core.rootId = rootId;
 
-      return `$filter=(_id gt '0' and (isinhierarchyof(${rootId}) and has(c8y_IsAsset))) $orderby=_id asc`;
+      return `$filter=(id gt '0' and (isinhierarchyof(${rootId}) and has(c8y_IsAsset))) $orderby=id asc`;
     }
     // No discoverable root: a tenant with parks but no root group still gets a tree.
     const types = config.hierarchyTypes.map((type) => `type eq '${type}'`).join(' or ');
-    return `$filter=(_id gt '0' and has(c8y_IsAsset) and (${types})) $orderby=_id asc`;
+    return `$filter=(id gt '0' and has(c8y_IsAsset) and (${types})) $orderby=id asc`;
   }
 
   /**

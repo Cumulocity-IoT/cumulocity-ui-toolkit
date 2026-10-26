@@ -1,6 +1,5 @@
 /// <reference types="cypress" />
 
-import { interceptAssetNavigatorInventoryQueries } from '../support/intercepts/asset-navigator.intercepts';
 
 /**
  * Asset Navigator — "Tree" navigator entry + explorer drawer (`assetTreeNavigatorViewProviders`).
@@ -82,7 +81,6 @@ describe('Asset Navigator — tree drawer', () => {
   beforeEach(() => {
     cy.getAuth().login().disableGainsight();
     cy.clearLocalStorage();
-    interceptAssetNavigatorInventoryQueries();
     loadWorld().then((w) => (world = w));
   });
 
