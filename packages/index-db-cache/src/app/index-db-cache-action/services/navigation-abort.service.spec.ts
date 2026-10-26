@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { NavigationEnd, NavigationStart, Router } from '@angular/router';
-import { NEVER, Observable, Subject } from 'rxjs';
+import { NEVER, type Observable, Subject } from 'rxjs';
 import { NavigationAbortInterceptorService } from './navigation-abort.service';
 import { NavigationAbortStateService } from './navigation-abort-state.service';
 

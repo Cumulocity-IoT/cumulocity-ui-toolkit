@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { AlarmService, EventService, IManagedObject, InventoryService } from '@c8y/client';
+import { AlarmService, EventService, type IManagedObject, InventoryService } from '@c8y/client';
 import { normalizeQueryFilter } from '~components/_formly-fields/query-forms/formly-query-blocks';
 
 @Injectable({

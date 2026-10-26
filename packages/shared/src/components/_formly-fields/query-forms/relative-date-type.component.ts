@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
-import { FieldType, FieldTypeConfig, FormlyModule } from '@ngx-formly/core';
+import { FieldType, type FieldTypeConfig, FormlyModule } from '@ngx-formly/core';
 import { DATE_OPTIONS } from './formly-query-blocks';
 
 @Component({

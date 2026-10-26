@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
-import { DataGridComponent, DataGridService } from '@c8y/ngx-components';
-import { ColumnConfig } from '@c8y/ngx-components';
+import { inject, Injectable } from '@angular/core';
+import { type DataGridComponent, DataGridService } from '@c8y/ngx-components';
+import { type ColumnConfig } from '@c8y/ngx-components';
 import { has, set } from 'lodash';
 import { Observable } from 'rxjs';
 import { mergeMap, switchMap, take, takeUntil } from 'rxjs/operators';
@@ -84,7 +84,7 @@ export class GridColumnWidthService {
   /** Marker placed on `DataGridService` to prevent double-patching. */
   private readonly PATCH_MARKER = '__c8yGridColumnWidthPatched';
 
-  constructor(private dataGridService: DataGridService) {}
+  private readonly dataGridService = inject(DataGridService);
 
   /**
    * Enables column-width persistence for the given `DataGridComponent`.

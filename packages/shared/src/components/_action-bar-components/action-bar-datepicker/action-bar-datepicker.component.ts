@@ -1,5 +1,5 @@
 import { Component, input, model } from '@angular/core';
-import { BsDatepickerConfig } from 'ngx-bootstrap/datepicker';
+import { type BsDatepickerConfig } from 'ngx-bootstrap/datepicker';
 import { CoreModule } from '@c8y/ngx-components';
 import { BsDatepickerModule } from 'ngx-bootstrap/datepicker';
 

@@ -1,15 +1,15 @@
 import { Component, inject } from '@angular/core';
-import { AlertService, CoreModule, ModalLabels } from '@c8y/ngx-components';
+import { AlertService, CoreModule, type ModalLabels } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { IconSelectorService } from '@c8y/ngx-components/icon-selector';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Subject } from 'rxjs';
 import { QueryFormsTabComponent } from '~components/_formly-fields/query-forms/query-forms-tab.component';
-import { DtmAssetType, DtmService } from '~services/dtm.service';
+import { type DtmAssetType, DtmService } from '~services/dtm.service';
 import {
-  BasicLayerConfig,
+  type BasicLayerConfig,
   isQueryLayerConfig,
-  QueryLayerConfig,
+  type QueryLayerConfig,
 } from '../layered-map-widget.model';
 
 @Component({

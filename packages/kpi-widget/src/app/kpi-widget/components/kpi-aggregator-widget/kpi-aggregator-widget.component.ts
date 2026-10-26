@@ -1,4 +1,4 @@
-import { Component, inject, Input, OnInit } from '@angular/core';
+import { Component, inject, Input, type OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AlertService, CoreModule } from '@c8y/ngx-components';
@@ -8,13 +8,18 @@ import { BaseChartDirective } from 'ng2-charts';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
 import { ActivatedRoute } from '@angular/router';
-import { IManagedObject, InventoryService, IResultList, Paging } from '@c8y/client';
-import { ChartConfiguration, ChartData, ChartTypeRegistry, TooltipItem } from 'chart.js';
+import { type IManagedObject, InventoryService, type IResultList, type Paging } from '@c8y/client';
+import {
+  type ChartConfiguration,
+  type ChartData,
+  type ChartTypeRegistry,
+  type TooltipItem,
+} from 'chart.js';
 import { cloneDeep, flatMap, orderBy } from 'lodash';
 import { getContextManagedObject } from '~helpers/route-context.helper';
 import { KPI_AGGREGATOR_WIDGET__DEFAULT_CONFIG } from '../../models/kpi-aggregator-widget.const';
 import {
-  KpiAggregatorWidgetConfig,
+  type KpiAggregatorWidgetConfig,
   KpiAggregatorWidgetDisplay,
   KpiAggregatorWidgetOrder,
 } from '../../models/kpi-aggregator-widget.model';

@@ -1,9 +1,9 @@
 import {
   DestroyRef,
-  EnvironmentProviders,
+  type EnvironmentProviders,
   Injectable,
-  Signal,
-  WritableSignal,
+  type Signal,
+  type WritableSignal,
   computed,
   inject,
   isDevMode,

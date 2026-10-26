@@ -1,6 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { CoreModule } from '@c8y/ngx-components';
-import { Reminder, ReminderType } from '../../models/reminder.model';
+import { type Reminder, type ReminderType } from '../../models/reminder.model';
 import { ReminderService } from '../../services/reminder.service';
 
 @Component({

@@ -1,9 +1,9 @@
-import { input, model, output, Component, OnInit } from '@angular/core';
+import { input, model, output, Component, type OnInit } from '@angular/core';
 import { InventoryQueryFormComponent } from './inventory-query-form.component';
 import { CoreModule } from '@c8y/ngx-components';
 import { AlarmQueryFormComponent } from './alarm-query-form.component';
 import { EventQueryFormComponent } from './event-query-form.component';
-import { IAlarm, IEvent, IManagedObject } from '@c8y/client';
+import { type IAlarm, type IEvent, type IManagedObject } from '@c8y/client';
 
 export type QueryResult = { filter: object } & (
   | { type: 'Inventory'; data: IManagedObject[] }

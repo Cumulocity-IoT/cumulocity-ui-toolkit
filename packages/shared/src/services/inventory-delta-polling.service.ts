@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
-import { IManagedObject, InventoryService } from '@c8y/client';
-import { Observable, Subscriber } from 'rxjs';
+import { type IManagedObject, InventoryService } from '@c8y/client';
+import { Observable, type Subscriber } from 'rxjs';
 
 const FETCH_INTERVAL = 5000;
 
