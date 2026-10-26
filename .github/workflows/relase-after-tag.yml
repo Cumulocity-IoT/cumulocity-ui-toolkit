@@ -63,6 +63,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Fixable advisories get an override, unfixable ones an ignore entry; see AGENTS.md → Dependency Audit.
       - name: Audit dependencies (high+)
         run: pnpm audit --audit-level high
 

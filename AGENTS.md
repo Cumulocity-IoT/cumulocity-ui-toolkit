@@ -181,6 +181,24 @@ Changelogs are **mandatory**: every change that a user, deployer or contributor 
 
 ---
 
+## Dependency Audit
+
+CI runs `pnpm audit --audit-level high` before every build and test job; any unignored high or critical advisory fails the PR.
+
+- **A patched release exists** → force it with an entry in `pnpm.overrides` (`package.json`), scoped to the major (e.g. `"undici@7": "^7.30.1"`). Never ignore a fixable advisory.
+- **No patched release** → add the GHSA id to `pnpm.auditConfig.ignoreGhsas` (`package.json`) **and** a row to the table below. pnpm 10.6 reads `auditConfig` only from `package.json`, which cannot hold comments, so this table is the justification.
+- Re-check every row when the Web SDK or Cypress is bumped, and remove entries that have become fixable.
+
+| GHSA | Package | Why it is accepted |
+|---|---|---|
+| GHSA-4w4v-5hc9-xrr2 | `angular@1.8.3` (AngularJS) | End of life, no fix (ReDoS). Shipped by `@c8y/ng1-modules`, the Web SDK's AngularJS layer; goes away only when Cumulocity drops AngularJS. |
+| GHSA-7x27-g8rg-x87w | `angular@1.8.3` (AngularJS) | End of life, no fix (XSS). Same source as above. |
+| GHSA-jmr9-qjv8-65gv | `extract-zip@2.0.1` | No fix (symlink path traversal). Cypress only, unpacks its own binary; dev/test, not shipped. |
+| GHSA-7pqw-9j4j-h8q3 | `extract-zip@2.0.1` | No fix (arbitrary file write via symlinks). Same source as above. |
+| GHSA-ch52-4w7c-c8xp | `http-cache-semantics@4.2.0` | No fix (cross-user cache disclosure). Via `make-fetch-happen` in the npm/Angular CLI tooling; build only, not bundled. |
+
+---
+
 ## MCP Servers
 
 ### `c8y-web-sdk-knowledge` — use FIRST for all Cumulocity development
