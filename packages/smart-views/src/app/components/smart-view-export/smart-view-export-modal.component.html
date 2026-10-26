@@ -1,0 +1,69 @@
+<c8y-modal [title]="labels.title" [customFooter]="true">
+  <div class="p-16">
+
+    @switch (state()) {
+
+      @case ('loading') {
+        <div class="text-center p-24" aria-live="polite">
+          <c8y-loading></c8y-loading>
+          <p class="text-muted m-t-8">{{ labels.loadingConfig }}</p>
+        </div>
+      }
+
+      @case ('confirm') {
+        @if (errorMessage(); as error) {
+          <div class="alert alert-danger" role="alert">{{ error }}</div>
+        } @else {
+          <p>
+            {{ labels.confirmPre }}
+            <strong>{{ itemCount() }}</strong>
+            {{ labels.confirmPost }}
+          </p>
+          <p class="text-muted">{{ labels.confirmHint }}</p>
+        }
+      }
+
+      @case ('exporting') {
+        <div aria-live="polite" aria-label="{{ labels.exportingAriaLabel }}">
+          <p class="m-b-8">{{ labels.exportingMessage }}</p>
+          <c8y-loading [progress]="progress()"></c8y-loading>
+          <p class="text-muted text-right m-t-4">{{ progress() }}%</p>
+        </div>
+      }
+
+      @case ('done') {
+        <div class="alert alert-success" role="status">
+          <i c8yIcon="ok-circled2"></i>
+          {{ labels.done }}
+        </div>
+      }
+
+    }
+  </div>
+
+  <div c8y-modal-footer-custom class="modal-footer">
+    @if (state() === 'done') {
+      <button type="button" class="btn btn-primary" (click)="onDismiss()">
+        {{ labels.close }}
+      </button>
+    } @else {
+      <button
+        type="button"
+        class="btn btn-default"
+        [disabled]="state() === 'exporting'"
+        (click)="onDismiss()"
+      >
+        {{ labels.cancel }}
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="state() !== 'confirm' || !!errorMessage() || itemCount() === 0"
+        (click)="onConfirm()"
+      >
+        <i c8yIcon="download-archive"></i>
+        {{ labels.export }}
+      </button>
+    }
+  </div>
+</c8y-modal>
