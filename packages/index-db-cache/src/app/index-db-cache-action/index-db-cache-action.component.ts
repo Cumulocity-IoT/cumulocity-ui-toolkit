@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
   signal,
@@ -65,6 +66,10 @@ const ABORT_HELP =
   standalone: true,
   imports: [CoreModule, CollapseModule, TooltipModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '[style.--idb-drawer-top.px]': 'drawerAnchor().top',
+    '[style.--idb-drawer-left.px]': 'drawerAnchor().left',
+  },
 })
 export class IndexDbCacheActionComponent {
   readonly isVisible = true;
@@ -106,7 +111,16 @@ export class IndexDbCacheActionComponent {
     }));
   });
 
+  /**
+   * Where the drawer starts: below the page toolbar and right of the navigator. Measured from the
+   * shell, because both move: the toolbar's height differs per page and the navigator is a narrow
+   * rail when collapsed (asset navigator) or hidden. Values before the first measurement are the
+   * old fixed offsets.
+   */
+  readonly drawerAnchor = signal({ top: 171, left: 250 });
+
   private ledHandle: ReturnType<typeof setTimeout> | null = null;
+  private stopObservingShell: (() => void) | null = null;
 
   constructor() {
     effect(() => {
@@ -115,6 +129,17 @@ export class IndexDbCacheActionComponent {
         this.flashReadIndicator();
       }
     });
+
+    // Follow the shell only while the drawer is open.
+    effect(() => {
+      if (this.isCollapsed()) {
+        this.unobserveShell();
+      } else {
+        this.measureShell();
+        this.observeShell();
+      }
+    });
+    inject(DestroyRef).onDestroy(() => this.unobserveShell());
   }
 
   toggle(): void {
@@ -149,4 +174,83 @@ export class IndexDbCacheActionComponent {
       this.readingFromDb.set(false);
     }, LED_LINGER_MS);
   }
+
+  private measureShell(): void {
+    const toolbarBottom = Math.max(
+      0,
+      ...visible(TOOLBAR_SELECTOR).map((element) => element.getBoundingClientRect().bottom)
+    );
+    const navigator = visible(NAVIGATOR_SELECTOR)[0];
+    // an off-canvas navigator (narrow viewports) reports a right edge at or below 0
+    const navigatorRight = navigator ? Math.max(0, navigator.getBoundingClientRect().right) : 0;
+
+    if (toolbarBottom > 0) {
+      this.drawerAnchor.set({ top: Math.round(toolbarBottom), left: Math.round(navigatorRight) });
+    }
+  }
+
+  /**
+   * Keeps the anchor current while the drawer is open:
+   * - a `ResizeObserver` on navigator and toolbar: a collapse to a narrow rail is a width
+   *   transition, so the drawer travels with it; toolbars differ in height per page
+   * - the navigator's own CSS transitions: closing it completely slides it off-canvas at a
+   *   constant width, which no resize reports — so measure on every frame while one runs
+   * - `window.resize` for breakpoint changes
+   */
+  private observeShell(): void {
+    this.unobserveShell();
+
+    const measure = () => this.measureShell();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
+    const navigators = Array.from(document.querySelectorAll<HTMLElement>(NAVIGATOR_SELECTOR));
+
+    [...navigators, ...visible(TOOLBAR_SELECTOR)].forEach((element) => observer?.observe(element));
+    window.addEventListener('resize', measure);
+
+    let frame: number | null = null;
+    const followFrames = () => {
+      measure();
+      frame = requestAnimationFrame(followFrames);
+    };
+    const onTransitionRun = () => {
+      if (frame === null) followFrames();
+    };
+    const onTransitionEnd = () => {
+      if (frame !== null) cancelAnimationFrame(frame);
+      frame = null;
+      measure();
+    };
+
+    navigators.forEach((element) => {
+      element.addEventListener('transitionrun', onTransitionRun);
+      element.addEventListener('transitionend', onTransitionEnd);
+      element.addEventListener('transitioncancel', onTransitionEnd);
+    });
+
+    this.stopObservingShell = () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', measure);
+      navigators.forEach((element) => {
+        element.removeEventListener('transitionrun', onTransitionRun);
+        element.removeEventListener('transitionend', onTransitionEnd);
+        element.removeEventListener('transitioncancel', onTransitionEnd);
+      });
+      if (frame !== null) cancelAnimationFrame(frame);
+    };
+  }
+
+  private unobserveShell(): void {
+    this.stopObservingShell?.();
+    this.stopObservingShell = null;
+  }
+}
+
+/** The shell's page toolbar (action bar) — possibly several stacked, the lowest one counts. */
+const TOOLBAR_SELECTOR = 'c8y-action-bar, .c8y-ui-action-bar';
+const NAVIGATOR_SELECTOR = '.app-main-navigator, c8y-navigator, .navigator';
+
+function visible(selector: string): HTMLElement[] {
+  return Array.from(document.querySelectorAll<HTMLElement>(selector)).filter(
+    (element) => element.getBoundingClientRect().height > 0
+  );
 }
