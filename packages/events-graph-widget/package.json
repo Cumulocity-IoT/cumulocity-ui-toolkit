@@ -1,0 +1,13 @@
+{
+  "name": "cumulocity-events-graph-plugin",
+  "version": "3.0.0",
+  "description": "Shows the occurrence of device events as colored state bars on a zoomable timeline.",
+  "author": "Hendrik Naether | Felix Lange | @dirk-peter-c8y",
+  "homepage": "https://github.com/Cumulocity-IoT/cumulocity-ui-toolkit/tree/main/packages/events-graph-widget",
+  "dependencies": {
+    "date-fns": "^4.4.0",
+    "echarts": "6.1.0",
+    "ngx-echarts": "^21.0.0",
+    "shared": "workspace:*"
+  }
+}

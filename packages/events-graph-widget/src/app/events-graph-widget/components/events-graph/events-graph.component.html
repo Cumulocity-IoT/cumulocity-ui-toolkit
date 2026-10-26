@@ -1,0 +1,81 @@
+@if (config?.realtime) {
+  <div
+    class="m-b-16 p-l-16 p-r-16 separator-top-bottom"
+  >
+    <div class="d-contents">
+      <div class="m-l-auto d-flex p-t-4 p-b-4">
+        <div class="m-l-auto d-flex a-i-center">
+          <label
+            class="m-b-0 m-r-8 text-label-small text-truncate flex-no-shrink"
+            title="Auto refresh"
+            translate
+          >
+            Auto refresh
+          </label>
+          <div class="input-group">
+            <label class="toggle-countdown" placement="bottom" aria-label="Disable auto refresh">
+              <input type="checkbox" data-cy="events-graph--interval-toggle-button" />
+
+              <c8y-countdown-interval
+                [countdownInterval]="config.realtimeInterval"
+                (countdownEnded)="onCountdownEnded()"
+              ></c8y-countdown-interval>
+            </label>
+            <div class="input-group-btn">
+              <button
+                class="btn btn-default"
+                (click)="refresh()"
+                placement="bottom"
+                type="button"
+                data-cy="events-graph--reload-button"
+                aria-label="Refresh"
+              >
+                <i class="c8y-icon dlt-c8y-icon-refresh" c8yicon="refresh"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@switch (state) {
+  @case ('no-device') {
+    <c8y-ui-empty-state
+      class="d-block"
+      icon="device"
+      [title]="'No device selected' | translate"
+      [subtitle]="'Select a device in the widget configuration.' | translate"
+      [horizontal]="true"
+      data-cy="events-graph--no-device"
+    ></c8y-ui-empty-state>
+  }
+  @case ('no-types') {
+    <c8y-ui-empty-state
+      class="d-block"
+      icon="c8y-events"
+      [title]="'No event types configured' | translate"
+      [subtitle]="'Add an event type in the widget configuration.' | translate"
+      [horizontal]="true"
+      data-cy="events-graph--no-types"
+    ></c8y-ui-empty-state>
+  }
+  @case ('error') {
+    <c8y-ui-empty-state
+      class="d-block"
+      icon="warning"
+      [title]="'Could not load events' | translate"
+      [horizontal]="true"
+      data-cy="events-graph--error"
+    ></c8y-ui-empty-state>
+  }
+  @case ('ready') {
+    <div
+      class="demo-chart p-b-16"
+      [options]="chartOptions"
+      echarts
+      data-cy="events-graph--chart"
+    ></div>
+  }
+}
