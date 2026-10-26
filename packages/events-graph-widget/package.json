@@ -1,0 +1,14 @@
+{
+  "name": "cumulocity-events-graph-plugin",
+  "version": "2.0.1",
+  "description": "",
+  "author": "Hendrik Naether | Felix Lange",
+  "homepage": "___TODO___",
+  "dependencies": {
+    "date-fns": "^4.4.0",
+    "echarts": "6.1.0",
+    "ngx-color-picker": "^20.1.1",
+    "ngx-echarts": "^21.0.0",
+    "shared": "workspace:*"
+  }
+}

@@ -1,0 +1,33 @@
+.d-flex {
+  display: flex;
+  align-items: center;
+}
+
+.egw-card-header {
+  display: block;
+}
+
+.event-type-del {
+  float: right;
+  padding-top: 25px;
+  font-size: 22px;
+}
+
+.event-value-add {
+  font-size: 16px;
+  margin-top: 15px;
+}
+
+.event-value-del {
+  font-size: 16px;
+  margin-top: 20px;
+}
+
+.form-group {
+  margin-right: 10px;
+}
+
+.input-group-btn {
+  display: flex;
+  align-items: center;
+}

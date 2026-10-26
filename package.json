@@ -56,6 +56,8 @@
     "build:asset-navigator": "ng build plugin.asset-navigator",
     "serve:energy-consumption-widget": "pnpm run _serve plugin.energy-consumption-widget",
     "build:energy-consumption-widget": "ng build plugin.energy-consumption-widget",
+    "serve:events-graph-widget": "pnpm run _serve plugin.events-graph-widget",
+    "build:events-graph-widget": "ng build plugin.events-graph-widget",
     "serve:favorites-manager": "pnpm run _serve plugin.favorites-manager",
     "build:favorites-manager": "ng build plugin.favorites-manager",
     "serve:index-db-cache": "pnpm run _serve plugin.index-db-cache",
