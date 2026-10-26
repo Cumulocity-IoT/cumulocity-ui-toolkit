@@ -1,4 +1,4 @@
-import { Component, effect, inject, OnDestroy, signal, untracked } from '@angular/core';
+import { Component, effect, inject, type OnDestroy, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { AlertService, CoreModule, HeaderService } from '@c8y/ngx-components';
@@ -9,17 +9,17 @@ import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { MomentModule } from 'ngx-moment';
 import { Subject, Subscription } from 'rxjs';
 import {
-  Reminder,
+  type Reminder,
   REMINDER__ASSET_CONTEXT_ROOTS,
   REMINDER__DRAWER_OPEN_CLASS,
   REMINDER__HIGHLIGHT_DURATION_SECONDS,
   REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG,
   REMINDER__MAIN_HEADER_CLASS,
-  ReminderConfig,
-  ReminderGroup,
+  type ReminderConfig,
+  type ReminderGroup,
   ReminderGroupStatus,
   ReminderStatus,
-  ReminderType,
+  type ReminderType,
 } from '../../models/reminder.model';
 import { ReminderService } from '../../services/reminder.service';
 import { ReminderModalComponent } from '../reminder-modal/reminder-modal.component';

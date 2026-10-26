@@ -1,12 +1,12 @@
 import { inject, Injectable } from '@angular/core';
 import { AlarmService } from '@c8y/client';
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 import { normalizeQueryFilter } from '~components/_formly-fields/query-forms/formly-query-blocks';
 import {
   isQueryLayerConfig,
-  MyLayer,
-  PollingDelta,
-  QueryLayerConfig,
+  type MyLayer,
+  type PollingDelta,
+  type QueryLayerConfig,
 } from '../layered-map-widget.model';
 import { SourceIdPollingService } from './source-id-polling.service';
 

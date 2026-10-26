@@ -1,10 +1,10 @@
-import { Component, inject, Input, TemplateRef, ViewChild } from '@angular/core';
+import { Component, inject, Input, type TemplateRef, ViewChild } from '@angular/core';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { FormGroup } from '@angular/forms';
 import { CoreModule } from '@c8y/ngx-components';
 import { WidgetConfigService } from '@c8y/ngx-components/context-dashboard';
 import { setWidgetPreview } from '~helpers/widget-preview.helper';
-import { FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
+import { type FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
 import {
   ENERGY_CONSUMPTION_WIDGET__DATE_RANGE,
   ENERGY_CONSUMPTION_WIDGET__DEFAULT_DATE_RANGE,
@@ -12,7 +12,7 @@ import {
   ENERGY_CONSUMPTION_WIDGET__RANGE_TYPE_OPTIONS,
 } from '../../models/energy-consumption-widget.const';
 import {
-  EnergyConsumptionWidgetConfig,
+  type EnergyConsumptionWidgetConfig,
   EnergyWidgetDateDisplayMode,
   EnergyWidgetRangeType,
 } from '../../models/energy-consumption-widget.model';

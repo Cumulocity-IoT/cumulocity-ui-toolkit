@@ -1,4 +1,4 @@
-import { Column } from '@c8y/ngx-components';
+import { type Column } from '@c8y/ngx-components';
 
 export interface SearchColumn extends Column {
   searchable?: boolean;

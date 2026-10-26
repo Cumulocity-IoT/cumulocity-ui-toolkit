@@ -1,7 +1,12 @@
 import { inject, output, Component, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IManagedObjectBinary, InventoryBinaryService } from '@c8y/client';
-import { AlertService, CoreModule, DropAreaComponent, DroppedFile } from '@c8y/ngx-components';
+import { type IManagedObjectBinary, InventoryBinaryService } from '@c8y/client';
+import {
+  AlertService,
+  CoreModule,
+  type DropAreaComponent,
+  type DroppedFile,
+} from '@c8y/ngx-components';
 import { isNil } from 'lodash';
 
 @Component({

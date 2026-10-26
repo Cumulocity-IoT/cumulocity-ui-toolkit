@@ -1,9 +1,9 @@
 import { inject, Injectable } from '@angular/core';
-import { IOperation, OperationService } from '@c8y/client';
+import { type IOperation, OperationService } from '@c8y/client';
 import { AlertService } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { TranslateService } from '@ngx-translate/core';
-import { OperationButtonConfig } from '../models/operations-widget-config.model';
+import { type OperationButtonConfig } from '../models/operations-widget-config.model';
 
 @Injectable()
 export class OperationsWidgetService {

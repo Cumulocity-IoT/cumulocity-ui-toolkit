@@ -1,4 +1,11 @@
-import { Injectable, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
+import {
+  Injectable,
+  type Signal,
+  type WritableSignal,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { UserPreferencesService } from '@c8y/ngx-components';
 import { firstValueFrom } from 'rxjs';
 import { AssetStoreService } from '../../services/asset-store/asset-store.service';

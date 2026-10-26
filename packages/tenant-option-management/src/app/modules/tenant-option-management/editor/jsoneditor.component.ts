@@ -31,8 +31,8 @@ import {
   Component,
   ElementRef,
   Input,
-  OnInit,
-  OnDestroy,
+  type OnInit,
+  type OnDestroy,
   ViewChild,
   Output,
   EventEmitter,
@@ -42,12 +42,12 @@ import {
   inject,
 } from '@angular/core';
 import JSONEditor from 'jsoneditor';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { type ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import {
   JsonEditorOptions,
-  JsonEditorMode,
-  JsonEditorTreeNode,
-  IError,
+  type JsonEditorMode,
+  type JsonEditorTreeNode,
+  type IError,
 } from './jsoneditor-options';
 import { isEmpty } from 'lodash';
 import { CoreModule } from '@c8y/ngx-components';
@@ -434,4 +434,4 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
     return levels;
   }
 }
-export { JsonEditorOptions, JsonEditorMode, JsonEditorTreeNode, IError };
+export { JsonEditorOptions, type JsonEditorMode, type JsonEditorTreeNode, type IError };

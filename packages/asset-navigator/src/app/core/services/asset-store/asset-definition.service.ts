@@ -1,4 +1,4 @@
-import { Injectable, Signal, WritableSignal, inject, signal } from '@angular/core';
+import { Injectable, type Signal, type WritableSignal, inject, signal } from '@angular/core';
 import { FetchClient } from '@c8y/client';
 import type { AssetDefinition, AssetPropertyDefinition } from '@c8y/ngx-components';
 import {
