@@ -10,7 +10,7 @@ import { CoreModule } from '@c8y/ngx-components';
 import { CollapseModule } from 'ngx-bootstrap/collapse';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { CacheEventsService } from './services/cache-events.service';
-import { CacheName, CacheLogService, LogEventType } from './services/cache-log.service';
+import { type CacheName, CacheLogService, type LogEventType } from './services/cache-log.service';
 import { CacheStateService } from './services/cache-state.service';
 import { CacheStatsService } from './services/cache-stats.service';
 import { NavigationAbortStateService } from './services/navigation-abort-state.service';

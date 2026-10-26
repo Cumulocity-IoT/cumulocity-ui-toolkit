@@ -1,7 +1,7 @@
 import { OperationStatus } from '@c8y/client';
 import { AlertService, OperationRealtimeService } from '@c8y/ngx-components';
 import { Subject } from 'rxjs';
-import { OperationAlert, OperationToastService } from './operation-toast.service';
+import { type OperationAlert, OperationToastService } from './operation-toast.service';
 import { createService } from '~helpers/create-service.helper';
 
 describe('OperationToastService', () => {

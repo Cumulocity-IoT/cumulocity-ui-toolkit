@@ -3,7 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  ElementRef,
+  type ElementRef,
   Injector,
   afterNextRender,
   computed,

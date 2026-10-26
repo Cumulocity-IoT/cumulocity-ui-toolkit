@@ -1,4 +1,4 @@
-import { SeriesResponse } from './chart-data.service';
+import { type SeriesResponse } from './chart-data.service';
 
 /**
  * Minimum milliseconds a timestamp must lie in the past to be considered

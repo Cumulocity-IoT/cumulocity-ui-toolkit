@@ -1,8 +1,8 @@
 import { inject, Component } from '@angular/core';
-import { IIdentified } from '@c8y/client';
+import { type IIdentified } from '@c8y/client';
 import { CoreModule } from '@c8y/ngx-components';
 import {
-  AssetSelectionChangeEvent,
+  type AssetSelectionChangeEvent,
   AssetSelectorModule,
 } from '@c8y/ngx-components/assets-navigator';
 import { BsModalRef } from 'ngx-bootstrap/modal';

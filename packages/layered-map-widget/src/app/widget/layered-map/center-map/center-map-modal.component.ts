@@ -1,14 +1,14 @@
 import {
   inject,
   model,
-  AfterViewInit,
+  type AfterViewInit,
   Component,
   ElementRef,
-  OnDestroy,
+  type OnDestroy,
   ViewChild,
 } from '@angular/core';
 import { fromEvent, Subject, takeUntil } from 'rxjs';
-import { CoreModule, ModalLabels } from '@c8y/ngx-components';
+import { CoreModule, type ModalLabels } from '@c8y/ngx-components';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { LocationGeocoderService } from '~services/location-geocoder.service';
 import type * as L from 'leaflet';

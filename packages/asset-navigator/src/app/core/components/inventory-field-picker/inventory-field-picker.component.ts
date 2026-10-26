@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, type OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CoreModule } from '@c8y/ngx-components';
 import { BsModalRef } from 'ngx-bootstrap/modal';

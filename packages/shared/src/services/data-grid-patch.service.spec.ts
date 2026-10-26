@@ -1,4 +1,4 @@
-import { DataGridComponent } from '@c8y/ngx-components';
+import { type DataGridComponent } from '@c8y/ngx-components';
 import { DataGridPatchService } from './data-grid-patch.service';
 
 describe('DataGridPatchService', () => {

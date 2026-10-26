@@ -1,4 +1,4 @@
-import { AstNode } from './reverse-queries-util.model';
+import { type AstNode } from './reverse-queries-util.model';
 import { QueryParser } from './query-parser';
 import { Tokenizer } from './string-tokenizer';
 

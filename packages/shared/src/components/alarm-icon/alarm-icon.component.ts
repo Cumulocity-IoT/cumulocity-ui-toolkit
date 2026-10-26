@@ -1,5 +1,5 @@
 import { Component, computed, input } from '@angular/core';
-import { IAlarm } from '@c8y/client';
+import { type IAlarm } from '@c8y/client';
 import { CoreModule } from '@c8y/ngx-components';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 

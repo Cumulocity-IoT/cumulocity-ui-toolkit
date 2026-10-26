@@ -1,14 +1,14 @@
 import { Component, effect, inject, model } from '@angular/core';
-import { AlertService, CommonModule, CoreModule, ModalLabels } from '@c8y/ngx-components';
+import { AlertService, CommonModule, CoreModule, type ModalLabels } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Subject } from 'rxjs';
-import { PopoverConfig } from '../layered-map-widget.model';
+import { type PopoverConfig } from '../layered-map-widget.model';
 import { FormGroup } from '@angular/forms';
-import { FormlyFieldConfig } from '@ngx-formly/core';
+import { type FormlyFieldConfig } from '@ngx-formly/core';
 import { DomainModelEditorComponent } from '~components/domain-object-editor/domain-model-editor.component';
-import { DtmAssetProperty, DtmService } from '~services/dtm.service';
-import { ModalTab } from '~models/modal-tab.model';
+import { type DtmAssetProperty, DtmService } from '~services/dtm.service';
+import { type ModalTab } from '~models/modal-tab.model';
 import { CollapseModule } from 'ngx-bootstrap/collapse';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 

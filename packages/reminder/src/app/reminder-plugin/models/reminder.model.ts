@@ -1,5 +1,5 @@
-import { IEvent, ITenantOption } from '@c8y/client';
-import { AssetFilterConfig } from '~models/asset-access.model';
+import { type IEvent, type ITenantOption } from '@c8y/client';
+import { type AssetFilterConfig } from '~models/asset-access.model';
 
 export const REMINDER__ASSET_CONTEXT_ROOTS = ['group', 'device'];
 export const REMINDER__TYPE = 'c8y_Reminder';

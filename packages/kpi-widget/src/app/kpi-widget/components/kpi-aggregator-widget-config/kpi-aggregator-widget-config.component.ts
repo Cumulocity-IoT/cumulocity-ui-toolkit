@@ -3,15 +3,15 @@ import {
   DestroyRef,
   inject,
   Input,
-  OnInit,
-  TemplateRef,
+  type OnInit,
+  type TemplateRef,
   ViewChild,
 } from '@angular/core';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormGroup } from '@angular/forms';
 import { CoreModule, OptionsService } from '@c8y/ngx-components';
-import { FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
+import { type FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
 import { cloneDeep } from 'lodash';
 import { debounceTime, Subject } from 'rxjs';
 import {
@@ -21,7 +21,7 @@ import {
   KPI_AGGREGATOR_WIDGET__SORT_OPTIONS,
   KPI_AGGREGATOR_WIDGET_ORDER_OPTIONS,
 } from '../../models/kpi-aggregator-widget.const';
-import { KpiAggregatorWidgetConfig } from '../../models/kpi-aggregator-widget.model';
+import { type KpiAggregatorWidgetConfig } from '../../models/kpi-aggregator-widget.model';
 import { KpiAggregatorWidgetComponent } from '../kpi-aggregator-widget/kpi-aggregator-widget.component';
 import { WidgetConfigService } from '@c8y/ngx-components/context-dashboard';
 import { setWidgetPreview } from '~helpers/widget-preview.helper';

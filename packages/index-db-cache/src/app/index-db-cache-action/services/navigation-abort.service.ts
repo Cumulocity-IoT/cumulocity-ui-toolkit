@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationStart, Router } from '@angular/router';
-import { IFetchResponse } from '@c8y/client';
-import { ApiCall, HttpHandler, HttpInterceptor } from '@c8y/ngx-components/api';
-import { Observable, filter } from 'rxjs';
+import { type IFetchResponse } from '@c8y/client';
+import { type ApiCall, type HttpHandler, type HttpInterceptor } from '@c8y/ngx-components/api';
+import { type Observable, filter } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { NavigationAbortStateService } from './navigation-abort-state.service';
 
