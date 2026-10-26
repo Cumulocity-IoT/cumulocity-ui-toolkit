@@ -1,9 +1,12 @@
 import { inject, Injectable } from '@angular/core';
 import { EventService } from '@c8y/client';
 import { has, isEmpty } from 'lodash';
-import { LatLng, polyline, Polyline } from 'leaflet';
-import { ILayeredMapWidgetConfig, ITrack } from '../layered-map-widget.model';
-import { ILocationUpdateEvent, isLocationUpdateEvent } from '~services/location-realtime.service';
+import { LatLng, polyline, type Polyline } from 'leaflet';
+import { type ILayeredMapWidgetConfig, type ITrack } from '../layered-map-widget.model';
+import {
+  type ILocationUpdateEvent,
+  isLocationUpdateEvent,
+} from '~services/location-realtime.service';
 
 export type { ILocationUpdateEvent };
 

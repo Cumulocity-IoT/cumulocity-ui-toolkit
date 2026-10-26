@@ -4,7 +4,7 @@ import {
   orderValues,
   responseColumnKeys,
 } from './interceptor-helpers';
-import { SeriesResponse } from './chart-data.service';
+import { type SeriesResponse } from './chart-data.service';
 
 describe('clampCoverageTo', () => {
   it('returns `to` unchanged when it is older than the live-edge limit', () => {

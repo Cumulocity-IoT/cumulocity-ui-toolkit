@@ -1,15 +1,18 @@
 import { TestBed } from '@angular/core/testing';
 import {
-  IFetchResponse,
+  type IFetchResponse,
   InventoryService,
-  ITenantOption,
+  type ITenantOption,
   TenantOptionsService,
   UserService,
 } from '@c8y/client';
 import { AlertService } from '@c8y/ngx-components';
 import { TranslateService } from '@ngx-translate/core';
 import { provideMock } from '~helpers/auto-mock.helper';
-import { TenantOptionConfiguration, TenantOptionRow } from './tenant-option-management.model';
+import {
+  type TenantOptionConfiguration,
+  type TenantOptionRow,
+} from './tenant-option-management.model';
 import { TenantOptionManagementService } from './tenant-option-management.service';
 
 const FETCH_RES = {} as IFetchResponse;

@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
-import { IMeasurement, MeasurementService } from '@c8y/client';
+import { type IMeasurement, MeasurementService } from '@c8y/client';
 import { saveAs } from 'file-saver';
-import { concatMap, from, map, Observable, switchMap } from 'rxjs';
+import { concatMap, from, map, type Observable, switchMap } from 'rxjs';
 import { get, isNil } from 'lodash';
 import { detectMeasurementPaths } from '../helpers/measurement-paths';
 

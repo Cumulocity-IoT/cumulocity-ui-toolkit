@@ -1,4 +1,4 @@
-import { IMeasurement } from '@c8y/client';
+import { type IMeasurement } from '@c8y/client';
 import { detectMeasurementPaths } from './measurement-paths';
 
 function measurement(fragments: Record<string, unknown>): IMeasurement {

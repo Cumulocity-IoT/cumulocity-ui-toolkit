@@ -1,5 +1,5 @@
-import { IMeasurementValue, IOperation } from '@c8y/client';
-import { IMeasurement } from '@c8y/client';
+import { type IMeasurementValue, type IOperation } from '@c8y/client';
+import { type IMeasurement } from '@c8y/client';
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;

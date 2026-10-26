@@ -1,12 +1,12 @@
 import { Component, inject } from '@angular/core';
-import { ITenantOption } from '@c8y/client';
+import { type ITenantOption } from '@c8y/client';
 import { AlertService, CoreModule } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { TranslateService } from '@ngx-translate/core';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Subject } from 'rxjs';
 import { TenantOptionManagementService } from '../tenant-option-management.service';
-import { TenantOptionRow } from '../tenant-option-management.model';
+import { type TenantOptionRow } from '../tenant-option-management.model';
 
 @Component({
   templateUrl: './import-option-modal.component.html',

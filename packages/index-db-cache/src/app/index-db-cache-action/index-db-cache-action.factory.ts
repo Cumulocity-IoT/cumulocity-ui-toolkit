@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ActionBarFactory, ActionBarItem } from '@c8y/ngx-components';
+import { type ActionBarFactory, type ActionBarItem } from '@c8y/ngx-components';
 import { IndexDbCacheActionComponent } from './index-db-cache-action.component';
 
 @Injectable()

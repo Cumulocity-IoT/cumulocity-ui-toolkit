@@ -1,4 +1,11 @@
-import { Injectable, Signal, WritableSignal, inject, isDevMode, signal } from '@angular/core';
+import {
+  Injectable,
+  type Signal,
+  type WritableSignal,
+  inject,
+  isDevMode,
+  signal,
+} from '@angular/core';
 import { FetchClient } from '@c8y/client';
 import { AssetStoreService } from '../asset-store/asset-store.service';
 import type { AssetHierarchy, AssetNode } from '../asset-store/asset-store.model';

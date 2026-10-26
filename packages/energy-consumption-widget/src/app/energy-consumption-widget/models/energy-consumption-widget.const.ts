@@ -4,7 +4,7 @@ import {
   EnergyWidgetRangeType,
 } from './energy-consumption-widget.model';
 import { gettext } from '@c8y/ngx-components/gettext';
-import { FormlySelectOption } from '~models/formly.model';
+import { type FormlySelectOption } from '~models/formly.model';
 
 export const ENERGY_CONSUMPTION_WIDGET__RANGE_TYPE_OPTIONS: FormlySelectOption[] = [
   { value: EnergyWidgetRangeType.DATE, label: gettext('🗓️ By Date Range') },

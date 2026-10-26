@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
-import { EventService, IEvent, IManagedObject } from '@c8y/client';
+import { EventService, type IEvent, type IManagedObject } from '@c8y/client';
 import { RealtimeService, RealtimeSubjectService } from '@c8y/ngx-components';
-import { from, merge, Observable } from 'rxjs';
+import { from, merge, type Observable } from 'rxjs';
 import { filter, map, pairwise, startWith } from 'rxjs/operators';
 import { isEmpty } from 'lodash';
 
@@ -47,8 +47,8 @@ const EMPTY_EVENT: ILocationUpdateEvent = {
 export class LocationRealtimeService extends RealtimeService<IEvent> {
   private event = inject(EventService);
 
-  constructor(realtime: RealtimeSubjectService) {
-    super(realtime);
+  constructor() {
+    super(inject(RealtimeSubjectService));
   }
 
   protected channel(): string {

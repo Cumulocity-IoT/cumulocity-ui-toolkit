@@ -1,20 +1,20 @@
-import { inject, AfterViewInit, Component } from '@angular/core';
+import { inject, type AfterViewInit, Component } from '@angular/core';
 import { Subject } from 'rxjs';
-import { CoreModule, ModalLabels } from '@c8y/ngx-components';
+import { CoreModule, type ModalLabels } from '@c8y/ngx-components';
 import {
   latLng,
-  LatLng,
-  LeafletMouseEvent,
-  Map as LMap,
-  MapOptions,
+  type LatLng,
+  type LeafletMouseEvent,
+  type Map as LMap,
+  type MapOptions,
   polyline,
-  Polyline,
+  type Polyline,
   tileLayer,
 } from 'leaflet';
 import { isEmpty } from 'lodash';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { LocationGeocoderService } from '~services/location-geocoder.service';
-import { ITrack } from '../layered-map-widget.model';
+import { type ITrack } from '../layered-map-widget.model';
 import { OSM_TILE_OPTIONS, OSM_TILE_URL } from '../base-tile-layers';
 
 @Component({

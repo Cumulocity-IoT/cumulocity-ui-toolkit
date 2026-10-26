@@ -1,5 +1,5 @@
-import { ActivatedRouteSnapshot } from '@angular/router';
-import { IManagedObjectExtended } from './favorites-manager.model';
+import { type ActivatedRouteSnapshot } from '@angular/router';
+import { type IManagedObjectExtended } from './favorites-manager.model';
 
 /**
  * Finds the `contextData` (device / group / asset) of the current route.

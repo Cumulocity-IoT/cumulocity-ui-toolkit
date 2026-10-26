@@ -1,17 +1,21 @@
 import {
   inject,
   input,
-  AfterViewInit,
+  type AfterViewInit,
   Component,
   ElementRef,
   Input,
-  OnDestroy,
+  type OnDestroy,
   ViewChild,
 } from '@angular/core';
 import type * as L from 'leaflet';
 import { isEmpty, isNil } from 'lodash';
-import { fromEvent, Subject, Subscription } from 'rxjs';
-import { ILayeredMapWidgetConfig, isQueryLayerConfig, MyLayer } from './layered-map-widget.model';
+import { fromEvent, Subject, type Subscription } from 'rxjs';
+import {
+  type ILayeredMapWidgetConfig,
+  isQueryLayerConfig,
+  type MyLayer,
+} from './layered-map-widget.model';
 import {
   BASE_TILE_LAYERS,
   customEntryToDef,
@@ -26,7 +30,8 @@ import { AlarmPollingService } from './service/alarm-polling.service';
 import { PositionPollingService } from './service/position-polling.service';
 import { EventPollingService } from './service/event-polling.service';
 import { escapeHtml, safeCssColor, safeIconName } from './utils/sanitize';
-import { IManagedObject } from '@c8y/client';
+import { type IManagedObject } from '@c8y/client';
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- constructor injection: Angular JIT (aot: false) reads parameter types at runtime
 import { CoreModule, DashboardChildComponent } from '@c8y/ngx-components';
 
 @Component({

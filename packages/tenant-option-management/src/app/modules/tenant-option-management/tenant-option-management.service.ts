@@ -1,12 +1,17 @@
 import { inject, Injectable } from '@angular/core';
-import { ITenantOption, InventoryService, TenantOptionsService, UserService } from '@c8y/client';
+import {
+  type ITenantOption,
+  InventoryService,
+  TenantOptionsService,
+  UserService,
+} from '@c8y/client';
 import { AlertService } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { TranslateService } from '@ngx-translate/core';
 import {
-  TenantOptionConfiguration,
-  TenantOptionConfigurationItem,
-  TenantOptionRow,
+  type TenantOptionConfiguration,
+  type TenantOptionConfigurationItem,
+  type TenantOptionRow,
 } from './tenant-option-management.model';
 
 @Injectable()

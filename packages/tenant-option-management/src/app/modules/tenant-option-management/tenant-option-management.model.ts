@@ -1,4 +1,4 @@
-import { IManagedObject, ITenantOption } from '@c8y/client';
+import { type IManagedObject, type ITenantOption } from '@c8y/client';
 
 export const ImportStatusEnum = {
   LOADING: 'LOADING',

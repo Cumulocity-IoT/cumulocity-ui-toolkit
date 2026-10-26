@@ -5,8 +5,8 @@ import {
   input,
   Component,
   ElementRef,
-  OnDestroy,
-  OnInit,
+  type OnDestroy,
+  type OnInit,
   ViewChild,
 } from '@angular/core';
 import { CoreModule, FormsModule } from '@c8y/ngx-components';
