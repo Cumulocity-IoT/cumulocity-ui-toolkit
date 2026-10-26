@@ -5,9 +5,11 @@ import type { CustomSeriesRenderItem } from 'echarts';
 import { groupBy, isEmpty } from 'lodash';
 import {
   type EventConfig,
+  type EventLane,
   type EventSeries,
   type EventTypeConfig,
   type IEventDuration,
+  type LaneState,
 } from '../models/event-graph.model';
 
 @Injectable()
@@ -141,6 +143,28 @@ export class EventStatusTrackerService {
       },
       data: groups[name],
     }));
+  }
+
+  /** The bars of one lane, from the output of {@link toCustomFormat}. */
+  toLane(label: string, data: ReturnType<EventStatusTrackerService['toCustomFormat']>): EventLane {
+    return {
+      label,
+      segments: data.map(({ name, value: [, start, end], itemStyle }) => ({
+        name,
+        start,
+        end,
+        color: itemStyle.color,
+      })),
+    };
+  }
+
+  /** What every lane shows at `time` — the readout of the shared time cursor. */
+  statesAt(lanes: EventLane[], time: number): LaneState[] {
+    return lanes.map(({ label, segments }) => {
+      const segment = segments.find(({ start, end }) => start <= time && time < end);
+
+      return { lane: label, state: segment?.name ?? null, color: segment?.color };
+    });
   }
 
   private getTimestampFromString(timeboxStart: number, dateString: string): number {

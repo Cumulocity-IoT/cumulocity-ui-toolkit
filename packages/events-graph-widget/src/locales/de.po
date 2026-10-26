@@ -59,3 +59,12 @@ msgstr "Ereignisse konnten nicht geladen werden"
 
 msgid "Duration"
 msgstr "Dauer"
+
+msgid "Hover the chart to compare all lanes at one point in time."
+msgstr "Zeigen Sie auf das Diagramm, um alle Zeilen zu einem Zeitpunkt zu vergleichen."
+
+msgid "Device"
+msgstr "Gerät"
+
+msgid "The group itself"
+msgstr "Die Gruppe selbst"

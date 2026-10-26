@@ -21,12 +21,33 @@ export type EventConfig = {
 
 export type EventTypeConfig = {
   type: string;
+  /**
+   * Source of this lane's events. Only offered on group dashboards (a device of that group);
+   * without it the lane uses the widget's target.
+   */
+  device?: {
+    id: string;
+    name: string;
+  };
   values: {
     name: string;
     color: string;
     label: string;
   }[];
 };
+
+/** One row of the chart: its label and the state bars drawn in it. */
+export interface EventLane {
+  label: string;
+  segments: { name: string; start: number; end: number; color?: string }[];
+}
+
+/** A lane's state at the time cursor; `state` is null when the lane has no bar there. */
+export interface LaneState {
+  lane: string;
+  state: string | null;
+  color?: string;
+}
 
 export interface IEventDuration extends IEvent {
   /**

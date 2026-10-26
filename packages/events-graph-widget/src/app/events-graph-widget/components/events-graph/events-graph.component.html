@@ -71,9 +71,28 @@
     ></c8y-ui-empty-state>
   }
   @case ('ready') {
+    <div class="egw-cursor p-l-16 p-r-16 text-12" data-cy="events-graph--cursor">
+      @if (cursor(); as cursor) {
+        <span class="text-medium m-r-8" data-cy="events-graph--cursor-time">{{ cursor.time }}</span>
+        @for (lane of cursor.states; track lane.lane) {
+          <span class="m-r-16 text-nowrap" data-cy="events-graph--cursor-lane">
+            <span class="text-muted">{{ lane.lane }}:</span>
+            @if (lane.state) {
+              <i class="egw-cursor-dot" [style.background]="lane.color"></i>
+              <span data-cy="events-graph--cursor-state">{{ lane.state }}</span>
+            } @else {
+              <span class="text-muted" data-cy="events-graph--cursor-state">–</span>
+            }
+          </span>
+        }
+      } @else {
+        <span class="text-muted" translate>Hover the chart to compare all lanes at one point in time.</span>
+      }
+    </div>
     <div
       class="demo-chart p-b-16"
       [options]="chartOptions"
+      (chartInit)="onChartInit($event)"
       echarts
       data-cy="events-graph--chart"
     ></div>
