@@ -41,6 +41,19 @@ Please note that, as you can also re-active a cleared alarm, **a notification fo
 
 Please reference your browsers documentation, in case you experience issues granting notification permission.
 
+#### Notification Defaults
+
+By default both notification types are off. A tenant can preset them for users who have not chosen their own settings yet, via the tenant option category `c8y.reminder`, key `defaults`:
+
+```json
+{
+  "browser": true,
+  "toast": true
+}
+```
+
+Only `browser` and `toast` are read, and only boolean values count (`false` is a valid default). Once a user changes their notification settings, these are stored in the browser and take precedence over the tenant defaults.
+
 ### Reminder Type Config
 
 Selectable reminder types can be configured using the tenant option – best using the [Tenant Option Manager Plugin](https://github.com/SoftwareAG/cumulocity-tenant-option-management-plugin) –, using the configuration as described below. Per default, no config is set and the type selection hidden.

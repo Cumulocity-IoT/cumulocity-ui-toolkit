@@ -11,6 +11,7 @@ import { DomService } from '~services/dom.service';
 import { LocalStorageService } from '~services/local-storage.service';
 import {
   REMINDER__LOCAL_STORAGE__CONFIG,
+  REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG,
   REMINDER__TYPE,
   type Reminder,
   ReminderGroupStatus,
@@ -422,6 +423,70 @@ describe('ReminderService', () => {
 
       expect(service.responsibilityFilterEnabled()).toBeTrue();
       expect(assetAccessService.getAssetIdsFromConfigAsync.calls.count()).toBe(1);
+    });
+
+    describe('tenant notification defaults', () => {
+      const NOT_FOUND = Object.assign(new Error('Not Found'), { res: { status: 404 } });
+
+      function respondWithDefaults(defaults: unknown): void {
+        tenantOptionsService.detail.and.callFake((query) =>
+          query.key === 'defaults'
+            ? Promise.resolve({
+                data: { value: JSON.stringify(defaults) },
+                res: FETCH_RES,
+              } as never)
+            : Promise.reject(NOT_FOUND)
+        );
+      }
+
+      beforeEach(() => {
+        // No stored user config: getOrDefault falls back to the given default.
+        localStorageService.getOrDefault.and.callFake(
+          <T>(_key: string, defaultValue: T): T => defaultValue
+        );
+      });
+
+      it('presets the notification switches for users without stored settings', async () => {
+        respondWithDefaults({ browser: true, toast: true });
+
+        await service.init();
+
+        expect(service.config().browser).toBeTrue();
+        expect(service.config().toast).toBeTrue();
+        expect(REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG.browser).toBeFalse();
+        expect(REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG.toast).toBeFalse();
+      });
+
+      it('keeps the settings a user already stored', async () => {
+        localStorageService.getOrDefault.and.returnValue({ browser: false, toast: false });
+        respondWithDefaults({ browser: true, toast: true });
+
+        await service.init();
+
+        expect(service.config().browser).toBeFalse();
+        expect(service.config().toast).toBeFalse();
+      });
+
+      it('honours false and ignores values that are not booleans', async () => {
+        respondWithDefaults({ browser: 'yes', toast: false, useContext: true });
+
+        await service.init();
+
+        expect(service.config().browser).toBeFalse();
+        expect(service.config().toast).toBeFalse();
+        expect(service.config().useContext).toBeFalse();
+      });
+
+      it('falls back to the built-in defaults without an alert when the option is missing', async () => {
+        const alertService = TestBed.inject(AlertService) as jasmine.SpyObj<AlertService>;
+
+        tenantOptionsService.detail.and.rejectWith(NOT_FOUND);
+
+        await service.init();
+
+        expect(service.config()).toEqual(REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG);
+        expect(alertService.danger).not.toHaveBeenCalled();
+      });
     });
 
     it('is idempotent when drawer already exists', async () => {
