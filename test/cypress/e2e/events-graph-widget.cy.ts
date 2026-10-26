@@ -1,11 +1,6 @@
 /// <reference types="cypress" />
 import { IManagedObject } from '@c8y/client';
-import { registerTestId } from '../support/utils';
-import { C8yAddWidgetDialog, C8yDashboard } from '../support/page-objects';
-import { DashboardSelectors, WidgetConfigSelectors } from '../support/selectors';
-
-const CYPRESS_TEST_ID = 'events-graph-widget-tests';
-registerTestId(CYPRESS_TEST_ID);
+import { AddWidgetDialog, Dashboard, DashboardSelectors, WidgetConfigSelectors } from '@cumulocity-iot/ui-sdk/cypress';
 
 const WIDGET_ID = 'events-graph.widget';
 const WIDGET = 'c8y-events-graph';
@@ -51,7 +46,6 @@ function createDashboard(
     .c8yclient((c) =>
       c.inventory.create({
         name: 'Events Graph Dashboard',
-        cy_testId: CYPRESS_TEST_ID,
         c8y_Dashboard: { name: 'Events Graph Dashboard', icon: 'th', priority: 10000, children },
         [`c8y_Dashboard!device!${device.id}`]: {},
       })
@@ -63,11 +57,7 @@ describe('Events Graph Widget', () => {
   let device: IManagedObject;
 
   function visitDashboard(dashboard: IManagedObject, selector: string) {
-    cy.visitShellAndWaitForSelector(
-      `device/${device.id}/dashboard/${dashboard.id}`,
-      'en',
-      selector
-    );
+    cy.visitApp(`device/${device.id}/dashboard/${dashboard.id}`, { language: 'en', waitFor: selector });
   }
 
   function visitWithConfig(config: Record<string, unknown>, selector = WIDGET) {
@@ -80,7 +70,7 @@ describe('Events Graph Widget', () => {
 
   before(() => {
     cy.getAuth().login();
-    cy.createDevice({ name: `Machine ${Date.now()}`, cy_testId: CYPRESS_TEST_ID }).then((d) => {
+    cy.createDevice({ name: `Machine ${Date.now()}` }).then((d) => {
       device = d;
       // one state before the 4 h window (picked up as the initial state) and alternating
       // states every 30 minutes inside it
@@ -101,7 +91,7 @@ describe('Events Graph Widget', () => {
       cy.intercept('PUT', `**/inventory/managedObjects/${dashboard.id}`).as('saveDashboard');
       visitDashboard(dashboard, DashboardSelectors.WIDGET_EDIT_READY);
     });
-    C8yAddWidgetDialog.openAndSelect('Events Graph');
+    AddWidgetDialog.openAndSelect('Events Graph');
 
     cy.get(CONFIG).within(() => {
       cy.get(cy_('-config--type')).should('not.exist');
@@ -137,7 +127,7 @@ describe('Events Graph Widget', () => {
       cy.get(cy_('-config--value-name')).should('have.length', 2);
     });
     cy.get(WidgetConfigSelectors.SAVE).should('be.enabled').click();
-    C8yDashboard.saveLayoutIfVisible();
+    Dashboard.saveIfVisible();
 
     cy.wait('@saveDashboard')
       .its('request.body.c8y_Dashboard.children')

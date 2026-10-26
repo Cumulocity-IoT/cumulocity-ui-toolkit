@@ -1,7 +1,6 @@
 /// <reference types="cypress" />
 
 import { IManagedObject } from '@c8y/client';
-import { registerTestId } from '../support';
 
 /**
  * Smart Views — runs against the tenant mock (windy-dev world: 15 `wind_turbine` assets).
@@ -20,8 +19,6 @@ import { registerTestId } from '../support';
  * The DTM microservice is not emulated by the mock, so `service/dtm/**` is stubbed.
  */
 
-const CYPRESS_TEST_ID = 'smart-views-tests';
-registerTestId(CYPRESS_TEST_ID);
 
 const CONFIG_TYPE = 'c8y_SmartViewConfiguration';
 const ASSET_TYPE = 'wind_turbine';
@@ -63,7 +60,6 @@ function createAssetDefinition(name = ASSET_TYPE): Cypress.Chainable<IManagedObj
         type: 'c8y_AssetDefinition',
         name,
         icon: { name: 'wind-turbine' },
-        cy_testId: CYPRESS_TEST_ID,
       })
     )
     .then((res) => res.body as IManagedObject);
@@ -78,7 +74,6 @@ function createConfiguration(
       c.inventory.create({
         type: CONFIG_TYPE,
         name,
-        cy_testId: CYPRESS_TEST_ID,
         c8y_SmartViewConfiguration: {
           icon: 'wind-turbine',
           query: `(type eq '${ASSET_TYPE}') and has(c8y_IsAsset)`,
@@ -135,12 +130,12 @@ function selectAssetDefinition(): void {
 
 function visitConfigurationPage(): void {
   cy.intercept('GET', `**/inventory/managedObjects?*type=${CONFIG_TYPE}*`).as('listConfigurations');
-  cy.visitShellAndWaitForSelector('smart-views-configuration', 'en', ADD_BUTTON);
+  cy.visitApp('smart-views-configuration', { language: 'en', waitFor: ADD_BUTTON });
   cy.wait('@listConfigurations');
 }
 
 function visitSmartView(id: string): void {
-  cy.visitShellAndWaitForSelector(`smart-views/${id}`, 'en', '#navigator');
+  cy.visitApp(`smart-views/${id}`, { language: 'en', waitFor: '#navigator' });
 }
 
 function gridRow(text: string) {
@@ -176,7 +171,7 @@ describe('Smart Views', () => {
         statusCode: 500,
         body: {},
       });
-      cy.visitShellAndWaitForSelector('smart-views-configuration', 'en', ADD_BUTTON);
+      cy.visitApp('smart-views-configuration', { language: 'en', waitFor: ADD_BUTTON });
 
       cy.get('[data-cy="smart-views--configuration-error"]').should(
         'contain.text',
@@ -381,7 +376,7 @@ describe('Smart Views', () => {
       cy.get(VIEW_ERROR).should('contain.text', 'Could not load smart view with ID "999999999".');
 
       cy.c8yclient((c) =>
-        c.inventory.create({ name: 'Plain MO', cy_testId: CYPRESS_TEST_ID })
+        c.inventory.create({ name: 'Plain MO' })
       ).then((res) => visitSmartView((res.body as IManagedObject).id));
       cy.get(VIEW_ERROR).should(
         'contain.text',
