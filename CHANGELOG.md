@@ -2,6 +2,8 @@
 
 ## 2026.10.26
 
+**asset-navigator 1.2.0**: no longer assumes the windy wind-farm data model — device/asset counts, availability from `c8y_Availability`, and a configurable detail panel described by a JSON Schema data contract (with a "Detail fields…" editor in the options menu) — see `packages/asset-navigator/CHANGELOG.md`.
+
 **asset-navigator 1.1.0**: options menu for the asset tree (search, shortcut, Pinned & Recent, inventory fallback without DTM), stored per user — see `packages/asset-navigator/CHANGELOG.md`.
 
 ## 2026.10.23
