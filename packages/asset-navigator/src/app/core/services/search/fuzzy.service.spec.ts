@@ -57,12 +57,12 @@ describe('FuzzyService.rank', () => {
   });
 
   it('never reports a highlight range outside the name, so the synthetic text cannot leak', () => {
-    const candidates = [result('Turbine 7', { type: 'wind_turbine', keywords: 'E101-SN-01' })];
+    const candidates = [result('Pump 7', { type: 'water_pump', keywords: 'E101-SN-01' })];
 
-    for (const term of ['turbine', 'wind_turbine', 'e101sn01', 'E101']) {
+    for (const term of ['pump', 'water_pump', 'e101sn01', 'E101']) {
       for (const [start, end] of fuzzy.rank(candidates, term)[0]?.highlights ?? []) {
         expect(start).toBeGreaterThanOrEqual(0);
-        expect(end).toBeLessThanOrEqual('Turbine 7'.length);
+        expect(end).toBeLessThanOrEqual('Pump 7'.length);
         expect(start).toBeLessThan(end);
       }
     }
@@ -95,43 +95,43 @@ describe('FuzzyService.rank', () => {
 describe('preferNumberIdentity', () => {
   const names = (results: SearchResult[]) => results.map((r) => r.name);
 
-  it('puts an identifier number before a decimal or a larger number — the windy-dev case', () => {
+  it('puts an identifier number before a decimal or a larger number — a model number next to an id', () => {
     const ranked = [
-      result('ROWTG07 · Vestas V150-4.2 MW'),
+      result('BLPMP07 · Grundfos CR-4.2 kW'),
       result('ROSUB01 · Siemens Energy 40 MVA'),
-      result('ROWTG14 · Nordex N117/3000'),
-      result('Turbine 4'),
-      result('ROWTG04 · Nordex N117/3000'),
+      result('BLPMP14 · KSB Etanorm 3000'),
+      result('Pump 4'),
+      result('BLPMP04 · KSB Etanorm 3000'),
     ];
 
     expect(names(preferNumberIdentity(ranked, '4'))).toEqual([
-      'ROWTG04 · Nordex N117/3000',
-      'Turbine 4',
-      'ROWTG07 · Vestas V150-4.2 MW',
+      'BLPMP04 · KSB Etanorm 3000',
+      'Pump 4',
+      'BLPMP07 · Grundfos CR-4.2 kW',
       'ROSUB01 · Siemens Energy 40 MVA',
-      'ROWTG14 · Nordex N117/3000',
+      'BLPMP14 · KSB Etanorm 3000',
     ]);
   });
 
   it('keeps the fuzzy order within a tier and leaves a term without numbers alone', () => {
-    const ranked = [result('T04-Main-Controller'), result('ROWTG04')];
+    const ranked = [result('T04-Main-Controller'), result('BLPMP04')];
 
-    expect(names(preferNumberIdentity(ranked, '4'))).toEqual(['T04-Main-Controller', 'ROWTG04']);
-    expect(preferNumberIdentity(ranked, 'rowtg')).toBe(ranked);
+    expect(names(preferNumberIdentity(ranked, '4'))).toEqual(['T04-Main-Controller', 'BLPMP04']);
+    expect(preferNumberIdentity(ranked, 'blpmp')).toBe(ranked);
   });
 
   it('reads separated identifiers and trailing punctuation as identity', () => {
     const ranked = [
       result('Vestas V150-4.2 MW'),
-      result('WTG-04'),
-      result('Turbine 4, north'),
+      result('PMP-04'),
+      result('Pump 4, north'),
       result('T#4'),
     ];
 
     expect(names(preferNumberIdentity(ranked, '4'))).toEqual([
-      'WTG-04',
+      'PMP-04',
       'T#4',
-      'Turbine 4, north',
+      'Pump 4, north',
       'Vestas V150-4.2 MW',
     ]);
   });

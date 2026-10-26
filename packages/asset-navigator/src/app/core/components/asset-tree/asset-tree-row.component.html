@@ -77,7 +77,11 @@
   }
 
   @if (count()) {
-    <span class="ps-tree-row__count text-muted">{{ count() }}</span>
+    <span
+      class="ps-tree-row__count text-muted"
+      data-cy="asset-navigator--row-count"
+      [attr.title]="(countUnit() === 'assets' ? '{{ count }} assets' : '{{ count }} devices') | translate: { count: count() }"
+    >{{ count() }}</span>
   }
 
   <!--
@@ -118,7 +122,6 @@
   <ps-status-dot
     [severity]="dot().severity" data-cy="asset-navigator--row-status"
     [unavailable]="dot().unavailable"
-    [derated]="dot().derated"
     [description]="dotTitle()"
   />
 </div>

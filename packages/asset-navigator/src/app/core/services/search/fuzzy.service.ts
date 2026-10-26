@@ -121,16 +121,16 @@ export class FuzzyService {
 }
 
 /**
- * A typed bare number is an identity — "turbine 4" — and the fuzzy ranker does not know that.
- * Measured on windy-dev: `In: Rostock` + `4` put ROWTG07 "Vestas V150-**4**.2 MW" first and
- * ROWTG**04** tenth, so the issue's own flow (`Husum` `→` `4` `Enter`) opened the wrong turbine.
+ * A typed bare number is an identity — "pump 4" — and the fuzzy ranker does not know that.
+ * Measured on a real fleet: `In: <site>` + `4` put PMP07 "Grundfos CR-**4**.2 kW" first and
+ * PMP**04** tenth, so `<site>` `→` `4` `Enter` opened the wrong asset.
  *
  * So for each all-digit word of the term, a name scores by how the number appears in it, and
  * the ranking is stably re-sorted on that score (the fuzzy order survives within a tier):
  *
  * - **0** — a digit run of that value right after a letter, or after a letter and one `-`/`_`/`#`:
- *   `TG04`, `T4`, `WTG-04`, `T#4`. Leading zeros are ignored.
- * - **1** — a standalone word of that value: `Turbine 4`, `WTG 04`, `Turbine 4, north`.
+ *   `MP04`, `P4`, `PMP-04`, `P#4`. Leading zeros are ignored.
+ * - **1** — a standalone word of that value: `Pump 4`, `PMP 04`, `Pump 4, north`.
  * - **2** — anything else: a decimal (`4.2`), part of a larger number (`40`, `14`), a model code.
  *
  * Several number words take the worst tier, so every typed number has to identify the row.

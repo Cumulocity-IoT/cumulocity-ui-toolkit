@@ -1,5 +1,5 @@
 import type { AssetDefinition } from '@c8y/ngx-components';
-import { toTypeFacets } from './asset-type-facets';
+import { inventoryTypeFacets, toTypeFacets } from './asset-type-facets';
 
 function definition(identifier: string, title?: string, icon?: string): AssetDefinition {
   return {
@@ -62,5 +62,24 @@ describe('toTypeFacets', () => {
 
   it('returns nothing for an empty catalog — a tenant without DTM simply gets no chips', () => {
     expect(toTypeFacets([])).toEqual([]);
+  });
+});
+
+describe('inventoryTypeFacets', () => {
+  it('lists the distinct asset types of the tree with readable labels', () => {
+    const node = (id: string, type: string) => [id, { id, type }] as const;
+    const byId = new Map([
+      node('a', 'wind_turbine'),
+      node('b', 'wind_park'),
+      node('c', 'wind_turbine'),
+      node('d', 'c8y_energySite'),
+      node('e', ''),
+    ]);
+
+    expect(inventoryTypeFacets({ byId } as never)).toEqual([
+      { type: 'c8y_energySite', label: 'Energy site', selected: false },
+      { type: 'wind_park', label: 'Wind park', selected: false },
+      { type: 'wind_turbine', label: 'Wind turbine', selected: false },
+    ]);
   });
 });

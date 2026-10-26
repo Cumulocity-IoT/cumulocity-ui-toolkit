@@ -6,15 +6,13 @@ import type { DotSeverity } from './status-dot.model';
  *
  * **One implementation, three callers.** This was copied twice before it was extracted: the
  * asset-tree row and the quick-access row each carried their own block, and the copies had
- * already drifted — only the tree's knew about `derated`, only the quick-access one knew about
- * `gone`. The palette would have been a third. The union of both is here, and neither caller's
- * rendering changes.
+ * already drifted. The palette would have been a third. The union of both is here.
  *
  * The two encodings, both load-bearing (OQ-T1, resolved: both):
  * - **Colour** — the worst active alarm severity in the subtree.
- * - **Fill** — solid is producing, a hollow ring is unavailable, a half fill is derated
- *   (producing but capped). The ring wins when both apply, because "stopped" outranks
- *   "capped". A stopped turbine with no alarm is exactly the case a severity-only dot hides.
+ * - **Fill** — solid when everything is available (or not availability-monitored), a hollow
+ *   ring when a device in the subtree is unavailable (`c8y_Availability`). An unavailable
+ *   device with no alarm is exactly the case a severity-only dot hides.
  *
  * `ViewEncapsulation.None` so the classes are global and a consuming plugin needs no extra
  * style import — the same reason `geo-map` does it. The trade is that these class names are
@@ -29,7 +27,6 @@ import type { DotSeverity } from './status-dot.model';
     class: 'ps-status-dot',
     '[class]': "'ps-status-dot ps-status-dot--' + severity()",
     '[class.ps-status-dot--unavailable]': 'unavailable()',
-    '[class.ps-status-dot--derated]': 'derated()',
     '[attr.title]': 'description() || null',
     '[attr.aria-label]': 'description() || null',
     // With a description the dot carries meaning and is announced; without one it is decorative
@@ -78,19 +75,12 @@ import type { DotSeverity } from './status-dot.model';
         background-color: transparent;
         box-shadow: inset 0 0 0 2px var(--ps-dot);
       }
-      /* Half filled: producing, but capped. Loses to the ring when both apply. */
-      .ps-status-dot--derated:not(.ps-status-dot--unavailable) {
-        background-image: linear-gradient(to right, transparent 50%, var(--ps-dot) 50%);
-        background-color: transparent;
-        box-shadow: inset 0 0 0 1px var(--ps-dot);
-      }
     `,
   ],
 })
 export class StatusDotComponent {
   readonly severity = input<DotSeverity>('ok');
   readonly unavailable = input(false);
-  readonly derated = input(false);
   /** The dot's meaning in words — see `describeDot`. Colour alone is not accessible. */
   readonly description = input<string>('');
 }

@@ -11,6 +11,9 @@ import {
   type SearchResult,
   type TypeFacet,
 } from './search.model';
+import { AssetStoreService } from '../asset-store/asset-store.service';
+import { inventoryTypeFacets } from '../asset-store/asset-type-facets';
+import { NavigatorSettingsService } from '../settings/navigator-settings.service';
 
 /**
  * Global search against the platform, in whichever mode the tenant's volume allows.
@@ -35,6 +38,8 @@ export class PlatformSearchBackend {
   private readonly fetchClient = inject(FetchClient);
   private readonly corpus = inject(SearchCorpusService);
   private readonly definitions = inject(AssetDefinitionService);
+  private readonly assets = inject(AssetStoreService);
+  private readonly navigatorSettings = inject(NavigatorSettingsService);
 
   async search(query: SearchQuery, signal?: AbortSignal): Promise<SearchResponse> {
     const corpus = await this.corpus.load();
@@ -85,11 +90,15 @@ export class PlatformSearchBackend {
 
   /**
    * Asset-type chips, from the Digital Twin Manager catalog the fleet cache already reads
-   * once per session. Tenants without DTM simply get no chips.
+   * once per session. Without DTM, the asset types present in the tree stand in — unless the
+   * user turned the inventory fallback off (options menu), then there are no chips.
    */
   async loadTypeFacets(): Promise<readonly TypeFacet[]> {
     await this.definitions.load();
+    if (this.definitions.available() !== false) return this.definitions.typeFacets();
+    if (!this.navigatorSettings.settings().inventoryFallback) return [];
+    const hierarchy = this.assets.hierarchy();
 
-    return this.definitions.typeFacets();
+    return hierarchy ? inventoryTypeFacets(hierarchy) : [];
   }
 }

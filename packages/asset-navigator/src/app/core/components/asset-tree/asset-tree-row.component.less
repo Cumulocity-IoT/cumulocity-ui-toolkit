@@ -179,10 +179,10 @@
 // Two independent encodings on one 8px dot (§3.3, OQ-T1 resolved as "both"):
 //
 //   colour = worst active alarm severity in the subtree
-//   shape  = whether anything in the subtree is not producing
+//   shape  = whether any device in the subtree is unavailable (c8y_Availability)
 //
 // The severity classes only set `--ps-dot`; the shape modifiers reuse it. That keeps
-// the two orthogonal — a red *ring* is a critical alarm on a stopped turbine, and it
+// the two orthogonal — a red *ring* is a critical alarm on an unavailable device, and it
 // stays legible without colour vision (NFR-T3).
 // The status dot is `ps-status-dot` (`components/status-dot/`) — one implementation for
 // the tree row, the quick-access row and the search palette. It brings its own styles.

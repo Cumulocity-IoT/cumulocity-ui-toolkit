@@ -14,7 +14,7 @@ import { buildHierarchy, type RawManagedObject } from './asset-rollup';
  */
 
 const asOf = '2026-08-05T09:00:00.000Z';
-const LEAF = 'wind_turbine';
+const LEAF = 'machine';
 
 function mo(
   id: string,
@@ -24,7 +24,7 @@ function mo(
   return {
     id,
     name: options.name ?? id,
-    type: options.type ?? 'wind_park',
+    type: options.type ?? 'site',
     childAssets: {
       references,
       ...(options.count === undefined ? {} : { count: options.count }),
@@ -113,7 +113,7 @@ describe('mergeLoadedAssets', () => {
 });
 
 describe('mergeLoadedAssets → buildHierarchy', () => {
-  it('produces a tree whose loaded park has its turbines and no pending flag', () => {
+  it('produces a tree whose loaded group has its children and no pending flag', () => {
     const skeleton = new Map([
       ['root', mo('root', { children: ['park'], count: 1 })],
       ['park', mo('park', { count: 2 })],
@@ -122,7 +122,7 @@ describe('mergeLoadedAssets → buildHierarchy', () => {
       ['park', branch([mo('t1', { type: LEAF, count: 0 }), mo('t2', { type: LEAF, count: 0 })], 2)],
     ]);
 
-    const hierarchy = buildHierarchy(mergeLoadedAssets(skeleton, branches), asOf, LEAF, null, {
+    const hierarchy = buildHierarchy(mergeLoadedAssets(skeleton, branches), asOf, null, {
       highVolume: true,
     });
 
@@ -131,13 +131,13 @@ describe('mergeLoadedAssets → buildHierarchy', () => {
     expect(hierarchy.pendingChildren.has('park')).toBe(false);
     // Fully loaded ⇒ the rollup may speak for the subtree.
     expect(hierarchy.rollup.get('park')?.partial).toBeUndefined();
-    expect(hierarchy.rollup.get('park')?.turbineCount).toBe(2);
+    expect(hierarchy.rollup.get('park')?.assetCount).toBe(3);
   });
 
   it('marks an unloaded park pending from its child count alone', () => {
     const skeleton = new Map([['park', mo('park', { count: 114 })]]);
 
-    const hierarchy = buildHierarchy(mergeLoadedAssets(skeleton, new Map()), asOf, LEAF, null, {
+    const hierarchy = buildHierarchy(mergeLoadedAssets(skeleton, new Map()), asOf, null, {
       highVolume: true,
     });
 

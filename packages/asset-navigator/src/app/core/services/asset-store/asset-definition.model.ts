@@ -59,7 +59,7 @@ const SKIP_PROPERTIES = new Set([
   'c8y_IsDeviceGroup',
   'c8y_LinkedSeries',
   'c8y_LatestMeasurements',
-  'wnd_Status',
+  'c8y_Availability',
   'creationTime',
   'lastUpdated',
   'owner',
