@@ -20,10 +20,15 @@
     </c8y-form-group>
 
     <c8y-form-group class="m-16">
-      <label for="keyInput" translate
-        >Key (optional — leave empty to import all options of this category)</label
-      >
-      <input type="text" class="form-control" id="keyInput" data-cy="import-option--key" [(ngModel)]="option.key" />
+      <label for="keyInput" translate>Key</label>
+      <input
+        type="text"
+        class="form-control"
+        id="keyInput"
+        data-cy="import-option--key"
+        [(ngModel)]="option.key"
+        [placeholder]="'Leave empty to import all options of this category' | translate"
+      />
       <c8y-messages> </c8y-messages>
     </c8y-form-group>
   </div>
@@ -44,7 +49,7 @@
       (click)="import()"
       data-cy="import-option--import"
       [class.btn-pending]="isLoading"
-      [disabled]="!option.category.length"
+      [disabled]="!option.category.trim().length"
     >
       {{ 'Import' | translate }}
     </button>

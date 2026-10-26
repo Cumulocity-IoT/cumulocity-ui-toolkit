@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { AlertService } from '@c8y/ngx-components';
+import { TranslateService } from '@ngx-translate/core';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { provideMock } from '~helpers/auto-mock.helper';
 import { TenantOptionRow } from '../tenant-option-management.model';
@@ -31,6 +32,7 @@ describe('ImportOptionModalComponent', () => {
         provideMock(TenantOptionManagementService),
         provideMock(AlertService),
         { provide: BsModalRef, useValue: modalRef },
+        { provide: TranslateService, useValue: { instant: (key: string) => key } },
       ],
     }).overrideComponent(ImportOptionModalComponent, { set: { imports: [], template: '' } });
 
@@ -61,7 +63,11 @@ describe('ImportOptionModalComponent', () => {
       await Promise.resolve();
       await Promise.resolve();
 
-      expect(optionsManagement.allowListOption).toHaveBeenCalledWith(component.option);
+      expect(optionsManagement.allowListOption).toHaveBeenCalledWith({
+        category: 'cat',
+        key: 'key',
+      });
+      expect(alertService.success).not.toHaveBeenCalled();
       expect(optionsManagement.allowListOptionsByCategory).not.toHaveBeenCalled();
       expect(emitted).toEqual([[single]]);
       expect(modalRef.hide).toHaveBeenCalled();
@@ -88,6 +94,25 @@ describe('ImportOptionModalComponent', () => {
       expect(optionsManagement.allowListOption).not.toHaveBeenCalled();
       expect(emitted).toEqual([rows]);
       expect(modalRef.hide).toHaveBeenCalled();
+      expect(alertService.success).toHaveBeenCalledWith(
+        '{{count}} tenant options of category "{{category}}" were added.'
+      );
+    });
+
+    it('treats a whitespace-only key as empty and trims the category', async () => {
+      component.option = { category: '  cat ', key: '   ' };
+      (optionsManagement.allowListOptionsByCategory as unknown as jasmine.Spy).and.resolveTo([]);
+
+      component.import();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(optionsManagement.allowListOptionsByCategory).toHaveBeenCalledWith('cat');
+      expect(optionsManagement.allowListOption).not.toHaveBeenCalled();
+      expect(alertService.success).toHaveBeenCalledWith(
+        'All tenant options of category "{{category}}" are already managed.'
+      );
+      expect(modalRef.hide).toHaveBeenCalled();
     });
   });
 
@@ -107,7 +132,10 @@ describe('ImportOptionModalComponent', () => {
       await Promise.resolve();
       await Promise.resolve();
 
-      expect(alertService.danger).toHaveBeenCalled();
+      expect(alertService.danger).toHaveBeenCalledWith(
+        'Option could not be imported',
+        'No tenant options found for category "empty-cat"'
+      );
       expect(modalRef.hide).not.toHaveBeenCalled();
       expect(emitted).toEqual([]);
       expect(component.isLoading).toBeFalse();

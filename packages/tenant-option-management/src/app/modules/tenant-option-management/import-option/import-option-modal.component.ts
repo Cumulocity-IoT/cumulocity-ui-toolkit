@@ -1,6 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { ITenantOption } from '@c8y/client';
 import { AlertService, CoreModule } from '@c8y/ngx-components';
+import { gettext } from '@c8y/ngx-components/gettext';
+import { TranslateService } from '@ngx-translate/core';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Subject } from 'rxjs';
 import { TenantOptionManagementService } from '../tenant-option-management.service';
@@ -24,22 +26,43 @@ export class ImportOptionModalComponent {
   private tenantOptionMgmt = inject(TenantOptionManagementService);
   private alert = inject(AlertService);
   private modal = inject(BsModalRef);
+  private translate = inject(TranslateService);
 
   import() {
+    const category = this.option.category.trim();
+    const key = this.option.key.trim();
+    const bulk = !key.length;
+
     this.isLoading = true;
 
-    const importPromise = this.option.key.length
-      ? this.tenantOptionMgmt.allowListOption(this.option).then((row) => [row])
-      : this.tenantOptionMgmt.allowListOptionsByCategory(this.option.category);
+    const importPromise = bulk
+      ? this.tenantOptionMgmt.allowListOptionsByCategory(category)
+      : this.tenantOptionMgmt.allowListOption({ category, key }).then((row) => [row]);
 
     importPromise
       .then(
         (rows) => {
+          if (bulk) {
+            this.alert.success(
+              rows.length
+                ? (this.translate.instant(
+                    gettext('{{count}} tenant options of category "{{category}}" were added.'),
+                    { count: rows.length, category }
+                  ) as string)
+                : (this.translate.instant(
+                    gettext('All tenant options of category "{{category}}" are already managed.'),
+                    { category }
+                  ) as string)
+            );
+          }
           this.closeSubject.next(rows);
           this.modal.hide();
         },
-        (error) => {
-          this.alert.danger('Option could not be imported', JSON.stringify(error));
+        (error: unknown) => {
+          this.alert.danger(
+            gettext('Option could not be imported'),
+            error instanceof Error ? error.message : JSON.stringify(error)
+          );
         }
       )
       .finally(() => (this.isLoading = false));
