@@ -351,7 +351,7 @@ importers:
     devDependencies:
       '@cumulocity-iot/ui-sdk':
         specifier: 1.0.0
-        version: 1.0.0(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.42(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@types/node@24.13.2)(chokidar@5.0.0)(cypress@15.15.0)(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 1.0.0(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.42(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)))(@types/node@24.13.2)(chokidar@5.0.0)(cypress@15.15.0)(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))
       '@types/chai':
         specifier: ^5.2.3
         version: 5.2.3
@@ -1424,15 +1424,6 @@ packages:
       '@oxc-angular/vite': '>=0.0.28'
       cypress: '>=13 <15'
       vite: '>=8.0.0'
-    peerDependenciesMeta:
-      '@module-federation/vite':
-        optional: true
-      '@oxc-angular/vite':
-        optional: true
-      cypress:
-        optional: true
-      vite:
-        optional: true
 
   '@cypress/grep@5.1.0':
     resolution: {integrity: sha512-n/8m5g2AuZf4thHhuo+rp7Fgkfm06k0uM9NlP0GrfWE5vaIJJ+8U10SOtjVj9bapjYI7l9RZiT87XSBU3wBFOA==}
@@ -7822,7 +7813,7 @@ snapshots:
       autoprefixer: 10.4.27(postcss@8.5.31)
       babel-loader: 10.0.0(@babel/core@7.29.7)(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31))
       browserslist: 4.29.4
-      copy-webpack-plugin: 14.0.0(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31))
+      copy-webpack-plugin: 14.0.0(webpack@5.105.2(postcss@8.5.31))
       css-loader: 7.1.3(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31))
       esbuild-wasm: 0.28.1
       http-proxy-middleware: 3.0.7
@@ -9097,26 +9088,26 @@ snapshots:
       angular-gettext-tools: https://codeload.github.com/rubenv/angular-gettext-tools/tar.gz/5a20d5fe2ad768bfd0cac18259b4986346061eda
       autoprefixer: 10.4.20(postcss@8.5.31)
       babel-eslint: 10.1.0(eslint@9.39.4(jiti@2.7.0))
-      babel-loader: 9.2.1(@babel/core@7.29.7)(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31))
+      babel-loader: 9.2.1(@babel/core@7.29.7)(webpack@5.105.2(postcss@8.5.31))
       babel-plugin-angularjs-annotate: 0.10.0
       chalk: 4.1.2
       commander: 11.1.0
-      copy-webpack-plugin: 14.0.0(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31))
+      copy-webpack-plugin: 14.0.0(webpack@5.105.2(postcss@8.5.31))
       cosmiconfig: 9.0.0(typescript@5.9.3)
       cosmiconfig-typescript-loader: 6.1.0(@types/node@24.13.2)(cosmiconfig@9.0.0(typescript@5.9.3))(typescript@5.9.3)
-      css-loader: 6.10.0(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31))
+      css-loader: 6.10.0(webpack@5.105.2(postcss@8.5.31))
       dotenv: 17.2.3
       fast-glob: 3.3.2
-      file-loader: 6.2.0(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31))
+      file-loader: 6.2.0(webpack@5.105.2(postcss@8.5.31))
       fs-extra: 11.3.0
-      html-loader: 5.1.0(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31))
+      html-loader: 5.1.0(webpack@5.105.2(postcss@8.5.31))
       html-webpack-plugin: 5.6.3(webpack@5.105.2(postcss@8.5.31))
       imports-loader: 0.8.0
-      mini-css-extract-plugin: 2.9.4(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31))
+      mini-css-extract-plugin: 2.9.4(webpack@5.105.2(postcss@8.5.31))
       pofile: 1.0.11
-      postcss-loader: 8.1.1(postcss@8.5.31)(typescript@5.9.3)(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31))
+      postcss-loader: 8.1.1(postcss@8.5.31)(typescript@5.9.3)(webpack@5.105.2(postcss@8.5.31))
       rimraf: 2.6.2
-      style-loader: 4.0.0(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31))
+      style-loader: 4.0.0(webpack@5.105.2(postcss@8.5.31))
       terser-webpack-plugin: 5.6.1(esbuild@0.28.1)(postcss@8.5.31)(webpack@5.105.2(postcss@8.5.31))
       tslib: 2.8.1
       typescript: 5.9.3
@@ -9298,16 +9289,15 @@ snapshots:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
 
-  '@cumulocity-iot/ui-sdk@1.0.0(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.42(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@types/node@24.13.2)(chokidar@5.0.0)(cypress@15.15.0)(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0))':
+  '@cumulocity-iot/ui-sdk@1.0.0(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.42(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)))(@types/node@24.13.2)(chokidar@5.0.0)(cypress@15.15.0)(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))':
     dependencies:
       '@angular/cli': 21.2.28(@types/node@24.13.2)(chokidar@5.0.0)
+      '@module-federation/vite': 1.23.5(typescript@5.9.3)(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))
+      '@oxc-angular/vite': 0.0.42(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))
       citty: 0.2.2
-      fflate: 0.8.3
-    optionalDependencies:
-      '@module-federation/vite': 1.23.5(typescript@5.9.3)(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0))
-      '@oxc-angular/vite': 0.0.42(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0))
       cypress: 15.15.0
-      vite: 7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)
+      fflate: 0.8.3
+      vite: 7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)
     transitivePeerDependencies:
       - '@cfworker/json-schema'
       - '@types/node'
@@ -9917,52 +9907,44 @@ snapshots:
       adm-zip: 0.6.1
       isomorphic-ws: 5.0.0(ws@8.21.3)
       typescript: 5.9.3
-      undici: 7.29.1
+      undici: 7.30.1
       ws: 8.21.3
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
-    optional: true
 
-  '@module-federation/error-codes@2.9.2':
-    optional: true
+  '@module-federation/error-codes@2.9.2': {}
 
   '@module-federation/managers@2.9.2':
     dependencies:
       '@module-federation/sdk': 2.9.2
-    optional: true
 
   '@module-federation/runtime-core@2.9.2':
     dependencies:
       '@module-federation/error-codes': 2.9.2
       '@module-federation/sdk': 2.9.2
-    optional: true
 
   '@module-federation/runtime@2.9.2':
     dependencies:
       '@module-federation/error-codes': 2.9.2
       '@module-federation/runtime-core': 2.9.2
       '@module-federation/sdk': 2.9.2
-    optional: true
 
-  '@module-federation/sdk@2.9.2':
-    optional: true
+  '@module-federation/sdk@2.9.2': {}
 
-  '@module-federation/third-party-dts-extractor@2.9.2':
-    optional: true
+  '@module-federation/third-party-dts-extractor@2.9.2': {}
 
-  '@module-federation/vite@1.23.5(typescript@5.9.3)(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0))':
+  '@module-federation/vite@1.23.5(typescript@5.9.3)(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))':
     dependencies:
       '@module-federation/dts-plugin': 2.9.2(typescript@5.9.3)
       '@module-federation/runtime': 2.9.2
       '@module-federation/sdk': 2.9.2
-      vite: 7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)
+      vite: 7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)
     transitivePeerDependencies:
       - bufferutil
       - typescript
       - utf-8-validate
       - vue-tsc
-    optional: true
 
   '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.4':
     optional: true
@@ -10182,10 +10164,10 @@ snapshots:
   '@oxc-angular/binding-win32-x64-msvc@0.0.42':
     optional: true
 
-  '@oxc-angular/vite@0.0.42(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0))':
+  '@oxc-angular/vite@0.0.42(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))':
     dependencies:
       obug: 3.0.0
-      vite: 7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)
+      vite: 7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)
     optionalDependencies:
       '@oxc-angular/binding-darwin-arm64': 0.0.42
       '@oxc-angular/binding-darwin-x64': 0.0.42
@@ -10195,7 +10177,6 @@ snapshots:
       '@oxc-angular/binding-linux-x64-musl': 0.0.42
       '@oxc-angular/binding-win32-arm64-msvc': 0.0.42
       '@oxc-angular/binding-win32-x64-msvc': 0.0.42
-    optional: true
 
   '@oxc-project/types@0.113.0': {}
 
@@ -10969,8 +10950,7 @@ snapshots:
       loader-utils: 2.0.4
       regex-parser: 2.3.1
 
-  adm-zip@0.6.1:
-    optional: true
+  adm-zip@0.6.1: {}
 
   agent-base@6.0.2:
     dependencies:
@@ -11234,7 +11214,7 @@ snapshots:
       find-up: 5.0.0
       webpack: 5.105.2(esbuild@0.28.1)(postcss@8.5.31)
 
-  babel-loader@9.2.1(@babel/core@7.29.7)(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31)):
+  babel-loader@9.2.1(@babel/core@7.29.7)(webpack@5.105.2(postcss@8.5.31)):
     dependencies:
       '@babel/core': 7.29.7
       find-cache-dir: 4.0.0
@@ -11703,7 +11683,7 @@ snapshots:
     dependencies:
       is-what: 4.1.16
 
-  copy-webpack-plugin@14.0.0(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31)):
+  copy-webpack-plugin@14.0.0(webpack@5.105.2(postcss@8.5.31)):
     dependencies:
       glob-parent: 6.0.2
       normalize-path: 3.0.0
@@ -11779,7 +11759,7 @@ snapshots:
       shebang-command: 2.0.0
       which: 2.0.2
 
-  css-loader@6.10.0(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31)):
+  css-loader@6.10.0(webpack@5.105.2(postcss@8.5.31)):
     dependencies:
       icss-utils: 5.1.0(postcss@8.5.31)
       postcss: 8.5.31
@@ -12609,7 +12589,7 @@ snapshots:
     dependencies:
       flat-cache: 4.0.1
 
-  file-loader@6.2.0(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31)):
+  file-loader@6.2.0(webpack@5.105.2(postcss@8.5.31)):
     dependencies:
       loader-utils: 2.0.4
       schema-utils: 3.3.0
@@ -12938,7 +12918,7 @@ snapshots:
 
   html-escaper@2.0.2: {}
 
-  html-loader@5.1.0(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31)):
+  html-loader@5.1.0(webpack@5.105.2(postcss@8.5.31)):
     dependencies:
       html-minifier-terser: 7.2.0
       parse5: 7.3.0
@@ -13337,7 +13317,6 @@ snapshots:
   isomorphic-ws@5.0.0(ws@8.21.3):
     dependencies:
       ws: 8.21.3
-    optional: true
 
   isstream@0.1.2: {}
 
@@ -13885,7 +13864,7 @@ snapshots:
       tapable: 2.3.3
       webpack: 5.105.2(esbuild@0.28.1)(postcss@8.5.31)
 
-  mini-css-extract-plugin@2.9.4(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31)):
+  mini-css-extract-plugin@2.9.4(webpack@5.105.2(postcss@8.5.31)):
     dependencies:
       schema-utils: 4.3.3
       tapable: 2.3.3
@@ -14220,8 +14199,7 @@ snapshots:
 
   obuf@1.1.2: {}
 
-  obug@3.0.0:
-    optional: true
+  obug@3.0.0: {}
 
   odiff-bin@4.3.8: {}
 
@@ -14511,7 +14489,7 @@ snapshots:
 
   possible-typed-array-names@1.1.0: {}
 
-  postcss-loader@8.1.1(postcss@8.5.31)(typescript@5.9.3)(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31)):
+  postcss-loader@8.1.1(postcss@8.5.31)(typescript@5.9.3)(webpack@5.105.2(postcss@8.5.31)):
     dependencies:
       cosmiconfig: 9.0.2(typescript@5.9.3)
       jiti: 1.21.7
@@ -15384,7 +15362,7 @@ snapshots:
 
   strip-json-comments@3.1.1: {}
 
-  style-loader@4.0.0(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31)):
+  style-loader@4.0.0(webpack@5.105.2(postcss@8.5.31)):
     dependencies:
       webpack: 5.105.2(esbuild@0.28.1)(postcss@8.5.31)
 
@@ -15760,6 +15738,24 @@ snapshots:
       tsx: 4.22.4
       yaml: 2.9.0
 
+  vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0):
+    dependencies:
+      esbuild: 0.28.1
+      fdir: 6.5.0(picomatch@4.0.4)
+      picomatch: 4.0.4
+      postcss: 8.5.31
+      rollup: 4.62.2
+      tinyglobby: 0.2.17
+    optionalDependencies:
+      '@types/node': 24.13.2
+      fsevents: 2.3.3
+      jiti: 2.7.0
+      less: 4.9.0
+      sass: 1.101.0
+      terser: 5.48.0
+      tsx: 4.22.4
+      yaml: 2.9.0
+
   void-elements@2.0.1: {}
 
   wait-on@9.0.10:
@@ -16022,8 +16018,7 @@ snapshots:
 
   ws@8.21.0: {}
 
-  ws@8.21.3:
-    optional: true
+  ws@8.21.3: {}
 
   wsl-utils@0.1.0:
     dependencies:
