@@ -328,6 +328,12 @@ importers:
         specifier: ^7.8.0
         version: 7.8.2
 
+  packages/smart-views:
+    dependencies:
+      shared:
+        specifier: workspace:*
+        version: link:../shared
+
   packages/tenant-option-management:
     dependencies:
       jsoneditor:
