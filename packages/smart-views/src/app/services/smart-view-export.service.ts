@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { IManagedObject, InventoryService, QueriesUtil } from '@c8y/client';
+import { type IManagedObject, InventoryService, QueriesUtil } from '@c8y/client';
 import { toFilterQueryString } from '../smart-views.model';
 
 /**

@@ -1,6 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { InventoryService } from '@c8y/client';
-import { Column, DataSourceModifier, ServerSideDataResult } from '@c8y/ngx-components';
+import {
+  type Column,
+  type DataSourceModifier,
+  type ServerSideDataResult,
+} from '@c8y/ngx-components';
 import { provideMock } from '~helpers/auto-mock.helper';
 import { SmartViewDatasourceService } from './smart-view-datasource.service';
 

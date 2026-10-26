@@ -1,7 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { InventoryService } from '@c8y/client';
 import { provideMock } from '~helpers/auto-mock.helper';
-import { SMART_VIEW_CONFIGURATION_TYPE, SmartViewConfigurationDraft } from '../smart-views.model';
+import {
+  SMART_VIEW_CONFIGURATION_TYPE,
+  type SmartViewConfigurationDraft,
+} from '../smart-views.model';
 import { SmartViewConfigurationService } from './smart-view-configuration.service';
 
 describe('SmartViewConfigurationService', () => {

@@ -1,9 +1,9 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, type OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AlertService, CoreModule } from '@c8y/ngx-components';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { take } from 'rxjs/operators';
-import { ReleaseNote } from '../../models/release-notes.model';
+import { type ReleaseNote } from '../../models/release-notes.model';
 import { ReleaseNotesService } from '../../services/release-notes.service';
 import { ReminderNotesAdminModalComponent } from '../admin-modal/admin-modal.component';
 import { TranslateService } from '@ngx-translate/core';

@@ -1,12 +1,16 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, type OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AlertService, CoreModule } from '@c8y/ngx-components';
 import { IconSelectorService } from '@c8y/ngx-components/icon-selector';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { DtmService } from '~services/dtm.service';
-import { DtmPropertyDefinition } from '~models/dtm.model';
-import { AssetDefinition, SmartViewColumn, SmartViewConfiguration } from '../../smart-views.model';
+import { type DtmPropertyDefinition } from '~models/dtm.model';
+import {
+  type AssetDefinition,
+  type SmartViewColumn,
+  type SmartViewConfiguration,
+} from '../../smart-views.model';
 import { SmartViewConfigurationService } from '../../services/smart-view-configuration.service';
 
 /**

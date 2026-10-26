@@ -1,4 +1,4 @@
-import { Token, TokenType } from './reverse-queries-util.model';
+import { type Token, type TokenType } from './reverse-queries-util.model';
 
 export class Tokenizer {
   private pos = 0;

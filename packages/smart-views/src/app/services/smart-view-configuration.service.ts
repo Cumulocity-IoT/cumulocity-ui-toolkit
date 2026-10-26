@@ -1,13 +1,13 @@
 import { inject, Injectable } from '@angular/core';
 import { InventoryService } from '@c8y/client';
-import { Observable, Subject } from 'rxjs';
+import { type Observable, Subject } from 'rxjs';
 import {
   ASSET_DEFINITION_TYPE,
-  AssetDefinition,
+  type AssetDefinition,
   SMART_VIEW_CONFIGURATION_TYPE,
-  SmartViewConfiguration,
-  SmartViewConfigurationData,
-  SmartViewConfigurationDraft,
+  type SmartViewConfiguration,
+  type SmartViewConfigurationData,
+  type SmartViewConfigurationDraft,
 } from '../smart-views.model';
 
 @Injectable({ providedIn: 'root' })

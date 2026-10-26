@@ -10,6 +10,7 @@
         <button
           class="btn-clean ps-detail__cog m-l-auto"
           type="button"
+          data-cy="asset-navigator--detail-configure"
           [attr.aria-label]="'Configure fields' | translate"
           [attr.title]="'Configure fields' | translate"
           (click)="openConfig.emit()"
@@ -24,16 +25,20 @@
 
     <dl class="ps-detail__fields">
       @for (row of rows(); track row.key) {
-        <div class="ps-detail__field d-flex a-i-baseline">
+        <div
+          class="ps-detail__field d-flex a-i-baseline"
+          data-cy="asset-navigator--detail-field"
+          [attr.data-field-id]="row.key"
+        >
           <dt class="text-muted">{{ row.label | translate }}</dt>
-          <dd
+          <dd data-cy="asset-navigator--detail-value"
             [class.text-muted]="row.unavailable"
             [class.ps-detail__value--status]="row.render === 'status'"
           >
             @if (row.unavailable) {
               <!--
                 Declared but not resolvable yet. Saying so is the point: a blank row
-                would read as "this turbine is fine" (NFR-T5).
+                would read as "this asset is fine" (NFR-T5).
               -->
               <span [attr.title]="'This field needs a data source that is not available yet' | translate">
                 {{ 'Not available' | translate }}
@@ -53,21 +58,6 @@
         <i c8yIcon="exclamation-circle"></i>
         {{ 'Live values could not be loaded.' | translate }}
       </p>
-    }
-
-    <!-- Never for a group: it has no power series of its own, so the panel only ever
-         had "No power history" to show there (the load is skipped for branches too). -->
-    @if (showSparkline() && !isBranch()) {
-      <div class="ps-detail__spark">
-        @if (sparklinePath(); as points) {
-          <svg viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true">
-            <polyline [attr.points]="points" />
-          </svg>
-        } @else {
-          <span class="text-muted">{{ 'No power history' | translate }}</span>
-        }
-        <span class="ps-detail__spark-label text-muted">{{ 'Power, 24 h' | translate }}</span>
-      </div>
     }
 
     <footer class="ps-detail__actions d-flex">

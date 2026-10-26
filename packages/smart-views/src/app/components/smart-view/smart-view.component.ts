@@ -1,14 +1,14 @@
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, inject, type OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { InventoryService } from '@c8y/client';
-import { Column, CoreModule, Pagination } from '@c8y/ngx-components';
+import { type Column, CoreModule, type Pagination } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { TranslateService } from '@ngx-translate/core';
 import {
   isSmartViewConfiguration,
-  SmartViewColumn,
-  SmartViewConfiguration,
+  type SmartViewColumn,
+  type SmartViewConfiguration,
 } from '../../smart-views.model';
 import { SmartViewDatasourceService } from '../../services/smart-view-datasource.service';
 

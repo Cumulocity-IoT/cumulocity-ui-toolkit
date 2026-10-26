@@ -1,4 +1,4 @@
-import { inject, signal, Injectable, OnDestroy } from '@angular/core';
+import { inject, signal, Injectable, type OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { LocalStorageService } from './local-storage.service';
 

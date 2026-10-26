@@ -1,7 +1,7 @@
 import {
-  KpiAggregatorWidgetConfig,
+  type KpiAggregatorWidgetConfig,
   KpiAggregatorWidgetDisplay,
-  KpiAggregatorWidgetOptions,
+  type KpiAggregatorWidgetOptions,
   KpiAggregatorWidgetOrder,
   KpiAggregatorWidgetSort,
 } from './kpi-aggregator-widget.model';

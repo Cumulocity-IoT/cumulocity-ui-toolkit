@@ -5,6 +5,7 @@ import {
   type AlarmCounts,
   type AlarmSeverityKey,
   type AssetAvailability,
+  type AttachedDevice,
   type AssetHierarchy,
   type AssetNode,
   type AssetRollup,
@@ -19,7 +20,7 @@ import {
 
 /**
  * Sibling order. Numeric collation so `T2` sorts before `T10` and `069` before `114` —
- * turbine names are overwhelmingly numbered, and plain lexical order reads as shuffled.
+ * asset and device names are very often numbered, and plain lexical order reads as shuffled.
  *
  * The sweep cannot do this for us: it is ordered by `_id` (the only ordering that makes
  * paging stable), and sibling order comes from each parent's `childAssets` references,
@@ -42,10 +43,8 @@ const OMITTED_FRAGMENTS = new Set([
   'c8y_ActiveAlarmsStatus',
   'c8y_Position',
   // `c8y_Notes` (the asset description) is deliberately **not** omitted: the search
-  // indexes it, and "the park where the gearbox was replaced" is a real query. It is one
+  // indexes it, and "the site where the pump was replaced" is a real query. It is one
   // short string per asset next to fragments already kept in full.
-  // Big, and read through the dedicated `wnd_PowerCurve` fetch rather than the tree.
-  'wnd_PowerCurve',
 ]);
 
 /** Minimal shape this module needs — narrower than `IManagedObject` on purpose. */
@@ -68,47 +67,43 @@ export interface RawManagedObject {
   [key: string]: unknown;
 }
 
-/** `WTUR.TurSt` codes that mean the turbine is not producing. */
-const HALTED_TURBINE_STATES = new Set([1, 2, 6]); // Stop · Standby · Braking
-/** `WTUR.TurSt` codes that mean it is producing or on its way there. */
-const RUNNING_TURBINE_STATES = new Set([3, 4, 5]); // Starting · Running · Freerun
-/** `WTUR.OpMod` codes that mean producing, but capped. */
-const DERATING_OP_MODES = new Set([2, 3, 4, 5]); // curtailed grid · noise · shadow · sector
-/** `WTUR.OpMod` maintenance — the turbine is deliberately out. */
-const MAINTENANCE_OP_MODE = 6;
-
 /**
- * Reads one `wnd_Status` entry as a numeric IEC code. The map is written from
- * `IECOperatingStateChange` events, so an entry may be the bare code or the event's
- * `{ stVal }` / `{ value }` wrapper depending on which writer produced it.
+ * Availability from the platform-standard `c8y_Availability.status` (written by the platform's
+ * availability monitoring). `MAINTENANCE` reads as `unavailable` — deliberately out of service;
+ * anything missing or unmapped is `unknown`, which is never counted as a fault.
  */
-function statusCode(status: unknown, key: string): number | null {
-  if (!status || typeof status !== 'object') return null;
-  const raw = (status as Record<string, unknown>)[key];
-  const value =
-    raw !== null && typeof raw === 'object'
-      ? ((raw as Record<string, unknown>).stVal ?? (raw as Record<string, unknown>).value)
-      : raw;
-  const code = typeof value === 'string' ? Number(value) : value;
-  return typeof code === 'number' && Number.isFinite(code) ? code : null;
+export function readAvailability(mo: RawManagedObject): AssetAvailability {
+  const fragment = mo['c8y_Availability'];
+
+  if (!fragment || typeof fragment !== 'object') return 'unknown';
+  const status = (fragment as Record<string, unknown>)['status'];
+
+  switch (typeof status === 'string' ? status.toUpperCase() : null) {
+    case 'AVAILABLE':
+      return 'available';
+    case 'UNAVAILABLE':
+    case 'MAINTENANCE':
+      return 'unavailable';
+    default:
+      return 'unknown';
+  }
 }
 
-/** Availability from `wnd_Status`; `unknown` whenever the codes do not say. */
-export function readAvailability(mo: RawManagedObject): AssetAvailability {
-  const status = mo['wnd_Status'];
-  const turbineState = statusCode(status, 'WTUR.TurSt');
-  const opMode = statusCode(status, 'WTUR.OpMod');
+/** A plain device — `c8y_IsDevice` without `c8y_IsAsset`: counted below its asset, never a row. */
+export function isPlainDevice(mo: RawManagedObject): boolean {
+  return mo['c8y_IsDevice'] !== undefined && mo['c8y_IsAsset'] === undefined;
+}
 
-  if (opMode === MAINTENANCE_OP_MODE) return 'unavailable';
-  if (turbineState !== null && HALTED_TURBINE_STATES.has(turbineState)) return 'unavailable';
+function toAttachedDevice(mo: RawManagedObject): AttachedDevice {
+  const id = String(mo.id);
 
-  if (turbineState !== null && RUNNING_TURBINE_STATES.has(turbineState)) {
-    return opMode !== null && DERATING_OP_MODES.has(opMode) ? 'derated' : 'available';
-  }
-  // A curtailment code on its own still tells us it is producing under a cap.
-  if (opMode !== null && DERATING_OP_MODES.has(opMode)) return 'derated';
-
-  return 'unknown';
+  return {
+    id,
+    name: mo.name ?? id,
+    type: mo.type ?? '',
+    availability: readAvailability(mo),
+    alarms: readAlarmCounts(mo),
+  };
 }
 
 export function readAlarmCounts(mo: RawManagedObject): AlarmCounts {
@@ -143,8 +138,8 @@ export function readPosition(mo: RawManagedObject): { lat: number; lng: number }
 
 /**
  * Everything else on the MO, so the detail panel can render tier-0 fields at once.
- * `wnd_Status` deliberately stays: `availability` reduces it to one word, and the
- * panel shows the individual subsystem states behind that.
+ * `c8y_Availability` deliberately stays: `availability` reduces it to one word, and a
+ * configured `property` field may still want the raw fragment (e.g. `lastMessage`).
  */
 function readProperties(mo: RawManagedObject): Record<string, unknown> {
   const properties: Record<string, unknown> = {};
@@ -174,6 +169,8 @@ export function toAssetNode(mo: RawManagedObject): AssetNode {
     position: readPosition(mo),
     alarms: readAlarmCounts(mo),
     availability: readAvailability(mo),
+    isDevice: mo['c8y_IsDevice'] !== undefined,
+    devices: [],
     properties: readProperties(mo),
   };
 }
@@ -191,6 +188,8 @@ function sameNode(previous: AssetNode, next: AssetNode): boolean {
     previous.name === next.name &&
     previous.type === next.type &&
     previous.availability === next.availability &&
+    previous.isDevice === next.isDevice &&
+    sameDevices(previous.devices, next.devices) &&
     previous.alarms.critical === next.alarms.critical &&
     previous.alarms.major === next.alarms.major &&
     previous.alarms.minor === next.alarms.minor &&
@@ -200,6 +199,28 @@ function sameNode(previous: AssetNode, next: AssetNode): boolean {
     previous.childIds.length === next.childIds.length &&
     previous.childIds.every((childId, index) => childId === next.childIds[index]) &&
     sameProperties(previous.properties, next.properties)
+  );
+}
+
+function sameDevices(
+  previous: readonly AttachedDevice[],
+  next: readonly AttachedDevice[]
+): boolean {
+  return (
+    previous.length === next.length &&
+    previous.every((device, index) => {
+      const other = next[index];
+
+      return (
+        device.id === other.id &&
+        device.name === other.name &&
+        device.availability === other.availability &&
+        device.alarms.critical === other.alarms.critical &&
+        device.alarms.major === other.alarms.major &&
+        device.alarms.minor === other.alarms.minor &&
+        device.alarms.warning === other.alarms.warning
+      );
+    })
   );
 }
 
@@ -240,6 +261,10 @@ export interface BuildHierarchyOptions {
 /**
  * Builds the hierarchy from a flat sweep.
  *
+ * The sweep holds assets **and** devices. Assets become nodes; plain devices (see
+ * {@link isPlainDevice}) are attached to the asset that references them and only feed the
+ * rollup's device counts, availability and alarms — the tree draws assets.
+ *
  * Parent edges are **inverted from `childAssets`** rather than fetched with
  * `withParents=true`: the sweep already carries every node, so the edges are free,
  * and `assetParents` is documented to ignore inventory roles — using it would let
@@ -251,7 +276,6 @@ export interface BuildHierarchyOptions {
 export function buildHierarchy(
   raw: readonly RawManagedObject[],
   asOf: string,
-  leafType: string,
   previous?: AssetHierarchy | null,
   options: BuildHierarchyOptions = {}
 ): AssetHierarchy {
@@ -259,7 +283,13 @@ export function buildHierarchy(
   const byId = new Map<string, AssetNode>();
   const childCounts = new Map<string, number>();
 
+  const devices = new Map<string, AttachedDevice>();
+
   for (const mo of raw) {
+    if (isPlainDevice(mo)) {
+      devices.set(String(mo.id), toAttachedDevice(mo));
+      continue;
+    }
     const node = toAssetNode(mo);
 
     byId.set(node.id, node);
@@ -279,13 +309,19 @@ export function buildHierarchy(
       .filter((childId) => byId.has(childId))
       .sort((a, b) => BY_NAME.compare(byId.get(a)?.name ?? '', byId.get(b)?.name ?? ''));
 
-    if (reachable.length !== node.childIds.length) unresolved.add(node.id);
+    const attached = node.childIds
+      .map((childId) => devices.get(childId))
+      .filter((device): device is AttachedDevice => device !== undefined)
+      .sort((a, b) => BY_NAME.compare(a.name, b.name));
+
+    if (reachable.length + attached.length !== node.childIds.length) unresolved.add(node.id);
 
     if (
+      attached.length ||
       reachable.length !== node.childIds.length ||
       reachable.some((childId, index) => childId !== node.childIds[index])
     ) {
-      byId.set(node.id, { ...node, childIds: reachable });
+      byId.set(node.id, { ...node, childIds: reachable, devices: attached });
     }
   }
 
@@ -301,7 +337,7 @@ export function buildHierarchy(
 
             // A count is authoritative: more children exist than are loaded ⇒ pending. It also
             // settles the leaf case (`count === 0` ⇒ never a twisty), which no reference list can.
-            if (count !== undefined) return count > node.childIds.length;
+            if (count !== undefined) return count > node.childIds.length + node.devices.length;
 
             // No count (an older platform, or a mock): fall back to the weaker signal.
             return unresolved.has(node.id);
@@ -336,7 +372,7 @@ export function buildHierarchy(
   return {
     byId,
     rootIds,
-    rollup: computeRollup(byId, rootIds, leafType, previous?.rollup, pendingChildren),
+    rollup: computeRollup(byId, rootIds, previous?.rollup, pendingChildren),
     asOf,
     mode,
     pendingChildren,
@@ -395,15 +431,19 @@ function worstOf(counts: AlarmCounts): AlarmSeverityKey | null {
   return ALARM_SEVERITIES.find((severity) => counts[severity] > 0) ?? null;
 }
 
+/** 1 when the severity is critical or major — what "alarmed" means in every count. */
+function isSevere(severity: AlarmSeverityKey | null): number {
+  return severity === 'critical' || severity === 'major' ? 1 : 0;
+}
+
 /**
  * Bottom-up rollup over the whole hierarchy, iterative (a 50k fleet would blow a
  * recursive stack). Every ancestor up to the root gets the subtree's worst severity,
- * so a critical alarm on one turbine reddens the whole path (AC-T10).
+ * so a critical alarm on one device reddens the whole path (AC-T10).
  */
 export function computeRollup(
   byId: ReadonlyMap<string, AssetNode>,
   rootIds: readonly string[],
-  leafType: string,
   previous?: ReadonlyMap<string, AssetRollup> | null,
   pendingChildren: ReadonlySet<string> = NO_PENDING_CHILDREN
 ): Map<string, AssetRollup> {
@@ -414,7 +454,7 @@ export function computeRollup(
   // enters each component at its top, and it does not: nodes unreachable from a root (see
   // `linkHierarchy`) are entered in `byId` order, i.e. the sweep's `_id` order, which says
   // nothing about depth. Entering such a component at a leaf put a parent ahead of its own
-  // child, the child's rollup did not exist yet, and its alarms and turbines were silently
+  // child, the child's rollup did not exist yet, and its alarms and counts were silently
   // dropped from every ancestor above it.
   //
   // Roots first so the reachable fleet is walked from the top, then whatever is left.
@@ -451,7 +491,7 @@ export function computeRollup(
 
   // Subtrees that are missing data, propagated upwards: a node is incomplete when its own
   // children are unloaded, or when anything below it is incomplete. This is the whole reason
-  // the rollup can stay honest in `high-volume` mode — a park with one loaded turbine must not
+  // the rollup can stay honest in `high-volume` mode — a site with one loaded asset must not
   // report "worst: minor" while 499 unloaded siblings might be critical.
   const incomplete = new Set<string>(pendingChildren);
   const rollup = new Map<string, AssetRollup>();
@@ -463,13 +503,22 @@ export function computeRollup(
     const alarms: AlarmCounts = { ...EMPTY_ALARM_COUNTS };
 
     addCounts(alarms, node.alarms);
-    const isLeaf = node.type === leafType;
     const ownWorst = worstOf(node.alarms);
-    let turbineCount = isLeaf ? 1 : 0;
-    // Assets, not alarms: a turbine with six active alarms is one alarmed turbine.
-    let alarmedCount = isLeaf && (ownWorst === 'critical' || ownWorst === 'major') ? 1 : 0;
-    let unavailableCount = isLeaf && node.availability === 'unavailable' ? 1 : 0;
-    let deratedCount = isLeaf && node.availability === 'derated' ? 1 : 0;
+    // Units, not alarms: a device with six active alarms is one alarmed device.
+    let assetCount = 1;
+    let alarmedAssetCount = isSevere(ownWorst);
+    let deviceCount = node.isDevice ? 1 : 0;
+    let alarmedDeviceCount = node.isDevice ? isSevere(ownWorst) : 0;
+    let availableCount = node.isDevice && node.availability === 'available' ? 1 : 0;
+    let unavailableCount = node.isDevice && node.availability === 'unavailable' ? 1 : 0;
+
+    for (const device of node.devices) {
+      addCounts(alarms, device.alarms);
+      deviceCount++;
+      alarmedDeviceCount += isSevere(worstOf(device.alarms));
+      if (device.availability === 'available') availableCount++;
+      if (device.availability === 'unavailable') unavailableCount++;
+    }
 
     for (const childId of node.childIds) {
       const child = rollup.get(childId);
@@ -478,10 +527,12 @@ export function computeRollup(
       if (!child) continue;
       if (incomplete.has(childId)) incomplete.add(node.id);
       addCounts(alarms, child.alarms);
-      alarmedCount += child.alarmedCount;
-      turbineCount += child.turbineCount;
+      assetCount += child.assetCount;
+      alarmedAssetCount += child.alarmedAssetCount;
+      deviceCount += child.deviceCount;
+      alarmedDeviceCount += child.alarmedDeviceCount;
+      availableCount += child.availableCount;
       unavailableCount += child.unavailableCount;
-      deratedCount += child.deratedCount;
     }
 
     const partial = incomplete.has(node.id);
@@ -492,10 +543,12 @@ export function computeRollup(
       // is what every consumer must branch on.
       worst: partial ? ownWorst : worstOf(alarms),
       alarms,
-      alarmedCount,
-      turbineCount,
+      assetCount,
+      deviceCount,
+      alarmedAssetCount,
+      alarmedDeviceCount,
+      availableCount,
       unavailableCount,
-      deratedCount,
       ...(partial ? { partial: true as const } : {}),
     };
     // Identity preservation, for the same reason `buildHierarchy` does it for nodes:
@@ -513,10 +566,12 @@ function sameRollup(a: AssetRollup, b: AssetRollup): boolean {
   return (
     a.worst === b.worst &&
     a.partial === b.partial &&
-    a.turbineCount === b.turbineCount &&
-    a.alarmedCount === b.alarmedCount &&
+    a.assetCount === b.assetCount &&
+    a.deviceCount === b.deviceCount &&
+    a.alarmedAssetCount === b.alarmedAssetCount &&
+    a.alarmedDeviceCount === b.alarmedDeviceCount &&
+    a.availableCount === b.availableCount &&
     a.unavailableCount === b.unavailableCount &&
-    a.deratedCount === b.deratedCount &&
     ALARM_SEVERITIES.every((severity) => a.alarms[severity] === b.alarms[severity])
   );
 }

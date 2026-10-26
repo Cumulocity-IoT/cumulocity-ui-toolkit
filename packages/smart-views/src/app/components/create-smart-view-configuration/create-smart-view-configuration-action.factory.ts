@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { ActionBarItem, ExtensionFactory } from '@c8y/ngx-components';
+import { type ActivatedRoute } from '@angular/router';
+import { type ActionBarItem, type ExtensionFactory } from '@c8y/ngx-components';
 import { CreateSmartViewConfigurationActionComponent } from './create-smart-view-configuration-action.component';
 
 /** Route on which the "Add configuration" action should be displayed. */

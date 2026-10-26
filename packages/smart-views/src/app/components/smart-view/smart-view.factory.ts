@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
-import { NavigatorNode, NavigatorNodeFactory } from '@c8y/ngx-components';
-import { from, Observable, startWith, switchMap } from 'rxjs';
+import { NavigatorNode, type NavigatorNodeFactory } from '@c8y/ngx-components';
+import { from, type Observable, startWith, switchMap } from 'rxjs';
 import { SmartViewConfigurationService } from '../../services/smart-view-configuration.service';
 
 /** Default navigator priority for a smart view without an explicit priority. */

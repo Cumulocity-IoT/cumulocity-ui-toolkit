@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { formatValue, resolveBinding } from './geo-map-binding';
-import { GeoMapChartComponent, GeoMapChartPoint } from './geo-map-chart.component';
+import { GeoMapChartComponent, type GeoMapChartPoint } from './geo-map-chart.component';
 import type {
   GeoMapBinding,
   GeoMapCategory,

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { ActionBarItem, ExtensionFactory } from '@c8y/ngx-components';
+import { type ActivatedRoute } from '@angular/router';
+import { type ActionBarItem, type ExtensionFactory } from '@c8y/ngx-components';
 import { SmartViewExportActionComponent } from './smart-view-export-action.component';
 
 /** Route path that identifies the Smart View detail page. */

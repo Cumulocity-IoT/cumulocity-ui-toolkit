@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { ActionBarFactory, ActionBarItem } from '@c8y/ngx-components';
+import { type ActivatedRoute } from '@angular/router';
+import { type ActionBarFactory, type ActionBarItem } from '@c8y/ngx-components';
 import { FavoritesActionComponent } from './favorites-action.component';
 import { findContextData } from './context-route.helper';
 

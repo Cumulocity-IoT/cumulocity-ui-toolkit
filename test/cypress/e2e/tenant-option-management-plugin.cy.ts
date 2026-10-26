@@ -11,7 +11,7 @@
  *  - grid of managed tenant options, empty state
  *  - create (text / JSON value), duplicate validation, API errors
  *  - edit, delete (confirm / cancel / error)
- *  - "Add existing" (allow-list an existing tenant option)
+ *  - "Add existing" (allow-list an existing tenant option, or all options of a category)
  *  - export of selected options to a JSON file
  *  - import from a JSON file (new + conflicting entries, invalid files)
  */
@@ -278,6 +278,103 @@ describe('Tenant Option Management', () => {
 
     cy.wait('@getOption').its('response.statusCode').should('eq', 404);
     cy.get(ALERT_DANGER).should('contain', 'Option could not be imported');
+    cy.get('[data-cy="import-option--cancel"]').click();
+    cy.get(MODAL).should('not.exist');
+  });
+
+  it('adds all tenant options of a category when the key is left empty', () => {
+    const category = uniqueKey('bulk');
+    const keyA = uniqueKey('a');
+    const keyB = uniqueKey('b');
+    createTenantOption(category, keyA, 'value-a');
+    createTenantOption(category, keyB, 'value-b');
+    // an option of another category must not be pulled in
+    const foreignKey = uniqueKey('foreign');
+    createTenantOption(CATEGORY, foreignKey, 'foreign');
+    interceptConfigUpdate();
+    visitPlugin();
+
+    cy.get('[data-cy="tenant-option-management--add-existing"]').click();
+    cy.get('[data-cy="import-option--category"]').type(category);
+    cy.get('[data-cy="import-option--key"]').should('have.value', '');
+    cy.get('[data-cy="import-option--import"]').should('be.enabled').click();
+
+    cy.wait('@updateConfig')
+      .its('request.body.options')
+      .should((options: { category: string; key: string }[]) => {
+        const added = options.filter((o) => o.category === category).map((o) => o.key);
+        expect(added).to.have.members([keyA, keyB]);
+        expect(options.some((o) => o.key === foreignKey)).to.eq(false);
+      });
+    cy.get(MODAL).should('not.exist');
+    cy.get(ALERT_SUCCESS).should('contain', `2 tenant options of category "${category}" were added.`);
+    rowByKey(keyA).find(CONTENT_CELL).should('contain', 'value-a');
+    rowByKey(keyB).find(CONTENT_CELL).should('contain', 'value-b');
+    cy.contains(`${GRID} ${KEY_CELL}`, foreignKey).should('not.exist');
+  });
+
+  it('skips already managed options when importing a category again', () => {
+    const category = uniqueKey('bulkagain');
+    const keyA = uniqueKey('a');
+    const keyB = uniqueKey('b');
+    createTenantOption(category, keyA, 'value-a');
+    interceptConfigUpdate();
+    visitPlugin();
+
+    // first import: only A exists
+    cy.get('[data-cy="tenant-option-management--add-existing"]').click();
+    cy.get('[data-cy="import-option--category"]').type(category);
+    cy.get('[data-cy="import-option--import"]').click();
+    cy.wait('@updateConfig');
+    cy.get(MODAL).should('not.exist');
+    rowByKey(keyA).should('exist');
+
+    // second import: B is new, A is already managed and must not be duplicated
+    createTenantOption(category, keyB, 'value-b');
+    cy.get('[data-cy="tenant-option-management--add-existing"]').click();
+    cy.get('[data-cy="import-option--category"]').type(category);
+    cy.get('[data-cy="import-option--import"]').click();
+    cy.wait('@updateConfig')
+      .its('request.body.options')
+      .should((options: { category: string; key: string }[]) => {
+        const keys = options.filter((o) => o.category === category).map((o) => o.key);
+        expect(keys).to.have.length(2);
+        expect(keys).to.have.members([keyA, keyB]);
+      });
+    cy.get(MODAL).should('not.exist');
+    cy.get(ALERT_SUCCESS).should('contain', `1 tenant options of category "${category}" were added.`);
+    cy.get(`${GRID} ${KEY_CELL}`).filter(`:contains("${keyA}")`).should('have.length', 1);
+    rowByKey(keyB).should('exist');
+
+    // third import: nothing new — no write, informative message
+    cy.get('[data-cy="tenant-option-management--add-existing"]').click();
+    cy.get('[data-cy="import-option--category"]').type(category);
+    cy.get('[data-cy="import-option--import"]').click();
+    cy.get(MODAL).should('not.exist');
+    cy.get(ALERT_SUCCESS).should(
+      'contain',
+      `All tenant options of category "${category}" are already managed.`
+    );
+    cy.get(`${GRID} ${KEY_CELL}`).filter(`:contains("${keyA}")`).should('have.length', 1);
+  });
+
+  it('shows an error when a category has no options or listing fails', () => {
+    const category = uniqueKey('emptycat');
+    visitPlugin();
+
+    cy.get('[data-cy="tenant-option-management--add-existing"]').click();
+    cy.get('[data-cy="import-option--category"]').type(category);
+    cy.get('[data-cy="import-option--import"]').click();
+    cy.get(ALERT_DANGER).should('contain', 'Option could not be imported');
+    cy.get(MODAL).should('be.visible');
+
+    cy.intercept('GET', '**/tenant/options?*', { statusCode: 500, body: { error: 'boom' } }).as(
+      'listFail'
+    );
+    cy.get('[data-cy="import-option--import"]').click();
+    cy.wait('@listFail');
+    cy.get(ALERT_DANGER).should('have.length.at.least', 1);
+    cy.get(MODAL).should('be.visible');
     cy.get('[data-cy="import-option--cancel"]').click();
     cy.get(MODAL).should('not.exist');
   });

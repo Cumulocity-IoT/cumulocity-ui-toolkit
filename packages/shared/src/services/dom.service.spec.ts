@@ -1,8 +1,8 @@
 import {
   ApplicationRef,
   ComponentFactoryResolver,
-  ComponentRef,
-  EmbeddedViewRef,
+  type ComponentRef,
+  type EmbeddedViewRef,
 } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { DomService } from './dom.service';

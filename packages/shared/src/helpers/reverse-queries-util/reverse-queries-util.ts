@@ -1,4 +1,4 @@
-import { AstNode, QueryJson } from './reverse-queries-util.model';
+import { type AstNode, type QueryJson } from './reverse-queries-util.model';
 import { QueryParser } from './parser';
 import { Tokenizer } from './tokenizer';
 

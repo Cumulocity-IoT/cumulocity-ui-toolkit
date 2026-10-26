@@ -1,23 +1,23 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, type OnInit } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CoreModule } from '@c8y/ngx-components';
 import { FormlyModule } from '@ngx-formly/core';
 import { ActivatedRoute } from '@angular/router';
-import { EventService, IEvent, IManagedObject, InventoryService } from '@c8y/client';
+import { EventService, type IEvent, type IManagedObject, InventoryService } from '@c8y/client';
 import { AlertService } from '@c8y/ngx-components';
-import { FormlyFieldConfig } from '@ngx-formly/core';
+import { type FormlyFieldConfig } from '@ngx-formly/core';
 import { TranslateService } from '@ngx-translate/core';
 import { getContextDeviceOrAsset } from '~helpers/route-context.helper';
-import { FormlySelectOption } from '~models/formly.model';
+import { type FormlySelectOption } from '~models/formly.model';
 import moment from 'moment';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import {
-  Reminder,
+  type Reminder,
   REMINDER__TEXT_LENGTH,
   REMINDER__TYPE,
   REMINDER__TYPE_FRAGMENT,
   ReminderStatus,
-  ReminderType,
+  type ReminderType,
 } from '../../models/reminder.model';
 import { ReminderService } from '../../services/reminder.service';
 

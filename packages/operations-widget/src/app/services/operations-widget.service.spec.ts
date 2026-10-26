@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { IFetchResponse, OperationService } from '@c8y/client';
+import { type IFetchResponse, OperationService } from '@c8y/client';
 import { AlertService } from '@c8y/ngx-components';
 import { TranslateService } from '@ngx-translate/core';
 import { provideMock } from '~helpers/auto-mock.helper';
-import { OperationButtonConfig } from '../models/operations-widget-config.model';
+import { type OperationButtonConfig } from '../models/operations-widget-config.model';
 import { OperationsWidgetService } from './operations-widget.service';
 
 describe('OperationsWidgetService', () => {

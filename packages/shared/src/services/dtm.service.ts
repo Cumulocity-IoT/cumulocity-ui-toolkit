@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import {
-  DtmAssetDefinition,
-  DtmDefinitionsResponse,
-  DtmPropertyDefinition,
+  type DtmAssetDefinition,
+  type DtmDefinitionsResponse,
+  type DtmPropertyDefinition,
 } from '../models/dtm.model';
 import { MicroserviceService } from './microservice.service';
 

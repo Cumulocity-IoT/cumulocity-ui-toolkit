@@ -9,7 +9,11 @@ import {
   type AssetTreeConfig,
   type AssetTreeRow,
 } from './asset-tree.model';
-import type { BranchStatus } from '../../services/asset-store/asset-store.model';
+import {
+  branchBadgeCount,
+  type BranchStatus,
+  type CountUnit,
+} from '../../services/asset-store/asset-store.model';
 
 /**
  * One tree row (§3.2). Pure and `OnPush`: it derives everything from its inputs and
@@ -45,6 +49,8 @@ export class AssetTreeRowComponent {
   readonly branchStatus = input<BranchStatus | undefined>(undefined);
   /** Children known to exist but not held — drives the explicit "load more". */
   readonly missingChildren = input(0);
+  /** What the branch badge counts — the container decides (`countUnitFor`). */
+  readonly countUnit = input<CountUnit>('devices');
 
   readonly toggle = output<void>();
   readonly activate = output<{ newTab: boolean }>();
@@ -73,8 +79,8 @@ export class AssetTreeRowComponent {
 
   /**
    * The rolled-up status dot (§3.3). Colour is the worst active alarm severity in the
-   * subtree; the ring marks unavailable turbines in it. Encoding both is deliberate —
-   * a stopped turbine with no alarm is exactly the case a severity-only dot hides
+   * subtree; the ring marks unavailable devices in it. Encoding both is deliberate —
+   * an unavailable device with no alarm is exactly the case a severity-only dot hides
    * (OQ-T1, resolved: both).
    */
   protected readonly dot = computed(() => {
@@ -84,10 +90,9 @@ export class AssetTreeRowComponent {
       // separately, so it must not be smuggled in here as a severity: this used to resolve to
       // `'unavailable'` when nothing was alarmed, which matched no colour rule (leaving the
       // base green) *and* stopped the intended `--ok.--unavailable` grey rule from applying.
-      // An alarm-free stopped turbine therefore rendered a green ring; it is now grey.
+      // An alarm-free unavailable device therefore rendered a green ring; it is now grey.
       severity: rollup.worst ?? 'ok',
       unavailable: rollup.unavailableCount > 0 || node.availability === 'unavailable',
-      derated: rollup.deratedCount > 0 || node.availability === 'derated',
     };
   });
 
@@ -96,7 +101,7 @@ export class AssetTreeRowComponent {
    *
    * When the subtree is only partly loaded the dot has been narrowed to this asset's *own*
    * severity (see `computeRollup`), so the words have to say that much too: "2 critical" about a
-   * park whose 500 turbines are unread would be a claim about data nobody has.
+   * group whose 500 members are unread would be a claim about data nobody has.
    */
   protected readonly dotTitle = computed(() => {
     const { rollup, node } = this.row();
@@ -108,7 +113,6 @@ export class AssetTreeRowComponent {
     return describeDot({
       alarms: rollup.alarms,
       unavailableCount: rollup.unavailableCount,
-      deratedCount: rollup.deratedCount,
     });
   });
 
@@ -122,17 +126,18 @@ export class AssetTreeRowComponent {
   }
 
   /**
-   * `n WTG` on branch rows; leaves show nothing (§3.3).
+   * The descendant count on branch rows — assets with the Digital Twin Manager, devices
+   * otherwise (`countUnitFor`); leaves show nothing (§3.3). The unit is in the title.
    *
-   * Suppressed entirely for a partly-loaded subtree: the number would be a floor, and "3 WTG" on a
-   * park with 500 turbines is worse than no number at all.
+   * Suppressed entirely for a partly-loaded subtree: the number would be a floor, and "3" on a
+   * group with 500 members is worse than no number at all.
    */
   protected readonly count = computed(() => {
     const row = this.row();
 
     if (!this.config().showCounts || !row.hasChildren || row.rollup.partial) return null;
 
-    return row.rollup.turbineCount || null;
+    return branchBadgeCount(row.rollup, this.countUnit()) || null;
   });
 
   protected onToggle(event: MouseEvent): void {

@@ -1,4 +1,4 @@
-import { Provider, Type } from '@angular/core';
+import { type Provider, type Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 /**

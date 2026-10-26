@@ -1,19 +1,19 @@
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, type OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
-  ActionControl,
+  type ActionControl,
   BuiltInActionType,
-  Column,
+  type Column,
   CoreModule,
-  DisplayOptions,
+  type DisplayOptions,
   ModalService,
-  Pagination,
+  type Pagination,
   Status,
 } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { TranslateService } from '@ngx-translate/core';
 import { BsModalService } from 'ngx-bootstrap/modal';
-import { SmartViewConfiguration } from '../../smart-views.model';
+import { type SmartViewConfiguration } from '../../smart-views.model';
 import { SmartViewConfigurationService } from '../../services/smart-view-configuration.service';
 import { CreateSmartViewConfigurationModalComponent } from '../create-smart-view-configuration/create-smart-view-configuration-modal.component';
 

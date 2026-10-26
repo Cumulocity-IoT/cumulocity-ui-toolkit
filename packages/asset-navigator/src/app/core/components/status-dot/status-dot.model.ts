@@ -59,11 +59,7 @@ export function totalAlarms(alarms: AlarmCounts): number {
  * alone is not an accessible channel (NFR-T3). Anything rendering a dot owes a reader this
  * sentence.
  */
-export function describeDot(input: {
-  alarms?: AlarmCounts;
-  unavailableCount?: number;
-  deratedCount?: number;
-}): string {
+export function describeDot(input: { alarms?: AlarmCounts; unavailableCount?: number }): string {
   const parts: string[] = [];
   const counts = input.alarms;
   const worst = worstSeverity(counts);
@@ -79,7 +75,6 @@ export function describeDot(input: {
   }
 
   if (input.unavailableCount) parts.push(`${input.unavailableCount} unavailable`);
-  if (input.deratedCount) parts.push(`${input.deratedCount} derated`);
 
   return parts.join(' · ');
 }

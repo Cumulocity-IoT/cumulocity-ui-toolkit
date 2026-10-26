@@ -1,9 +1,13 @@
 import { inject } from '@angular/core';
-import { IManagedObject, InventoryService } from '@c8y/client';
+import { type IManagedObject, InventoryService } from '@c8y/client';
 import { isEmpty } from 'lodash';
-import { EMPTY, from, Observable, timer } from 'rxjs';
+import { EMPTY, from, type Observable, timer } from 'rxjs';
 import { catchError, exhaustMap, filter } from 'rxjs/operators';
-import { MyLayer, PollingDelta, QueryLayerConfig } from '../layered-map-widget.model';
+import {
+  type MyLayer,
+  type PollingDelta,
+  type QueryLayerConfig,
+} from '../layered-map-widget.model';
 
 /** Inventory page size used when resolving source ids to managed objects. */
 const PAGE_SIZE = 100;

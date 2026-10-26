@@ -1,13 +1,13 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { IManagedObject, InventoryService } from '@c8y/client';
+import { Component, inject, type OnInit, signal } from '@angular/core';
+import { type IManagedObject, InventoryService } from '@c8y/client';
 import { CoreModule } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { CsvExportService } from '~services/csv-export.service';
 import {
   isSmartViewConfiguration,
-  SmartViewColumn,
-  SmartViewConfiguration,
+  type SmartViewColumn,
+  type SmartViewConfiguration,
 } from '../../smart-views.model';
 import { SmartViewExportService } from '../../services/smart-view-export.service';
 

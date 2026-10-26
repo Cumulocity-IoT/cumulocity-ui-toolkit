@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { InventoryService, MeasurementService, aggregationType } from '@c8y/client';
+import { InventoryService } from '@c8y/client';
+import type { DetailField } from '../../services/settings/detail-panel.model';
 import { seriesFor } from './asset-detail-fields';
 
 /**
@@ -22,12 +23,6 @@ export interface AssetLatestValues {
   asOf?: string;
 }
 
-export interface AssetSparkline {
-  /** Values oldest-first, already reduced to one number per bucket. */
-  points: number[];
-  unit?: string;
-}
-
 export interface LoadHandle<T> {
   result: Promise<T | null>;
   /**
@@ -39,26 +34,16 @@ export interface LoadHandle<T> {
   cancel: () => void;
 }
 
-const SPARKLINE_WINDOW_HOURS = 24;
-
 @Injectable({ providedIn: 'root' })
 export class AssetDetailService {
   private readonly inventory = inject(InventoryService);
-  private readonly measurement = inject(MeasurementService);
 
   /** Session cache. Keyed by asset id; the value set is a superset per asset. */
   private readonly latestCache = new Map<string, AssetLatestValues>();
-  private readonly sparklineCache = new Map<string, AssetSparkline>();
   private readonly inFlight = new Map<string, Promise<AssetLatestValues>>();
-  /** Same coalescing for the 24 h series: re-hovering a row must not re-request it. */
-  private readonly sparklineInFlight = new Map<string, Promise<AssetSparkline>>();
 
   cachedLatest(assetId: string): AssetLatestValues | undefined {
     return this.latestCache.get(assetId);
-  }
-
-  cachedSparkline(assetId: string): AssetSparkline | undefined {
-    return this.sparklineCache.get(assetId);
   }
 
   /**
@@ -70,8 +55,8 @@ export class AssetDetailService {
    * costs one request. (Feature preview on the platform side; when it is unavailable
    * the values are simply absent and the rows render as unavailable.)
    */
-  loadLatest(assetId: string, fieldKeys: readonly string[]): LoadHandle<AssetLatestValues> {
-    const needed = seriesFor(fieldKeys);
+  loadLatest(assetId: string, fields: readonly DetailField[]): LoadHandle<AssetLatestValues> {
+    const needed = seriesFor(fields);
     const cached = this.latestCache.get(assetId);
 
     if (!needed.length || cached) {
@@ -97,72 +82,14 @@ export class AssetDetailService {
     };
   }
 
-  /** The `Power, 24 h` sparkline (§6.2). Off by default, so usually never requested. */
-  loadSparkline(assetId: string, series = 'WTUR.W'): LoadHandle<AssetSparkline> {
-    const cached = this.sparklineCache.get(assetId);
-
-    if (cached) return { result: Promise.resolve(cached), cancel: () => undefined };
-
-    let cancelled = false;
-    const request = this.sparklineInFlight.get(assetId) ?? this.fetchSparkline(assetId, series);
-
-    this.sparklineInFlight.set(assetId, request);
-
-    return {
-      result: request.then((value) => (cancelled ? null : value)).catch((): null => null),
-      cancel: () => {
-        cancelled = true;
-      },
-    };
-  }
-
-  private fetchSparkline(assetId: string, series: string): Promise<AssetSparkline> {
-    const dateTo = new Date();
-    const dateFrom = new Date(dateTo.getTime() - SPARKLINE_WINDOW_HOURS * 3600_000);
-    return this.measurement
-      .listSeries({
-        source: assetId,
-        dateFrom: dateFrom.toISOString(),
-        dateTo: dateTo.toISOString(),
-        series,
-        // Hourly buckets: 24 points is what a 100px sparkline can actually show, and it
-        // keeps the response small enough not to compete with navigation.
-        aggregationType: aggregationType.HOURLY,
-      })
-      .then(({ data }) => {
-        const points = Object.keys(data.values ?? {})
-          .sort()
-          .map((timestamp) => {
-            const bucket = data.values[timestamp]?.[0];
-
-            if (!bucket) return Number.NaN;
-
-            // The series API returns min/max per bucket; the midpoint is the honest
-            // one-number summary of an hour of power.
-            return (bucket.min + bucket.max) / 2;
-          })
-          .filter((value) => Number.isFinite(value));
-        const sparkline: AssetSparkline = { points, unit: data.series?.[0]?.unit };
-
-        this.sparklineCache.set(assetId, sparkline);
-
-        return sparkline;
-      })
-      .finally(() => this.sparklineInFlight.delete(assetId));
-  }
-
   /** Drops the session cache — the store's poll found the fleet changed. */
   invalidate(assetId?: string): void {
     if (assetId) {
       this.latestCache.delete(assetId);
-      this.sparklineCache.delete(assetId);
-      this.sparklineInFlight.delete(assetId);
 
       return;
     }
-    this.sparklineInFlight.clear();
     this.latestCache.clear();
-    this.sparklineCache.clear();
   }
 
   private async fetchLatest(assetId: string): Promise<AssetLatestValues> {

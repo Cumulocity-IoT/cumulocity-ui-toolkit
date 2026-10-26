@@ -1,4 +1,4 @@
-import { IManagedObject } from '@c8y/client';
+import { type IManagedObject } from '@c8y/client';
 
 /** Managed-object type identifying a smart view configuration. */
 export const SMART_VIEW_CONFIGURATION_TYPE = 'c8y_SmartViewConfiguration';

@@ -17,21 +17,35 @@ export type AlarmSeverityKey = (typeof ALARM_SEVERITIES)[number];
 export type AlarmCounts = Record<AlarmSeverityKey, number>;
 
 /**
- * How available a turbine is right now, derived from `wnd_Status` (see the
- * `ps-data-model` skill for the code tables):
+ * How available a device is right now, from the platform-standard `c8y_Availability.status`
+ * fragment the availability monitoring writes onto every monitored device:
  *
- * - `available`   — `WTUR.TurSt` is Starting / Running / Freerun and not curtailed
- * - `derated`     — running but `WTUR.OpMod` says curtailed / noise / shadow / sector
- * - `unavailable` — Stop / Standby / Braking, or `WTUR.OpMod` maintenance
- * - `unknown`     — no `wnd_Status`, or a code we do not map (never counted as a fault)
+ * - `available`   — `AVAILABLE`
+ * - `unavailable` — `UNAVAILABLE`, and also `MAINTENANCE`: a device in a maintenance window is
+ *   deliberately out of service, which for triage is the same as "not available" (no separate
+ *   state, so the dot keeps two fills)
+ * - `unknown`     — no `c8y_Availability`, or a status we do not map. Never counted as a fault:
+ *   most devices are simply not availability-monitored.
  */
-export type AssetAvailability = 'available' | 'derated' | 'unavailable' | 'unknown';
+export type AssetAvailability = 'available' | 'unavailable' | 'unknown';
+
+/**
+ * A plain device (`c8y_IsDevice` without `c8y_IsAsset`) hanging below an asset. Not a tree row —
+ * the tree draws assets — but it counts: its availability and alarms roll up into every ancestor.
+ */
+export interface AttachedDevice {
+  id: string;
+  name: string;
+  type: string;
+  availability: AssetAvailability;
+  alarms: AlarmCounts;
+}
 
 /** One asset in the cached hierarchy. Plain data — no SDK models, no class instances. */
 export interface AssetNode {
   id: string;
   name: string;
-  /** The discriminating managed-object `type`, e.g. `wind_park`, `wind_turbine`. */
+  /** The discriminating managed-object `type`, e.g. `building`, `production_line`. */
   type: string;
   /** `null` for a root of the cached hierarchy (not necessarily a tenant root). */
   parentId: string | null;
@@ -42,12 +56,19 @@ export interface AssetNode {
   position?: { lat: number; lng: number };
   /** This asset's own active alarms. Subtree totals live on the rollup. */
   alarms: AlarmCounts;
-  /** This asset's own availability. Only meaningful for turbines. */
+  /**
+   * This asset's own availability (`c8y_Availability`). Only meaningful when the asset is itself a
+   * device ({@link isDevice}); otherwise `unknown` and the subtree's devices say it (rollup).
+   */
   availability: AssetAvailability;
+  /** The asset is also a device (`c8y_IsDevice`), e.g. a device modelled in the DTM. */
+  isDevice: boolean;
+  /** Plain devices referenced as this asset's children. Counted, not drawn. */
+  devices: readonly AttachedDevice[];
   /**
    * The tier-0 fragments the detail panel can show without a request — the raw MO
    * minus the parts already projected above and minus the heavy fragments
-   * (`childAssets`, `childDevices`, `wnd_PowerCurve`, …). Read by path.
+   * (`childAssets`, `childDevices`, …). Read by path.
    */
   properties: Readonly<Record<string, unknown>>;
 }
@@ -60,22 +81,28 @@ export interface AssetRollup {
    */
   worst: AlarmSeverityKey | null;
   /**
-   * Subtree alarm totals, including the node's own. **Alarms, not assets** — one turbine
-   * with six active alarms contributes six.
+   * Subtree alarm totals, including the node's own and those of its attached devices. **Alarms,
+   * not assets** — one device with six active alarms contributes six.
    */
   alarms: AlarmCounts;
+  /** Assets in the subtree, **including the node itself** (so a leaf has 1). */
+  assetCount: number;
   /**
-   * Turbines in the subtree carrying at least one critical or major alarm. The count of
-   * *assets*, which is what a fleet summary means by "how many are alarmed" — reporting
-   * {@link alarms} there claimed 114 alarmed turbines out of a 114-turbine fleet.
+   * Devices in the subtree: attached plain devices, plus every asset that is itself a device
+   * (the node included).
    */
-  alarmedCount: number;
-  /** `wind_turbine` descendants (plus the node itself when it is one). */
-  turbineCount: number;
-  /** Turbines in the subtree that are `unavailable`. This is the dot's shape. */
+  deviceCount: number;
+  /**
+   * Assets in the subtree (node included) whose own alarms include a critical or major one. The
+   * count of *assets*, which is what a summary means by "how many are alarmed".
+   */
+  alarmedAssetCount: number;
+  /** Devices in the subtree whose own alarms include a critical or major one. */
+  alarmedDeviceCount: number;
+  /** Devices in the subtree reporting `c8y_Availability` `AVAILABLE`. */
+  availableCount: number;
+  /** Devices in the subtree that are `unavailable`. This is the dot's shape. */
   unavailableCount: number;
-  /** Turbines in the subtree that are `derated`. */
-  deratedCount: number;
   /**
    * `true` when part of this subtree is **not loaded** (`high-volume` mode only), so every
    * count above is a floor rather than a total and {@link AssetRollup.worst} has been narrowed
@@ -129,33 +156,26 @@ export interface AssetHierarchy {
 }
 
 /**
- * The external identity that marks **the** fleet root group, resolved through the Identity API
- * (`GET /identity/externalIds/{type}/{externalId}`). Shared with the backend's `GET /api/assets`
- * (`apps/backend/backwind/server/routes/api/assets.get.ts`) — keep the two in step.
+ * The external identity that marks **the** root of the navigated hierarchy, resolved through the
+ * Identity API (`GET /identity/externalIds/{type}/{externalId}`). Optional: give one asset this
+ * external id to pin the tree to it; without it the store falls back to the first root group.
  *
- * A tenant can hold several parentless device groups (imports, test data, other solutions'
- * roots), so "the first `onlyRoots` hit" is not a stable answer to "where is the fleet"; an
- * external id is (#382).
+ * A tenant can hold several parentless groups (imports, test data, other solutions' roots), so
+ * "the first `onlyRoots` hit" is not a stable answer to "where does the tree start"; an external
+ * id is.
  */
 export const FLEET_ROOT_EXTERNAL_ID_TYPE = 'c8y_Asset';
-export const FLEET_ROOT_EXTERNAL_ID = 'wind-fleet';
+export const FLEET_ROOT_EXTERNAL_ID = 'asset-navigator-root';
 
-/** Tuning for the sweep. All optional — the defaults describe the windy-dev fleet. */
+/** Tuning for the sweep. All optional. */
 export interface AssetStoreConfig {
   /**
    * Root asset to scope the sweep to, via `isinhierarchyof(<id>)`. When unset the store
-   * resolves the fleet root through the Identity API ({@link FLEET_ROOT_EXTERNAL_ID_TYPE} /
-   * {@link FLEET_ROOT_EXTERNAL_ID}), then tries the root device group (`fragmentType` +
-   * `onlyRoots`), and falls back to the type union below if there is none.
+   * resolves the root through the Identity API ({@link FLEET_ROOT_EXTERNAL_ID_TYPE} /
+   * {@link FLEET_ROOT_EXTERNAL_ID}), then tries the root group (`fragmentType` +
+   * `onlyRoots`), and falls back to every asset and device of the tenant if there is none.
    */
   rootId?: string;
-  /**
-   * Types swept when there is no discoverable root. Also the vocabulary the tree
-   * uses for icons and level filters, so keep it ordered top-down.
-   */
-  hierarchyTypes: readonly string[];
-  /** The leaf type counts roll up (`n WTG` on branch rows). */
-  leafType: string;
   /**
    * Poll interval while **nothing is displaying the tree** — the background cadence that
    * runs from plugin load onwards, so the first open is instant.
@@ -169,14 +189,6 @@ export interface AssetStoreConfig {
 }
 
 export const DEFAULT_ASSET_STORE_CONFIG: AssetStoreConfig = {
-  hierarchyTypes: [
-    'wind_fleet_root',
-    'wind_service_region',
-    'wind_service_area',
-    'wind_park',
-    'wind_turbine',
-  ],
-  leafType: 'wind_turbine',
   idleIntervalMs: 300_000,
   activeIntervalMs: 30_000,
 };
@@ -191,10 +203,12 @@ export const EMPTY_ALARM_COUNTS: AlarmCounts = Object.freeze({
 export const EMPTY_ROLLUP: AssetRollup = Object.freeze({
   worst: null,
   alarms: EMPTY_ALARM_COUNTS,
-  alarmedCount: 0,
-  turbineCount: 0,
+  assetCount: 0,
+  deviceCount: 0,
+  alarmedAssetCount: 0,
+  alarmedDeviceCount: 0,
+  availableCount: 0,
   unavailableCount: 0,
-  deratedCount: 0,
 });
 
 /** An empty hierarchy in the given mode — the shape a failed or not-yet-run load publishes. */
@@ -213,16 +227,14 @@ export function emptyHierarchy(asOf: string, mode: AssetStoreMode = 'full'): Ass
  * The one place `AssetAvailability` becomes words. Lives next to the type it switches
  * on, because these strings are user-visible *and* AI-context-visible
  * (`docs/ContextAwareAIChat/ui-to-ai-context.spec.md`) — a second copy means the tree,
- * the detail panel and the assistant can describe one turbine three ways.
+ * the detail panel and the assistant can describe one device three ways.
  */
 export function availabilityLabel(availability: AssetAvailability): string {
   switch (availability) {
     case 'available':
-      return gettext('Running');
-    case 'derated':
-      return gettext('Derated');
+      return gettext('Available');
     case 'unavailable':
-      return gettext('Not producing');
+      return gettext('Unavailable');
     default:
       return gettext('Unknown');
   }
@@ -240,26 +252,52 @@ export function alarmSummary(counts: AlarmCounts): string | null {
 }
 
 /**
- * `wind_service_region` → `Service region`. The type strings are the vocabulary; this is
- * the display form, used by the overlay's level tabs and indexed by the search so typing
- * "park" finds parks.
+ * `production_line` → `Production line`. The type strings are the vocabulary; this is the
+ * display form, used by the overlay's level tabs and indexed by the search so typing "line"
+ * finds production lines.
  */
 export function assetTypeLabel(type: string): string {
-  return type
-    .replace(/^wind_/, '')
-    .replace(/_/g, ' ')
-    .replace(/^./, (first) => first.toUpperCase());
+  return type.replace(/_/g, ' ').replace(/^./, (first) => first.toUpperCase());
 }
 
-/** c8y icon name per hierarchy level. Falls back to a neutral dot in the row. */
-export const ASSET_TYPE_ICONS: Readonly<Record<string, string>> = Object.freeze({
-  wind_fleet_root: 'sitemap',
-  wind_service_region: 'globe',
-  wind_service_area: 'map-marker-multiple',
-  wind_park: 'c8y-group',
-  wind_turbine: 'c8y-device',
-  wind_weather_station: 'thermometer',
-  wind_substation: 'flash',
-  wind_park_rtu: 'router',
-  wind_pcc_meter: 'gauge',
-});
+/**
+ * What the counts in the footer, the branch badges and the branch detail rows count: **assets**
+ * when the Digital Twin Manager is available (the tenant models assets), **devices** otherwise
+ * (`null` — DTM not answered yet — counts devices, so the label never flips the wrong way).
+ */
+export type CountUnit = 'assets' | 'devices';
+
+export function countUnitFor(dtmAvailable: boolean | null | undefined): CountUnit {
+  return dtmAvailable === true ? 'assets' : 'devices';
+}
+
+/** The subtree count in `unit`, the node itself included (see {@link AssetRollup}). */
+export function unitCount(rollup: AssetRollup, unit: CountUnit): number {
+  return unit === 'assets' ? rollup.assetCount : rollup.deviceCount;
+}
+
+/** Of {@link unitCount}, how many carry a critical or major alarm of their own. */
+export function alarmedUnitCount(rollup: AssetRollup, unit: CountUnit): number {
+  return unit === 'assets' ? rollup.alarmedAssetCount : rollup.alarmedDeviceCount;
+}
+
+/**
+ * What a **branch** row's badge says: the descendants in `unit`. Assets exclude the branch itself
+ * ("3 assets" below a site); devices include it only when the branch is itself a device.
+ */
+export function branchBadgeCount(rollup: AssetRollup, unit: CountUnit): number {
+  return unit === 'assets' ? Math.max(0, rollup.assetCount - 1) : rollup.deviceCount;
+}
+
+/**
+ * The availability an asset row or panel shows: its own when it is a monitored device, else the
+ * one its devices report — any unavailable device makes it `unavailable`, otherwise any available
+ * one `available`, otherwise `unknown`.
+ */
+export function effectiveAvailability(node: AssetNode, rollup: AssetRollup): AssetAvailability {
+  if (node.availability !== 'unknown') return node.availability;
+  if (rollup.unavailableCount > 0) return 'unavailable';
+  if (rollup.availableCount > 0) return 'available';
+
+  return 'unknown';
+}

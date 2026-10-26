@@ -1,20 +1,20 @@
 import { Injectable, inject } from '@angular/core';
 import {
-  IManagedObject,
-  IResultList,
+  type IManagedObject,
+  type IResultList,
   InventoryService,
   QueriesUtil,
-  QueryObject,
-  QueryObjectFilterComparison,
+  type QueryObject,
+  type QueryObjectFilterComparison,
 } from '@c8y/client';
 import {
-  Column,
-  DataSourceModifier,
-  Pagination,
-  ServerSideDataCallback,
-  ServerSideDataResult,
+  type Column,
+  type DataSourceModifier,
+  type Pagination,
+  type ServerSideDataCallback,
+  type ServerSideDataResult,
 } from '@c8y/ngx-components';
-import { SmartViewConfigurationData, toFilterQueryString } from '../smart-views.model';
+import { type SmartViewConfigurationData, toFilterQueryString } from '../smart-views.model';
 
 interface SearchableColumn extends Column {
   searchable: boolean;
