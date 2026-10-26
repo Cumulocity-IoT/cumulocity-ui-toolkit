@@ -35,15 +35,9 @@ test/
 └── cypress/
     ├── e2e/                      # One spec file per plugin
     ├── support/
-    │   ├── e2e.ts                # Global setup: commands, logs, teardown, error handlers
-    │   ├── commands.ts           # Custom Cypress command declarations + registrations
-    │   ├── index.ts              # Barrel — import everything from '../support'
-    │   ├── api/                  # Live C8Y API helpers (use cy.c8yclient inside)
-    │   ├── factories/            # Pure data builders (no Cypress commands)
-    │   ├── intercepts/           # cy.intercept stubs for inventory + dashboard mocking
-    │   ├── page-objects/         # Typed page-object classes for C8Y shell components
-    │   ├── selectors/            # Typed data-cy selector constants for C8Y platform
-    │   └── utils/                # Test-ID registry and other pure helpers
+    │   ├── e2e.ts                # Global setup: cumulocity-cypress, ui-sdk commands, logs, failed-DOM dump
+    │   ├── commands.ts           # cy.createDevice
+    │   └── intercepts/           # asset-navigator.intercepts.ts (tenant-mock query shim)
     └── logs/                     # Failed-DOM dumps (auto-written on test failure)
 ```
 
@@ -148,6 +142,8 @@ The central factory.  Configures:
 - `installLogsPrinter` — streams Cypress command logs to the terminal.
 - `allowCypressEnv: true` — allows `Cypress.env()` reads from `cypress.json`
   and `--env` flags.
+- `env.C8Y_SHELL` (from `C8Y_SHELL_TARGET`) and `env.C8Y_REMOTES` (the per-plugin
+  config's remotes JSON) — what `cy.visitApp` loads: `/apps/<C8Y_SHELL>/index.html?remotes=<C8Y_REMOTES>#/<path>`.
 
 ### Per-plugin config
 
@@ -166,195 +162,41 @@ export default baseConfig(
 
 ## Support Library
 
-Everything lives under `cypress/support/`.  Import from the barrel for
-convenience:
+Generic helpers come from [`@cumulocity-iot/ui-sdk`](https://github.com/Cumulocity-IoT/c8y-ai-ui-sdk)
+(its `writing-e2e-tests` skill documents them); `cypress/support/` only holds what is specific to this repo.
+
+### `@cumulocity-iot/ui-sdk/cypress` (imported by `support/e2e.ts`)
+
+| Command / export | Purpose |
+|---|---|
+| `cy.visitApp(path, { language, waitFor, timeout })` | Open `path` in the shell `C8Y_SHELL` with the plugin's remotes (`C8Y_REMOTES`), set the UI language (localStorage `c8y_language`), wait until `waitFor` is visible |
+| `cy.resetWorld()`, `cy.loadWorld(world)`, `cy.mockRequests()` | Tenant-mock state and request log |
+| `Dashboard` | `enterEditMode()`, `save()`, `saveIfVisible()`, `editWidget(index)` |
+| `AddWidgetDialog` | `open()`, `openAndSelect(name)` (reopens while the plugin is still loading), `selectAsset(name)` |
+| `WidgetConfigModal` | `waitForConfig()`, `save()`, `cancel()` |
+| `enterEditMode()`, `openWidgetForEditing(index?)`, `saveWidgetAndDashboard()` | Edit-mode shortcuts |
+| `DashboardSelectors`, `WidgetSelectors`, `WidgetConfigSelectors` | The data-cy selectors those use |
+
+Importing the module also ignores the dashboard grid's `ResizeObserver loop` errors
+(`allowResizeObserverErrors()` turns that off).
 
 ```ts
-import {
-  mockDevice, mockDashboard, stubDeviceDashboard,
-  C8yWidgetModal, DashboardSelectors, registerTestId,
-  createGroup, createUserWithGlobalRoles,
-} from '../support';
+import { AddWidgetDialog, DashboardSelectors, openWidgetForEditing } from '@cumulocity-iot/ui-sdk/cypress';
 ```
 
-Or import from the sub-module directly for targeted imports:
+### `@cumulocity-iot/ui-sdk/factories` — platform-shaped data (Node-safe)
 
-```ts
-import { mockDevice } from '../support/factories';
-import { DashboardSelectors } from '../support/selectors';
-import { stubDeviceDashboard } from '../support/intercepts';
-```
+`createManagedObject`, `mockDevice`, `mockGroup`, `mockDashboard(target, widgets)`, `mockWidget`,
+`getWidgetConfigs`, `mockListResponse(items, { key, statistics })`, `mockChildAssetsResponse`, `mockEvent`,
+`mockMeasurement`, `mockMeasurementsResponse`, `mockTenantOptionResponse`, `mockId` — for `cy.intercept`
+stubs, e.g. `cy.intercept('GET', '**/inventory/managedObjects?*', mockListResponse([mockDevice()]))`.
 
-### `api/` — Live backend helpers
+### `cypress/support/` (this repo)
 
-All functions use `cy.c8yclient` internally and return `Cypress.Chainable`.
-Call them inside Cypress command chains or hooks — never in plain callbacks.
-
-| Export | Description |
+| Helper | Purpose |
 |---|---|
-| `createGroup(c, options)` | Creates a `c8y_DeviceGroup` MO with `c8y_CypressTestGroup` marker |
-| `createDevice(c, options)` | Creates a `c8y_IsDevice` MO with `c8y_CypressTestDevice` marker |
-| `assignToGroup(c, groupId, assetId)` | Assigns a managed object as child asset |
-| `createGroupHierarchy(hierarchy, cy_testId)` | Recursively builds a group tree, sets `.id` on each node |
-| `clearAllManagedObjectsOfTest(cy_testId)` | Deletes all MOs tagged with `cy_testId` — called by the global teardown |
-| `createGlobalRole(name, permissions)` | Creates a global user-group role with given permission strings |
-| `deleteGlobalRoles(groupNames)` | Deletes global roles by name |
-| `createInventoryRoleWithPermissions(name, permissions)` | Creates an inventory role; handles 409 (already exists) |
-| `assignInventoryRoleToGroupForUser(role, groupId, user)` | Assigns inventory role to user for a specific MO |
-| `createUserWithGlobalRoles(user, roles)` | Creates a user and assigns global roles by name |
-| `deleteUsers(users)` | Deletes an array of users |
-| `cleanupCypressUsers()` | Deletes all users whose `userName` starts with `cypress` |
-| `isApplicationInstalled(nameOrKey)` | Returns `true` when a given app key is subscribed to the tenant |
-
-> **Note:** `createGlobalRole` and `deleteGlobalRoles` are also available as
-> built-in `cy.createGlobalRole()` / `cy.deleteGlobalRoles()` commands
-> provided by `cumulocity-cypress` 1.x.  Prefer the built-ins in spec files;
-> use the api functions inside helper functions.
-
-### `factories/` — Pure data builders
-
-No Cypress commands — safe to call anywhere including before `cy.visit`.
-
-| Export | Description |
-|---|---|
-| `createManagedObject(parts?)` | Full `IManagedObject` skeleton with random `id` |
-| `mockDevice(parts?)` | `createManagedObject` + `c8y_IsDevice: {}` |
-| `mockGroup(parts?)` | `createManagedObject` + `c8y_IsDeviceGroup: {}` |
-| `mockId()` | Random 16-digit numeric string |
-| `dynamicClone(mo)` | Deep-clones an MO and stamps it with a fresh `id`/`name` |
-| `mockTenantOptionResponse(value)` | Wraps a value in the `GET /tenant/options` envelope |
-| `mockDashboard(target, widgets?)` | Full dashboard MO with `c8y_Dashboard` fragment |
-| `mockWidget(fragments?)` | Widget descriptor with random `id`/`componentId` |
-| `getWidgetConfigs(putBody)` | Extracts widget config array from a dashboard PUT body |
-| `mockListResponse(data, stats?)` | C8Y paged-list envelope (`managedObjects`/`events`/`measurements`) |
-| `mockChildAssetsResponse(data, stats?)` | Child-assets reference envelope |
-| `generateUser(displayName)` | Unique `IUser` with `cypress-` prefixed `userName` |
-| `getUUID()` | Random UUID string |
-| `createEvent(parts?)` | Minimal valid `IEvent` |
-| `createMeasurement(overrides?)` | `c8y_Temperature.T` measurement with random value |
-| `mockMeasurementsResponse(count, interval)` | List of measurements spread backward in time |
-
-### `intercepts/` — cy.intercept stubs
-
-Use these to avoid hitting the backend for **view/edit** tests.  Stubs are
-registered synchronously; call them before `cy.visit`.
-
-#### Inventory stubs
-
-```ts
-// Stub a single device (all standard GET variants)
-mockInventoryObject(device.id, deviceData);
-
-// Stub a group + its children
-mockInventoryGroup(group, [child1, child2]);
-
-// Suppress the Gainsight MO lookup that blocks page load
-interceptAndMockGainsight();
-```
-
-#### Widget simulator — pre-load a widget into a mocked dashboard
-
-```ts
-// View an existing widget
-const widget = mockWidget({ componentId: 'my-widget', config, _width: 6, _height: 4 });
-stubDeviceDashboard(device, deviceFixture, [widget]);
-cy.visitShellAndWaitForSelector(`device/${device.id}`, 'en', 'my-widget');
-
-// Empty dashboard → add widget from UI
-stubDeviceDashboard(device, deviceFixture, []);
-cy.visitShellAndWaitForSelector(`device/${device.id}`, 'en', DashboardSelectors.WIDGET_EDIT_READY);
-enterEditMode();
-C8yWidgetModal.selectWidget('My Widget Name');
-
-// Convenience wrappers that stub + navigate in one call
-visitDeviceWithWidget(device, fixture, [widget], 'my-widget');
-visitDeviceWithEmptyDashboard(device, fixture);
-visitGroupWithWidget(group, children, [widget], 'my-widget');
-
-// Dashboard save assertion
-const saveAlias = interceptDashboardSave(dashboard.id);
-cy.get(DashboardSelectors.SAVE).click({ force: true });
-assertWidgetConfigSaved(saveAlias, expectedConfig, ['history']);
-```
-
-### `page-objects/` — Typed page-object classes
-
-| Class | Description |
-|---|---|
-| `C8yDashboard` | `createDashboardForDevice`, `createDashboardForGroup`, `saveLayoutIfVisible` |
-| `C8yAddWidgetDialog` | `openAddWidgetModal`, `openAndSelect(widgetName)`, `selectAnyDevice`, `selectDevice(name)`, `saveAndClose` |
-| `C8yWidgetModal` | `selectWidget(name)`, `selectWidgetAndAnyDevice(name)`, `waitForConfigToLoad`, `openOnContext(path, name, opts)` |
-| `C8yDataGrid` | `getSortButtonOfColumn`, `getFilterButtonOfColumn`, `getRow(index)`, `getEditActionButton`, `getDeleteActionButton` |
-| `C8yConfirmationModal` | `ok()`, `cancel()`, `getButton(title)` |
-| `C8ySelect` | `toggleDropdown()`, `selectItem(text)`, `apply()` |
-| `C8yAlert` | `containsText(text)` |
-| `C8ySideMenu` | `toggleMenu()`, `clickMainNode(title)`, `clickSubNode(title)` |
-| `C8yTabMenu` | `getButton(title)`, `getAddDashboardButton()` |
-
-Free functions:
-
-```ts
-enterEditMode();            // clicks "Edit widgets" toolbar button
-clickEditWidgetMenuItem();  // gear icon → "Edit widget" on first widget
-openWidgetForEditing();     // enterEditMode + clickEditWidgetMenuItem + waitForConfigToLoad
-saveWidgetAndDashboard();   // widget Save → dashboard Save
-visitAndWaitForSettingsLoaded(item?); // opens navigator → Settings
-```
-
-### `selectors/` — Typed data-cy selector constants
-
-Import directly from the barrel or from individual files.
-
-| Export | Covers |
-|---|---|
-| `DashboardSelectors` | Edit, Add widget, Save, Reset toolbar buttons |
-| `WidgetChildSelectors` | Per-widget gear/settings icon |
-| `WidgetMenuSelectors` | Edit widget, Remove widget menu items |
-| `WidgetConfigSelectors` | Widget picker search, list, Save, Cancel |
-| `DataGridSelectors` | Table rows, checkboxes, edit/delete buttons |
-| `DataGridFilterSelectors` | Filter panel, chips, reload, counter |
-| `DataGridColumnSelectors` | Sort, filter, header, cell, action buttons |
-| `AlarmListSelectors` | Alarm list, text, badge, clear-all |
-| `AlarmFilterSelectors` | Severity filter chips with `.bySeverity(s)` helper |
-| `EventListSelectors` | Event list, text, date, attachment |
-| `NavigatorSelectors` | `.node(title)`, `.settingsNode(title)` |
-| `HeaderBarSelectors` | User dot, toggle, more |
-| `TabMenuSelectors` | `.tab(title)`, Add dashboard |
-| `ConfirmModalSelectors` | OK, Cancel, `.button(title)` |
-| `AlertSelectors` | Message, close |
-| `DashboardDetailSelectors` | Save/cancel on create-dashboard form |
-| `GlobalDateContextSelectors` | Date context apply, interval, aggregation |
-| `DatapointSelectorSelectors` | Add datapoint, toggle visibility |
-| `PackagesSelectors`, `PluginSelectors` | Admin app extension management |
-| `BrandingSelectors` | Branding form controls |
-
-### `utils/`
-
-| Export | Description |
-|---|---|
-| `registerTestId(id)` | Registers `id` in the global `testIdRegistry` so managed objects created with `cy_testId = id` are auto-deleted after the spec finishes |
-| `testIdRegistry` | The singleton `TestIdRegistry` instance (rarely needed directly) |
-
----
-
-## Custom Commands
-
-Registered in `support/commands.ts`, available on `cy.*` in all specs.
-
-| Command | Description |
-|---|---|
-| `cy.visitShellAndWaitForSelector(url, lang?, selector?, timeout?)` | Navigate to a shell route, set language, inject remotes if `C8Y_SHELL_EXTENSION` is set, wait for selector |
-| `cy.createGroup(options)` | Wraps `createGroupApi` — returns the created `IManagedObject` |
-| `cy.createDevice(options)` | Wraps `createDeviceApi` |
-| `cy.assignDevice(groupId)` | Subject-chained: assigns the yielded device to `groupId` |
-| `cy.interceptDashboardLoad(id, context, handler)` | Intercepts the dashboard query for a device or group |
-| `cy.createGroupHierarchy(hierarchy, cy_testId)` | Recursively creates a group tree |
-| `cy.configureApplicationAccess(role, appNames)` | Adds apps to a global role's access list |
-| `cy.createInventoryRoleWithPermissions(name, permissions)` | Creates an inventory role |
-| `cy.assignInventoryRoleToGroupForUser(role, groupId, user)` | Assigns inventory role |
-| `cy.deleteInventoryRole(name)` | Deletes an inventory role by name |
-| `cy.createUserWithGlobalRoles(user, roles)` | Creates a user and assigns global roles |
-| `cy.deleteUsers(users)` | Deletes an array of users |
+| `cy.createDevice(options)` | Creates a device (`c8y_IsDevice`) via `cy.c8yclient`, yields the managed object |
+| `interceptAssetNavigatorInventoryQueries()` | Rewrites `_id` → `id` in inventory queries (tenant-mock gap) |
 
 Commands provided **natively by `cumulocity-cypress` 1.x** (do not redefine):
 `cy.getAuth`, `cy.login`, `cy.createUser`, `cy.deleteUser`, `cy.createGlobalRole`,
@@ -368,30 +210,24 @@ Commands provided **natively by `cumulocity-cypress` 1.x** (do not redefine):
 
 ```ts
 // cypress/e2e/my-plugin.cy.ts
-
-import { registerTestId, mockDevice, stubDeviceDashboard, mockWidget,
-         visitDeviceWithWidget, DashboardSelectors } from '../support';
-
-const CYPRESS_TEST_ID = 'my-plugin-tests';
-registerTestId(CYPRESS_TEST_ID); // auto-cleanup after spec
+import { AddWidgetDialog, DashboardSelectors } from '@cumulocity-iot/ui-sdk/cypress';
 
 describe('My Plugin', () => {
-  const device = { name: 'Test Device', id: mockId() };
+  let device: IManagedObject;
 
   before(() => {
-    Cypress.session.clearAllSavedSessions();
     cy.getAuth().login();
-    cy.createGroup({ name: 'Test Group', cy_testId: CYPRESS_TEST_ID });
+    cy.createDevice({ name: 'My plugin device' }).then((d) => (device = d));
   });
 
   beforeEach(() => {
     cy.getAuth().login().disableGainsight();
   });
 
-  it('renders the widget', () => {
-    const widget = mockWidget({ componentId: 'my-plugin-widget', config: {} });
-    visitDeviceWithWidget(device, { ...device, c8y_IsDevice: {} }, [widget], 'my-plugin-widget');
-    cy.get('my-plugin-widget').should('be.visible');
+  it('adds the widget', () => {
+    cy.visitApp(`device/${device.id}`, { language: 'en', waitFor: DashboardSelectors.WIDGET_EDIT_READY });
+    AddWidgetDialog.openAndSelect('My Widget');
+    cy.get('my-plugin-widget-config').should('be.visible');
   });
 });
 ```
@@ -431,51 +267,16 @@ generate script only covers build/serve/test):
 
 ---
 
-## Test Cleanup Pattern
+## Test Data
 
-All managed objects created against the live backend must be tagged with a
-`cy_testId` field so the global `after()` hook in `e2e.ts` can delete them:
+Against the tenant mock every plugin run starts from a fresh mock with the world file, so objects a
+spec creates (`cy.createDevice`, `cy.c8yclient((c) => c.inventory.create(…))`) need no tagging or
+global teardown. Give them unique names (`Date.now()`) when specs could see each other's objects,
+and delete what a test must not leave behind (e.g. events) explicitly. Against a real tenant, clean up
+in `after()`.
 
-```ts
-// At the top of every describe block that creates backend data
-const CYPRESS_TEST_ID = 'my-plugin-tests';
-registerTestId(CYPRESS_TEST_ID);
-
-// Pass cy_testId when creating inventory objects
-cy.createGroup({ name: 'My Group', cy_testId: CYPRESS_TEST_ID });
-cy.c8yclient((c) => createGroup(c, { name: 'My Group', cy_testId: CYPRESS_TEST_ID }));
-```
-
-`clearAllManagedObjectsOfTest(CYPRESS_TEST_ID)` queries the inventory with
-`cy_testId eq '<id>'` and cascade-deletes every match.  Each per-plugin config
-runs a narrow `specPattern` so only that plugin's test IDs accumulate per run.
-
----
-
-## Two Test Modes
-
-### Intercept-based (unit-style) — no backend required
-
-Use `stubDeviceDashboard` / `visitDeviceWithWidget` to load a pre-configured
-widget without a live backend.  Ideal for widget rendering, config form, and
-save-assertion tests.
-
-```ts
-const widget = mockWidget({ componentId: 'my-widget', config: { threshold: 42 } });
-const dashboard = stubDeviceDashboard(device, deviceFixture, [widget]);
-const saveAlias = interceptDashboardSave(dashboard.id);
-
-cy.visitShellAndWaitForSelector(`device/${device.id}`, 'en', 'my-widget');
-// ... interact with widget config ...
-saveWidgetAndDashboard();
-assertWidgetConfigSaved(saveAlias, { threshold: 42 });
-```
-
-### Live backend (integration-style)
-
-Use `cy.getAuth().login()` + `cy.createGroup` / `cy.createDevice` to
-provision real data.  Tag everything with `cy_testId` and call
-`registerTestId` so it is cleaned up automatically.
+To stub instead of create, register `cy.intercept` with factory data from
+`@cumulocity-iot/ui-sdk/factories` before `cy.visitApp`.
 
 ---
 
@@ -504,11 +305,8 @@ spec creates its own test user, so sessions do not leak between runs.
 - **Do not** redefine commands already provided by `cumulocity-cypress` 1.x
   (`createGlobalRole`, `deleteGlobalRoles`, `createUser`, `deleteUser`, etc.)
   — TypeScript will catch the signature conflict at compile time.
-- **Do not** call api functions (e.g. `createGroup`) outside a Cypress command
-  chain — they use `cy.c8yclient` internally and will fail outside a test
-  context.
-- **Do not** create managed objects without a `cy_testId` tag unless you clean
-  them up explicitly in `after()`.
+- **Do not** re-add generic helpers (page objects, factories, selectors) to
+  `cypress/support/` — add them to `@cumulocity-iot/ui-sdk` instead.
 - **Do not** use `cy.wait(N)` for arbitrary time delays — use
   `cy.get(selector).should('be.visible')` or `cy.wait('@alias')` instead.
 - **Do not** commit credentials.  Use the root `.env` file (git-ignored).

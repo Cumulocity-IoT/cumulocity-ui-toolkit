@@ -39,24 +39,19 @@ export function baseConfig(remote?: string, pattern?: string[], packageName?: st
       },
       specPattern: pattern || (packageName ? `cypress/e2e/${packageName}*.cy.ts` : undefined),
       allowCypressEnv: true,
-      expose: {
-        C8Y_SHELL_EXTENSION: remote || '',
-        C8Y_SHELL_TARGET:
-          process.env.CYPRESS_C8Y_SHELL_TARGET ||
-          process.env.C8Y_SHELL_TARGET ||
-          'cockpit-test-1023',
-      },
       env: {
         C8Y_TENANT: process.env.CYPRESS_C8Y_TENANT || process.env.C8Y_TENANT,
         C8Y_BASEURL:
           process.env.CYPRESS_C8Y_CYPRESS_URL ||
           process.env.C8Y_CYPRESS_URL ||
           'http://localhost:9001',
-        C8Y_SHELL_EXTENSION: remote || '',
-        C8Y_SHELL_TARGET:
+        // cy.visitApp (@cumulocity-iot/ui-sdk/cypress): the shell to load the plugin into, and the
+        // `?remotes=` value ({ contextPath: modules }) built by the per-plugin config.
+        C8Y_SHELL:
           process.env.CYPRESS_C8Y_SHELL_TARGET ||
           process.env.C8Y_SHELL_TARGET ||
           'cockpit-test-1023',
+        C8Y_REMOTES: remote || '',
         C8Y_USERNAME: process.env.CYPRESS_C8Y_USERNAME || process.env.C8Y_USERNAME,
         C8Y_PASSWORD: process.env.CYPRESS_C8Y_PASSWORD || process.env.C8Y_PASSWORD,
       },

@@ -359,8 +359,8 @@ importers:
         version: 14.0.0
     devDependencies:
       '@cumulocity-iot/ui-sdk':
-        specifier: 1.0.0
-        version: 1.0.0(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.42(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)))(@types/node@24.13.2)(chokidar@5.0.0)(cypress@15.15.0)(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))
+        specifier: 1.2.0
+        version: 1.2.0(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.42(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)))(@types/node@24.13.2)(chokidar@5.0.0)(cypress@15.15.0)(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))
       '@types/chai':
         specifier: ^5.2.3
         version: 5.2.3
@@ -1424,8 +1424,8 @@ packages:
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
 
-  '@cumulocity-iot/ui-sdk@1.0.0':
-    resolution: {integrity: sha512-hJmYgFqTKO1kUqKStLDMuE4m9IVplQuyoGu/4h5HpZGJbqzwvnYjX9HVxgFDJijy16cKclTqEYThJROcMszw1A==, tarball: https://npm.pkg.github.com/download/@cumulocity-iot/ui-sdk/1.0.0/93e7d967a6da0abdcfa46cbb3c2ed50c45b48492}
+  '@cumulocity-iot/ui-sdk@1.2.0':
+    resolution: {integrity: sha512-iTMAZ96OypVu+euhJyF6u74nAq3JsscxXwz5HuHq+HAkXKwXspKodUPZuvvXYT3do1LLKZ/oCdMT0xnz3TLLtg==, tarball: https://npm.pkg.github.com/download/@cumulocity-iot/ui-sdk/1.2.0/9877466029d764a196e341d6f3814b57bdfce6e7}
     engines: {node: '>=24.0.0'}
     hasBin: true
     peerDependencies:
@@ -7822,7 +7822,7 @@ snapshots:
       autoprefixer: 10.4.27(postcss@8.5.31)
       babel-loader: 10.0.0(@babel/core@7.29.7)(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31))
       browserslist: 4.29.4
-      copy-webpack-plugin: 14.0.0(webpack@5.105.2(postcss@8.5.31))
+      copy-webpack-plugin: 14.0.0(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31))
       css-loader: 7.1.3(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31))
       esbuild-wasm: 0.28.1
       http-proxy-middleware: 3.0.7
@@ -9097,26 +9097,26 @@ snapshots:
       angular-gettext-tools: https://codeload.github.com/rubenv/angular-gettext-tools/tar.gz/5a20d5fe2ad768bfd0cac18259b4986346061eda
       autoprefixer: 10.4.20(postcss@8.5.31)
       babel-eslint: 10.1.0(eslint@9.39.4(jiti@2.7.0))
-      babel-loader: 9.2.1(@babel/core@7.29.7)(webpack@5.105.2(postcss@8.5.31))
+      babel-loader: 9.2.1(@babel/core@7.29.7)(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31))
       babel-plugin-angularjs-annotate: 0.10.0
       chalk: 4.1.2
       commander: 11.1.0
-      copy-webpack-plugin: 14.0.0(webpack@5.105.2(postcss@8.5.31))
+      copy-webpack-plugin: 14.0.0(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31))
       cosmiconfig: 9.0.0(typescript@5.9.3)
       cosmiconfig-typescript-loader: 6.1.0(@types/node@24.13.2)(cosmiconfig@9.0.0(typescript@5.9.3))(typescript@5.9.3)
-      css-loader: 6.10.0(webpack@5.105.2(postcss@8.5.31))
+      css-loader: 6.10.0(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31))
       dotenv: 17.2.3
       fast-glob: 3.3.2
-      file-loader: 6.2.0(webpack@5.105.2(postcss@8.5.31))
+      file-loader: 6.2.0(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31))
       fs-extra: 11.3.0
-      html-loader: 5.1.0(webpack@5.105.2(postcss@8.5.31))
+      html-loader: 5.1.0(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31))
       html-webpack-plugin: 5.6.3(webpack@5.105.2(postcss@8.5.31))
       imports-loader: 0.8.0
-      mini-css-extract-plugin: 2.9.4(webpack@5.105.2(postcss@8.5.31))
+      mini-css-extract-plugin: 2.9.4(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31))
       pofile: 1.0.11
-      postcss-loader: 8.1.1(postcss@8.5.31)(typescript@5.9.3)(webpack@5.105.2(postcss@8.5.31))
+      postcss-loader: 8.1.1(postcss@8.5.31)(typescript@5.9.3)(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31))
       rimraf: 2.6.2
-      style-loader: 4.0.0(webpack@5.105.2(postcss@8.5.31))
+      style-loader: 4.0.0(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31))
       terser-webpack-plugin: 5.6.1(esbuild@0.28.1)(postcss@8.5.31)(webpack@5.105.2(postcss@8.5.31))
       tslib: 2.8.1
       typescript: 5.9.3
@@ -9298,7 +9298,7 @@ snapshots:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
 
-  '@cumulocity-iot/ui-sdk@1.0.0(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.42(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)))(@types/node@24.13.2)(chokidar@5.0.0)(cypress@15.15.0)(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))':
+  '@cumulocity-iot/ui-sdk@1.2.0(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.42(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)))(@types/node@24.13.2)(chokidar@5.0.0)(cypress@15.15.0)(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))':
     dependencies:
       '@angular/cli': 21.2.28(@types/node@24.13.2)(chokidar@5.0.0)
       '@module-federation/vite': 1.23.5(typescript@5.9.3)(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))
@@ -11223,7 +11223,7 @@ snapshots:
       find-up: 5.0.0
       webpack: 5.105.2(esbuild@0.28.1)(postcss@8.5.31)
 
-  babel-loader@9.2.1(@babel/core@7.29.7)(webpack@5.105.2(postcss@8.5.31)):
+  babel-loader@9.2.1(@babel/core@7.29.7)(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31)):
     dependencies:
       '@babel/core': 7.29.7
       find-cache-dir: 4.0.0
@@ -11692,7 +11692,7 @@ snapshots:
     dependencies:
       is-what: 4.1.16
 
-  copy-webpack-plugin@14.0.0(webpack@5.105.2(postcss@8.5.31)):
+  copy-webpack-plugin@14.0.0(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31)):
     dependencies:
       glob-parent: 6.0.2
       normalize-path: 3.0.0
@@ -11768,7 +11768,7 @@ snapshots:
       shebang-command: 2.0.0
       which: 2.0.2
 
-  css-loader@6.10.0(webpack@5.105.2(postcss@8.5.31)):
+  css-loader@6.10.0(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31)):
     dependencies:
       icss-utils: 5.1.0(postcss@8.5.31)
       postcss: 8.5.31
@@ -12598,7 +12598,7 @@ snapshots:
     dependencies:
       flat-cache: 4.0.1
 
-  file-loader@6.2.0(webpack@5.105.2(postcss@8.5.31)):
+  file-loader@6.2.0(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31)):
     dependencies:
       loader-utils: 2.0.4
       schema-utils: 3.3.0
@@ -12927,7 +12927,7 @@ snapshots:
 
   html-escaper@2.0.2: {}
 
-  html-loader@5.1.0(webpack@5.105.2(postcss@8.5.31)):
+  html-loader@5.1.0(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31)):
     dependencies:
       html-minifier-terser: 7.2.0
       parse5: 7.3.0
@@ -13873,7 +13873,7 @@ snapshots:
       tapable: 2.3.3
       webpack: 5.105.2(esbuild@0.28.1)(postcss@8.5.31)
 
-  mini-css-extract-plugin@2.9.4(webpack@5.105.2(postcss@8.5.31)):
+  mini-css-extract-plugin@2.9.4(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31)):
     dependencies:
       schema-utils: 4.3.3
       tapable: 2.3.3
@@ -14498,7 +14498,7 @@ snapshots:
 
   possible-typed-array-names@1.1.0: {}
 
-  postcss-loader@8.1.1(postcss@8.5.31)(typescript@5.9.3)(webpack@5.105.2(postcss@8.5.31)):
+  postcss-loader@8.1.1(postcss@8.5.31)(typescript@5.9.3)(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31)):
     dependencies:
       cosmiconfig: 9.0.2(typescript@5.9.3)
       jiti: 1.21.7
@@ -15371,7 +15371,7 @@ snapshots:
 
   strip-json-comments@3.1.1: {}
 
-  style-loader@4.0.0(webpack@5.105.2(postcss@8.5.31)):
+  style-loader@4.0.0(webpack@5.105.2(esbuild@0.28.1)(postcss@8.5.31)):
     dependencies:
       webpack: 5.105.2(esbuild@0.28.1)(postcss@8.5.31)
 

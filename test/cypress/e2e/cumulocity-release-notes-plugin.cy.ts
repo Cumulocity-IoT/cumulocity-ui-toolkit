@@ -1,7 +1,6 @@
 /// <reference types="cypress" />
 
 import { IEvent, IManagedObject } from '@c8y/client';
-import { registerTestId } from '../support';
 
 /**
  * Release Notes plugin
@@ -13,14 +12,12 @@ import { registerTestId } from '../support';
  * Release notes are events of type `c8y_ReleaseNotes` (with a `published` fragment when
  * published) attached to a managed object of type `c8y_ReleaseNotes`.
  */
-const CYPRESS_TEST_ID = 'release-notes-tests';
 const EVENT_TYPE = 'c8y_ReleaseNotes';
 const LAST_CHECKED_KEY = 'c8y_release_notes';
 const ADMIN_ITEM = '[data-cy="release-notes-admin--item"]';
 const MODAL = 'c8y-release-notes-admin-modal';
 const DISPLAY_MODAL = 'c8y-release-notes-display-list-modal';
 
-registerTestId(CYPRESS_TEST_ID);
 
 interface SeedNote {
   version: string;
@@ -70,7 +67,7 @@ function clearNotes(): void {
 }
 
 function visitAdmin(): void {
-  cy.visitShellAndWaitForSelector('release-notes', 'en', '[data-cy="release-notes-admin--create"]');
+  cy.visitApp('release-notes', { language: 'en', waitFor: '[data-cy="release-notes-admin--create"]' });
 }
 
 function adminItem(version: string): Cypress.Chainable<JQuery<HTMLElement>> {
@@ -88,7 +85,7 @@ describe('Release notes', () => {
     cy.getAuth().login();
     cy.getAuth()
       .c8yclient((c) =>
-        c.inventory.create({ type: EVENT_TYPE, name: 'Release notes source', cy_testId: CYPRESS_TEST_ID })
+        c.inventory.create({ type: EVENT_TYPE, name: 'Release notes source' })
       )
       .then((res) => {
         sourceId = (res.body as IManagedObject).id;
@@ -102,7 +99,7 @@ describe('Release notes', () => {
 
   describe('admin', () => {
     it('adds a "Release Notes" navigator node under Settings that opens the admin list', () => {
-      cy.visitShellAndWaitForSelector('', 'en', '#navigator');
+      cy.visitApp('', { language: 'en', waitFor: '#navigator' });
       cy.get('c8y-navigator-node button[data-cy="Settings"]').click();
       cy.get('c8y-navigator-node button[data-cy="Release Notes"]').should('be.visible').click();
       cy.url().should('include', '#/release-notes');
@@ -241,7 +238,7 @@ describe('Release notes', () => {
     it('opens the release notes modal from the right drawer listing only published notes', () => {
       seedNote({ version: '7.0.0', published: true, body: 'Published **notes**' });
       seedNote({ version: '7.1.0', published: false, body: 'draft' });
-      cy.visitShellAndWaitForSelector('', 'en', '#navigator');
+      cy.visitApp('', { language: 'en', waitFor: '#navigator' });
 
       cy.get('[data-cy="right-drawer-toggle-button"], .main-header .c8y-right-drawer-toggle, button[title="User"]')
         .first()
@@ -258,7 +255,7 @@ describe('Release notes', () => {
     });
 
     it('shows the empty state in the display modal when nothing is published', () => {
-      cy.visitShellAndWaitForSelector('', 'en', '#navigator');
+      cy.visitApp('', { language: 'en', waitFor: '#navigator' });
       cy.get('[data-cy="right-drawer-toggle-button"], .main-header .c8y-right-drawer-toggle, button[title="User"]')
         .first()
         .click();
@@ -268,7 +265,7 @@ describe('Release notes', () => {
 
     it('records the first visit and pops up newer release notes on the next start', () => {
       // First start: no stored timestamp → it is stored, no modal.
-      cy.visitShellAndWaitForSelector('', 'en', '#navigator');
+      cy.visitApp('', { language: 'en', waitFor: '#navigator' });
       cy.window().its('localStorage').invoke('getItem', LAST_CHECKED_KEY).should('be.a', 'string');
       cy.get(DISPLAY_MODAL).should('not.exist');
 

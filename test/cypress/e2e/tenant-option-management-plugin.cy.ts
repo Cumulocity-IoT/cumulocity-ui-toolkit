@@ -50,7 +50,7 @@ function visitPlugin() {
     'getConfig'
   );
   cy.intercept('GET', '**/tenant/options?*').as('listOptions');
-  cy.visitShellAndWaitForSelector(ROUTE, 'en', '[data-cy="tenant-option-management--create"]');
+  cy.visitApp(ROUTE, { language: 'en', waitFor: '[data-cy="tenant-option-management--create"]' });
   cy.wait('@getConfig');
   // The grid is filled only once the option values are loaded too; acting before that races
   // the initial load, which replaces the rows when it completes.
@@ -87,7 +87,7 @@ describe('Tenant Option Management', () => {
       if (req.body?.type === 'tenant_option_plugin_config') req.alias = 'createConfig';
     });
 
-    cy.visitShellAndWaitForSelector('', 'en', '#navigator');
+    cy.visitApp('', { language: 'en', waitFor: '#navigator' });
     cy.get('c8y-navigator-node button[data-cy="Settings"]').click();
     cy.get('c8y-navigator-node button[data-cy="Options"]').should('be.visible').click();
 
