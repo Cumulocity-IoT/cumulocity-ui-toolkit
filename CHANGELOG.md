@@ -1,5 +1,9 @@
 # UI Toolkit Changelog
 
+## 2026.10.27 — ui-sdk 1.3.1
+
+**Test infrastructure**: `@cumulocity-iot/ui-sdk` 1.2.0 → 1.3.1 in `test/`. The release brings `c8y-ui dev --apps <dir>,…` (several plugins with hot reload behind one router on the tenant mock) and its Vite plugin now shares every sub-entry the dev shell provides (`@c8y/ngx-components/device-grid`, `ngx-bootstrap/modal`, …), which fixes `NG0201` provider errors of such components in Vite dev.
+
 ## 2026.10.26 — ui-sdk Cypress helpers
 
 **Test infrastructure**: the e2e specs use the Cypress helpers of `@cumulocity-iot/ui-sdk` 1.2.0 (`cy.visitApp`, `AddWidgetDialog`, `Dashboard`, dashboard/widget selectors) instead of the suite's own support library, which is removed. `test/config/base.config.ts` passes the shell and the `?remotes=` value as `C8Y_SHELL` / `C8Y_REMOTES`.
