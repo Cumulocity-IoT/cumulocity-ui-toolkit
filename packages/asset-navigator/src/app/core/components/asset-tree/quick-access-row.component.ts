@@ -13,8 +13,10 @@ import { CoreModule } from '@c8y/ngx-components';
 import type { DotSeverity } from '../status-dot/status-dot.model';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { AssetIconService } from '../../services/asset-store/asset-icon.service';
+import { effectiveAvailability } from '../../services/asset-store/asset-store.model';
 import { AssetStoreService } from '../../services/asset-store/asset-store.service';
 import { AssetTreeService, type QuickAccessEntry } from './asset-tree.service';
+import { NavigatorSettingsService } from '../../services/settings/navigator-settings.service';
 
 /** A quick-access entry resolved against the store — path and status included. */
 export interface QuickAccessItem {
@@ -73,13 +75,21 @@ export class QuickAccessRowComponent {
 
   private readonly assets = inject(AssetStoreService);
   private readonly tree = inject(AssetTreeService);
+  private readonly navigatorSettings = inject(NavigatorSettingsService);
   private readonly icons = inject(AssetIconService);
 
-  protected readonly pinned = computed(() => this.resolve(this.tree.pinned()));
-  /** Recents minus anything already pinned — the same asset twice is noise. */
+  /** Pinned assets, as many as the options menu allows. */
+  protected readonly pinned = computed(() =>
+    this.resolve(this.tree.pinned()).slice(0, this.navigatorSettings.settings().maxPinned)
+  );
+
+  /** Recents minus anything already pinned — the same asset twice is noise — capped likewise. */
   protected readonly recent = computed(() => {
     const pinnedIds = new Set(this.tree.pinned().map((entry) => entry.assetId));
-    return this.resolve(this.tree.recent().filter((entry) => !pinnedIds.has(entry.assetId)));
+    return this.resolve(this.tree.recent().filter((entry) => !pinnedIds.has(entry.assetId))).slice(
+      0,
+      this.navigatorSettings.settings().maxRecent
+    );
   });
 
   protected readonly counts = computed(() => ({
@@ -264,7 +274,7 @@ export class QuickAccessRowComponent {
         icon: this.icons.iconFor(node),
         path: this.assets.pathLabel(entry.assetId),
         severity: rollup.worst ?? 'ok',
-        unavailable: rollup.unavailableCount > 0 || node.availability === 'unavailable',
+        unavailable: effectiveAvailability(node, rollup) === 'unavailable',
       };
     });
   }

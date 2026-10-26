@@ -1,0 +1,19 @@
+// Rendered in <body> (container="body"): the drawer clips its overflow.
+.ps-settings-menu {
+  width: 300px;
+
+  .dropdown-form {
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  &__counts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  &__recording {
+    border-color: var(--c8y-brand-primary);
+  }
+}

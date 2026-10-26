@@ -8,19 +8,19 @@ import {
 } from '@angular/core';
 import { UserPreferencesService } from '@c8y/ngx-components';
 import { firstValueFrom } from 'rxjs';
-import { DEFAULT_ASSET_STORE_CONFIG } from '../../services/asset-store/asset-store.model';
 import { AssetStoreService } from '../../services/asset-store/asset-store.service';
-import { detailFieldFor } from './asset-detail-fields';
 import {
   EMPTY_TREE_FILTER,
   filterHierarchy,
   type FilteredHierarchy,
   type TreeFilter,
 } from './asset-tree.model';
+import { LIST_LIMIT } from '../../services/settings/navigator-settings.model';
 
 /**
- * Tree state: expansion, selection, filter, pinned & recent assets, and the detail
- * panel's field selection (tree design §3, §6.1, §6.3).
+ * Tree state: expansion, selection, filter, pinned & recent assets (tree design §3, §6.1).
+ * The detail panel's fields are not here: they are part of the navigator settings
+ * (`NavigatorSettings.detailPanel`).
  *
  * Everything here is parked on `globalThis` for the same reason as `AssetStoreService`
  * — the drawer and the overlay are separate plugin bundles, each with its own compiled
@@ -29,20 +29,19 @@ import {
  * shows the same shape and selection (AC-T3).
  *
  * v2: `expanded: Set<string>` became `expansion: Map<string, boolean>` — see
- * {@link AssetTreeService.expansion}. v3: the detail panel's one field list became one
- * list *per asset type* — see {@link AssetTreeService.detailFieldsByType}. Neither pair is
- * interchangeable, so the key is versioned: a stale bundle and a current one must not
- * share a slot. v4 adds {@link AssetTreeService.currentAssetId}, which a v3 slot has no
- * signal for — reading it would be `undefined()`.
+ * {@link AssetTreeService.expansion}. v3: the detail panel's field list became per type.
+ * v4 adds {@link AssetTreeService.currentAssetId}. v5 drops the detail-field state (moved to
+ * the navigator settings). No pair is interchangeable, so the key is versioned: a stale
+ * bundle and a current one must not share a slot.
  */
-const STATE_SYMBOL = Symbol.for('c8y-ps.asset-tree-state.v4');
+const STATE_SYMBOL = Symbol.for('c8y-ps.asset-tree-state.v5');
 
 /** Per-user preference keys. `bookmarks` is the platform's own — see `pinned`. */
 const PREF_BOOKMARKS = 'bookmarks';
 const PREF_RECENT = 'ps.assetNav.recent';
-const PREF_DETAIL_FIELDS = 'ps.assetNav.detailFields';
 
-const MAX_RECENT = 8;
+/** Recents kept per user: the options menu's upper limit, so any configured display size has entries. */
+const MAX_RECENT = LIST_LIMIT.max;
 
 /**
  * A platform bookmark, as `@c8y/ngx-components/bookmarks` stores it under the
@@ -57,14 +56,6 @@ export interface PlatformBookmark {
   icon?: string;
   markToRemove?: boolean;
 }
-
-/**
- * Configured detail fields, keyed by the asset's managed-object `type`
- * (`wind_turbine`, `wind_park`, …). A type that is absent has never been configured and
- * falls back to that kind's default (`resolveDetailFieldKeys`); a type mapped to `[]`
- * was deliberately emptied by the user.
- */
-export type DetailFieldsByType = Readonly<Record<string, readonly string[]>>;
 
 /** A pinned or recent asset as the quick-access panel shows it. */
 export interface QuickAccessEntry {
@@ -81,10 +72,8 @@ interface AssetTreeState {
   filter: WritableSignal<TreeFilter>;
   pinned: WritableSignal<readonly QuickAccessEntry[]>;
   recent: WritableSignal<readonly QuickAccessEntry[]>;
-  detailFieldsByType: WritableSignal<DetailFieldsByType>;
   /** Where the surrounding app already is — a ranking signal, not a selection. */
   currentAssetId: WritableSignal<string | null>;
-  sparkline: WritableSignal<boolean>;
   /** Guards the one-time preference read across bundles. */
   prefsLoaded: boolean;
 }
@@ -100,9 +89,7 @@ function resolveState(): AssetTreeState {
     filter: signal<TreeFilter>({ ...EMPTY_TREE_FILTER }),
     pinned: signal<readonly QuickAccessEntry[]>([]),
     recent: signal<readonly QuickAccessEntry[]>([]),
-    detailFieldsByType: signal<DetailFieldsByType>({}),
     currentAssetId: signal<string | null>(null),
-    sparkline: signal(false),
     prefsLoaded: false,
   });
 }
@@ -112,7 +99,7 @@ function resolveState(): AssetTreeState {
  * lands in the right-hand drawer's list as a working link.
  *
  * Every asset carries `c8y_IsAsset` + `c8y_IsDeviceGroup`, so the group context
- * route is right for all of them; a pure device (a turbine controller, an RTU) uses the
+ * route is right for all of them; a pure device (a gateway, a sensor) uses the
  * device route. `AssetNavigationService.routeFor` decides which, and the route shapes
  * here have to stay in step with `ViewContext.Group` / `.Device`.
  */
@@ -154,18 +141,6 @@ export class AssetTreeService {
   readonly filter: Signal<TreeFilter> = this.state.filter.asReadonly();
   readonly pinned: Signal<readonly QuickAccessEntry[]> = this.state.pinned.asReadonly();
   readonly recent: Signal<readonly QuickAccessEntry[]> = this.state.recent.asReadonly();
-  readonly sparkline: Signal<boolean> = this.state.sparkline.asReadonly();
-
-  /**
-   * The detail panel's configured fields per asset type (§6.3).
-   *
-   * Per type rather than one global list because the panel's subject is not one thing: a
-   * park and a turbine share no useful field beyond their name, so a single list meant
-   * every choice made for one was wrong for the other. Read it through
-   * {@link configuredFieldKeys}, which is a signal read and so stays reactive.
-   */
-  readonly detailFieldsByType: Signal<DetailFieldsByType> =
-    this.state.detailFieldsByType.asReadonly();
 
   /**
    * The search term, which the **containers' inputs render from** rather than keeping a
@@ -374,58 +349,6 @@ export class AssetTreeService {
     await this.preferences.set(PREF_RECENT, next);
   }
 
-  // ── detail field config (§6.3) ───────────────────────────────────────────────
-
-  /**
-   * What the user configured for this asset type, or `null` when they never did.
-   *
-   * The caller resolves the default, because it depends on something this service has no
-   * business knowing (whether the type is a branch or a leaf) — see
-   * `resolveDetailFieldKeys`.
-   */
-  configuredFieldKeys(assetType: string | undefined): readonly string[] | null {
-    if (!assetType) return null;
-
-    return this.detailFieldsByType()[assetType] ?? null;
-  }
-
-  async setDetailFieldKeys(assetType: string, keys: readonly string[]): Promise<void> {
-    this.state.detailFieldsByType.update((current) => ({
-      ...current,
-      [assetType]: sanitizeFieldKeys(keys),
-    }));
-    await this.persistDetailFields();
-  }
-
-  async setSparkline(enabled: boolean): Promise<void> {
-    this.state.sparkline.set(enabled);
-    await this.persistDetailFields();
-  }
-
-  /** Forgets this type's selection, so it falls back to the default for its kind. */
-  async resetDetailFields(assetType: string): Promise<void> {
-    this.state.detailFieldsByType.update((current) => {
-      const next = { ...current };
-
-      delete next[assetType];
-
-      return next;
-    });
-    await this.persistDetailFields();
-  }
-
-  /**
-   * Per-type field lists and the sparkline toggle share one stored document, so both
-   * writers go through here — writing only one half would silently reset the other.
-   */
-  private async persistDetailFields(): Promise<void> {
-    await this.preferences.set(PREF_DETAIL_FIELDS, {
-      version: 2,
-      byType: this.detailFieldsByType(),
-      sparkline: this.sparkline(),
-    });
-  }
-
   // ── preferences ──────────────────────────────────────────────────────────────
 
   private async readBookmarks(): Promise<PlatformBookmark[]> {
@@ -443,22 +366,13 @@ export class AssetTreeService {
     this.state.prefsLoaded = true;
 
     try {
-      const [bookmarks, recent, fields] = await Promise.all([
+      const [bookmarks, recent] = await Promise.all([
         this.readBookmarks(),
         firstValueFrom<unknown>(this.preferences.get(PREF_RECENT)),
-        firstValueFrom<unknown>(this.preferences.get(PREF_DETAIL_FIELDS)),
       ]);
 
       this.state.pinned.set(projectPinned(bookmarks));
       this.state.recent.set(projectRecent(recent));
-      // Migrate-on-read, twice over: keys the vocabulary no longer knows are dropped
-      // rather than rendered (AC-T6), and a v1 document — one flat list, written when the
-      // panel had no per-type configuration — becomes that list *for the leaf type*, which
-      // is the only type its turbine fields ever described.
-      const stored = fields as { byType?: unknown; keys?: unknown; sparkline?: unknown } | null;
-
-      this.state.detailFieldsByType.set(projectFieldsByType(stored));
-      this.state.sparkline.set(stored?.sparkline === true);
     } catch {
       // Defaults are already in place.
     }
@@ -493,39 +407,4 @@ function projectRecent(raw: unknown): QuickAccessEntry[] {
       );
     })
     .slice(0, MAX_RECENT);
-}
-
-/**
- * Known keys only, deduped, order preserved.
- *
- * Empty is a legal result here, unlike in the pre-per-type version: for a branch it is
- * the default, and for a leaf `resolveDetailFieldKeys` reads it as "never configured" and
- * substitutes the turbine set — so the "never show an empty panel" rule now lives at the
- * one place that knows which kind of asset is being rendered.
- */
-function sanitizeFieldKeys(keys: readonly string[]): string[] {
-  return [...new Set(keys)].filter((key) => detailFieldFor(key) !== undefined);
-}
-
-/** The stored per-type document, sanitized. Also migrates the flat v1 shape. */
-function projectFieldsByType(
-  stored: { byType?: unknown; keys?: unknown } | null
-): DetailFieldsByType {
-  const byType: Record<string, readonly string[]> = {};
-
-  if (stored?.byType && typeof stored.byType === 'object') {
-    for (const [type, keys] of Object.entries(stored.byType as Record<string, unknown>)) {
-      if (Array.isArray(keys)) byType[type] = sanitizeFieldKeys(keys as string[]);
-    }
-
-    return byType;
-  }
-
-  if (Array.isArray(stored?.keys)) {
-    const migrated = sanitizeFieldKeys(stored.keys as string[]);
-
-    if (migrated.length) byType[DEFAULT_ASSET_STORE_CONFIG.leafType] = migrated;
-  }
-
-  return byType;
 }

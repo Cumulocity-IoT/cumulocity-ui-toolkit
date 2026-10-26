@@ -21,7 +21,16 @@ import { gettext } from '@c8y/ngx-components/gettext';
 import { filter as filterEvents, map } from 'rxjs/operators';
 import { cappedList } from '../../helpers/ai-context.helper';
 import { AiContextService } from '../../services/ai-context.service';
-import type { AssetNode, BranchStatus } from '../../services/asset-store/asset-store.model';
+import {
+  alarmedUnitCount,
+  countUnitFor,
+  effectiveAvailability,
+  unitCount,
+  type AssetNode,
+  type BranchStatus,
+  type CountUnit,
+} from '../../services/asset-store/asset-store.model';
+import { AssetDefinitionService } from '../../services/asset-store/asset-definition.service';
 import {
   globalSearchAvailable,
   openGlobalSearch,
@@ -45,6 +54,7 @@ import { CascadePanelComponent } from './cascade-panel.component';
 import { DetailFieldConfigComponent } from './detail-field-config.component';
 import { QuickAccessPanelComponent } from './quick-access-panel.component';
 import { QuickAccessRowComponent, type QuickAccessItem } from './quick-access-row.component';
+import { NavigatorSettingsService } from '../../services/settings/navigator-settings.service';
 
 /** Level-by-level reveal: delay per depth, and the depth at which the stagger stops. */
 const REVEAL_STEP_MS = 45;
@@ -58,7 +68,7 @@ const SCROLL_HEADROOM_ROWS = 2;
 const DETAIL_PANEL_WIDTH = 300;
 /**
  * Height the detail cascade may take before it starts scrolling. The panel's own content —
- * header, path, six fields, sparkline, action row — runs to ~360px, and the cascade's 320px
+ * header, path, seven fields, action row — runs to ~360px, and the cascade's 320px
  * default silently cut the action row off the bottom (a hover panel gives no hint that it
  * scrolls). Still clamped to what the container can actually show.
  */
@@ -144,6 +154,8 @@ export class AssetTreeComponent {
 
   private readonly assets = connectAssetStore();
   private readonly tree = inject(AssetTreeService);
+  private readonly navigatorSettings = inject(NavigatorSettingsService);
+  private readonly definitions = inject(AssetDefinitionService);
   private readonly router = inject(Router);
   private readonly injector = inject(Injector);
   private readonly cascade = new CascadeController();
@@ -185,7 +197,12 @@ export class AssetTreeComponent {
 
   /** Whether the Pinned & Recent cascade panel is out (§6.1). */
   protected readonly quickAccessOpen = computed(
-    () => this.cascadeTarget()?.kind === 'quick-access'
+    () => this.showQuickAccess() && this.cascadeTarget()?.kind === 'quick-access'
+  );
+
+  /** The options menu can hide Pinned & Recent; hidden, its panel never opens either. */
+  protected readonly showQuickAccess = computed(
+    () => this.navigatorSettings.settings().showQuickAccess
   );
 
   protected readonly rowHeight = computed(() => ROW_HEIGHT[this.config().density]);
@@ -242,11 +259,21 @@ export class AssetTreeComponent {
   protected readonly focusedId = this.tree.focusedId;
   protected readonly filtering = this.tree.filtering;
 
+  /**
+   * What the counts count: assets when the Digital Twin Manager is available, devices otherwise
+   * (`countUnitFor`). Footer, branch badges and the branch detail rows share this one choice.
+   */
+  protected readonly countUnit = computed<CountUnit>(() =>
+    countUnitFor(this.definitions.available())
+  );
+
   /** Footer: what the user can trust is complete (§3.4). */
   protected readonly summary = computed(() => {
     const rows = this.rows();
     const roots = this.assets.rootIds();
-    let turbines = 0;
+    const unit = this.countUnit();
+    let count = 0;
+    let devices = 0;
     let unavailable = 0;
     let alarmed = 0;
     let alarms = 0;
@@ -255,23 +282,31 @@ export class AssetTreeComponent {
     for (const rootId of roots) {
       const rollup = this.assets.rollupOf(rootId);
 
-      turbines += rollup.turbineCount;
+      count += unitCount(rollup, unit);
+      devices += rollup.deviceCount;
       unavailable += rollup.unavailableCount;
-      // Turbines, to match `turbines` and `unavailable` next to it. This used to add up
-      // `alarms.critical + alarms.major` — a count of *alarms* — and so reported a
-      // 114-turbine fleet as having 114 alarmed turbines whenever it had 114 alarms.
-      alarmed += rollup.alarmedCount;
+      // Units, to match `count` next to it — not `alarms.critical + alarms.major`, a count of
+      // *alarms*, which reported every unit as alarmed whenever there were as many alarms.
+      alarmed += alarmedUnitCount(rollup, unit);
       alarms += rollup.alarms.critical + rollup.alarms.major;
       criticals += rollup.alarms.critical;
     }
-    // The stat counts turbines alarmed critical *or* major, so its dot has to say which — it was
-    // hardcoded red, which claimed "critical" on a fleet whose worst was major.
+    // The stat counts units alarmed critical *or* major, so its dot has to say which.
     const worst: DotSeverity = criticals > 0 ? 'critical' : 'major';
     // In `high-volume` mode these are counts over the *loaded* branches, not the fleet. The footer
-    // says so rather than presenting a floor as a total — a "12 turbines" label on a 700k tenant
-    // is worse than no label.
+    // says so rather than presenting a floor as a total.
     const partial = this.assets.highVolume();
-    return { visible: rows.length, turbines, unavailable, alarmed, alarms, worst, partial };
+    return {
+      visible: rows.length,
+      unit,
+      count,
+      devices,
+      unavailable,
+      alarmed,
+      alarms,
+      worst,
+      partial,
+    };
   });
 
   /** `high-volume` mode is on and the tree is showing part of the fleet — surfaced in the footer. */
@@ -719,6 +754,11 @@ export class AssetTreeComponent {
     this.cascade.leave();
   }
 
+  /** The type the ⚙ editor configures: the hovered asset's (`null`, the default list, if gone). */
+  protected assetTypeOf(id: string): string | null {
+    return this.assets.node(id)?.type ?? null;
+  }
+
   protected openConfigPanel(): void {
     this.cascade.openConfigPanel();
   }
@@ -926,12 +966,12 @@ export class AssetTreeComponent {
         visibleRows: summary.visible,
         // Labelled `loaded…` and carrying `coverage` in `high-volume` mode, because these are
         // counts over the branches that happen to be in memory. Reporting them as fleet totals
-        // would have the assistant assert "the fleet has 12 turbines" about a 700k tenant.
+        // would have the assistant assert "the fleet has 12 devices" about a 700k tenant.
         fleet: {
           coverage: summary.partial ? 'partial — only loaded branches are counted' : 'complete',
-          turbines: summary.turbines,
-          notProducing: summary.unavailable,
-          turbinesWithCriticalOrMajorAlarms: summary.alarmed,
+          [summary.unit]: summary.count,
+          unavailableDevices: summary.unavailable,
+          [`${summary.unit}WithCriticalOrMajorAlarms`]: summary.alarmed,
           activeCriticalOrMajorAlarms: summary.alarms,
           ...(summary.partial ? { assetsLoaded: this.loadedCount() } : {}),
         },
@@ -957,7 +997,7 @@ export class AssetTreeComponent {
               name: selected.name,
               type: selected.type,
               path: this.assets.pathLabel(selected.id),
-              status: selected.availability,
+              status: effectiveAvailability(selected, this.assets.rollupOf(selected.id)),
               alarms: this.assets.rollupOf(selected.id).worst ?? 'none',
             }
           : null,
@@ -969,8 +1009,8 @@ export class AssetTreeComponent {
             depth: row.depth,
             expanded: row.expanded,
             worstAlarm: row.rollup.worst ?? 'none',
-            turbines: row.rollup.turbineCount || undefined,
-            notProducing: row.rollup.unavailableCount || undefined,
+            [this.countUnit()]: unitCount(row.rollup, this.countUnit()) || undefined,
+            unavailableDevices: row.rollup.unavailableCount || undefined,
             // Marked "Current" on screen, so it has to be marked here too.
             youAreHere: row.current || undefined,
           })),

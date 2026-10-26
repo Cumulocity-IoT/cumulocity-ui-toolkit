@@ -96,7 +96,9 @@ describe('Asset Navigator — global search', () => {
     cy.get(TRIGGER).should('have.attr', 'aria-expanded', 'true');
     cy.get(INPUT).should('be.focused').and('have.attr', 'placeholder').and('match', /K\)$/);
 
-    cy.get('.ps-search-backdrop').click('right');
+    // Cypress checks a fixed element's visibility at its centre, which the palette covers;
+    // the click itself lands on the free bottom-right corner.
+    cy.get('.ps-search-backdrop').click('bottomRight', { force: true });
     cy.get(PALETTE).should('not.exist');
 
     cy.get(TRIGGER).click();

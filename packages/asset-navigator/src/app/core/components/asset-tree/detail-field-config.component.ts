@@ -12,38 +12,32 @@ import { InventoryFieldPickerComponent } from '../inventory-field-picker/invento
 import { humanizeInventoryKey } from '../inventory-field-picker/inventory-field.model';
 import { AssetStoreService } from '../../services/asset-store/asset-store.service';
 import {
-  CUSTOM_FIELD_KEY_PREFIX,
-  DETAIL_FIELD_CATALOGUE,
-  branchFieldCatalogue,
-  customFieldKey,
-  detailFieldFor,
-  resolveDetailFieldKeys,
-} from './asset-detail-fields';
-import { AssetTreeService } from './asset-tree.service';
+  detailFieldId,
+  fieldsForType,
+  type DetailField,
+} from '../../services/settings/detail-panel.model';
+import { NavigatorSettingsService } from '../../services/settings/navigator-settings.service';
+import { DETAIL_FIELD_CATALOGUE, branchFieldCatalogue, propertyField } from './asset-detail-fields';
 
 /** How many assets of the type the field picker reads the available fragments off. */
 const PICKER_SAMPLE_SIZE = 10;
 
 /**
- * Cascade level 3 — the ⚙ panel (§6.3): which fields the detail panel shows for **the
- * hovered asset's type**, in which order, plus the sparkline toggle.
+ * The detail-field editor: which fields the detail panel shows for **one asset type** (or for
+ * the `default` list), in which order. It edits the detail-panel data contract stored in the
+ * navigator settings (`NavigatorSettings.detailPanel`, see `detail-panel.model.ts`).
  *
- * Per type, not globally: a park and a turbine share no useful field beyond their name, so
- * one list meant every choice made for one was wrong for the other. The panel therefore
- * configures `wind_turbine` when opened from a turbine and `wind_park` when opened from a
- * park, and says so in its header.
+ * Opened two ways: as cascade level 3 from the detail panel's ⚙ (for the hovered asset's
+ * type), and from the options menu's "Detail fields…" (for a type picked there).
  *
- * The vocabulary is `DETAIL_FIELD_CATALOGUE` (NFR-T6) **plus** anything the user picks with
- * the shared inventory-field picker — the same modal the overview's config drawer uses for
- * its table columns and popup sections. Picked fields are `mo:<path>` keys resolved from
- * the asset store's tier-0 properties, so they cost no request; branches are offered only
- * `mo` fields, because a group has no measurement series of its own.
+ * A type without its own entry shows what it currently gets (the default list for a leaf,
+ * nothing for a branch); the first edit creates the type's entry from that, and "Reset to
+ * default" removes the entry again. Edits apply at once — there is no Save step inside a hover
+ * cascade.
  *
- * Unlike `OverviewConfigDrawerComponent`, edits apply immediately rather than on Save:
- * this is a per-user view preference on an already-open panel, and a Save/Cancel pair
- * inside a hover cascade would mean the panel has to stay open across a pointer trip to
- * a footer button. Persistence is per user (`UserPreferencesService`), so the choice
- * survives a reload (AC-T6).
+ * The vocabulary is the built-in fields (`DETAIL_FIELD_CATALOGUE`) **plus** any inventory
+ * property picked with the shared inventory-field picker; branches are not offered
+ * availability and alarms, which their subtree rows always show.
  */
 @Component({
   selector: 'ps-detail-field-config',
@@ -53,98 +47,111 @@ const PICKER_SAMPLE_SIZE = 10;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DetailFieldConfigComponent {
-  /** The asset the detail panel is showing — this panel configures **its type**. */
-  readonly assetId = input.required<string>();
+  /** The type to configure; `null` configures the `default` list. */
+  readonly assetType = input<string | null>(null);
+  /** The asset the panel was opened from, if any — sampled first by the property picker. */
+  readonly assetId = input<string | null>(null);
+  /** Hides the close button where the host has its own (the options-menu modal). */
+  readonly closable = input(true);
 
   readonly closed = output<void>();
   /**
    * `true` while a modal opened from here is up.
    *
-   * The container has to hold the cascade open for that whole time: the modal is outside
-   * the panel, so the pointer leaving for it would otherwise start the close grace period
-   * and destroy this component — and with it the promise waiting for the picked fields.
+   * The cascade has to stay open for that whole time: the modal is outside the panel, so the
+   * pointer leaving for it would otherwise start the close grace period and destroy this
+   * component — and with it the promise waiting for the picked fields.
    */
   readonly modalOpen = output<boolean>();
 
-  private readonly tree = inject(AssetTreeService);
+  private readonly settings = inject(NavigatorSettingsService);
   private readonly assets = inject(AssetStoreService);
   private readonly bsModal = inject(BsModalService);
 
-  protected readonly sparkline = this.tree.sparkline;
+  private readonly node = computed(() => {
+    const id = this.assetId();
 
-  private readonly node = computed(() => this.assets.node(this.assetId()));
-  /** The type being configured. Empty only if the asset left the store mid-hover. */
-  protected readonly assetType = computed(() => this.node()?.type ?? '');
-  protected readonly typeLabel = computed(() =>
-    this.assetType() ? humanizeInventoryKey(this.assetType()) : ''
-  );
+    return id ? this.assets.node(id) : undefined;
+  });
 
-  /**
-   * A group rather than a turbine. Same test as the detail panel's, so the two can never
-   * disagree about which vocabulary applies.
-   */
-  protected readonly isBranch = computed(
-    () => !!this.assetType() && this.assetType() !== this.assets.config().leafType
-  );
+  protected readonly typeLabel = computed(() => {
+    const type = this.assetType();
 
-  private readonly keys = computed(() =>
-    resolveDetailFieldKeys(this.tree.configuredFieldKeys(this.assetType()), this.isBranch())
-  );
-
-  /** Selected fields, in their configured order. */
-  protected readonly selected = computed(() =>
-    this.keys()
-      .map((key) => detailFieldFor(key))
-      .filter((field): field is NonNullable<typeof field> => field !== undefined)
-  );
-
-  protected readonly available = computed(() => {
-    const chosen = new Set(this.keys());
-    const catalogue = this.isBranch() ? branchFieldCatalogue() : DETAIL_FIELD_CATALOGUE;
-    return catalogue.filter((field) => !chosen.has(field.spec.key));
+    return type ? humanizeInventoryKey(type) : '';
   });
 
   /**
-   * The last remaining field of a **leaf** type cannot be unchecked.
-   *
-   * An empty selection is how `resolveDetailFieldKeys` spells "never configured" for a leaf —
-   * an empty turbine panel is not a valid state — so unchecking the last box would have
-   * brought the whole default set back instead of leaving one field, which reads as the panel
-   * ignoring the click. A branch has no such floor: its identity is the rollup rows the panel
-   * always renders, so emptying its additions is a legitimate choice.
+   * Whether the type is a group. From the hovered asset when there is one (same test as the
+   * detail panel), else from any cached asset of the type having children.
    */
-  protected readonly atMinimum = computed(() => !this.isBranch() && this.keys().length === 1);
+  protected readonly isBranch = computed(() => {
+    const type = this.assetType();
 
-  protected isCustom(key: string): boolean {
-    return key.startsWith(CUSTOM_FIELD_KEY_PREFIX);
+    if (type === null) return false;
+    const node = this.node();
+
+    if (node) return node.childIds.length > 0;
+
+    for (const candidate of this.assets.hierarchy()?.byId.values() ?? []) {
+      if (candidate.type === type && candidate.childIds.length) return true;
+    }
+
+    return false;
+  });
+
+  /** The type has its own list (as opposed to falling back). Always true for `default`. */
+  protected readonly hasOwnEntry = computed(() => {
+    const type = this.assetType();
+
+    return type === null || type in this.settings.settings().detailPanel.types;
+  });
+
+  /** Selected fields, in their configured order. */
+  protected readonly selected = computed<readonly DetailField[]>(() => {
+    const type = this.assetType();
+    const config = this.settings.settings().detailPanel;
+
+    return type === null ? config.default : fieldsForType(config, type, this.isBranch());
+  });
+
+  protected readonly available = computed(() => {
+    const chosen = new Set(this.selected().map(detailFieldId));
+    const catalogue = this.isBranch() ? branchFieldCatalogue() : DETAIL_FIELD_CATALOGUE;
+
+    return catalogue.filter((field) => !chosen.has(detailFieldId(field)));
+  });
+
+  protected readonly fieldId = detailFieldId;
+
+  /** A picked inventory property rather than a built-in field — shows the path it reads. */
+  protected pathOf(field: DetailField): string | null {
+    return field.source.kind === 'property' &&
+      !DETAIL_FIELD_CATALOGUE.some((builtin) => detailFieldId(builtin) === detailFieldId(field))
+      ? field.source.path
+      : null;
   }
 
-  /** The MO path behind a picked field, for its `title` — the label drops the prefix. */
-  protected pathOf(key: string): string {
-    return key.slice(CUSTOM_FIELD_KEY_PREFIX.length);
-  }
+  protected async toggleField(field: DetailField): Promise<void> {
+    const id = detailFieldId(field);
+    const fields = this.selected();
+    const present = fields.some((item) => detailFieldId(item) === id);
 
-  protected async toggleField(key: string): Promise<void> {
-    const keys = this.keys();
-    const removing = keys.includes(key);
-
-    // Also guarded here, not just by the disabled checkbox: the floor is a rule about the
-    // stored value, and a caller reaching this any other way must not be able to cross it.
-    if (removing && this.atMinimum()) return;
-    await this.write(removing ? keys.filter((item) => item !== key) : [...keys, key]);
+    await this.write(
+      present ? fields.filter((item) => detailFieldId(item) !== id) : [...fields, field]
+    );
   }
 
   protected async drop(event: CdkDragDrop<unknown>): Promise<void> {
-    const keys = [...this.keys()];
+    const fields = [...this.selected()];
 
-    moveItemInArray(keys, event.previousIndex, event.currentIndex);
-    await this.write(keys);
+    moveItemInArray(fields, event.previousIndex, event.currentIndex);
+    await this.write(fields);
   }
 
   /**
-   * Adds inventory fields picked from the assets of this type. The sample comes from the
-   * asset store, so the picker offers exactly the fragments the panel can then actually
-   * read — and opening it costs no request.
+   * Adds inventory properties picked from cached assets of this type (any asset, for the
+   * default list). The sample comes from the asset store, so the picker offers exactly the
+   * fragments the panel can then actually read — and opening it costs no request.
    */
   protected async addInventoryFields(): Promise<void> {
     const samples = this.samples();
@@ -162,12 +169,13 @@ export class DetailFieldConfigComponent {
       );
 
       if (!picked?.length) return;
-      const keys = this.keys();
+      const fields = this.selected();
+      const ids = new Set(fields.map(detailFieldId));
       const additions = picked
-        .map((field: { path: string }) => customFieldKey(field.path))
-        .filter((key: string) => !keys.includes(key));
+        .map((field: { path: string }) => propertyField(field.path))
+        .filter((field: DetailField) => !ids.has(detailFieldId(field)));
 
-      if (additions.length) await this.write([...keys, ...additions]);
+      if (additions.length) await this.write([...fields, ...additions]);
     } finally {
       this.modalOpen.emit(false);
     }
@@ -176,34 +184,22 @@ export class DetailFieldConfigComponent {
   /** Drives the "Add asset properties" button's disabled state — see {@link samples}. */
   protected readonly hasSamples = computed(() => this.samples().length > 0);
 
-  protected async toggleSparkline(): Promise<void> {
-    await this.tree.setSparkline(!this.tree.sparkline());
-  }
-
-  /** Back to the default set for this type — other types keep their configuration. */
+  /** Back to the default: this type falls back again, or `default` gets the built-in list. */
   protected async reset(): Promise<void> {
-    if (!this.assetType()) return;
-    await this.tree.resetDetailFields(this.assetType());
+    await this.settings.resetDetailFields(this.assetType());
   }
 
-  private async write(keys: readonly string[]): Promise<void> {
-    if (!this.assetType()) return;
-    await this.tree.setDetailFieldKeys(this.assetType(), keys);
+  private async write(fields: readonly DetailField[]): Promise<void> {
+    await this.settings.setDetailFields(this.assetType(), fields);
   }
 
   /**
-   * Up to {@link PICKER_SAMPLE_SIZE} assets of this type, for the picker to read the
-   * available fragments off.
-   *
-   * A `computed` rather than a method: the template asks for it (through
-   * {@link hasSamples}) on every change-detection pass, and a type with few instances walks
-   * the whole cached fleet before it finds its ten — thousands of map entries per pass, for
-   * a button's disabled state. Memoised, it runs once per (asset, fleet).
+   * Up to {@link PICKER_SAMPLE_SIZE} assets of this type (or of any type, for the default
+   * list), for the picker to read the available fragments off. Memoised: the template asks for
+   * it on every change-detection pass, through {@link hasSamples}.
    */
   private readonly samples = computed<Readonly<Record<string, unknown>>[]>(() => {
     const type = this.assetType();
-
-    if (!type) return [];
     const samples: Readonly<Record<string, unknown>>[] = [];
     // The hovered asset first: it is the one the user is looking at, so a fragment only
     // it carries has to be offered rather than sampled away.
@@ -213,7 +209,10 @@ export class DetailFieldConfigComponent {
 
     for (const node of this.assets.hierarchy()?.byId.values() ?? []) {
       if (samples.length >= PICKER_SAMPLE_SIZE) break;
-      if (node.type === type && node.id !== hovered?.id) samples.push(node.properties);
+
+      if ((type === null || node.type === type) && node.id !== hovered?.id) {
+        samples.push(node.properties);
+      }
     }
 
     return samples;

@@ -34,6 +34,10 @@ import {
   type AssetStoreMode,
   type BranchStatus,
 } from './asset-store.model';
+import { NavigatorSettingsService } from '../settings/navigator-settings.service';
+
+/** The sweep's selection: the tree's assets plus the devices that are counted below them. */
+const ASSETS_OR_DEVICES = '(has(c8y_IsAsset) or has(c8y_IsDevice))';
 
 /** Platform cap on `pageSize` for `GET /inventory/managedObjects`. */
 const PAGE_SIZE = 2000;
@@ -69,7 +73,7 @@ export const HIGH_VOLUME_THRESHOLD = MAX_PAGES * PAGE_SIZE;
  * 114 of its children because the user cannot tell absent from unloaded. That holds for real
  * fleets; it stops being physically possible for a group with tens of thousands of direct
  * children, so past this point the branch says so explicitly with a "load more" row rather than
- * silently truncating. 3 pages = 6000 children, well beyond any real park.
+ * silently truncating. 3 pages = 6000 children, well beyond any real group.
  */
 const BRANCH_PAGE_LIMIT = 3;
 
@@ -197,6 +201,7 @@ export class AssetStoreService {
   private readonly inventory = inject(InventoryService);
   private readonly identity = inject(IdentityService);
   private readonly definitions = inject(AssetDefinitionService);
+  private readonly navigatorSettings = inject(NavigatorSettingsService);
 
   /** The cached fleet, or `null` before the first sweep completes. */
   readonly hierarchy: Signal<AssetHierarchy | null> = this.core.hierarchy.asReadonly();
@@ -236,7 +241,13 @@ export class AssetStoreService {
 
     if (!hierarchy) return null;
 
-    return buildAssetIndex(hierarchy, this.definitions.indexableProperties());
+    // Guessing properties from the inventory is the fallback for a missing DTM; the user can
+    // turn it off (options menu). While DTM is still unknown or available, guessing stays on
+    // for types it does not describe.
+    const fallback =
+      this.definitions.available() !== false || this.navigatorSettings.settings().inventoryFallback;
+
+    return buildAssetIndex(hierarchy, this.definitions.indexableProperties(), { fallback });
   });
 
   /** ISO timestamp of the data currently on screen — what a "as of" label shows. */
@@ -255,10 +266,8 @@ export class AssetStoreService {
 
     if (
       next.rootId === current.rootId &&
-      next.leafType === current.leafType &&
       next.idleIntervalMs === current.idleIntervalMs &&
-      next.activeIntervalMs === current.activeIntervalMs &&
-      next.hierarchyTypes.join() === current.hierarchyTypes.join()
+      next.activeIntervalMs === current.activeIntervalMs
     ) {
       return;
     }
@@ -529,14 +538,7 @@ export class AssetStoreService {
       );
     }
 
-    this.core.hierarchy.set(
-      buildHierarchy(
-        raw,
-        new Date().toISOString(),
-        this.core.config().leafType,
-        this.core.hierarchy()
-      )
-    );
+    this.core.hierarchy.set(buildHierarchy(raw, new Date().toISOString(), this.core.hierarchy()));
   }
 
   /**
@@ -544,10 +546,10 @@ export class AssetStoreService {
    *
    * The **roots only** — deliberately no type predicate anywhere in this path. Which types happen
    * to be groups is a tenant's business, not this store's, and hardcoding "everything except
-   * `wind_turbine`" would both miss group types nobody told us about and sweep 690k turbines on a
+   * <leaf type>" would both miss group types nobody told us about and sweep every leaf on a
    * tenant that names them differently. `childAssets` says what has children; that is enough.
    *
-   * Already-loaded branches are **not** re-fetched here. Polling 350 open parks every 30 s would
+   * Already-loaded branches are **not** re-fetched here. Polling 350 open branches every 30 s would
    * recreate the request storm this mode exists to end; instead {@link loadChildren} refetches a
    * branch when it is expanded and its cache has aged past the current cadence.
    */
@@ -680,12 +682,13 @@ export class AssetStoreService {
    * One or more pages of `GET /inventory/managedObjects/{id}/childAssets`.
    *
    * Three parameters carry the design:
-   * - `query=$filter=has(c8y_IsAsset)` — the asset filter runs **server-side** (this endpoint
-   *   accepts the query language), so controllers and RTUs never cross the wire. Matches what the
-   *   full-mode sweep selects.
+   * - `query=$filter=(has(c8y_IsAsset) or has(c8y_IsDevice))` — the filter runs **server-side**
+   *   (this endpoint accepts the query language), so additions and other non-inventory children
+   *   never cross the wire. Matches what the full-mode sweep selects; devices are counted, not
+   *   drawn (see `buildHierarchy`).
    * - `withChildrenCount=true` — the only way to know whether a child has children of its own, now
-   *   that `withChildren` defaults to `false`. Without it every loaded turbine would look like a
-   *   leaf and every loaded park like a dead end.
+   *   that `withChildren` defaults to `false`. Without it every loaded asset would look like a
+   *   leaf.
    * - `withTotalElements` on the first page only. Elements, not pages: the number wanted is "how
    *   many children are there", which is also what the "load more" row counts down. The parent's
    *   own `childAssets.count` is *not* used for this — it counts every child, including the
@@ -709,7 +712,7 @@ export class AssetStoreService {
 
       for (let page = fromPage; page <= lastPage; page++) {
         const response = await this.inventory.childAssetsList(parentId, {
-          query: '$filter=(has(c8y_IsAsset))',
+          query: `$filter=${ASSETS_OR_DEVICES}`,
           pageSize: PAGE_SIZE,
           currentPage: page,
           withChildrenCount: true,
@@ -755,7 +758,7 @@ export class AssetStoreService {
   /**
    * Makes `id` present in the hierarchy, loading whatever chain of branches it takes.
    *
-   * This is what lets a pinned turbine, a deep link or a hit handed over from the global search
+   * This is what lets a pinned asset, a deep link or a hit handed over from the global search
    * still be revealed in a tree that holds almost nothing: ask the platform for the asset's
    * ancestors, find the nearest one we already hold, then load down from there.
    *
@@ -811,15 +814,9 @@ export class AssetStoreService {
     const raw = mergeLoadedAssets(this.core.skeleton, this.core.branches);
 
     this.core.hierarchy.set(
-      buildHierarchy(
-        raw,
-        new Date().toISOString(),
-        this.core.config().leafType,
-        this.core.hierarchy(),
-        {
-          highVolume: true,
-        }
-      )
+      buildHierarchy(raw, new Date().toISOString(), this.core.hierarchy(), {
+        highVolume: true,
+      })
     );
   }
 
@@ -863,25 +860,22 @@ export class AssetStoreService {
   }
 
   /**
-   * The sweep query, in the form proven by the backend's `GET /api/assets`
-   * (`apps/backend/backwind/server/routes/api/assets.get.ts`) — keep the two in step.
-   * Three details in it are load-bearing:
+   * The sweep query. Three details in it are load-bearing:
    *
    * - `isinhierarchyof(<id>)` matches the root **and all descendants** in one query, so
    *   the whole fleet is one paged request rather than a per-level walk.
    * - `id gt '0'` with `$orderby=id asc` pins the sweep to the id index. Ordering by
    *   anything else makes `currentPage` paging unstable across a multi-page collection —
    *   rows shift between pages, so a page can be fetched twice and another missed. This
-   *   matters more here than in the backend, because `load()` fetches pages 2..n
+   *   matters here because `load()` fetches pages 2..n
    *   **concurrently**: parallel paging is only correct over a stable order.
    * - `$filter` and `$orderby` are one query-language string separated by a **space**.
    *   They are not two HTTP parameters; joining them with `&` either escapes to a literal
    *   `&` inside the filter or splits off an `$orderby` the endpoint ignores. Either way
    *   the ordering silently does not apply.
    *
-   * `has(c8y_IsAsset)` diverges from the backend's `has(c8y_IsDeviceGroup)` on purpose:
-   * that route stops at the wind park, while the tree has to render the turbines inside
-   * it. It still excludes the controller/RTU/SCADA devices, which are not tree rows.
+   * Assets **and devices** are swept: assets are the tree's rows, devices are what the counts,
+   * the availability and most alarms come from (`buildHierarchy` attaches them to their asset).
    */
   private async sweepQuery(): Promise<string> {
     const config = this.core.config();
@@ -890,15 +884,16 @@ export class AssetStoreService {
     if (rootId) {
       this.core.rootId = rootId;
 
-      return `$filter=(id gt '0' and (isinhierarchyof(${rootId}) and has(c8y_IsAsset))) $orderby=id asc`;
+      return `$filter=(id gt '0' and (isinhierarchyof(${rootId}) and ${ASSETS_OR_DEVICES})) $orderby=id asc`;
     }
-    // No discoverable root: a tenant with parks but no root group still gets a tree.
-    const types = config.hierarchyTypes.map((type) => `type eq '${type}'`).join(' or ');
-    return `$filter=(id gt '0' and has(c8y_IsAsset) and (${types})) $orderby=id asc`;
+
+    // No discoverable root: every asset and device of the tenant, so a tenant without a root
+    // group still gets a tree (devices not below any asset are simply not counted).
+    return `$filter=(id gt '0' and ${ASSETS_OR_DEVICES}) $orderby=id asc`;
   }
 
   /**
-   * The fleet root, found the way the backend route does: through the Identity API, as the
+   * The hierarchy root, found through the Identity API, as the
    * managed object behind the external id {@link FLEET_ROOT_EXTERNAL_ID_TYPE} /
    * {@link FLEET_ROOT_EXTERNAL_ID}.
    *
@@ -941,7 +936,7 @@ export class AssetStoreService {
       const root = response.data[0];
       return root ? String(root.id) : null;
     } catch {
-      // Not fatal — the type-union fallback covers it.
+      // Not fatal — the tenant-wide fallback covers it.
       return null;
     }
   }

@@ -3,16 +3,16 @@
 
 /**
  * Asset Navigator — "Tree" navigator entry + explorer drawer (`assetTreeNavigatorViewProviders`).
- * Runs against the tenant mock (windy-dev world: energy site → subsystems → turbines/inverters …).
+ * Runs against the tenant mock (windy-dev world: a site → subsystems → leaf assets → devices).
  *
  * Covered:
  *  - navigator entry "Tree" toggles the drawer; close button and backdrop click close it
  *  - pin / unpin: pinned drawer has no backdrop and survives a reload (UserPreferencesService)
  *  - resize grip (keyboard: ArrowRight / ArrowLeft change the width, clamped, persisted)
- *  - hierarchy rendering from the world (site → subsystem → turbine), expand all / collapse all
+ *  - hierarchy rendering from the world (site → subsystem → leaf), expand all / collapse all
  *  - filter inside the drawer (exact + fuzzy), empty state, reset
  *  - clicking a row routes to the asset (group route) and shows the path header
- *  - footer turbine count, status dots on rows
+ *  - footer device count, status dots on rows
  *  - detail panel (info button): title, Open
  *
  * Names and ids are read from the inventory at runtime — the world is re-pulled in CI.
@@ -35,28 +35,41 @@ interface MO {
 interface World {
   site: MO;
   subsystem: MO;
-  turbine: MO;
-  turbineCount: number;
+  leaf: MO;
+  leafCount: number;
+  deviceCount: number;
   assetCount: number;
 }
 
-/** Site (root asset) → a subsystem with turbines → one turbine, read from the mock inventory. */
+/** Site (root asset) → a subsystem with leaves → one leaf asset, read from the mock inventory. */
 function loadWorld(): Cypress.Chainable<World> {
-  return cy.request('/inventory/managedObjects?fragmentType=c8y_IsAsset&pageSize=2000').then((res) => {
-    const assets = res.body.managedObjects as (MO & {
+  return cy.request('/inventory/managedObjects?pageSize=2000&withChildren=true').then((res) => {
+    const all = res.body.managedObjects as (MO & {
+      c8y_IsAsset?: object;
+      c8y_IsDevice?: object;
       childAssets?: { references: { managedObject: { id: string } }[] };
     })[];
+    const assets = all.filter((mo) => mo.c8y_IsAsset);
+    const plainDevices = all.filter((mo) => mo.c8y_IsDevice && !mo.c8y_IsAsset);
     const parentOf = (id: string) =>
       assets.find((a) => (a.childAssets?.references ?? []).some((r) => r.managedObject.id === id));
-    const turbines = assets.filter((a) => a.type === 'wind_turbine');
-    const turbine = turbines.find((t) => parentOf(t.id) && parentOf(parentOf(t.id)!.id)) as MO;
-    const subsystem = parentOf(turbine.id) as MO;
+    const hasChildAsset = (mo: (typeof assets)[number]) =>
+      (mo.childAssets?.references ?? []).some((r) => assets.some((a) => a.id === r.managedObject.id));
+    const leaves = assets.filter((a) => !hasChildAsset(a));
+    const leaf = leaves.find((t) => parentOf(t.id) && parentOf(parentOf(t.id)!.id)) as MO;
+    const subsystem = parentOf(leaf.id) as MO;
     const site = parentOf(subsystem.id) as MO;
 
     const inSite = (id: string): boolean => id === site.id || (!!parentOf(id) && inSite(parentOf(id)!.id));
     const assetCount = assets.filter((a) => inSite(a.id)).length;
+    const leafCount = leaves.filter((a) => inSite(a.id)).length;
+    // devices are counted below the asset that references them
+    const deviceCount = plainDevices.filter((d) => {
+      const parent = parentOf(d.id);
+      return !!parent && inSite(parent.id);
+    }).length;
 
-    return { site, subsystem, turbine, turbineCount: turbines.length, assetCount };
+    return { site, subsystem, leaf, leafCount, deviceCount, assetCount };
   });
 }
 
@@ -156,7 +169,7 @@ describe('Asset Navigator — tree drawer', () => {
       });
   });
 
-  it('renders the hierarchy site → subsystem → turbine and expands / collapses all', () => {
+  it('renders the hierarchy site → subsystem → leaf and expands / collapses all', () => {
     openDrawer();
     cy.get('[data-cy="asset-navigator--collapse-all"]').click();
     cy.get(ROW).should('have.length', 1);
@@ -172,10 +185,10 @@ describe('Asset Navigator — tree drawer', () => {
     rowNamed(world.subsystem.name)
       .should('have.attr', 'aria-level', '2')
       .and('have.attr', 'aria-expanded', 'false');
-    cy.contains(ROW, world.turbine.name).should('not.exist');
+    cy.contains(ROW, world.leaf.name).should('not.exist');
 
     rowNamed(world.subsystem.name).find('[data-cy="asset-navigator--row-toggle"]').click();
-    rowNamed(world.turbine.name).should('have.attr', 'aria-level', '3');
+    rowNamed(world.leaf.name).should('have.attr', 'aria-level', '3');
 
     // expand all: every asset of the site is a visible node
     cy.get('[data-cy="asset-navigator--expand-all"]').should('be.enabled').click();
@@ -189,11 +202,12 @@ describe('Asset Navigator — tree drawer', () => {
     cy.get(ROW).should('have.length', 1);
   });
 
-  it('shows the turbine count in the footer and a status dot on every row', () => {
+  it('shows the device count in the footer and a status dot on every row', () => {
     openDrawer();
-    cy.get('[data-cy="asset-navigator--footer"]').should(
-      'contain',
-      `${world.turbineCount} turbines`,
+    // no Digital Twin Manager on the mock: the footer counts devices
+    cy.get('[data-cy="asset-navigator--footer-count"]').should(
+      'have.text',
+      `${world.deviceCount} devices`,
     );
     cy.get(ROW).each(($row) => {
       cy.wrap($row).find('[data-cy="asset-navigator--row-status"]').should('exist');
@@ -202,14 +216,14 @@ describe('Asset Navigator — tree drawer', () => {
 
   it('filters the tree (exact and fuzzy), shows the empty state and resets', () => {
     openDrawer();
-    const code = world.turbine.name.split(' ')[0]; // e.g. "CUWTG01"
+    const code = world.leaf.name.split(' ')[0];
 
     cy.get(FILTER).type(code);
-    rowNamed(world.turbine.name).should('exist').find('mark').should('contain', code);
+    rowNamed(world.leaf.name).should('exist').find('mark').should('contain', code);
     // ancestors stay visible for context
     rowNamed(world.site.name).should('exist');
     rowNamed(world.subsystem.name).should('exist');
-    cy.get(`${ROW}`).should('have.length.lessThan', world.turbineCount);
+    cy.get(`${ROW}`).should('have.length.lessThan', world.leafCount);
 
     cy.get(FILTER).clear().type('zzqqxxyy-nothing');
     cy.get('[data-cy="asset-navigator--empty"]').should('contain', 'No asset matches the filter.');
@@ -241,12 +255,12 @@ describe('Asset Navigator — tree drawer', () => {
 
   it('navigates to the asset on row click, marks it current and shows the path header', () => {
     openDrawer();
-    cy.get(FILTER).type(world.turbine.name.split(' ')[0]);
-    rowNamed(world.turbine.name).click();
+    cy.get(FILTER).type(world.leaf.name.split(' ')[0]);
+    rowNamed(world.leaf.name).click();
 
-    cy.location('hash').should('contain', `/group/${world.turbine.id}`);
+    cy.location('hash').should('contain', `/group/${world.leaf.id}`);
     cy.get(DRAWER).should('be.visible');
-    rowNamed(world.turbine.name)
+    rowNamed(world.leaf.name)
       .should('have.attr', 'aria-selected', 'true')
       .find('[data-cy="asset-navigator--row-current"]')
       .should('contain', 'Current');
@@ -254,20 +268,20 @@ describe('Asset Navigator — tree drawer', () => {
     cy.get('[data-cy="asset-navigator--path"]')
       .should('contain', world.site.name)
       .and('contain', world.subsystem.name)
-      .and('contain', world.turbine.name)
+      .and('contain', world.leaf.name)
       .find('.ps-drawer__path-last')
-      .should('contain', world.turbine.name);
+      .should('contain', world.leaf.name);
   });
 
   it('opens the detail panel from the info button and opens the asset from there', () => {
     openDrawer();
-    cy.get(FILTER).type(world.turbine.name.split(' ')[0]);
-    rowNamed(world.turbine.name).find('[data-cy="asset-navigator--row-info"]').click({ force: true });
+    cy.get(FILTER).type(world.leaf.name.split(' ')[0]);
+    rowNamed(world.leaf.name).find('[data-cy="asset-navigator--row-info"]').click({ force: true });
 
     cy.get('[data-cy="asset-navigator--detail"]').should('be.visible');
-    cy.get('[data-cy="asset-navigator--detail-title"]').should('contain', world.turbine.name);
+    cy.get('[data-cy="asset-navigator--detail-title"]').should('contain', world.leaf.name);
     cy.get('[data-cy="asset-navigator--detail-open"]').click();
-    cy.location('hash').should('contain', `/group/${world.turbine.id}`);
+    cy.location('hash').should('contain', `/group/${world.leaf.id}`);
   });
 
   it('resizes the drawer by dragging the grip', () => {
@@ -335,21 +349,21 @@ describe('Asset Navigator — tree drawer', () => {
     cy.get('[data-cy="asset-navigator--quick-access-counts"]')
       .invoke('text')
       .should('match', /^\s*0\+\d+\s*$/);
-    cy.get(FILTER).type(world.turbine.name.split(' ')[0]);
-    rowNamed(world.turbine.name).trigger('mouseenter');
+    cy.get(FILTER).type(world.leaf.name.split(' ')[0]);
+    rowNamed(world.leaf.name).trigger('mouseenter');
 
     cy.get('[data-cy="asset-navigator--detail"]').should('be.visible');
-    cy.get('[data-cy="asset-navigator--detail-title"]').should('contain', world.turbine.name);
+    cy.get('[data-cy="asset-navigator--detail-title"]').should('contain', world.leaf.name);
     cy.get('[data-cy="asset-navigator--detail-pin"]').should('contain', 'Pin').click();
     cy.get('[data-cy="asset-navigator--detail-pin"]').should('contain', 'Unpin');
 
-    rowNamed(world.turbine.name).find('.ps-tree-row__pin').should('exist');
+    rowNamed(world.leaf.name).find('.ps-tree-row__pin').should('exist');
     cy.get('[data-cy="asset-navigator--quick-access-counts"]')
       .invoke('text')
       .should('match', /^\s*1\+\d+\s*$/);
 
     // the detail panel's Alarms action routes to the asset's alarm tab
     cy.get('[data-cy="asset-navigator--detail-alarms"]').click();
-    cy.location('hash').should('contain', `/group/${world.turbine.id}/alarms`);
+    cy.location('hash').should('contain', `/group/${world.leaf.id}/alarms`);
   });
 });

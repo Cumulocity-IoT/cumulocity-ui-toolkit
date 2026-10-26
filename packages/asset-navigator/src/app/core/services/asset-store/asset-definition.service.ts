@@ -33,6 +33,8 @@ interface DefinitionCore {
   properties: WritableSignal<AssetIndexablePropertyMap>;
   /** The same `/definitions/assets` response, projected into global-search chips. */
   facets: WritableSignal<readonly TypeFacet[]>;
+  /** DTM answered (true), failed (false), or not asked yet (null). */
+  available?: WritableSignal<boolean | null>;
   loaded: boolean;
   inFlight: Promise<void> | null;
 }
@@ -41,12 +43,17 @@ type GlobalWithCore = typeof globalThis & { [CORE_SYMBOL]?: DefinitionCore };
 
 function resolveCore(): DefinitionCore {
   const scope = globalThis as GlobalWithCore;
-  return (scope[CORE_SYMBOL] ??= {
+  const core = (scope[CORE_SYMBOL] ??= {
     properties: signal<AssetIndexablePropertyMap>(new Map()),
     facets: signal<readonly TypeFacet[]>([]),
     loaded: false,
     inFlight: null,
   });
+
+  // A core created by an older bundle has no availability yet.
+  core.available ??= signal<boolean | null>(null);
+
+  return core;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -68,6 +75,13 @@ export class AssetDefinitionService {
    * the catalog from the inventory fails silently, with no error to notice.
    */
   readonly typeFacets: Signal<readonly TypeFacet[]> = this.core.facets.asReadonly();
+
+  /**
+   * Whether the Digital Twin Manager answered: `true` once the definitions loaded, `false` when
+   * the request failed (no DTM, no permission), `null` before the first load. Readers decide on
+   * `false` whether to fall back to the inventory (options menu → Inventory fallback).
+   */
+  readonly available: Signal<boolean | null> = this.core.available!.asReadonly();
 
   /**
    * Loads the definitions once. Idempotent and shared across bundles; concurrent callers
@@ -95,11 +109,13 @@ export class AssetDefinitionService {
       // collection. Publishing that as "loaded" would pin every type to an empty property
       // list; leaving the map empty lets the per-node fallback run instead.
       this.core.loaded = true;
+      this.core.available!.set(true);
       if (map.size) this.core.properties.set(map);
     } catch {
       // No DTM, no permission, or an older platform: the fallback covers it. Latched so a
       // 403 is not retried on every index rebuild.
       this.core.loaded = true;
+      this.core.available!.set(false);
     }
   }
 
