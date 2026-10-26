@@ -1,6 +1,5 @@
 /// <reference types="cypress" />
 
-import { interceptAssetNavigatorInventoryQueries } from '../support/intercepts/asset-navigator.intercepts';
 
 /**
  * Asset Navigator — global search (`globalSearchViewProviders`): header search button and the
@@ -81,7 +80,6 @@ describe('Asset Navigator — global search', () => {
   beforeEach(() => {
     cy.getAuth().login().disableGainsight();
     cy.clearLocalStorage();
-    interceptAssetNavigatorInventoryQueries();
     loadWorld().then((w) => (world = w));
   });
 
