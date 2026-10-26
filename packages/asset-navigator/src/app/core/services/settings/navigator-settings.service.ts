@@ -8,6 +8,7 @@ import {
   SETTINGS_MO_TYPE,
   type NavigatorSettings,
 } from './navigator-settings.model';
+import { defaultDetailPanel, type DetailField, type DetailPanelConfig } from './detail-panel.model';
 
 /**
  * The asset tree's per-user settings.
@@ -64,7 +65,35 @@ export class NavigatorSettingsService {
 
   /** Back to the defaults (stored too). */
   reset(): Promise<void> {
-    return this.update({ ...DEFAULT_SETTINGS });
+    return this.update({ ...DEFAULT_SETTINGS, detailPanel: defaultDetailPanel() });
+  }
+
+  /**
+   * Sets the detail fields of one type, or of the `default` list when `type` is `null`. The
+   * list is normalized like stored data, so the editor cannot write what the contract forbids.
+   */
+  setDetailFields(type: string | null, fields: readonly DetailField[]): Promise<void> {
+    const current = this.state().detailPanel;
+    const next: DetailPanelConfig =
+      type === null
+        ? { ...current, default: [...fields] }
+        : { ...current, types: { ...current.types, [type]: [...fields] } };
+
+    return this.update({ detailPanel: next });
+  }
+
+  /** Drops a type's own list (it falls back to `default`), or restores the built-in `default`. */
+  resetDetailFields(type: string | null): Promise<void> {
+    const current = this.state().detailPanel;
+
+    if (type === null) {
+      return this.update({ detailPanel: { ...current, default: defaultDetailPanel().default } });
+    }
+    const types = { ...current.types };
+
+    delete types[type];
+
+    return this.update({ detailPanel: { ...current, types } });
   }
 
   private async read(): Promise<void> {

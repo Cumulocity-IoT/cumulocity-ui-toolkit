@@ -8,6 +8,8 @@ import {
 } from '@angular/core';
 import { CoreModule } from '@c8y/ngx-components';
 import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
+import { BsModalService } from 'ngx-bootstrap/modal';
+import { DetailFieldsModalComponent } from './detail-fields-modal.component';
 import {
   LIST_LIMIT,
   type NavigatorSettings,
@@ -17,8 +19,8 @@ import { chordFromEvent, parseChord } from '../core/services/shortcuts/chord';
 
 /**
  * The explorer drawer's options menu (cog next to the pin): what the drawer shows, the
- * keyboard shortcut that opens it, list sizes, and the inventory fallback for tenants
- * without the Digital Twin Manager. Every change applies and is stored at once — the menu
+ * keyboard shortcut that opens it, list sizes, the inventory fallback for tenants without the
+ * Digital Twin Manager, and the detail panel's fields ("Detail fields…", a modal). Every change applies and is stored at once — the menu
  * has no save step (see {@link NavigatorSettingsService} for where it is stored).
  */
 @Component({
@@ -34,6 +36,7 @@ export class NavigatorSettingsMenuComponent {
   protected readonly settings = this.service.settings;
   protected readonly limit = LIST_LIMIT;
   protected readonly recording = signal(false);
+  private readonly modals = inject(BsModalService);
 
   constructor() {
     // Closing the drawer removes the field without a blur: never leave the drawer's own
@@ -86,6 +89,11 @@ export class NavigatorSettingsMenuComponent {
 
   protected clearShortcut(): void {
     this.set('shortcut', '');
+  }
+
+  /** The detail-field editor, for a type picked in the modal (or the default list). */
+  protected openDetailFields(): void {
+    this.modals.show(DetailFieldsModalComponent);
   }
 
   protected reset(): void {

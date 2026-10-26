@@ -123,4 +123,36 @@ describe('NavigatorSettingsService', () => {
       expect(service.settings().maxPinned).toBe(5);
     });
   });
+
+  describe('detail fields', () => {
+    const field = { label: 'Floor', source: { kind: 'property' as const, path: 'floor' } };
+
+    it("writes a type's list into the stored settings, and resets it", async () => {
+      const service = setup();
+
+      await service.load();
+      await service.setDetailFields('building', [field]);
+      expect(service.settings().detailPanel.types).toEqual({ building: [field] });
+      expect(users.updateCurrent).toHaveBeenCalledWith({
+        customProperties: jasmine.objectContaining({
+          [SETTINGS_FRAGMENT]: jasmine.objectContaining({
+            detailPanel: jasmine.objectContaining({ types: { building: [field] } }),
+          }),
+        }),
+      });
+
+      await service.resetDetailFields('building');
+      expect(service.settings().detailPanel.types).toEqual({});
+    });
+
+    it('edits and restores the default list', async () => {
+      const service = setup();
+
+      await service.load();
+      await service.setDetailFields(null, [field]);
+      expect(service.settings().detailPanel.default).toEqual([field]);
+      await service.resetDetailFields(null);
+      expect(service.settings().detailPanel).toEqual(DEFAULT_SETTINGS.detailPanel);
+    });
+  });
 });

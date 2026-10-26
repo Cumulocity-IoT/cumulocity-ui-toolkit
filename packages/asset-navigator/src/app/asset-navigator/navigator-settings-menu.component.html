@@ -130,6 +130,18 @@
         </p>
       </div>
 
+      <div class="form-group">
+        <button
+          class="btn btn-default btn-sm"
+          type="button"
+          data-cy="asset-navigator--setting-detail-fields"
+          (click)="openDetailFields(); menu.hide()"
+        >
+          <i c8yIcon="list"></i> {{ 'Detail fields…' | translate }}
+        </button>
+        <p class="help-block">{{ 'Which fields the hover detail panel shows, per asset type.' | translate }}</p>
+      </div>
+
       <p class="text-muted small m-b-0" data-cy="asset-navigator--setting-storage">
         {{ (service.storage() === 'inventory' ? 'Stored in your settings object (single sign-on user).' : 'Stored with your user.') | translate }}
       </p>

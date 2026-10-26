@@ -1,3 +1,9 @@
+import {
+  defaultDetailPanel,
+  normalizeDetailPanel,
+  type DetailPanelConfig,
+} from './detail-panel.model';
+
 /** The asset tree's per-user settings, edited in the explorer drawer's options menu. */
 export interface NavigatorSettings {
   /** Show the filter field in the drawer header. */
@@ -16,6 +22,8 @@ export interface NavigatorSettings {
    * asset types present in the tree. Off: only DTM definitions are used.
    */
   inventoryFallback: boolean;
+  /** The detail panel's fields per type — the documented data contract in `detail-panel.model.ts`. */
+  detailPanel: DetailPanelConfig;
 }
 
 export const DEFAULT_SETTINGS: Readonly<NavigatorSettings> = {
@@ -25,6 +33,7 @@ export const DEFAULT_SETTINGS: Readonly<NavigatorSettings> = {
   maxPinned: 10,
   maxRecent: 8,
   inventoryFallback: true,
+  detailPanel: defaultDetailPanel(),
 };
 
 /** Bounds of the two list sizes (the menu's number fields use the same). */
@@ -60,5 +69,6 @@ export function normalizeSettings(raw: unknown): NavigatorSettings {
     maxPinned: count('maxPinned'),
     maxRecent: count('maxRecent'),
     inventoryFallback: bool('inventoryFallback'),
+    detailPanel: normalizeDetailPanel(value.detailPanel),
   };
 }

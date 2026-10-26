@@ -1,3 +1,4 @@
+import { defaultDetailPanel } from './detail-panel.model';
 import { DEFAULT_SETTINGS, LIST_LIMIT, normalizeSettings } from './navigator-settings.model';
 
 describe('navigator settings model', () => {
@@ -25,5 +26,32 @@ describe('navigator settings model', () => {
     expect(settings.maxPinned).toBe(LIST_LIMIT.min);
     expect(settings.maxRecent).toBe(LIST_LIMIT.max);
     expect(normalizeSettings({ maxRecent: 4.4 }).maxRecent).toBe(4);
+  });
+
+  it('carries the detail panel contract: defaults when absent, validated when present', () => {
+    expect(normalizeSettings({}).detailPanel).toEqual(defaultDetailPanel());
+
+    const settings = normalizeSettings({
+      showSearch: false,
+      detailPanel: {
+        version: 1,
+        types: {
+          c8y_Linux: [
+            { label: 'OS', source: { kind: 'property', path: 'c8y_Hardware.model' } },
+            { label: 'x' },
+          ],
+        },
+        default: [],
+      },
+    });
+
+    expect(settings.showSearch).toBe(false);
+    expect(settings.detailPanel).toEqual({
+      version: 1,
+      types: {
+        c8y_Linux: [{ label: 'OS', source: { kind: 'property', path: 'c8y_Hardware.model' } }],
+      },
+      default: [],
+    });
   });
 });
