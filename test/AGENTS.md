@@ -30,6 +30,7 @@ test/
 │   ├── operations-widget.config.ts
 │   ├── release-notes.config.ts
 │   ├── reminder.config.ts
+│   ├── smart-views.config.ts
 │   └── tenant-option-management.config.ts
 └── cypress/
     ├── e2e/                      # One spec file per plugin

@@ -1,5 +1,11 @@
 # UI Toolkit Changelog
 
+## 2026.10.26
+
+**New plugin**: `packages/smart-views` (from #70) — query-driven asset views with a configuration page under Settings and CSV export, now on Web SDK 1024.21.x / Angular 21. Registered in `angular.json` with build/serve/test targets and covered by unit tests and an e2e suite on the tenant mock. See `packages/smart-views/CHANGELOG.md`.
+
+**Shared library** (additive, no change for existing plugins): `CsvExportService` (CSV conversion + browser download), DTM models and `DtmService.getAssetDefinition()` / `getPropertyDefinitions()`, and an internal `ReverseQueriesUtil` helper (query string → QueriesUtil JSON; not exported).
+
 ## 2026.10.23
 
 **New plugin**: `packages/asset-navigator` — asset tree explorer drawer in the navigator and a global asset search (`⌘K` / `Ctrl+K`), ported from the windy solution. See `packages/asset-navigator/CHANGELOG.md`.
