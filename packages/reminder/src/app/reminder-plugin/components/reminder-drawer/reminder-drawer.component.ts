@@ -1,6 +1,6 @@
-import { Component, effect, inject, OnDestroy, signal } from '@angular/core';
+import { Component, effect, inject, type OnDestroy, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { AlertService, CoreModule, HeaderService } from '@c8y/ngx-components';
 import { isEmpty } from 'lodash';
 import { CollapseModule } from 'ngx-bootstrap/collapse';
@@ -9,17 +9,17 @@ import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { MomentModule } from 'ngx-moment';
 import { Subject, Subscription } from 'rxjs';
 import {
-  Reminder,
+  type Reminder,
   REMINDER__ASSET_CONTEXT_ROOTS,
   REMINDER__DRAWER_OPEN_CLASS,
   REMINDER__HIGHLIGHT_DURATION_SECONDS,
   REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG,
   REMINDER__MAIN_HEADER_CLASS,
-  ReminderConfig,
-  ReminderGroup,
+  type ReminderConfig,
+  type ReminderGroup,
   ReminderGroupStatus,
   ReminderStatus,
-  ReminderType,
+  type ReminderType,
 } from '../../models/reminder.model';
 import { ReminderService } from '../../services/reminder.service';
 import { ReminderModalComponent } from '../reminder-modal/reminder-modal.component';
@@ -33,6 +33,7 @@ import { ReminderTypeComponent } from '../reminder-type/reminder-type.component'
   imports: [
     CoreModule,
     FormsModule,
+    RouterLink,
     CollapseModule,
     TooltipModule,
     MomentModule,
@@ -75,7 +76,11 @@ export class ReminderDrawerComponent implements OnDestroy {
   set contextFilterEnabled(enabled: boolean) {
     this._contextFilterEnabled = enabled;
     this.setConfig('useContext');
-    this.filterByType();
+    // regroup regardless of reminder types — `filterByType()` bails out without types
+    this.reminderGroups = this.reminderService.groupReminders(
+      this.reminders,
+      enabled ? this.context : undefined
+    );
   }
 
   private context?: string;
@@ -302,8 +307,18 @@ export class ReminderDrawerComponent implements OnDestroy {
     );
 
     // Live updates on reminders and config come from the service signals.
-    effect(() => this.digestReminders(this.reminderService.reminders()));
-    effect(() => this.handleConfigChange(this.reminderService.config()));
+    // The handlers group reminders, which reads and writes the config signal —
+    // run them untracked so each effect only depends on its own source signal.
+    effect(() => {
+      const reminders = this.reminderService.reminders();
+
+      untracked(() => this.digestReminders(reminders));
+    });
+    effect(() => {
+      const config = this.reminderService.config();
+
+      untracked(() => this.handleConfigChange(config));
+    });
 
     // route change for context
     this.subscriptions.add(

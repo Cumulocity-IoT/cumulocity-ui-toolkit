@@ -1,0 +1,64 @@
+// The lists' look, moved verbatim from `quick-access-row.component.less` when the lists
+// moved from in-place expansion into the cascade panel — the entry markup and its styles
+// exist exactly once, here.
+
+:host {
+  display: block;
+}
+
+.ps-qa-lists {
+  padding: 6px 8px 8px;
+  font-size: var(--ps-tree-font-sm, 14px);
+}
+
+.ps-qa-lists__heading {
+  margin: 6px 0 3px;
+  font-size: var(--ps-tree-font-label, 12px);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ps-qa-lists__empty {
+  margin: 0 0 6px;
+  font-size: var(--ps-tree-font-xs, 13px);
+}
+
+.ps-qa-lists__list {
+  list-style: none;
+  margin: 0 0 6px;
+  padding: 0;
+}
+
+.ps-qa-entry {
+  display: block;
+  width: 100%;
+  padding: 4px 6px;
+  background: none;
+  border: 0;
+  text-align: left;
+  color: inherit;
+  border-radius: 3px;
+
+  &:hover {
+    background-color: var(--c8y-palette-gray-80, rgba(0, 0, 0, 0.04));
+  }
+
+  &--focused {
+    outline: 2px solid var(--c8y-component-color-focus, var(--c8y-root-component-color-focus));
+    outline-offset: -2px;
+  }
+}
+
+.ps-qa-entry__top {
+  gap: 5px;
+  min-width: 0;
+}
+
+.ps-qa-entry__path {
+  display: block;
+  font-size: var(--ps-tree-font-xs, 13px);
+  padding-left: 21px;
+}
+
+// The status dot is `ps-status-dot` (`components/status-dot/`), shared with the tree row and
+// the search palette. It brings its own styles.

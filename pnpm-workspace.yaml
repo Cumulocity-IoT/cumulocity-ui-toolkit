@@ -11,6 +11,8 @@ minimumReleaseAge: 10080
 # Matches package names (not paths), so this has to be the workspace package name.
 minimumReleaseAgeExclude:
   - 'shared'
+  # Cumulocity-internal packages from GitHub Packages (the tenant mock for e2e)
+  - '@cumulocity-iot/*'
 
 # Disable temporary workaround for exotic subdependencies, It needs to be clarified why this is required.
 blockExoticSubdeps: false

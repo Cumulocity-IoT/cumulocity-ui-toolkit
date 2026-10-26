@@ -1,12 +1,17 @@
 import { inject, Injectable } from '@angular/core';
-import { ITenantOption, InventoryService, TenantOptionsService, UserService } from '@c8y/client';
+import {
+  type ITenantOption,
+  InventoryService,
+  TenantOptionsService,
+  UserService,
+} from '@c8y/client';
 import { AlertService } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { TranslateService } from '@ngx-translate/core';
 import {
-  TenantOptionConfiguration,
-  TenantOptionConfigurationItem,
-  TenantOptionRow,
+  type TenantOptionConfiguration,
+  type TenantOptionConfigurationItem,
+  type TenantOptionRow,
 } from './tenant-option-management.model';
 
 @Injectable()
@@ -118,7 +123,11 @@ export class TenantOptionManagementService {
     };
 
     await this.tenantOption.update(option).then((res) => res.data);
-    const item = await this.updateOptionForConfiguration(option);
+    // An option that exists on the tenant but is not yet managed by the plugin
+    // (e.g. overwritten through a file import) is registered instead of failing.
+    const item = await this.updateOptionForConfiguration(option).catch(() =>
+      this.addOptionToConfiguration(option)
+    );
     return { id: `${option.category}-${option.key}`, value: option.value ?? '', ...item };
   }
 

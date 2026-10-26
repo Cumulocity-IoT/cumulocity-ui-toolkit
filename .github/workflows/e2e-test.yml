@@ -3,16 +3,10 @@ name: E2E Test Runner
 on:
   pull_request:
 
-env:
-  C8Y_TENANT: ${{ vars.C8Y_TENANT }}
-  C8Y_USERNAME: ${{ vars.C8Y_USERNAME }}
-  C8Y_PASSWORD: ${{ secrets.C8Y_PASSWORD }}
-  C8Y_BASEURL: ${{ vars.C8Y_BASEURL }}
-  C8Y_SHELL_TARGET: 'cockpit-test-1023'
-  C8Y_CYPRESS_URL: 'http://localhost:9001'
 
 permissions:
   contents: read
+  packages: read # @cumulocity-iot/ui-sdk from GitHub Packages
   pull-requests: write
 
 jobs:
@@ -42,6 +36,7 @@ jobs:
   test-components:
     needs: detect-changes
     runs-on: ubuntu-latest
+    # windy-dev credentials for pulling the mock's world
     environment: e2e
     if: fromJson(needs.detect-changes.outputs.matrix).component != '[]'
     strategy:
@@ -60,6 +55,17 @@ jobs:
         with:
           node-version: '24'
           cache: 'pnpm'
+          # @cumulocity-iot/ui-sdk (the tenant mock) comes from GitHub Packages
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@cumulocity-iot'
+
+      - name: Cache Cumulocity shell builds
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/c8y-ui
+          key: c8y-ui-shells-${{ hashFiles('test/c8y-ui.json', 'package.json') }}
+          restore-keys: |
+            c8y-ui-shells-
 
       - name: Cache Cypress binary
         uses: actions/cache@v4
@@ -71,41 +77,38 @@ jobs:
 
       - name: Install root dependencies
         run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install test workspace dependencies
         run: pnpm -C test install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Cypress binary
         run: pnpm -C test exec cypress install
 
-      - name: Start Angular Server (package ${{ matrix.component }})
-        run: |
-          echo "Starting Angular server for package ${{ matrix.component }}"
-          pnpm run serve:${{ matrix.component }} &
-          pnpm exec wait-on http://localhost:9001 --timeout 120000
-          sleep 10
-          echo "Angular server is up!"
+      - name: Set up go-c8y-cli
+        uses: reubenmiller/setup-go-c8y-cli@9b6147a9f916607a3c1db392eab6e54e3e8c3f01 # v2
+        with:
+          showTenant: 'false'
+
+      # The world is not committed: pull the current windy-dev data for this run.
+      - name: Pull the mock world from windy-dev
+        run: pnpm run e2e:world:pull
+        timeout-minutes: 5
+        env:
+          C8Y_HOST: ${{ vars.WINDY_C8Y_HOST }}
+          C8Y_USER: ${{ vars.WINDY_C8Y_USER }}
+          C8Y_PASSWORD: ${{ secrets.WINDY_C8Y_PASSWORD }}
+
+      # Mocked tenant (windy-dev world) with the cockpit release of the workspace's Web SDK version;
+      # starts the plugin's dev server against it and runs its Cypress suite.
+      - name: Run Cypress Tests against the tenant mock (package ${{ matrix.component }})
+        run: pnpm run e2e:mock ${{ matrix.component }}
+        timeout-minutes: 15
         env:
           NODE_OPTIONS: --max_old_space_size=4096
-
-      - name: Run Cypress Tests (testing package ${{ matrix.component }})
-        env:
-          CYPRESS_C8Y_TENANT: ${{ env.C8Y_TENANT }}
-          CYPRESS_C8Y_USERNAME: ${{ env.C8Y_USERNAME }}
-          CYPRESS_C8Y_PASSWORD: ${{ secrets.C8Y_PASSWORD }}
-          CYPRESS_C8Y_CYPRESS_URL: ${{ env.C8Y_CYPRESS_URL }}
-          CYPRESS_C8Y_SHELL_TARGET: ${{ env.C8Y_SHELL_TARGET }}
-        run: |
-          echo "Running tests for ${{ matrix.component }}"
-          pnpm run e2e:run:${{ matrix.component }}
-        timeout-minutes: 10
-
-      - name: Stop Angular Server
-        if: always()
-        run: |
-          echo "Stopping Angular server..."
-          pkill -f "ng serve" || echo "Server was not running."
-          echo "Angular server stopped."
 
       - name: Upload Cypress Screenshots
         if: always()

@@ -1,13 +1,13 @@
 import { Component, inject } from '@angular/core';
-import { ITenantOption, TenantOptionsService } from '@c8y/client';
+import { type ITenantOption, TenantOptionsService } from '@c8y/client';
 import {
   AlertService,
-  Column,
-  ColumnDataType,
+  type Column,
+  type ColumnDataType,
   CoreModule,
-  DisplayOptions,
+  type DisplayOptions,
   ModalService,
-  Pagination,
+  type Pagination,
   Status,
 } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
@@ -19,7 +19,7 @@ import { isEmpty } from 'lodash';
 import {
   ImportStatusEnum,
   isImportableTenantOption,
-  TenantOptionImportRow,
+  type TenantOptionImportRow,
 } from '../tenant-option-management.model';
 
 @Component({
@@ -70,14 +70,14 @@ export class FileImportModalComponent {
         name: 'category',
         path: 'category',
         filterable: true,
-        dataType: ColumnDataType.TextLong,
+        dataType: 'text-long' as ColumnDataType,
       },
       {
         header: 'Key',
         name: 'key',
         path: 'key',
         filterable: true,
-        dataType: ColumnDataType.TextLong,
+        dataType: 'text-long' as ColumnDataType,
       },
       {
         header: 'Status',
@@ -85,7 +85,7 @@ export class FileImportModalComponent {
         path: 'status',
         filterable: true,
         gridTrackSize: '9em',
-        dataType: ColumnDataType.TextShort,
+        dataType: 'text-short' as ColumnDataType,
       },
     ];
   }

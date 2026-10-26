@@ -1,0 +1,286 @@
+/* Leaflet + markercluster base styles bundled with the component so consuming
+   plugins need no extra imports (ViewEncapsulation.None). */
+@import 'leaflet/dist/leaflet.css';
+@import 'leaflet.markercluster/dist/MarkerCluster.css';
+
+ps-geo-map {
+  display: block;
+  height: 100%;
+  min-height: 200px;
+}
+
+.ps-geo-map__container {
+  height: 100%;
+  width: 100%;
+}
+
+/* divIcon wrapper — kill leaflet's default white box */
+.ps-gm-icon {
+  background: transparent;
+  border: none;
+}
+
+/* ── Single marker (pin) ─────────────────────────────────────────────────── */
+.ps-gm-marker {
+  position: relative;
+  width: 30px;
+  height: 40px;
+}
+
+.ps-gm-marker__pin {
+  position: relative;
+  width: 30px;
+  height: 40px;
+}
+
+/* Explicit svg sizing — never rely on shell CSS for intrinsic svg dimensions */
+.ps-gm-marker__pin > svg,
+.ps-gm-cluster > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Center the icon on the pin's white disc (cx/cy 15, r 9 in the svg).
+   The <i> collapses to a zero-size point and is only the containing block;
+   everything visible is the ::before, which the SHELL paints and, left alone,
+   also sizes (a 1.1em mask box today, a font glyph before that). We give the
+   pseudo an explicit square box and place it by negative offsets, so the mask
+   is `contain`ed and centered in a box we control, and a glyph sits centered
+   in a line box of its own height — keep the width/height/line-height trio,
+   each is load-bearing.
+
+   `top` is 18px, not the disc's 15px, and that +3 is a MEASURED correction, not
+   geometry: in the running shell the icon paints ~3.5px above where this point
+   puts it. It is not a box-model artifact — flex centering, translate(-50%)
+   and explicit offsets all land identically, and resizing the box resizes the
+   icon without moving its center — so the <i>'s origin is not where `top` on a
+   `position: relative` parent should put it. Cause unresolved. Before
+   "fixing" this back to 15px, check in the running shell that
+   `i.getBoundingClientRect()` actually matches the pin's top + 15, and drop
+   the correction only once it does. */
+.ps-gm-marker__pin i {
+  position: absolute;
+  left: 15px;
+  top: 18px;
+  width: 0;
+  height: 0;
+  margin: 0;
+  font-size: 11px; /* only the font path uses this: 1.1em ≈ the 12px box below */
+  color: currentColor;
+}
+
+.ps-gm-marker__pin i::before {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  width: 12px;
+  height: 12px;
+  margin: 0;
+  line-height: 12px;
+  text-align: center;
+}
+
+.ps-gm-marker__label {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c8y-body-color, #333);
+  text-shadow:
+    -1px -1px 0 rgba(255, 255, 255, 0.8),
+    1px -1px 0 rgba(255, 255, 255, 0.8),
+    -1px 1px 0 rgba(255, 255, 255, 0.8),
+    1px 1px 0 rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+}
+
+/* ── Cluster bubble with category donut ring ─────────────────────────────── */
+.ps-gm-cluster {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+}
+
+.ps-gm-cluster__count {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c8y-body-color, #333);
+}
+
+/* ── Selected state ───────────────────────────────────────────────────────────
+   Deliberately no size change: a selected marker used to scale to 1.28, which
+   moved the thing under the user's cursor and shifted it out from under the
+   popup that had just opened on it. Markers keep one size at all times; the
+   open popup is the selection cue. `ps-gm--selected` is still toggled on the
+   marker element (and emitted on a cluster holding a selection), so it stays
+   the hook if a non-geometric cue is ever wanted here. */
+
+/* ── Popup ───────────────────────────────────────────────────────────────── */
+.ps-gm-popup .leaflet-popup-content-wrapper {
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  background: var(--c8y-root-component-background-default, #fff);
+  color: var(--c8y-body-color, #333);
+}
+
+.ps-gm-popup .leaflet-popup-content {
+  margin: 0;
+  width: 400px !important;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Sections wrap in a row grid: full sections span the row, two consecutive
+   'half' sections sit side by side. */
+.ps-gm-popup__sections {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.ps-gm-popup__slot {
+  width: 100%;
+  min-width: 0;
+}
+
+.ps-gm-popup__slot--half {
+  width: 50%;
+}
+
+.ps-gm-popup__slot--half .ps-gm-popup__kpis {
+  grid-template-columns: 1fr;
+}
+
+/* Dividers: horizontal between rows, vertical between two halves in one row */
+.ps-gm-popup__slot + .ps-gm-popup__slot {
+  border-top: 1px solid var(--c8y-root-component-border-color, #e1e5ea);
+}
+
+.ps-gm-popup__slot--half + .ps-gm-popup__slot--half {
+  border-top: none;
+  border-left: 1px solid var(--c8y-root-component-border-color, #e1e5ea);
+}
+
+.ps-gm-popup__header {
+  padding: 8px 10px 6px;
+}
+
+/* Layout stability: the popup's shape comes from the CONFIG, never from the
+   item — every text cell is a single ellipsized line so no value (long, short,
+   or missing) can change the popup's geometry between items. */
+.ps-gm-popup__title,
+.ps-gm-popup__subtitle,
+.ps-gm-popup__row span,
+.ps-gm-popup__kpi-head span,
+.ps-gm-popup__table th,
+.ps-gm-popup__table td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ps-gm-popup__title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ps-gm-popup__subtitle {
+  font-size: 11px;
+}
+
+.ps-gm-popup__section {
+  padding: 6px 10px;
+}
+
+.ps-gm-popup__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 1px 0;
+}
+
+.ps-gm-popup__alarms {
+  display: inline-flex;
+  gap: 10px;
+}
+.ps-gm-popup__alarm {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.ps-gm-popup__alarm--zero {
+  opacity: 0.35;
+}
+
+.ps-gm-popup__kpis {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+}
+
+.ps-gm-popup__kpi-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 2px;
+  height: 17px; /* fixed — a wrapping label must never push the bar down */
+}
+
+.ps-gm-popup__kpi-head span:last-child {
+  flex: none; /* the value never truncates; the label ellipsizes instead */
+}
+
+.ps-gm-popup__kpi-track {
+  height: 10px;
+  border-radius: 2px;
+  background: var(--c8y-palette-gray-20, #ebeef2);
+  overflow: hidden;
+}
+
+.ps-gm-popup__kpi-fill {
+  height: 100%;
+  transition: width 300ms ease;
+}
+
+.ps-gm-popup__kpi-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+}
+
+.ps-gm-popup__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ps-gm-popup__table th,
+.ps-gm-popup__table td {
+  text-align: left;
+  padding: 2px 5px 2px 0;
+  border-bottom: 1px solid var(--c8y-root-component-border-color, #e1e5ea);
+  font-weight: normal;
+}
+
+.ps-gm-popup__pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 6px;
+}
+
+.ps-gm-popup__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}

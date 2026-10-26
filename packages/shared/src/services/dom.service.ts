@@ -2,11 +2,11 @@ import {
   inject,
   ApplicationRef,
   ComponentFactoryResolver,
-  ComponentRef,
-  EmbeddedViewRef,
+  type ComponentRef,
+  type EmbeddedViewRef,
   Injectable,
   Injector,
-  Type,
+  type Type,
 } from '@angular/core';
 
 /**

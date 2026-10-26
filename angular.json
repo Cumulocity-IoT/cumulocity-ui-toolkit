@@ -990,6 +990,103 @@
           }
         }
       }
+    },
+    "plugin.asset-navigator": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "less"
+        }
+      },
+      "root": "packages/asset-navigator",
+      "sourceRoot": "packages/asset-navigator/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@c8y/devkit:build",
+          "options": {
+            "outputPath": "dist/cumulocity-asset-navigator-plugin",
+            "main": "packages/asset-navigator/src/main.ts",
+            "tsConfig": "packages/asset-navigator/tsconfig.app.json",
+            "polyfills": [
+              "zone.js"
+            ],
+            "assets": [],
+            "inlineStyleLanguage": "less",
+            "scripts": [],
+            "aot": false,
+            "buildOptimizer": false,
+            "allowedCommonJsDependencies": [
+              "regenerator-runtime/runtime",
+              "zone.js/dist/zone"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "all",
+              "buildOptimizer": false
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@c8y/devkit:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.asset-navigator:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.asset-navigator:build:development"
+            }
+          },
+          "defaultConfiguration": "development",
+          "options": {
+            "port": 9001,
+            "publicHost": "localhost:9001"
+          }
+        },
+        "deploy": {
+          "builder": "@c8y/devkit:deploy",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.asset-navigator:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.asset-navigator:build:development"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:karma",
+          "options": {
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
+            "tsConfig": "packages/asset-navigator/tsconfig.spec.json",
+            "inlineStyleLanguage": "less",
+            "karmaConfig": "karma.conf.js"
+          }
+        }
+      }
     }
   },
   "cli": {

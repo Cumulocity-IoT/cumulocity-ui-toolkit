@@ -4,7 +4,7 @@ import { AlertService, ModalService } from '@c8y/ngx-components';
 import { TranslateService } from '@ngx-translate/core';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { provideMock } from '~helpers/auto-mock.helper';
-import { ImportStatusEnum, TenantOptionImportRow } from '../tenant-option-management.model';
+import { ImportStatusEnum, type TenantOptionImportRow } from '../tenant-option-management.model';
 import { TenantOptionManagementService } from '../tenant-option-management.service';
 import { FileImportModalComponent } from './file-import-modal.component';
 

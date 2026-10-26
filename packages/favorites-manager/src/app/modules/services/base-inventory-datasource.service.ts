@@ -1,8 +1,8 @@
 import { inject, Injectable } from '@angular/core';
-import { InventoryService, IResultList, IManagedObject, QueriesUtil } from '@c8y/client';
-import { Column, Pagination } from '@c8y/ngx-components';
+import { InventoryService, type IResultList, type IManagedObject, QueriesUtil } from '@c8y/client';
+import { type Column, type Pagination } from '@c8y/ngx-components';
 import { cloneDeep } from 'lodash';
-import { QueryFilter } from '../models/query-utils.model';
+import { type QueryFilter } from '../models/query-utils.model';
 
 export interface QueryJSON {
   __filter: QueryFilter;

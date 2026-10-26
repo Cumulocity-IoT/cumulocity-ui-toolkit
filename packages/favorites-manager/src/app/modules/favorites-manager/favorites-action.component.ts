@@ -1,6 +1,7 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, type OnInit } from '@angular/core';
 import { FavoritesManagerService } from './favorites-manager.service';
-import { ActivatedRoute } from '@angular/router';
+import { Router } from '@angular/router';
+import { findContextData } from './context-route.helper';
 import { AlertService, CoreModule } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 
@@ -20,7 +21,7 @@ export class FavoritesActionComponent implements OnInit {
 
   private favoritesManagerService = inject(FavoritesManagerService);
 
-  private activatedRoute = inject(ActivatedRoute);
+  private router = inject(Router);
 
   private alertService = inject(AlertService);
 
@@ -52,12 +53,7 @@ export class FavoritesActionComponent implements OnInit {
   }
 
   private initContext(): void {
-    this.contextId = (
-      (this.activatedRoute.snapshot.parent?.data ||
-        this.activatedRoute.snapshot.firstChild?.data) as {
-        contextData: { id: string };
-      }
-    ).contextData?.id;
+    this.contextId = findContextData(this.router.routerState.snapshot.root)?.id as string;
   }
 
   private async initFavoriteStatus(): Promise<void> {

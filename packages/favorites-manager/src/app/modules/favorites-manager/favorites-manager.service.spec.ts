@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { FavoritesManagerService } from './favorites-manager.service';
-import { InventoryService, IResult, IUser, UserService } from '@c8y/client';
+import { InventoryService, type IResult, type IUser, UserService } from '@c8y/client';
 import { provideMock } from '~helpers/auto-mock.helper';
 
 /** Cast an autoMock'd method to a Jasmine spy so we can configure its return value. */

@@ -1,0 +1,279 @@
+/**
+ * The tree's type scale, declared once here and read by every component in the family
+ * (rows, quick access, the detail panel, the field-config panel).
+ *
+ * Custom properties rather than LESS variables on purpose: LESS variables do not cross
+ * file boundaries, and these components each own their stylesheet — so the scale would
+ * have to be repeated per file, which is exactly how it drifted into eleven different
+ * sizes between 10px and 14px in the first place. Custom properties inherit through the
+ * DOM and are unaffected by emulated encapsulation, so one declaration reaches all of
+ * them. Every use keeps a literal fallback, so a stylesheet still stands alone.
+ *
+ * `-label` is the uppercase section-heading size; it stays a step below body text because
+ * capitals read larger than their point size, not because the label matters less.
+ */
+:host {
+  --ps-tree-font: 15px;
+  --ps-tree-font-sm: 14px;
+  --ps-tree-font-xs: 13px;
+  --ps-tree-font-label: 12px;
+  --ps-tree-icon: 16px;
+
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
+/**
+ * A slim scrollbar that **takes layout width**, and a gutter reserved for it. Used by every
+ * scroller in the tree.
+ *
+ * A row's last items — the status dot and the ⓘ button — sit at its right edge, and a macOS-style
+ * *overlay* scrollbar is painted on top of the content rather than beside it, so it covered them
+ * whenever the tree scrolled. Giving `::-webkit-scrollbar` an explicit width is what opts a WebKit
+ * scroller out of overlay behaviour; `scrollbar-gutter: stable` then reserves the strip even before
+ * there is overflow, so rows do not shift sideways the moment the tree grows past the viewport.
+ *
+ * 4px and these custom properties are the platform's own scrollbar treatment
+ * (`style/styles/mixins/_c8y-scrollbar.scss`) — the tree should not invent a second look for the
+ * same furniture.
+ */
+.ps-tree-scroller() {
+  scrollbar-gutter: stable;
+  // Firefox, which has no `::-webkit-scrollbar`.
+  scrollbar-width: thin;
+  // The platform's two-level token chain: `--c8y-component-*` is the per-component override and
+  // is usually unset, so it must fall through to `--c8y-root-component-*` rather than straight to
+  // a literal — otherwise dark mode and branded tenants get the light-mode value.
+  scrollbar-color: var(
+      --c8y-component-scrollbar-thumb-default,
+      var(--c8y-root-component-scrollbar-thumb-default, rgba(57, 72, 82, 0.2))
+    )
+    transparent;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: var(--c8y-component-scrollbar-track, var(--c8y-root-component-scrollbar-track, transparent));
+  }
+  &::-webkit-scrollbar-thumb {
+    border-radius: 1px;
+    background: var(
+      --c8y-component-scrollbar-thumb-default,
+      var(--c8y-root-component-scrollbar-thumb-default, rgba(57, 72, 82, 0.2))
+    );
+  }
+  &:hover::-webkit-scrollbar-thumb {
+    background: var(
+      --c8y-component-scrollbar-thumb-hover,
+      var(--c8y-root-component-scrollbar-thumb-hover, #6f7b8a)
+    );
+  }
+}
+
+.ps-tree {
+  // The positioning context for the cascade. `overflow` is deliberately NOT set: a
+  // clipping ancestor here would cut the panel off at the container's right edge, which
+  // is exactly where it is supposed to start (§6.4).
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  font-size: var(--ps-tree-font, 15px);
+
+  // Compact trades away padding, not legibility: the row height is fixed at 36px either
+  // way (the virtual scroller requires it), so shrinking the text here bought nothing.
+  &--compact {
+    --ps-tree-font: 14px;
+    --ps-tree-font-sm: 13px;
+  }
+}
+
+/**
+ * Pinned & Recent. A section of its own, above the hierarchy and separated from it by a
+ * rule — the two are different kinds of list (a short flat one you curate, a long nested
+ * one you explore) and merging them would make the tree's first rows mean two things.
+ *
+ * The lists themselves live in the cascade panel (level 1, `ps-quick-access-panel`) —
+ * this section is only ever the one header row.
+ */
+.ps-tree__quick {
+  position: relative;
+  flex: 0 0 auto;
+  border-bottom: 1px solid var(--c8y-root-component-border-color, rgba(0, 0, 0, 0.08));
+
+  /**
+   * The 4px scroll band below the rule, matching the platform's own navigator header
+   * (`.navigator .title::after`: `top: 100%`, 4px, header background, `.shadow-scroll` =
+   * `box-shadow: 0 2px 3px rgba(0,0,0,.1)`). The drawer lines this section's rule up with
+   * that header rule to the pixel, and without the same band the left one reads as sitting
+   * 4px lower — the borders coincide, the *decoration* did not. Values are the platform's,
+   * so the two boundaries stay one line if it restyles.
+   */
+  &::after {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 10;
+    display: block;
+    width: 100%;
+    height: 4px;
+    content: '';
+    background-color: var(--c8y-root-component-background-default, #fff);
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  // No background of its own: the section is already delimited by the rule below it and by
+  // its own heading, and a grey field behind live content reads as "disabled". The lists
+  // themselves open in the cascade panel (level 1) — nothing expands in place here, so the
+  // hierarchy can never be pushed off the bottom of the drawer by the shortcut list.
+}
+
+.ps-tree__section {
+  flex: 0 0 auto;
+  padding-right: 4px;
+}
+
+/**
+ * The fuzzy-fallback notice. Deliberately unstyled beyond spacing — it is an explanation
+ * of the rows below it, not a warning, so it must not read louder than they do.
+ */
+.ps-tree__hint {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0 8px 4px;
+  font-size: var(--ps-tree-font-xs, 13px);
+  line-height: 1.3;
+
+  i {
+    margin-right: 4px;
+  }
+}
+
+.ps-tree__section-label {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 5px 8px 3px;
+  font-size: var(--ps-tree-font-label, 12px);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ps-tree__section-actions {
+  gap: 2px;
+}
+
+.ps-tree__section-action {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: none;
+  color: var(--c8y-palette-gray-40, #6f7b8a);
+  font-size: var(--ps-tree-font-sm, 14px);
+
+  &:hover:not(:disabled) {
+    background-color: var(--c8y-palette-gray-80, rgba(0, 0, 0, 0.06));
+    color: var(--c8y-text-color, inherit);
+  }
+
+  // Kept in place rather than hidden when there is nothing to do: the pair is a fixed landmark
+  // in the header, and one appearing and disappearing would shift the other under the pointer.
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+}
+
+.ps-tree__state {
+  flex: 0 0 auto;
+  padding: 12px 8px;
+  font-size: var(--ps-tree-font-sm, 14px);
+}
+
+.ps-tree__viewport {
+  flex: 1 1 auto;
+  min-height: 0;
+  .ps-tree-scroller();
+  // Horizontal overflow must stay hidden inside the scroller (long names ellipsize in
+  // the row), but the scroller is a child of `.ps-tree`, so it never clips the cascade.
+  overflow-x: hidden;
+
+  // CDK's content wrapper is absolutely positioned with only `min-width: 100%`, so it
+  // shrink-wraps to the widest row's max-content and silently overflows the clip above —
+  // at ≤440px the trailing status-dot column was cut off entirely and names never
+  // truncated. Capping it makes the wrapper exactly the viewport's width, which is what
+  // lets `.ps-tree-row`'s `min-width: 0` and the name's `text-truncate` actually engage.
+  // `::ng-deep` because CDK creates the wrapper element itself, so it never carries this
+  // component's emulated-encapsulation attribute.
+  &::ng-deep .cdk-virtual-scroll-content-wrapper {
+    max-width: 100%;
+  }
+
+  // Platform focus idiom (see `asset-tree-row.component.less`): the tenant's focus colour,
+  // inset so the ring is not clipped by the scroller's own overflow.
+  &:focus-visible {
+    outline: 2px solid var(--c8y-component-color-focus, var(--c8y-root-component-color-focus));
+    outline-offset: -2px;
+    border-radius: var(--c8y-component-border-radius-focus, var(--c8y-root-component-border-radius-focus));
+  }
+}
+
+.ps-tree-item {
+  // Fixed height, matching the viewport's `itemSize`. Anything that changes a row's
+  // height silently desynchronises the virtual scroller (NFR-T1).
+  overflow: hidden;
+
+  // The level-by-level reveal. Only `opacity` and `transform` are animated — both are
+  // compositor-only, so a 2000-row viewport does not relayout, and neither touches the
+  // row's height, which the virtual scroller depends on being constant.
+  &--reveal {
+    animation: ps-tree-reveal 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+}
+
+@keyframes ps-tree-reveal {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+// Motion is decoration here: the tree is equally usable without it, so it goes away
+// entirely rather than being shortened.
+@media (prefers-reduced-motion: reduce) {
+  .ps-tree-item--reveal {
+    animation: none;
+  }
+}
+
+.ps-tree__footer {
+  flex: 0 0 auto;
+  gap: 10px;
+  padding: 5px 8px;
+  font-size: var(--ps-tree-font-xs, 13px);
+  border-top: 1px solid var(--c8y-root-component-border-color, rgba(0, 0, 0, 0.08));
+  font-variant-numeric: tabular-nums;
+}
+
+.ps-tree__footer-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+// Both footer stats render `ps-status-dot` (`components/status-dot/`) — the alarm one coloured
+// by the fleet's worst severity, the stopped one as the grey ring. It brings its own styles.
+

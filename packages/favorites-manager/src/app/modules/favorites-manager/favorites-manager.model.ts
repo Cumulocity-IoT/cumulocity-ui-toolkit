@@ -1,4 +1,4 @@
-import { IManagedObject } from '@c8y/client';
+import { type IManagedObject } from '@c8y/client';
 
 export interface IUserCustomerProperties {
   favorites?: string[];

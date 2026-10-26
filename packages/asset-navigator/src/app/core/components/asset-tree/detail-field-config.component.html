@@ -1,0 +1,114 @@
+<div class="ps-fieldcfg">
+  <header class="ps-fieldcfg__header d-flex a-i-center">
+    <span class="text-bold">{{ 'Detail fields' | translate }}</span>
+    <button
+      class="btn-clean m-l-auto text-muted"
+      type="button"
+      [attr.aria-label]="'Close' | translate"
+      (click)="closed.emit()"
+    >
+      <i c8yIcon="times"></i>
+    </button>
+  </header>
+
+  <!--
+    Which type is being configured, spelled out: the selection applies to every asset of
+    this type, not to the one asset the panel happens to be showing (§6.3).
+  -->
+  <p class="ps-fieldcfg__scope text-muted" [attr.title]="assetType()">
+    {{ 'For all' | translate }} <span class="text-medium">{{ typeLabel() }}</span>
+    {{ 'assets' | translate }}
+  </p>
+
+  @if (isBranch()) {
+    <p class="text-muted ps-fieldcfg__note">
+      {{ 'Turbine counts and alarms are always shown for a group — add properties below.' | translate }}
+    </p>
+  }
+
+  <p class="text-muted ps-fieldcfg__hint">
+    {{ 'Shown, in order. Drag to reorder.' | translate }}
+  </p>
+
+  <ul
+    class="ps-fieldcfg__list"
+    cdkDropList
+    (cdkDropListDropped)="drop($event)"
+  >
+    @for (field of selected(); track field.spec.key) {
+      <li class="ps-fieldcfg__item d-flex a-i-center" cdkDrag>
+        <i class="ps-fieldcfg__grip text-muted" cdkDragHandle c8yIcon="drag" aria-hidden="true"></i>
+        <!--
+          The last field of a turbine type stays checked: an empty selection is how the
+          resolver spells "never configured" and would bring the whole default set back,
+          so unchecking it would read as the panel ignoring the click. "Reset to defaults"
+          in the footer is the way back to the full set.
+        -->
+        <label
+          class="ps-fieldcfg__label"
+          [attr.title]="atMinimum() ? ('At least one field is shown. Add another to remove this one.' | translate) : null"
+        >
+          <input
+            type="checkbox"
+            [checked]="true"
+            [disabled]="atMinimum()"
+            (change)="toggleField(field.spec.key)"
+          />
+          <span>{{ field.label | translate }}</span>
+        </label>
+        @if (isCustom(field.spec.key)) {
+          <!--
+            A picked inventory path rather than a catalogue entry — unchecking it drops it
+            entirely instead of moving it to "Available", so it is marked as such and shows
+            the path it reads.
+          -->
+          <code
+            class="ps-fieldcfg__path text-muted"
+            [attr.title]="pathOf(field.spec.key)"
+          >{{ pathOf(field.spec.key) }}</code>
+        }
+      </li>
+    } @empty {
+      <li class="ps-fieldcfg__item text-muted">{{ 'No fields selected.' | translate }}</li>
+    }
+  </ul>
+
+  @if (available().length) {
+    <p class="text-muted ps-fieldcfg__hint">{{ 'Available' | translate }}</p>
+    <ul class="ps-fieldcfg__list">
+      @for (field of available(); track field.spec.key) {
+        <li class="ps-fieldcfg__item d-flex a-i-center">
+          <span class="ps-fieldcfg__grip" aria-hidden="true"></span>
+          <label class="ps-fieldcfg__label">
+            <input type="checkbox" [checked]="false" (change)="toggleField(field.spec.key)" />
+            <span>{{ field.label | translate }}</span>
+          </label>
+        </li>
+      }
+    </ul>
+  }
+
+  <footer class="ps-fieldcfg__footer">
+    <!--
+      The same picker the overview's config drawer uses for its table columns and popup
+      sections, over the fragments these assets actually carry.
+    -->
+    <button
+      class="btn btn-default btn-sm"
+      type="button"
+      [disabled]="!hasSamples()"
+      (click)="addInventoryFields()"
+    >
+      <i c8yIcon="cubes"></i> {{ 'Add asset properties' | translate }}
+    </button>
+    @if (!isBranch()) {
+      <label class="ps-fieldcfg__label">
+        <input type="checkbox" [checked]="sparkline()" (change)="toggleSparkline()" />
+        <span>{{ 'Power sparkline (24 h)' | translate }}</span>
+      </label>
+    }
+    <button class="btn btn-default btn-sm" type="button" (click)="reset()">
+      {{ 'Reset to defaults' | translate }}
+    </button>
+  </footer>
+</div>

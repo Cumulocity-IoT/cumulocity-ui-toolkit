@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { ApplicationService, IApplication } from '@c8y/client';
+import { ApplicationService, type IApplication } from '@c8y/client';
 
 /**
  * Shared helper to check whether an application or microservice is installed

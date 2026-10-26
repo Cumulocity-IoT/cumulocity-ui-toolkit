@@ -76,6 +76,17 @@ export default [
         },
       ],
 
+      // Types are imported and re-exported with `type`: per-file compilers (Vite / esbuild /
+      // OXC, ng's isolated mode) cannot see that a name is only a type. See AGENTS.md.
+      '@typescript-eslint/consistent-type-imports': [
+        'error',
+        { prefer: 'type-imports', fixStyle: 'inline-type-imports', disallowTypeAnnotations: false },
+      ],
+      '@typescript-eslint/consistent-type-exports': [
+        'error',
+        { fixMixedExportsWithInlineTypeSpecifier: true },
+      ],
+
       'no-unused-vars': 'off',
       'no-prototype-builtins': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',

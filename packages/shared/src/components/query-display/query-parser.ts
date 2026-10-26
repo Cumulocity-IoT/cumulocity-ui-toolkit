@@ -1,11 +1,11 @@
 import {
-  AstNode,
-  Token,
-  TokenOfType,
-  TokenType,
-  ValueTokenType,
+  type AstNode,
+  type Token,
+  type TokenOfType,
+  type TokenType,
+  type ValueTokenType,
 } from './reverse-queries-util.model';
-import { Tokenizer } from './string-tokenizer';
+import { type Tokenizer } from './string-tokenizer';
 
 export class QueryParser {
   private current: Token;
