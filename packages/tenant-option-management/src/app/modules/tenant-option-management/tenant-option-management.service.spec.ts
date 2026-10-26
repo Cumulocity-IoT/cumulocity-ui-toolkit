@@ -336,6 +336,27 @@ describe('TenantOptionManagementService', () => {
       expect(rows).toHaveSize(2);
       expect(tenantOptionsService.list).toHaveBeenCalledTimes(2);
     });
+    it('ignores options of other categories returned by the backend', async () => {
+      tenantOptionsService.list.and.returnValue(
+        Promise.resolve({
+          data: [
+            { category: 'cat', key: 'k1', value: 'v1' },
+            { category: 'other', key: 'k2', value: 'v2' },
+          ],
+          paging: { currentPage: 1, totalPages: 1 } as never,
+          res: FETCH_RES,
+        })
+      );
+
+      const cfg = makeConfig();
+
+      spyOn(service, 'getConfiguration').and.returnValue(Promise.resolve(cfg));
+      inventoryService.update.and.returnValue(Promise.resolve({ data: cfg, res: FETCH_RES }));
+
+      const rows = await service.allowListOptionsByCategory('cat');
+
+      expect(rows.map((r) => r.id)).toEqual(['cat-k1']);
+    });
   });
 
   // ─── deleteOption() ──────────────────────────────────────────────────────────

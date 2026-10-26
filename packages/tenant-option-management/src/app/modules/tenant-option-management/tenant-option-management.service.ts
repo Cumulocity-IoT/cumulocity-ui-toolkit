@@ -146,7 +146,10 @@ export class TenantOptionManagementService {
       options.push(...data);
     }
 
-    if (!options.length) {
+    // `GET /tenant/options` does not reliably honour a `category` filter, so narrow it down here.
+    const categoryOptions = options.filter((option) => option.category === category);
+
+    if (!categoryOptions.length) {
       return Promise.reject(new Error(`No tenant options found for category "${category}"`));
     }
 
@@ -154,7 +157,7 @@ export class TenantOptionManagementService {
     const user = await this.getUser();
     const addedRows: TenantOptionRow[] = [];
 
-    for (const option of options) {
+    for (const option of categoryOptions) {
       const alreadyRegistered = config.options.some(
         (o) => o.category === option.category && o.key === option.key
       );
