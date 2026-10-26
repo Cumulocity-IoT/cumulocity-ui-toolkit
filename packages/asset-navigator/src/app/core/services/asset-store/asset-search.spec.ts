@@ -301,4 +301,18 @@ describe('indexing what the asset definition says an asset is', () => {
 
     expect(result?.ids.has('t12')).toBe(true);
   });
+
+  it('indexes names only, without guessed properties, when the inventory fallback is off', () => {
+    const hierarchy = fleet();
+    const index = buildAssetIndex(hierarchy, new Map(), { fallback: false });
+
+    expect(
+      searchAssets(index, hierarchy, { searchText: 'E-126', matchMode: 'contains' })?.ids.has('t12')
+    ).toBe(false);
+    expect(
+      searchAssets(index, hierarchy, { searchText: 'Emden T12', matchMode: 'contains' })?.ids.has(
+        't12'
+      )
+    ).toBe(true);
+  });
 });

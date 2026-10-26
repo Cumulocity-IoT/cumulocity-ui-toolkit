@@ -19,30 +19,35 @@
 >
   <header class="ps-drawer__header d-flex a-i-center">
     <span class="ps-drawer__title">{{ 'Assets' | translate }}</span>
-    <!-- Same platform search primitive as the overlay, in the small variant. -->
-    <div class="ps-drawer__search input-group input-group-search input-group-sm">
-      <input
-        #filterInput data-cy="asset-navigator--filter"
-        class="form-control"
-        type="text"
-        autocomplete="off"
-        [attr.placeholder]="'Search for groups or assets…' | translate"
-        [attr.aria-label]="'Filter assets' | translate"
-        [value]="searchText()"
-        (input)="onSearch($any($event.target).value)"
-      />
-      <span class="input-group-btn">
-        <button
-          class="btn btn-default"
-          type="button"
-          [attr.title]="(searchText() ? 'Reset' : 'Search') | translate"
-          [attr.aria-label]="(searchText() ? 'Reset' : 'Search') | translate"
-          (click)="onResetSearch()" data-cy="asset-navigator--filter-reset"
-        >
-          <i [c8yIcon]="searchText() ? 'times' : 'search'"></i>
-        </button>
-      </span>
-    </div>
+    @if (settings().showSearch) {
+      <!-- Same platform search primitive as the overlay, in the small variant. -->
+      <div class="ps-drawer__search input-group input-group-search input-group-sm">
+        <input
+          #filterInput data-cy="asset-navigator--filter"
+          class="form-control"
+          type="text"
+          autocomplete="off"
+          [attr.placeholder]="'Search for groups or assets…' | translate"
+          [attr.aria-label]="'Filter assets' | translate"
+          [value]="searchText()"
+          (input)="onSearch($any($event.target).value)"
+        />
+        <span class="input-group-btn">
+          <button
+            class="btn btn-default"
+            type="button"
+            [attr.title]="(searchText() ? 'Reset' : 'Search') | translate"
+            [attr.aria-label]="(searchText() ? 'Reset' : 'Search') | translate"
+            (click)="onResetSearch()" data-cy="asset-navigator--filter-reset"
+          >
+            <i [c8yIcon]="searchText() ? 'times' : 'search'"></i>
+          </button>
+        </span>
+      </div>
+    } @else {
+      <span class="ps-drawer__spacer"></span>
+    }
+    <ps-navigator-settings-menu />
     <button
       class="btn-clean ps-drawer__action"
       type="button"

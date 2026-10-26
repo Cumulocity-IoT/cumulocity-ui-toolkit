@@ -1,11 +1,12 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  DestroyRef,
-  ElementRef,
   computed,
+  DestroyRef,
   effect,
+  ElementRef,
   inject,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { CoreModule } from '@c8y/ngx-components';
@@ -17,6 +18,8 @@ import {
 import { AssetTreeService } from '../core/components/asset-tree/asset-tree.service';
 import { AssetStoreService } from '../core/services/asset-store/asset-store.service';
 import { AssetNavigationService } from './asset-navigation.service';
+import { NavigatorSettingsMenuComponent } from './navigator-settings-menu.component';
+import { NavigatorSettingsService } from '../core/services/settings/navigator-settings.service';
 import {
   DRAWER_MAX_WIDTH,
   DRAWER_MIN_WIDTH,
@@ -37,11 +40,12 @@ import {
   selector: 'ps-explorer-drawer',
   templateUrl: './explorer-drawer.component.html',
   styleUrls: ['./explorer-drawer.component.less'],
-  imports: [CoreModule, AssetTreeComponent],
+  imports: [CoreModule, AssetTreeComponent, NavigatorSettingsMenuComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExplorerDrawerComponent {
   protected readonly drawer = inject(ExplorerDrawerService);
+  protected readonly settings = inject(NavigatorSettingsService).settings;
   private readonly tree = inject(AssetTreeService);
   private readonly assets = inject(AssetStoreService);
   private readonly navigation = inject(AssetNavigationService);
@@ -85,6 +89,12 @@ export class ExplorerDrawerComponent {
   constructor() {
     inject(DestroyRef).onDestroy(() => this.endDrag?.());
 
+    // Hiding the search (options menu) must not leave an invisible filter applied.
+    effect(() => {
+      if (!this.settings().showSearch && untracked(this.searchText))
+        this.tree.setFilter({ searchText: '' });
+    });
+
     // Chrome budget above the hierarchy, from the measured navigator header (see
     // `ExplorerDrawerService.chromeHeight`) — written imperatively rather than through a
     // `[style.--…]` binding so the CSS fallback stays in the stylesheet when nothing was
@@ -109,8 +119,9 @@ export class ExplorerDrawerComponent {
     this.filterInput()?.nativeElement.focus();
   }
 
-  /** Type-ahead in the tree lands in the filter input (§3.6). */
+  /** Type-ahead in the tree lands in the filter input (§3.6) — only while it is shown. */
   protected onFilterTyped(character: string): void {
+    if (!this.settings().showSearch) return;
     this.tree.setFilter({ searchText: this.searchText() + character });
     const input = this.filterInput()?.nativeElement;
 

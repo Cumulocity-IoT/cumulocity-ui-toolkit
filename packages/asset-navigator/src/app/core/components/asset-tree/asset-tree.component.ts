@@ -45,6 +45,7 @@ import { CascadePanelComponent } from './cascade-panel.component';
 import { DetailFieldConfigComponent } from './detail-field-config.component';
 import { QuickAccessPanelComponent } from './quick-access-panel.component';
 import { QuickAccessRowComponent, type QuickAccessItem } from './quick-access-row.component';
+import { NavigatorSettingsService } from '../../services/settings/navigator-settings.service';
 
 /** Level-by-level reveal: delay per depth, and the depth at which the stagger stops. */
 const REVEAL_STEP_MS = 45;
@@ -144,6 +145,7 @@ export class AssetTreeComponent {
 
   private readonly assets = connectAssetStore();
   private readonly tree = inject(AssetTreeService);
+  private readonly navigatorSettings = inject(NavigatorSettingsService);
   private readonly router = inject(Router);
   private readonly injector = inject(Injector);
   private readonly cascade = new CascadeController();
@@ -185,7 +187,12 @@ export class AssetTreeComponent {
 
   /** Whether the Pinned & Recent cascade panel is out (§6.1). */
   protected readonly quickAccessOpen = computed(
-    () => this.cascadeTarget()?.kind === 'quick-access'
+    () => this.showQuickAccess() && this.cascadeTarget()?.kind === 'quick-access'
+  );
+
+  /** The options menu can hide Pinned & Recent; hidden, its panel never opens either. */
+  protected readonly showQuickAccess = computed(
+    () => this.navigatorSettings.settings().showQuickAccess
   );
 
   protected readonly rowHeight = computed(() => ROW_HEIGHT[this.config().density]);

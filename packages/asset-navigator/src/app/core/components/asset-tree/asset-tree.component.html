@@ -17,6 +17,7 @@
   <div
     #quickSection
     class="ps-tree__quick"
+    [hidden]="!showQuickAccess()"
     (mouseenter)="onQuickAccessEnter($event)"
     (mouseleave)="onQuickAccessLeave()"
     (keydown.escape)="onQuickAccessEscape()"

@@ -34,6 +34,7 @@ import {
   type AssetStoreMode,
   type BranchStatus,
 } from './asset-store.model';
+import { NavigatorSettingsService } from '../settings/navigator-settings.service';
 
 /** Platform cap on `pageSize` for `GET /inventory/managedObjects`. */
 const PAGE_SIZE = 2000;
@@ -197,6 +198,7 @@ export class AssetStoreService {
   private readonly inventory = inject(InventoryService);
   private readonly identity = inject(IdentityService);
   private readonly definitions = inject(AssetDefinitionService);
+  private readonly navigatorSettings = inject(NavigatorSettingsService);
 
   /** The cached fleet, or `null` before the first sweep completes. */
   readonly hierarchy: Signal<AssetHierarchy | null> = this.core.hierarchy.asReadonly();
@@ -236,7 +238,13 @@ export class AssetStoreService {
 
     if (!hierarchy) return null;
 
-    return buildAssetIndex(hierarchy, this.definitions.indexableProperties());
+    // Guessing properties from the inventory is the fallback for a missing DTM; the user can
+    // turn it off (options menu). While DTM is still unknown or available, guessing stays on
+    // for types it does not describe.
+    const fallback =
+      this.definitions.available() !== false || this.navigatorSettings.settings().inventoryFallback;
+
+    return buildAssetIndex(hierarchy, this.definitions.indexableProperties(), { fallback });
   });
 
   /** ISO timestamp of the data currently on screen — what a "as of" label shows. */

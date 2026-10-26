@@ -29,6 +29,22 @@ The plugin has two exports that can be installed independently:
 - Fully keyboard operable: arrows move and expand, `Enter` opens, `Alt`+`Enter` opens in a new tab, typing
   goes to the filter, `Esc` closes the innermost panel and then the drawer.
 
+### Options menu
+
+The cog next to the drawer's pin opens the tree options, stored per user and applied at once:
+
+| Option | Default |
+|---|---|
+| Show search | on |
+| Show Pinned & Recent | on |
+| Pinned items shown / Recent items shown | 10 / 8 (1–25) |
+| Keyboard shortcut to open the tree | none — click the field and press a chord with a modifier, e.g. Alt+Shift+T |
+| Inventory fallback without DTM | on — without the Digital Twin Manager, search asset properties and type filters come from the inventory |
+
+Platform users keep them on their user object (`customProperties.ps_AssetNavigatorSettings`). Single sign-on users
+(`customProperties.userOrigin = OAUTH2`), and users who may not update themselves, get a managed object of type
+`ps_AssetNavigatorSettings` owned by them instead.
+
 ## Global asset search
 
 - A search button in the header and the `⌘K` / `Ctrl+K` shortcut open the **search palette**.

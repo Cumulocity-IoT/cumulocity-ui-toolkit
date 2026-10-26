@@ -146,8 +146,12 @@ function externalIdOf(properties: Readonly<Record<string, unknown>>): string {
  */
 export function buildAssetIndex(
   hierarchy: AssetHierarchy,
-  indexableProperties: AssetIndexablePropertyMap = new Map()
+  indexableProperties: AssetIndexablePropertyMap = new Map(),
+  options: { fallback?: boolean } = {}
 ): AssetSearchIndex {
+  // `false` when the user turned the inventory fallback off and DTM is not available:
+  // types DTM does not describe then index by name and path only, without guessed properties.
+  const fallback = options.fallback ?? true;
   const index = new MiniSearch<AssetSearchDoc>({
     fields: [...SEARCH_FIELDS],
     storeFields: ['name', 'externalId', 'depth', 'turbineCount', 'severity', 'unavailable'],
@@ -180,7 +184,8 @@ export function buildAssetIndex(
     const severity = rollup?.worst ? (SEVERITY_RANK[rollup.worst] ?? 0) : 0;
     const unavailable = node.availability === 'unavailable' || (rollup?.unavailableCount ?? 0) > 0;
     const indexable =
-      indexableProperties.get(node.type) ?? fallbackIndexableProperties(node.properties);
+      indexableProperties.get(node.type) ??
+      (fallback ? fallbackIndexableProperties(node.properties) : []);
     const required: IndexableProperty[] = [];
     const optional: IndexableProperty[] = [];
 

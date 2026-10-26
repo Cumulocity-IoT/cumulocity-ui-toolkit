@@ -1,5 +1,9 @@
 # UI Toolkit Changelog
 
+## 2026.10.26
+
+**asset-navigator 1.1.0**: options menu for the asset tree (search, shortcut, Pinned & Recent, inventory fallback without DTM), stored per user — see `packages/asset-navigator/CHANGELOG.md`.
+
 ## 2026.10.23
 
 **New plugin**: `packages/asset-navigator` — asset tree explorer drawer in the navigator and a global asset search (`⌘K` / `Ctrl+K`), ported from the windy solution. See `packages/asset-navigator/CHANGELOG.md`.

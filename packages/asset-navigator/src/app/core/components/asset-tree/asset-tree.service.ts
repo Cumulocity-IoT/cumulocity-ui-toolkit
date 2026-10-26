@@ -10,6 +10,7 @@ import {
   type FilteredHierarchy,
   type TreeFilter,
 } from './asset-tree.model';
+import { LIST_LIMIT } from '../../services/settings/navigator-settings.model';
 
 /**
  * Tree state: expansion, selection, filter, pinned & recent assets, and the detail
@@ -35,7 +36,8 @@ const PREF_BOOKMARKS = 'bookmarks';
 const PREF_RECENT = 'ps.assetNav.recent';
 const PREF_DETAIL_FIELDS = 'ps.assetNav.detailFields';
 
-const MAX_RECENT = 8;
+/** Recents kept per user: the options menu's upper limit, so any configured display size has entries. */
+const MAX_RECENT = LIST_LIMIT.max;
 
 /**
  * A platform bookmark, as `@c8y/ngx-components/bookmarks` stores it under the
