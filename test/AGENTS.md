@@ -27,6 +27,7 @@ test/
 │   ├── favorites-manager.config.ts
 │   ├── kpi-widget.config.ts
 │   ├── energy-consumption-widget.config.ts
+│   ├── events-graph-widget.config.ts
 │   ├── operations-widget.config.ts
 │   ├── release-notes.config.ts
 │   ├── reminder.config.ts

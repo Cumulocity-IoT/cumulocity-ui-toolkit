@@ -58,6 +58,7 @@ cumulocity-ui-toolkit/
 │   │
 │   ├── asset-navigator/
 │   ├── energy-consumption-widget/
+│   ├── events-graph-widget/
 │   ├── favorites-manager/
 │   ├── index-db-cache/
 │   ├── kpi-widget/
@@ -111,6 +112,7 @@ All plugins are registered as Angular projects in the single root `angular.json`
 | `shared`                           | `packages/shared`                    | — (internal library)                         |
 | `plugin.asset-navigator`           | `packages/asset-navigator`           | `cumulocity-asset-navigator-plugin`          |
 | `plugin.energy-consumption-widget` | `packages/energy-consumption-widget` | `cumulocity-energy-consumption-widget-plugin` |
+| `plugin.events-graph-widget`      | `packages/events-graph-widget`      | `cumulocity-events-graph-plugin`             |
 | `plugin.favorites-manager`         | `packages/favorites-manager`         | `cumulocity-favorites-manager-plugin`        |
 | `plugin.index-db-cache`            | `packages/index-db-cache`            | `cumulocity-index-db-cache-plugin`           |
 | `plugin.kpi-widget`                | `packages/kpi-widget`                | `cumulocity-kpi-aggregator-widget-plugin`    |
@@ -304,12 +306,13 @@ Unit tests use **Karma + Jasmine** with the `@angular/build:karma` builder. All 
 #### Running Tests
 
 ```bash
-# Run all 11 suites in sequence (shared + 10 plugins):
+# Run all 13 suites in sequence (shared + 12 plugins):
 pnpm test
 
 # Run a single suite headless (CI mode):
 pnpm run test:shared
 pnpm run test:energy-consumption-widget
+pnpm run test:events-graph-widget
 pnpm run test:favorites-manager
 pnpm run test:index-db-cache
 pnpm run test:kpi-widget

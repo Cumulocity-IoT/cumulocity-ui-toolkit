@@ -228,6 +228,21 @@ importers:
         specifier: workspace:*
         version: link:../shared
 
+  packages/events-graph-widget:
+    dependencies:
+      date-fns:
+        specifier: ^4.4.0
+        version: 4.4.0
+      echarts:
+        specifier: 6.1.0
+        version: 6.1.0
+      ngx-echarts:
+        specifier: ^21.0.0
+        version: 21.0.0(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.15.1))(echarts@6.1.0)
+      shared:
+        specifier: workspace:*
+        version: link:../shared
+
   packages/favorites-manager:
     dependencies:
       shared:
