@@ -1,13 +1,18 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { EventService, IEvent } from '@c8y/client';
 import { subHours } from 'date-fns';
-import { CustomSeriesRenderItem } from 'echarts';
+import type { CustomSeriesRenderItem } from 'echarts';
 import { groupBy, isEmpty } from 'lodash';
-import { EventConfig, EventTypeConfig, IEventDuration } from '../models/event-graph.model';
+import {
+  EventConfig,
+  EventSeries,
+  EventTypeConfig,
+  IEventDuration,
+} from '../models/event-graph.model';
 
 @Injectable()
 export class EventStatusTrackerService {
-  constructor(private eventService: EventService) {}
+  private readonly eventService = inject(EventService);
 
   async fetchAndPrepareEvents(
     start: Date,
@@ -113,22 +118,22 @@ export class EventStatusTrackerService {
       name: string;
       value: number[];
       itemStyle: {
-        color: string;
+        color?: string;
       };
     }[],
     renderItem: CustomSeriesRenderItem,
     types: EventConfig[]
-  ) {
+  ): EventSeries[] {
     const groups = groupBy(data, 'name');
     const names = Object.keys(groups);
 
     return names.map((name) => ({
       name,
       renderItem,
-      type: 'custom',
+      type: 'custom' as const,
       itemStyle: {
         opacity: 0.9,
-        color: types.find((type) => type.name === name || type.label === name)?.color ?? null,
+        color: types.find((type) => type.name === name || type.label === name)?.color,
       },
       encode: {
         x: [1, 2],

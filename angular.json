@@ -1105,16 +1105,19 @@
             "outputPath": "dist/cumulocity-events-graph-widget-plugin",
             "main": "packages/events-graph-widget/src/main.ts",
             "tsConfig": "packages/events-graph-widget/tsconfig.app.json",
-            "polyfills": ["zone.js"],
+            "polyfills": [
+              "zone.js"
+            ],
             "assets": [
               {
                 "glob": "**/*",
                 "input": "packages/events-graph-widget/public"
-              },
-              "packages/events-graph-widget/src/assets"
+              }
             ],
             "inlineStyleLanguage": "less",
-            "styles": ["packages/events-graph-widget/src/styles.less"],
+            "styles": [
+              "packages/events-graph-widget/src/styles.less"
+            ],
             "scripts": [],
             "aot": false,
             "buildOptimizer": false,
@@ -1178,6 +1181,18 @@
             }
           },
           "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:karma",
+          "options": {
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
+            "tsConfig": "packages/events-graph-widget/tsconfig.spec.json",
+            "inlineStyleLanguage": "less",
+            "karmaConfig": "karma.conf.js"
+          }
         }
       }
     }

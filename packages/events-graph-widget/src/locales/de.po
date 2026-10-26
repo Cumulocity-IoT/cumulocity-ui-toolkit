@@ -6,5 +6,56 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-msgid "Module Federation widget"
-msgstr "Modul Federation Dingsbums"
+msgid "Events Graph"
+msgstr "Ereignisdiagramm"
+
+msgid "Show event occurrence in a timeline chart."
+msgstr "Zeigt das Auftreten von Ereignissen in einem Zeitstrahl-Diagramm."
+
+msgid "Display duration"
+msgstr "Anzeigedauer"
+
+msgid "hours"
+msgstr "Stunden"
+
+msgid "Refresh Interval"
+msgstr "Aktualisierungsintervall"
+
+msgid "seconds"
+msgstr "Sekunden"
+
+msgid "Event Type"
+msgstr "Ereignistyp"
+
+msgid "Event Text"
+msgstr "Ereignistext"
+
+msgid "Add Event Type"
+msgstr "Ereignistyp hinzufügen"
+
+msgid "Remove event type"
+msgstr "Ereignistyp entfernen"
+
+msgid "Add value"
+msgstr "Wert hinzufügen"
+
+msgid "Remove value"
+msgstr "Wert entfernen"
+
+msgid "No device selected"
+msgstr "Kein Gerät ausgewählt"
+
+msgid "Select a device in the widget configuration."
+msgstr "Wählen Sie in der Widget-Konfiguration ein Gerät aus."
+
+msgid "No event types configured"
+msgstr "Keine Ereignistypen konfiguriert"
+
+msgid "Add an event type in the widget configuration."
+msgstr "Fügen Sie in der Widget-Konfiguration einen Ereignistyp hinzu."
+
+msgid "Could not load events"
+msgstr "Ereignisse konnten nicht geladen werden"
+
+msgid "Duration"
+msgstr "Dauer"

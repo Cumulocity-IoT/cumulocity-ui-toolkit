@@ -1,28 +1,23 @@
-import { Component, inject, Input } from '@angular/core';
-import {
-  CoreModule,
-  DynamicComponent,
-  GlobalTimeContextWidgetConfig,
-  OptionsService,
-} from '@c8y/ngx-components';
+import { Component, inject, Input, OnInit } from '@angular/core';
+import { CoreModule, DynamicComponent, OptionsService } from '@c8y/ngx-components';
 import {
   DEFAULT_GRAPH_INTERVAL,
   DEFAULT_GRAPH_ITEM_SCALE,
   EventStatusTrackerConfig,
 } from '../../models/event-graph.model';
-import { has } from 'lodash';
 
 @Component({
   selector: 'c8y-event-status',
-  standalone: true,
   imports: [CoreModule],
   templateUrl: './events-graph-config.component.html',
-  styleUrl: './events-graph-config.component.css',
+  styleUrl: './events-graph-config.component.less',
 })
-export class EventsGraphConfigComponent implements DynamicComponent {
-  private optionsService = inject(OptionsService);
+export class EventsGraphConfigComponent implements DynamicComponent, OnInit {
+  private readonly optionsService = inject(OptionsService);
 
-  @Input() config: EventStatusTrackerConfig & GlobalTimeContextWidgetConfig;
+  @Input() config: EventStatusTrackerConfig;
+
+  private defaultColor = '#000000';
 
   get refreshInterval(): number {
     return this.config.realtimeInterval / 1000;
@@ -32,47 +27,39 @@ export class EventsGraphConfigComponent implements DynamicComponent {
     this.config.realtimeInterval = interval * 1000;
   }
 
-  private defaultColor: string = '#000000';
-
-  ngOnInit() {
+  ngOnInit(): void {
     this.fetchDefaultColor();
 
-    if (!this.config.types) {
-      this.config.types = [];
-    }
-
+    // mutate in place: the dashboard saves the object it handed in
+    this.config.types = this.config.types ?? [];
     this.config.realtimeInterval = this.config.realtimeInterval || DEFAULT_GRAPH_INTERVAL;
     this.config.scale = this.config.scale || DEFAULT_GRAPH_ITEM_SCALE;
-
-    this.config = {
-      ...this.config,
-      widgetInstanceGlobalTimeContext: true,
-      canDecoupleGlobalTimeContext: false,
-    };
   }
 
-  addEventType() {
+  addEventType(): void {
     this.config.types.push({
       type: '',
       values: [{ name: '', color: this.defaultColor, label: '' }],
     });
   }
 
-  removeEventType(index: number) {
+  removeEventType(index: number): void {
     this.config.types.splice(index, 1);
   }
 
-  addValue(typeIndex: number) {
+  addValue(typeIndex: number): void {
     this.config.types[typeIndex].values.push({ name: '', color: this.defaultColor, label: '' });
   }
 
-  removeValue(typeIndex: number, valueIndex: number) {
+  removeValue(typeIndex: number, valueIndex: number): void {
     this.config.types[typeIndex].values.splice(valueIndex, 1);
   }
 
   private fetchDefaultColor(): void {
-    if (has(this.optionsService.brandingCssVars, 'brand-primary')) {
-      this.defaultColor = this.optionsService.brandingCssVars['brand-primary'];
+    const brandPrimary = this.optionsService.brandingCssVars?.['brand-primary'];
+
+    if (brandPrimary) {
+      this.defaultColor = brandPrimary;
     }
   }
 }

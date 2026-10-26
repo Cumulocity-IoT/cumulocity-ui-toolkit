@@ -1,4 +1,5 @@
 import { IEvent } from '@c8y/client';
+import type { CustomSeriesRenderItem } from 'echarts';
 
 export type EventStatusTrackerConfig = {
   hours: number;
@@ -31,16 +32,16 @@ export interface IEventDuration extends IEvent {
   /**
    * Duration in seconds
    */
-  duration: number;
+  duration: number | null;
 }
 
 export interface EventSeries {
   type: 'custom';
   name: string;
-  renderItem: echarts.CustomSeriesRenderItem;
-  itemStyle: { opacity: number; color: string };
+  renderItem: CustomSeriesRenderItem;
+  itemStyle: { opacity: number; color?: string };
   encode: { x: number[]; y: number };
-  data: { name: string; value: number[] }[];
+  data: { name: string; value: number[]; itemStyle?: { color?: string } }[];
 }
 
 export const DEFAULT_GRAPH_ITEM_SCALE = 0.2;
