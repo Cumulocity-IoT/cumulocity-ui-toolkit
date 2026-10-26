@@ -210,13 +210,21 @@ describe('Asset Navigator — tree options menu', () => {
     cy.get(setting('search')).uncheck({ force: true });
     savedSettings();
     cy.get(setting('reset')).click();
-    savedSettings().should('deep.equal', {
-      showSearch: true,
-      shortcut: '',
-      showQuickAccess: true,
-      maxPinned: 10,
-      maxRecent: 8,
-      inventoryFallback: true,
+    savedSettings().then((saved) => {
+      const { detailPanel, ...rest } = saved;
+
+      expect(rest).to.deep.equal({
+        showSearch: true,
+        shortcut: '',
+        showQuickAccess: true,
+        maxPinned: 10,
+        maxRecent: 8,
+        inventoryFallback: true,
+      });
+      // the detail panel's data contract, at its defaults
+      expect(detailPanel.version).to.eq(1);
+      expect(detailPanel.types).to.deep.equal({});
+      expect(detailPanel.default).to.have.length(7);
     });
     cy.get(FILTER).should('be.visible');
   });
