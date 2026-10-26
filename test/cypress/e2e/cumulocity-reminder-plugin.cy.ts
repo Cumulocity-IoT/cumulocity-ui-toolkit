@@ -156,6 +156,17 @@ describe('Reminder', () => {
     groupCount('DUE').should('contain.text', '1');
     groupCount('UPCOMING').should('contain.text', '1');
     groupCount('CLEARED').should('contain.text', '1');
+    // the group headers keep the drawer's inset instead of touching its edges
+    cy.get(DRAWER).then(($drawer) => {
+      const drawer = $drawer[0].getBoundingClientRect();
+      group('DUE')
+        .find('[data-cy="reminder--group-toggle"]')
+        .should(($toggle) => {
+          const toggle = $toggle[0].getBoundingClientRect();
+          expect(toggle.left - drawer.left).to.be.at.least(16);
+          expect(drawer.right - toggle.right).to.be.at.least(16);
+        });
+    });
 
     expandGroup('DUE');
     group('DUE').find(ITEM).should('contain.text', 'Due reminder');
