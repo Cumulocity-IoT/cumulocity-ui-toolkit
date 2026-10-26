@@ -4,7 +4,7 @@ import {
   computed,
   DestroyRef,
   effect,
-  ElementRef,
+  type ElementRef,
   inject,
   untracked,
   viewChild,
