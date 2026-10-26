@@ -1,13 +1,7 @@
 /// <reference types="cypress" />
 
 import { IManagedObject } from '@c8y/client';
-import {
-  C8yWidgetModal,
-  DashboardSelectors,
-  enterEditMode,
-  openWidgetForEditing,
-  registerTestId,
-} from '../support';
+import { AddWidgetDialog, DashboardSelectors, WidgetConfigModal, enterEditMode, openWidgetForEditing } from '@cumulocity-iot/ui-sdk/cypress';
 
 /**
  * Layered Map widget (`iot.cumulocity.layered.map.widget`)
@@ -24,7 +18,6 @@ import {
  * Data is created via API on the tenant mock (devices with `c8y_Position`, alarms,
  * events, dashboards). External map tiles are stubbed.
  */
-const CYPRESS_TEST_ID = 'layered-map-tests';
 const WIDGET_ID = 'iot.cumulocity.layered.map.widget';
 const DEVICE_TYPE = 'lm_e2e_tracker';
 const ALARM_TYPE = 'lm_e2e_alarm';
@@ -34,7 +27,6 @@ const MARKER = `${WIDGET} .leaflet-marker-pane .c8y-map-marker-icon`;
 const TRANSPARENT_PNG =
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 
-registerTestId(CYPRESS_TEST_ID);
 
 type Layer = {
   config: Record<string, unknown>;
@@ -100,7 +92,6 @@ function createDashboard(config?: Record<string, unknown>): Cypress.Chainable<st
     .c8yclient((c) =>
       c.inventory.create({
         name: 'Layered map dashboard',
-        cy_testId: CYPRESS_TEST_ID,
         [`c8y_Dashboard!device!${host.id}`]: {},
         c8y_Dashboard: { name: 'Layered map', icon: 'th', priority: 10000, columns: 24, children },
       })
@@ -109,7 +100,7 @@ function createDashboard(config?: Record<string, unknown>): Cypress.Chainable<st
 }
 
 function visitDashboard(dashboardId: string, waitFor = `${WIDGET} .leaflet-container`): void {
-  cy.visitShellAndWaitForSelector(`device/${host.id}/dashboard/${dashboardId}`, 'en', waitFor);
+  cy.visitApp(`device/${host.id}/dashboard/${dashboardId}`, { language: 'en', waitFor });
 }
 
 function readWidgetConfig(dashboardId: string): Cypress.Chainable<Record<string, unknown>> {
@@ -155,7 +146,6 @@ describe('Layered Map Widget', () => {
       cy.createDevice({
         name: `LM tracker ${i + 1}`,
         type: DEVICE_TYPE,
-        cy_testId: CYPRESS_TEST_ID,
         c8y_Position: pos,
         ...(i === 0
           ? {
@@ -166,8 +156,8 @@ describe('Layered Map Widget', () => {
       }).then((d) => devices.push(d));
     });
     // a device of the same type without position must not produce a marker
-    cy.createDevice({ name: 'LM tracker no position', type: DEVICE_TYPE, cy_testId: CYPRESS_TEST_ID });
-    cy.createDevice({ name: 'LM host', cy_testId: CYPRESS_TEST_ID }).then((d) => (host = d));
+    cy.createDevice({ name: 'LM tracker no position', type: DEVICE_TYPE });
+    cy.createDevice({ name: 'LM host' }).then((d) => (host = d));
 
     cy.then(() => {
       cy.getAuth().c8yclient((c) =>
@@ -282,7 +272,6 @@ describe('Layered Map Widget', () => {
         c.inventory.create({
           type: 'ps_layeredMapBaseLayerConfig',
           name: 'Layered Map Base Layer Configuration',
-          cy_testId: CYPRESS_TEST_ID,
           ps_layeredMapBaseLayers: {
             layers: [{ id: 'custom-1', label: 'E2E tiles', url: 'https://tiles.e2e.example/{z}/{x}/{y}.png' }],
           },
@@ -301,8 +290,8 @@ describe('Layered Map Widget', () => {
     it('can be added from the widget picker with sensible defaults', () => {
       createDashboard().then((id) => visitDashboard(id, DashboardSelectors.WIDGET_EDIT_READY));
       enterEditMode();
-      C8yWidgetModal.selectWidget('Layered Map');
-      C8yWidgetModal.waitForConfigToLoad();
+      AddWidgetDialog.openAndSelect('Layered Map');
+      WidgetConfigModal.waitForConfig();
 
       cy.get('[data-cy="layered-map-config--base-layer"]').should('have.value', 'osm');
       cy.get('[data-cy="layered-map-config--auto-center"] option:selected').should('contain.text', 'Fit all markers');

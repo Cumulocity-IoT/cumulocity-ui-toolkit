@@ -1,7 +1,6 @@
 /// <reference types="cypress" />
 
 import { IEvent, IManagedObject } from '@c8y/client';
-import { registerTestId } from '../support';
 
 /**
  * Reminder plugin
@@ -15,7 +14,6 @@ import { registerTestId } from '../support';
  *
  * Reminders are events of type `c8y_Reminder` with a `status` fragment.
  */
-const CYPRESS_TEST_ID = 'reminder-tests';
 const TYPE = 'c8y_Reminder';
 const ITEM = '[data-cy="reminder--item"]';
 const DRAWER = '[data-cy="reminder--drawer"]';
@@ -25,7 +23,6 @@ const TYPES = [
   { id: 'inspection', name: 'Inspection' },
 ];
 
-registerTestId(CYPRESS_TEST_ID);
 
 type Status = 'ACTIVE' | 'ACKNOWLEDGED' | 'CLEARED';
 
@@ -75,7 +72,7 @@ function stubTenantOption(key: 'types' | 'config', value: unknown): void {
 }
 
 function visit(url = ''): void {
-  cy.visitShellAndWaitForSelector(url, 'en', '[data-cy="reminder--indicator"]');
+  cy.visitApp(url, { language: 'en', waitFor: '[data-cy="reminder--indicator"]' });
 }
 
 function openDrawer(): void {
@@ -106,8 +103,8 @@ function item(text: string): Cypress.Chainable<JQuery<HTMLElement>> {
 describe('Reminder', () => {
   before(() => {
     cy.getAuth().login();
-    cy.createDevice({ name: 'Reminder device A', cy_testId: CYPRESS_TEST_ID }).then((d) => (device = d));
-    cy.createDevice({ name: 'Reminder device B', cy_testId: CYPRESS_TEST_ID }).then((d) => (otherDevice = d));
+    cy.createDevice({ name: 'Reminder device A' }).then((d) => (device = d));
+    cy.createDevice({ name: 'Reminder device B' }).then((d) => (otherDevice = d));
   });
 
   beforeEach(() => {

@@ -51,7 +51,7 @@ function loadWorld(): Cypress.Chainable<World> {
 }
 
 function visitHome() {
-  cy.visitShellAndWaitForSelector('', 'en', TRIGGER);
+  cy.visitApp('', { language: 'en', waitFor: TRIGGER });
 }
 
 function openPalette() {

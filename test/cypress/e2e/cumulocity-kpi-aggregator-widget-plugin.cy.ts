@@ -1,11 +1,7 @@
 /// <reference types="cypress" />
 import { IManagedObject } from '@c8y/client';
-import { registerTestId } from '../support/utils';
-import { C8yAddWidgetDialog, C8yDashboard } from '../support/page-objects';
-import { DashboardSelectors, WidgetConfigSelectors } from '../support/selectors';
+import { AddWidgetDialog, Dashboard, DashboardSelectors, WidgetConfigSelectors } from '@cumulocity-iot/ui-sdk/cypress';
 
-const CYPRESS_TEST_ID = 'kpi-aggregator-widget-tests';
-registerTestId(CYPRESS_TEST_ID);
 
 const WIDGET_ID = 'kpi-aggregator.widget';
 const WIDGET = 'c8y-kpi-aggregator-widget';
@@ -65,7 +61,6 @@ function createDashboard(
     .c8yclient((c) =>
       c.inventory.create({
         name: 'KPI Dashboard',
-        cy_testId: CYPRESS_TEST_ID,
         c8y_Dashboard: { name: 'KPI Dashboard', icon: 'th', priority: 10000, children },
         [`c8y_Dashboard!device!${device.id}`]: {},
       })
@@ -79,26 +74,26 @@ describe('KPI Aggregator Widget', () => {
   before(() => {
     cy.getAuth().login();
     ASSETS.forEach((asset) =>
-      cy.c8yclient((c) => c.inventory.create({ ...asset, cy_testId: CYPRESS_TEST_ID }))
+      cy.c8yclient((c) => c.inventory.create(asset))
     );
   });
 
   beforeEach(() => {
     cy.getAuth().login().disableGainsight();
-    cy.createDevice({ name: `KPI Device ${Date.now()}`, cy_testId: CYPRESS_TEST_ID, kpiRun: RUN }).then(
+    cy.createDevice({ name: `KPI Device ${Date.now()}`, kpiRun: RUN }).then(
       (d) => (device = d)
     );
   });
 
   function visitWithConfig(config: Record<string, unknown>) {
     createDashboard(device, { ...DEFAULT_CONFIG, ...config });
-    cy.visitShellAndWaitForSelector(`device/${device.id}`, 'en', WIDGET);
+    cy.visitApp(`device/${device.id}`, { language: 'en', waitFor: WIDGET });
   }
 
   it('is offered in the add-widget dialog and toggles config fields by display mode', () => {
     createDashboard(device, null);
-    cy.visitShellAndWaitForSelector(`device/${device.id}`, 'en', DashboardSelectors.WIDGET_EDIT_READY);
-    C8yAddWidgetDialog.openAndSelect('KPI Aggregator Widget');
+    cy.visitApp(`device/${device.id}`, { language: 'en', waitFor: DashboardSelectors.WIDGET_EDIT_READY });
+    AddWidgetDialog.openAndSelect('KPI Aggregator Widget');
 
     cy.get('c8y-kpi-aggregator-widget-config').within(() => {
       // defaults
@@ -132,8 +127,8 @@ describe('KPI Aggregator Widget', () => {
     createDashboard(device, null).then((dashboard) =>
       cy.intercept('PUT', `**/inventory/managedObjects/${dashboard.id}`).as('saveDashboard')
     );
-    cy.visitShellAndWaitForSelector(`device/${device.id}`, 'en', DashboardSelectors.WIDGET_EDIT_READY);
-    C8yAddWidgetDialog.openAndSelect('KPI Aggregator Widget');
+    cy.visitApp(`device/${device.id}`, { language: 'en', waitFor: DashboardSelectors.WIDGET_EDIT_READY });
+    AddWidgetDialog.openAndSelect('KPI Aggregator Widget');
 
     cy.get('c8y-kpi-aggregator-widget-config').within(() => {
       cy.get('input[id*="_query_"]').scrollIntoView({ offset: { top: -250, left: 0 } }).type(QUERY, { parseSpecialCharSequences: false });
@@ -148,7 +143,7 @@ describe('KPI Aggregator Widget', () => {
       cy.get('input[id*="_runOnLoad_"]').scrollIntoView({ offset: { top: -250, left: 0 } }).check({ force: true });
     });
     cy.get(WidgetConfigSelectors.SAVE).click();
-    C8yDashboard.saveLayoutIfVisible();
+    Dashboard.saveIfVisible();
 
     cy.wait('@saveDashboard')
       .its('request.body.c8y_Dashboard.children')

@@ -318,7 +318,7 @@ pnpm run e2e:open
 pnpm run e2e:open:favorites-manager
 ```
 
-Cypress configs in `test/config/` import the corresponding `cumulocity.config.ts` from each package and pass `runTime.remotes` as the `C8Y_SHELL_EXTENSION` variable, so the correct Module Federation remotes are loaded automatically.
+Cypress configs in `test/config/` import the corresponding `cumulocity.config.ts` from each package and pass the remotes as the `C8Y_REMOTES` env (read by `cy.visitApp` from `@cumulocity-iot/ui-sdk/cypress`), so the correct Module Federation remotes are loaded automatically.
 
 ---
 

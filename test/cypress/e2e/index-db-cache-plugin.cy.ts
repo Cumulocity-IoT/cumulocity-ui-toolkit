@@ -23,7 +23,7 @@ const ABORT_TOGGLE = '[data-cy="index-db-cache--abort-toggle"]';
 const ACTIVE_STATE = '[data-cy="index-db-cache--active-state"]';
 
 function openDrawer() {
-  cy.visitShellAndWaitForSelector('', 'en', TOGGLE);
+  cy.visitApp('', { language: 'en', waitFor: TOGGLE });
   cy.get(TOGGLE).click();
   cy.get(DRAWER).should('be.visible');
 }
@@ -35,7 +35,7 @@ describe('Index DB Cache Plugin', () => {
   });
 
   it('shows the cache action bar button and opens / closes the drawer', () => {
-    cy.visitShellAndWaitForSelector('', 'en', '#navigator');
+    cy.visitApp('', { language: 'en', waitFor: '#navigator' });
 
     cy.get(DRAWER).should('not.be.visible');
     cy.get(TOGGLE).should('be.visible').and('have.attr', 'aria-expanded', 'false').click();
@@ -50,7 +50,7 @@ describe('Index DB Cache Plugin', () => {
   it('is available on device pages as well', () => {
     cy.request('/inventory/managedObjects?fragmentType=c8y_IsDevice&pageSize=1').then((res) => {
       const id = res.body.managedObjects[0].id as string;
-      cy.visitShellAndWaitForSelector(`device/${id}`, 'en', TOGGLE);
+      cy.visitApp(`device/${id}`, { language: 'en', waitFor: TOGGLE });
       cy.get(TOGGLE).click();
       cy.get(DRAWER).should('be.visible');
     });
