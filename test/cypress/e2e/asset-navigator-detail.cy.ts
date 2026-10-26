@@ -98,7 +98,7 @@ function rowNamed(name: string) {
 }
 
 function openDrawer() {
-  cy.visitShellAndWaitForSelector('', 'en', NAV_NODE);
+  cy.visitApp('', { language: 'en', waitFor: NAV_NODE });
   cy.get(NAV_NODE).click();
   cy.get(DRAWER).should('be.visible');
   cy.get(ROW, { timeout: 30000 }).should('have.length.greaterThan', 0);
