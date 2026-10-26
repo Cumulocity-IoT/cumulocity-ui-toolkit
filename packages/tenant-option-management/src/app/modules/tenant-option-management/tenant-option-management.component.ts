@@ -175,10 +175,12 @@ export class TenantOptionManagementComponent implements OnInit {
   openAllowListModal() {
     const modalRef = this.bsModalService.show(ImportOptionModalComponent, { class: 'modal-lg' });
 
-    modalRef.content?.closeSubject.pipe(take(1)).subscribe((row) => {
-      if (row) {
-        this.rows.push(row);
-        this.rows = [...this.rows]; // trigger binding
+    modalRef.content?.closeSubject.pipe(take(1)).subscribe((rows) => {
+      if (rows && rows.length) {
+        const existingIds = new Set(this.rows.map((r) => r.id));
+        const newRows = rows.filter((row) => !existingIds.has(row.id));
+
+        this.rows = [...this.rows, ...newRows]; // trigger binding
       }
     });
   }
