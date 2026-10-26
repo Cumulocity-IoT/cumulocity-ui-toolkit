@@ -1,4 +1,4 @@
-import { ApplicationRef, createComponent, type ComponentRef } from '@angular/core';
+import { type ApplicationRef, createComponent, type ComponentRef } from '@angular/core';
 import { ExplorerDrawerRootComponent } from './explorer-drawer-root.component';
 
 /**

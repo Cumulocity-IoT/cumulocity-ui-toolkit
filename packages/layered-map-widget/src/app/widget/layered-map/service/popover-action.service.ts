@@ -2,19 +2,19 @@ import { inject, Injectable } from '@angular/core';
 import {
   AlarmService,
   EventService,
-  IAlarm,
-  IEvent,
-  IManagedObject,
-  IOperation,
-  IResult,
+  type IAlarm,
+  type IEvent,
+  type IManagedObject,
+  type IOperation,
+  type IResult,
   OperationService,
 } from '@c8y/client';
 import { AlertService } from '@c8y/ngx-components';
 import {
-  AlarmAction,
-  EventAction,
-  OperationAction,
-  PopoverAction,
+  type AlarmAction,
+  type EventAction,
+  type OperationAction,
+  type PopoverAction,
 } from '../layered-map-widget.model';
 
 @Injectable()

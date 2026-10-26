@@ -5,7 +5,7 @@ import {
   effect,
   inject,
   input,
-  OnDestroy,
+  type OnDestroy,
 } from '@angular/core';
 import * as echarts from 'echarts/core';
 import { BarChart, LineChart, PieChart } from 'echarts/charts';

@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Cumulocity-IoT/cumulocity-ui-toolkit/packages/asset-navigator/detail-panel.schema.json",
+  "title": "Asset navigator detail panel configuration",
+  "description": "Which fields the asset navigator's hover detail panel shows, per managed-object type. Stored as `detailPanel` inside the user's asset navigator settings (customProperties.ps_AssetNavigatorSettings, or the ps_AssetNavigatorSettings managed object for SSO users). A type listed in `types` uses its own list (an empty list shows no fields); any other leaf asset uses `default`; a branch asset always shows its subtree counts and only adds `types[type]`.",
+  "type": "object",
+  "required": ["version", "types", "default"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "description": "Contract version. Any other value is ignored and the defaults apply.",
+      "const": 1
+    },
+    "types": {
+      "description": "Field lists keyed by the managed object's `type` (e.g. `c8y_Linux`, `building`).",
+      "type": "object",
+      "propertyNames": { "minLength": 1 },
+      "additionalProperties": { "$ref": "#/$defs/fieldList" }
+    },
+    "default": {
+      "description": "Fields of every leaf asset whose type has no entry in `types`.",
+      "$ref": "#/$defs/fieldList"
+    }
+  },
+  "$defs": {
+    "fieldList": {
+      "type": "array",
+      "maxItems": 50,
+      "items": { "$ref": "#/$defs/field" }
+    },
+    "field": {
+      "type": "object",
+      "required": ["label", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "description": "Row label.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "source": { "$ref": "#/$defs/source" },
+        "unit": {
+          "description": "Appended to the value. For measurements the reading's own unit is the fallback.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "format": {
+          "description": "How the value is rendered. Default `text`; `percent` appends `%`; `date` renders an ISO timestamp in the user's locale.",
+          "enum": ["text", "number", "percent", "date"]
+        },
+        "precision": {
+          "description": "Decimals for `number` and `percent`. Default 1.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6
+        }
+      }
+    },
+    "source": {
+      "description": "Where the value comes from.",
+      "oneOf": [
+        {
+          "description": "A dot path into the managed object, e.g. `c8y_Hardware.model`. Read from the cached inventory, no request.",
+          "type": "object",
+          "required": ["kind", "path"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "property" },
+            "path": { "type": "string", "pattern": "^[^.\\s]+(\\.[^.\\s]+)*$" }
+          }
+        },
+        {
+          "description": "The latest value of a measurement series `<fragment>.<series>` (from `c8y_LatestMeasurements`, one request per asset).",
+          "type": "object",
+          "required": ["kind", "series", "fn"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "measurement" },
+            "series": { "type": "string", "pattern": "^[^.\\s]+\\.[^.\\s]+$" },
+            "fn": { "enum": ["latest"] }
+          }
+        },
+        {
+          "description": "Built-in values: `alarms` (active alarms of the asset and its subtree by severity), `availability` (c8y_Availability in words), `lastUpdated`, `type`.",
+          "type": "object",
+          "required": ["kind"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "enum": ["alarms", "availability", "lastUpdated", "type"] }
+          }
+        }
+      ]
+    }
+  }
+}

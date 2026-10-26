@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { divIcon, DivIcon } from 'leaflet';
+import { divIcon, type DivIcon } from 'leaflet';
 import { escapeHtml, safeCssColor, safeIconName } from '../utils/sanitize';
 
 @Injectable({ providedIn: 'root' })

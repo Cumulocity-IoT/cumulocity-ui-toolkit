@@ -1,0 +1,156 @@
+<div
+  class="dropdown"
+  dropdown
+  [insideClick]="true"
+  placement="bottom right"
+  container="body"
+  #menu="bs-dropdown"
+  (onHidden)="stopRecording()"
+>
+  <button
+    class="btn-clean ps-drawer__action"
+    type="button"
+    dropdownToggle
+    data-cy="asset-navigator--settings"
+    [class.active]="menu.isOpen"
+    [attr.aria-expanded]="menu.isOpen"
+    [attr.aria-haspopup]="true"
+    [attr.aria-label]="'Asset tree options' | translate"
+    [attr.title]="'Asset tree options' | translate"
+  >
+    <i c8yIcon="cog"></i>
+  </button>
+
+  <div class="dropdown-menu dropdown-menu-right ps-settings-menu" *dropdownMenu>
+    <form class="dropdown-form" data-cy="asset-navigator--settings-menu" (submit)="$event.preventDefault()">
+      <p class="legend form-block m-t-8 m-b-16">{{ 'Asset tree options' | translate }}</p>
+
+      <div class="form-group">
+        <label class="c8y-switch" [attr.title]="'Show search' | translate">
+          <input
+            type="checkbox"
+            data-cy="asset-navigator--setting-search"
+            [checked]="settings().showSearch"
+            (change)="set('showSearch', $any($event.target).checked)"
+          />
+          <span></span>
+          {{ 'Show search' | translate }}
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label class="c8y-switch" [attr.title]="'Show Pinned & Recent' | translate">
+          <input
+            type="checkbox"
+            data-cy="asset-navigator--setting-quick-access"
+            [checked]="settings().showQuickAccess"
+            (change)="set('showQuickAccess', $any($event.target).checked)"
+          />
+          <span></span>
+          {{ 'Show Pinned & Recent' | translate }}
+        </label>
+      </div>
+
+      <div class="ps-settings-menu__counts">
+        <div class="form-group">
+          <label for="psSettingsMaxPinned">{{ 'Pinned items shown' | translate }}</label>
+          <input
+            id="psSettingsMaxPinned"
+            class="form-control input-sm"
+            type="number"
+            data-cy="asset-navigator--setting-max-pinned"
+            [min]="limit.min"
+            [max]="limit.max"
+            [value]="settings().maxPinned"
+            [disabled]="!settings().showQuickAccess"
+            (change)="setCount('maxPinned', $any($event.target).value)"
+          />
+        </div>
+        <div class="form-group">
+          <label for="psSettingsMaxRecent">{{ 'Recent items shown' | translate }}</label>
+          <input
+            id="psSettingsMaxRecent"
+            class="form-control input-sm"
+            type="number"
+            data-cy="asset-navigator--setting-max-recent"
+            [min]="limit.min"
+            [max]="limit.max"
+            [value]="settings().maxRecent"
+            [disabled]="!settings().showQuickAccess"
+            (change)="setCount('maxRecent', $any($event.target).value)"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="psSettingsShortcut">{{ 'Keyboard shortcut to open the tree' | translate }}</label>
+        <div class="input-group input-group-sm">
+          <input
+            id="psSettingsShortcut"
+            class="form-control"
+            type="text"
+            readonly
+            data-cy="asset-navigator--setting-shortcut"
+            [value]="recording() ? ('Press a key combination…' | translate) : shortcutLabel() || ('None' | translate)"
+            [class.ps-settings-menu__recording]="recording()"
+            (focus)="startRecording()"
+            (blur)="stopRecording()"
+            (keydown)="onShortcutKeydown($event)"
+          />
+          <span class="input-group-btn">
+            <button
+              class="btn btn-default"
+              type="button"
+              data-cy="asset-navigator--setting-shortcut-clear"
+              [disabled]="!settings().shortcut"
+              [attr.title]="'Remove shortcut' | translate"
+              [attr.aria-label]="'Remove shortcut' | translate"
+              (click)="clearShortcut()"
+            >
+              <i c8yIcon="times"></i>
+            </button>
+          </span>
+        </div>
+        <p class="help-block">{{ 'Click the field, then press e.g. Alt+Shift+T. A modifier is required.' | translate }}</p>
+      </div>
+
+      <div class="form-group">
+        <label class="c8y-switch" [attr.title]="'Fall back to the inventory when the Digital Twin Manager is not available' | translate">
+          <input
+            type="checkbox"
+            data-cy="asset-navigator--setting-inventory-fallback"
+            [checked]="settings().inventoryFallback"
+            (change)="set('inventoryFallback', $any($event.target).checked)"
+          />
+          <span></span>
+          {{ 'Inventory fallback without DTM' | translate }}
+        </label>
+        <p class="help-block">
+          {{ 'Without the Digital Twin Manager, search asset properties and type filters from the inventory.' | translate }}
+        </p>
+      </div>
+
+      <div class="form-group">
+        <button
+          class="btn btn-default btn-sm"
+          type="button"
+          data-cy="asset-navigator--setting-detail-fields"
+          (click)="openDetailFields(); menu.hide()"
+        >
+          <i c8yIcon="list"></i> {{ 'Detail fields…' | translate }}
+        </button>
+        <p class="help-block">{{ 'Which fields the hover detail panel shows, per asset type.' | translate }}</p>
+      </div>
+
+      <p class="text-muted small m-b-0" data-cy="asset-navigator--setting-storage">
+        {{ (service.storage() === 'inventory' ? 'Stored in your settings object (single sign-on user).' : 'Stored with your user.') | translate }}
+      </p>
+
+      <div class="dropdown-footer">
+        <button class="btn btn-default btn-sm" type="button" data-cy="asset-navigator--setting-reset" (click)="reset()">
+          {{ 'Reset to defaults' | translate }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

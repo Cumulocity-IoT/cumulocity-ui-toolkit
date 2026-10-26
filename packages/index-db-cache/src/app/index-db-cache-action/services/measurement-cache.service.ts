@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { CumulocityMeasurement } from './chart-data.service';
+import { type CumulocityMeasurement } from './chart-data.service';
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- constructor injection: Angular JIT (aot: false) reads parameter types at runtime
 import { CacheEventsService } from './cache-events.service';
 import { COVERAGE_TTL_MS, asError } from './interceptor-helpers';
 

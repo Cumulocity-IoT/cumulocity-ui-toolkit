@@ -1,4 +1,4 @@
-import { StructuralTokenType, Token } from './reverse-queries-util.model';
+import { type StructuralTokenType, type Token } from './reverse-queries-util.model';
 
 export class Tokenizer {
   private pos = 0;

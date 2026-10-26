@@ -33,19 +33,17 @@ describe('describeDot', () => {
   });
 
   it('appends availability, which the fill encodes and the colour cannot', () => {
-    expect(
-      describeDot({ alarms: counts({ critical: 1 }), unavailableCount: 3, deratedCount: 2 })
-    ).toBe('1 critical · 3 unavailable · 2 derated');
+    expect(describeDot({ alarms: counts({ critical: 1 }), unavailableCount: 3 })).toBe(
+      '1 critical · 3 unavailable'
+    );
   });
 
-  it('describes an alarm-free but stopped subtree — the case a severity-only dot hides', () => {
+  it('describes an alarm-free but unavailable subtree — the case a severity-only dot hides', () => {
     expect(describeDot({ unavailableCount: 1 })).toBe('No active alarms · 1 unavailable');
   });
 
   it('omits zero counts rather than saying "0 unavailable"', () => {
-    expect(
-      describeDot({ alarms: counts({ major: 1 }), unavailableCount: 0, deratedCount: 0 })
-    ).toBe('1 major');
+    expect(describeDot({ alarms: counts({ major: 1 }), unavailableCount: 0 })).toBe('1 major');
   });
 });
 

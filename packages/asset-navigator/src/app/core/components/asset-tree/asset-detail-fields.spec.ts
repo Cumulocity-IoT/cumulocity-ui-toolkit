@@ -1,97 +1,106 @@
+import { detailFieldId } from '../../services/settings/detail-panel.model';
+import { EMPTY_ROLLUP, type AssetRollup } from '../../services/asset-store/asset-store.model';
 import {
-  CUSTOM_FIELD_KEY_PREFIX,
-  DEFAULT_DETAIL_FIELD_KEYS,
   DETAIL_FIELD_CATALOGUE,
   branchFieldCatalogue,
-  customDetailField,
-  customFieldKey,
-  detailFieldByKey,
-  detailFieldFor,
-  resolveDetailFieldKeys,
+  propertyField,
+  readPath,
   seriesFor,
 } from './asset-detail-fields';
+import { branchRows, formatValue } from './asset-detail-panel.component';
 
-describe('the field catalogue', () => {
-  it('only declares fields whose keys are unique', () => {
-    const keys = DETAIL_FIELD_CATALOGUE.map((field) => field.spec.key);
+describe('the detail field vocabulary', () => {
+  it('declares every built-in field once', () => {
+    const ids = DETAIL_FIELD_CATALOGUE.map(detailFieldId);
 
-    expect(new Set(keys).size).toBe(keys.length);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('resolves every default key', () => {
-    for (const key of DEFAULT_DETAIL_FIELD_KEYS) {
-      expect(detailFieldByKey(key)).withContext(key).toBeDefined();
-    }
+  it('offers a branch neither availability nor alarms — its subtree rows already say both', () => {
+    const kinds = branchFieldCatalogue().map((field) => field.source.kind);
+
+    expect(kinds).not.toContain('availability');
+    expect(kinds).not.toContain('alarms');
+    expect(kinds).toContain('property');
   });
 
-  it('offers a branch only its own managed-object fields', () => {
-    // A group has no IECMeasurement series and its subtree alarms are already in the
-    // rollup rows, so offering either would only ever add a dash or a duplicate.
-    for (const field of branchFieldCatalogue()) {
-      expect(field.spec.kind).toBe('mo');
-      expect(field.render).not.toBe('status');
-    }
-    expect(branchFieldCatalogue().length).toBeGreaterThan(0);
-  });
-});
-
-describe('custom (picked) fields', () => {
-  it('describes itself entirely from its key', () => {
-    const field = customDetailField(customFieldKey('turbine_firmware_version'));
-
-    expect(field?.spec).toEqual({
-      key: 'mo:turbine_firmware_version',
-      kind: 'mo',
-      path: 'turbine_firmware_version',
+  it('labels a picked inventory path after its last segment', () => {
+    expect(propertyField('c8y_Hardware.serialNumber')).toEqual({
+      label: 'Serial Number',
+      source: { kind: 'property', path: 'c8y_Hardware.serialNumber' },
     });
-    // No vendor prefix to drop here (`turbine_` is not `<lowercase>_<Uppercase>`), so the
-    // whole path is humanized — the catalogue's curated "Firmware" label is what the
-    // *catalogue* entry is for; a free-picked path is labeled from what it says.
-    expect(field?.label).toBe('Turbine Firmware Version');
   });
 
-  it('labels a nested path from its last segment', () => {
-    expect(customDetailField('mo:wnd_Owner.companyName')?.label).toBe('Company Name');
+  it('collects the measurement series a field list needs, and nothing else', () => {
+    expect(
+      seriesFor([
+        { label: 'T', source: { kind: 'measurement', series: 'c8y_Temperature.T', fn: 'latest' } },
+        { label: 'Model', source: { kind: 'property', path: 'c8y_Hardware.model' } },
+        { label: 'Alarms', source: { kind: 'alarms' } },
+      ])
+    ).toEqual(['c8y_Temperature.T']);
+    expect(seriesFor(DETAIL_FIELD_CATALOGUE)).toEqual([]);
   });
 
-  it('is not a catalogue key, and an empty path is not a field', () => {
-    expect(detailFieldByKey('mo:anything')).toBeUndefined();
-    expect(customDetailField('status')).toBeUndefined();
-    expect(customDetailField(CUSTOM_FIELD_KEY_PREFIX)).toBeUndefined();
-  });
+  it('reads dot paths, and nothing through a scalar', () => {
+    const mo = { c8y_Hardware: { model: 'X1' }, flat: 3 };
 
-  it('is resolved by the vocabulary alongside the catalogue', () => {
-    expect(detailFieldFor('status')?.spec.key).toBe('status');
-    expect(detailFieldFor('mo:a.b')?.spec.key).toBe('mo:a.b');
-    expect(detailFieldFor('nope')).toBeUndefined();
-  });
-});
-
-describe('resolveDetailFieldKeys', () => {
-  it('falls back to the turbine set for a leaf that was never configured', () => {
-    expect(resolveDetailFieldKeys(null, false)).toEqual(DEFAULT_DETAIL_FIELD_KEYS);
-    // An empty stored list reads the same way: an empty turbine panel is not a state the
-    // user can have meant, so it degrades rather than rendering nothing.
-    expect(resolveDetailFieldKeys([], false)).toEqual(DEFAULT_DETAIL_FIELD_KEYS);
-  });
-
-  it('falls back to nothing for a branch — its rollup rows are the panel', () => {
-    expect(resolveDetailFieldKeys(null, true)).toEqual([]);
-    expect(resolveDetailFieldKeys([], true)).toEqual([]);
-  });
-
-  it('keeps a configured selection, in order', () => {
-    expect(resolveDetailFieldKeys(['alarms', 'status'], false)).toEqual(['alarms', 'status']);
-    expect(resolveDetailFieldKeys(['mo:capacity'], true)).toEqual(['mo:capacity']);
+    expect(readPath(mo, 'c8y_Hardware.model')).toBe('X1');
+    expect(readPath(mo, 'flat.deeper')).toBeUndefined();
+    expect(readPath(mo, 'missing.model')).toBeUndefined();
   });
 });
 
-describe('seriesFor', () => {
-  it('asks only for the series the selected measurement fields need', () => {
-    expect(seriesFor(['status', 'activePower', 'mo:x', 'alarms'])).toEqual(['WTUR.W']);
+describe('branchRows', () => {
+  const rollup: AssetRollup = {
+    ...EMPTY_ROLLUP,
+    alarms: { critical: 1, major: 0, minor: 2, warning: 0 },
+    assetCount: 5,
+    deviceCount: 3,
+    availableCount: 2,
+    unavailableCount: 1,
+  };
+
+  it('counts devices without the DTM', () => {
+    expect(branchRows(rollup, 'devices').map((row) => [row.label, row.value])).toEqual([
+      ['Devices', '3'],
+      ['Available', '2 of 3'],
+      ['Unavailable', '1'],
+      ['Alarms', '1 critical, 2 minor'],
+    ]);
   });
 
-  it('ignores keys the vocabulary does not know', () => {
-    expect(seriesFor(['gone'])).toEqual([]);
+  it('counts assets with the DTM; availability stays about devices', () => {
+    const rows = branchRows(rollup, 'assets');
+
+    expect(rows[0]).toEqual(jasmine.objectContaining({ label: 'Assets', value: '5' }));
+    expect(rows[1].value).toBe('2 of 3');
+  });
+
+  it('says "None" for a clean subtree', () => {
+    expect(branchRows(EMPTY_ROLLUP, 'devices')[3].value).toBe('None');
+  });
+});
+
+describe('formatValue', () => {
+  it('keeps text as stored, a number included, unless a precision asks for rounding', () => {
+    expect(formatValue('X1', {})).toBe('X1');
+    expect(formatValue(2019, {})).toBe('2019');
+    expect(formatValue(2.345, { precision: 1, unit: 'kW' })).toBe('2.3 kW');
+  });
+
+  it('formats numbers, percentages and dates', () => {
+    expect(formatValue('4.56', { format: 'number', precision: 0 })).toBe('5');
+    expect(formatValue(97.04, { format: 'percent' })).toBe('97.0 %');
+    expect(formatValue('2026-01-02T03:04:05Z', { format: 'date' })).toBe(
+      new Date('2026-01-02T03:04:05Z').toLocaleString()
+    );
+    expect(formatValue('not a date', { format: 'date' })).toBe('—');
+  });
+
+  it('dashes missing and structured values', () => {
+    expect(formatValue(undefined, {})).toBe('—');
+    expect(formatValue('', {})).toBe('—');
+    expect(formatValue({ a: 1 }, {})).toBe('—');
   });
 });

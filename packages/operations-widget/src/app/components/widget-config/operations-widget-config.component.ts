@@ -1,12 +1,12 @@
-import { Component, inject, Input, TemplateRef, ViewChild } from '@angular/core';
+import { Component, inject, Input, type TemplateRef, ViewChild } from '@angular/core';
 import { CoreModule, HumanizePipe } from '@c8y/ngx-components';
 import { IconSelectorService } from '@c8y/ngx-components/icon-selector';
 import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
 import { extractPlaceholdersFromObject } from '~helpers/extract-placeholders';
 import {
-  OperationButtonConfig,
-  OperationParamConfig,
-  OperationWidgetConfig,
+  type OperationButtonConfig,
+  type OperationParamConfig,
+  type OperationWidgetConfig,
 } from '../../models/operations-widget-config.model';
 import { OperationsEditorComponent } from '../operations-value/operations-editor.component';
 import { OperationsWidgetComponent } from '../operations-widget/operations-widget.component';

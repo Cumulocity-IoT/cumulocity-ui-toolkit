@@ -1,4 +1,4 @@
-import { Injectable, Signal, inject, signal } from '@angular/core';
+import { Injectable, type Signal, inject, signal } from '@angular/core';
 import { UserPreferencesService } from '@c8y/ngx-components';
 import { firstValueFrom } from 'rxjs';
 import type { PaletteEntry } from '../../components/search-palette/palette-entry';

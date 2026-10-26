@@ -1,4 +1,11 @@
-import { AfterViewInit, Component, inject, Input, OnInit, ViewChild } from '@angular/core';
+import {
+  type AfterViewInit,
+  Component,
+  inject,
+  Input,
+  type OnInit,
+  ViewChild,
+} from '@angular/core';
 import { CoreModule, CountdownIntervalComponent, DatePipe } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,8 +29,8 @@ import { CanvasRenderer } from 'echarts/renderers';
 import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
 import {
   DEFAULT_GRAPH_ITEM_SCALE,
-  EventSeries,
-  EventStatusTrackerConfig,
+  type EventSeries,
+  type EventStatusTrackerConfig,
 } from '../../models/event-graph.model';
 import { EventStatusTrackerService } from '../../services/events-graph.service';
 

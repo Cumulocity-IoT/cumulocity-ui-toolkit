@@ -1,9 +1,9 @@
-import { Component, inject, Input, OnInit } from '@angular/core';
-import { CoreModule, DynamicComponent, OptionsService } from '@c8y/ngx-components';
+import { Component, inject, Input, type OnInit } from '@angular/core';
+import { CoreModule, type DynamicComponent, OptionsService } from '@c8y/ngx-components';
 import {
   DEFAULT_GRAPH_INTERVAL,
   DEFAULT_GRAPH_ITEM_SCALE,
-  EventStatusTrackerConfig,
+  type EventStatusTrackerConfig,
 } from '../../models/event-graph.model';
 
 @Component({

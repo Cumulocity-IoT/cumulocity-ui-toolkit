@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { EventService, IEvent } from '@c8y/client';
+import { EventService, type IEvent } from '@c8y/client';
 import { provideMock } from '~helpers/auto-mock.helper';
 import { EventStatusTrackerService } from './events-graph.service';
 

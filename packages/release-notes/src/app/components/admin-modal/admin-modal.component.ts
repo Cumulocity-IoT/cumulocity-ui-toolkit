@@ -1,13 +1,13 @@
-import { Component, inject, Input, OnInit } from '@angular/core';
+import { Component, inject, Input, type OnInit } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { AlertService, CoreModule } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { FormlyModule } from '@ngx-formly/core';
 import { CollapseModule } from 'ngx-bootstrap/collapse';
-import { FormlyFieldConfig } from '@ngx-formly/core';
+import { type FormlyFieldConfig } from '@ngx-formly/core';
 import { TranslateService } from '@ngx-translate/core';
 import { BsModalRef } from 'ngx-bootstrap/modal';
-import { ReleaseNote } from '../../models/release-notes.model';
+import { type ReleaseNote } from '../../models/release-notes.model';
 import { ReleaseNotesService } from '../../services/release-notes.service';
 
 @Component({

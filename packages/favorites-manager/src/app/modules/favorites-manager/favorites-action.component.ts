@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, type OnInit } from '@angular/core';
 import { FavoritesManagerService } from './favorites-manager.service';
 import { Router } from '@angular/router';
 import { findContextData } from './context-route.helper';

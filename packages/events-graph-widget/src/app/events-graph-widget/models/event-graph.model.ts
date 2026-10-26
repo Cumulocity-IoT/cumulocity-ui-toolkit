@@ -1,4 +1,4 @@
-import { IEvent } from '@c8y/client';
+import { type IEvent } from '@c8y/client';
 import type { CustomSeriesRenderItem } from 'echarts';
 
 export type EventStatusTrackerConfig = {

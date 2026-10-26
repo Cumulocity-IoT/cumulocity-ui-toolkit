@@ -1,13 +1,13 @@
 import { inject, Injectable } from '@angular/core';
-import { EventService, IEvent } from '@c8y/client';
+import { EventService, type IEvent } from '@c8y/client';
 import { subHours } from 'date-fns';
 import type { CustomSeriesRenderItem } from 'echarts';
 import { groupBy, isEmpty } from 'lodash';
 import {
-  EventConfig,
-  EventSeries,
-  EventTypeConfig,
-  IEventDuration,
+  type EventConfig,
+  type EventSeries,
+  type EventTypeConfig,
+  type IEventDuration,
 } from '../models/event-graph.model';
 
 @Injectable()

@@ -4,9 +4,9 @@ import {
   signal,
   Component,
   Input,
-  OnChanges,
-  OnInit,
-  SimpleChanges,
+  type OnChanges,
+  type OnInit,
+  type SimpleChanges,
   ViewChild,
 } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';

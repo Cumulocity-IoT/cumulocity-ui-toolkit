@@ -39,7 +39,7 @@ export interface AssetTreeConfig {
   cascade: 'right-edge' | 'off';
   /** Row height + font scale. `'comfortable'` in the drawer, `'compact'` in the overlay. */
   density: 'comfortable' | 'compact';
-  /** Show the rolled-up turbine count per branch row. */
+  /** Show the rolled-up device/asset count per branch row. */
   showCounts: boolean;
   /**
    * Start from **every branch open** instead of every branch closed.
@@ -88,7 +88,7 @@ export const OVERLAY_TREE_CONFIG: AssetTreeConfig = {
  * The filter the tree reads. This is the **level-agnostic** subset of the host
  * design's `FilterState` (`docs/FastNavigation/host-component-design.md` §3.2) —
  * search text and asset type. Level-specific KPI predicates (`columnFilters`) are
- * deliberately absent: a park has no `WTUR.W`, so pruning a tree on one is
+ * deliberately absent: a group has no measurement of its own, so pruning a tree on one is
  * meaningless (§3.5). When the full `NavigationStore` lands, this becomes a
  * projection of its `FilterState` rather than a second type.
  */

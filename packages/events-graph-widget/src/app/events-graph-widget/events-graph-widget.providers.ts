@@ -1,4 +1,4 @@
-import { DynamicWidgetDefinition, hookWidget } from '@c8y/ngx-components';
+import { type DynamicWidgetDefinition, hookWidget } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { assets } from './assets/assets';
 import { EventStatusTrackerService } from './services/events-graph.service';

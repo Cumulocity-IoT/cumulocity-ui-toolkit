@@ -1,4 +1,4 @@
-import { IManagedObject, InventoryService } from '@c8y/client';
+import { type IManagedObject, InventoryService } from '@c8y/client';
 import { filter, firstValueFrom, of } from 'rxjs';
 import { HierarchyAggregationService } from './hierarchy-aggregation.service';
 import { createService } from '~helpers/create-service.helper';

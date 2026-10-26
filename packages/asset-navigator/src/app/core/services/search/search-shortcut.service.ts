@@ -1,25 +1,10 @@
 import { Injectable, inject, provideEnvironmentInitializer, signal } from '@angular/core';
 import { OptionsService } from '@c8y/ngx-components';
 import { openGlobalSearch } from './global-search-channel';
+import { type Chord, matchesChord, parseChord } from '../shortcuts/chord';
 
-/** How the shortcut is described to the user, per platform. */
-const MODIFIER_LABEL = /Mac|iPhone|iPad/.test(
-  typeof navigator === 'undefined' ? '' : navigator.platform
-)
-  ? '⌘'
-  : 'Ctrl';
-
-/**
- * A parsed chord: modifier requirements plus the key it fires on.
- * `'mod'` means Meta on Apple platforms, Control elsewhere.
- */
-export interface SearchChord {
-  key: string;
-  mod: boolean;
-  shift: boolean;
-  alt: boolean;
-  label: string;
-}
+/** The chord's parsed form; kept under its old name for existing readers. */
+export type SearchChord = Chord;
 
 const DEFAULT_CHORD = 'mod+k';
 
@@ -45,14 +30,14 @@ export class SearchShortcutService {
   private readonly options = inject(OptionsService);
 
   /** The bound chord, already parsed and labelled for display (the trigger's tooltip). */
-  readonly chord = signal<SearchChord>(parseChord(DEFAULT_CHORD));
+  readonly chord = signal<SearchChord>(parseChord(DEFAULT_CHORD)!);
 
   constructor() {
     const configured = this.options.get('assetNavigatorShortcut') as string | undefined;
 
-    if (typeof configured === 'string' && configured.trim()) {
-      this.chord.set(parseChord(configured.trim()));
-    }
+    const parsed = typeof configured === 'string' ? parseChord(configured) : undefined;
+
+    if (parsed) this.chord.set(parsed);
 
     if (typeof window !== 'undefined') {
       window.addEventListener('keydown', (event) => this.onKeydown(event), { capture: true });
@@ -60,17 +45,7 @@ export class SearchShortcutService {
   }
 
   private onKeydown(event: KeyboardEvent): void {
-    const chord = this.chord();
-    const modifier = MODIFIER_LABEL === '⌘' ? event.metaKey : event.ctrlKey;
-
-    if (
-      event.key.toLowerCase() !== chord.key ||
-      modifier !== chord.mod ||
-      event.shiftKey !== chord.shift ||
-      event.altKey !== chord.alt
-    ) {
-      return;
-    }
+    if (!matchesChord(this.chord(), event)) return;
     // Only claim the chord we were actually configured with — anything else stays with
     // the browser, so we never break a shortcut a user relies on.
     event.preventDefault();
@@ -85,28 +60,4 @@ export class SearchShortcutService {
  */
 export function provideSearchShortcut() {
   return provideEnvironmentInitializer(() => void inject(SearchShortcutService));
-}
-
-/** `mod+k`, `ctrl+shift+k`, `alt+g` … Unparseable input falls back to the default. */
-function parseChord(raw: string): SearchChord {
-  const parts = raw
-    .toLowerCase()
-    .split('+')
-    .map((part) => part.trim())
-    .filter(Boolean);
-  const key = parts.pop();
-
-  if (!key) return parseChord(DEFAULT_CHORD);
-  const mod = parts.includes('mod') || parts.includes('ctrl') || parts.includes('cmd');
-  const shift = parts.includes('shift');
-  const alt = parts.includes('alt');
-  const label = [
-    mod ? MODIFIER_LABEL : null,
-    shift ? 'Shift' : null,
-    alt ? 'Alt' : null,
-    key.toUpperCase(),
-  ]
-    .filter(Boolean)
-    .join('+');
-  return { key, mod, shift, alt, label };
 }

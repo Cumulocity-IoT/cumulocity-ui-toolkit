@@ -1,12 +1,12 @@
 import { Component, inject } from '@angular/core';
-import { ITenantOption } from '@c8y/client';
+import { type ITenantOption } from '@c8y/client';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Subject } from 'rxjs';
 import { TenantOptionManagementService } from '../tenant-option-management.service';
-import { TenantOptionRow } from '../tenant-option-management.model';
+import { type TenantOptionRow } from '../tenant-option-management.model';
 import { CoreModule } from '@c8y/ngx-components';
 import { JsonEditorComponent } from '../editor/jsoneditor.component';
-import { ModalTab } from '~models/modal-tab.model';
+import { type ModalTab } from '~models/modal-tab.model';
 
 type Tab = ModalTab<'text' | 'json'>;
 

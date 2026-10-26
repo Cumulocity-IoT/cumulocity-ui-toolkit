@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { FetchClient, IFetchOptions, IFetchResponse } from '@c8y/client';
+import { FetchClient, type IFetchOptions, type IFetchResponse } from '@c8y/client';
 import { cloneDeep } from 'lodash';
 
 @Injectable({

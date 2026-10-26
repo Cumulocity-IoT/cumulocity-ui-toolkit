@@ -12,19 +12,25 @@ import { CoreModule } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { injectAiContextReporter } from '../../services/ai-context.service';
 import {
-  ALARM_SEVERITIES,
+  alarmSummary,
   availabilityLabel,
+  countUnitFor,
+  effectiveAvailability,
+  unitCount,
   type AssetNode,
   type AssetRollup,
+  type CountUnit,
 } from '../../services/asset-store/asset-store.model';
+import { AssetDefinitionService } from '../../services/asset-store/asset-definition.service';
 import { AssetIconService } from '../../services/asset-store/asset-icon.service';
 import { AssetStoreService } from '../../services/asset-store/asset-store.service';
 import {
-  isResolvable,
-  readPath,
-  type DetailFieldSpec,
-} from '../../services/asset-store/metric-spec.model';
-import { detailFieldFor, resolveDetailFieldKeys } from './asset-detail-fields';
+  detailFieldId,
+  fieldsForType,
+  type DetailField,
+} from '../../services/settings/detail-panel.model';
+import { NavigatorSettingsService } from '../../services/settings/navigator-settings.service';
+import { readPath } from './asset-detail-fields';
 import { AssetDetailService, type AssetLatestValues } from './asset-detail.service';
 import { AssetTreeService } from './asset-tree.service';
 
@@ -35,10 +41,11 @@ import { AssetTreeService } from './asset-tree.service';
 export const DETAIL_CONTEXT_ID = 'ps.asset-navigator.detail';
 
 /** One rendered row of the panel. `value === null` means "no data", not "zero". */
-interface DetailRow {
+export interface DetailRow {
   key: string;
   label: string;
-  render: 'number' | 'percent' | 'status' | 'alarms' | 'text' | 'date';
+  /** `status` and `alarms` have their own presentation; everything else is text. */
+  render: 'status' | 'alarms' | 'text';
   value: string | null;
   /** Set when the field is declared but its data path does not exist yet. */
   unavailable: boolean;
@@ -73,9 +80,10 @@ export class AssetDetailPanelComponent {
   private readonly assets = inject(AssetStoreService);
   private readonly details = inject(AssetDetailService);
   private readonly tree = inject(AssetTreeService);
+  private readonly settings = inject(NavigatorSettingsService);
+  private readonly definitions = inject(AssetDefinitionService);
 
   private readonly latest = signal<AssetLatestValues | null>(null);
-  private readonly sparklinePoints = signal<number[] | null>(null);
   protected readonly loading = signal(false);
   protected readonly failed = signal(false);
 
@@ -91,26 +99,30 @@ export class AssetDetailPanelComponent {
   });
 
   /**
-   * Whether this asset is a group rather than a turbine. Keyed off the store's configured
-   * `leafType` rather than child count: a park with no turbines yet is still a park, and
-   * must not be described with turbine fields it will never have.
+   * Whether this asset is a group: it has child assets (loaded, or known to be pending in
+   * `high-volume` mode). A branch describes its subtree instead of itself — see `branchRows`.
    */
   protected readonly isBranch = computed(() => {
     const node = this.node();
-    return !!node && node.type !== this.assets.config().leafType;
+
+    if (!node) return false;
+
+    return node.childIds.length > 0 || !!this.assets.hierarchy()?.pendingChildren.has(node.id);
   });
 
+  /** "Devices" or "Assets" — the same choice as the footer and the row badges. */
+  private readonly unit = computed<CountUnit>(() => countUnitFor(this.definitions.available()));
+
   /**
-   * The fields to render, for **this asset's type** — a park and a turbine are configured
-   * independently (§6.3). Branch types default to nothing here: their identity is the
-   * rollup rows below, and configured fields are additions to them.
+   * The fields to render for **this asset's type**, from the detail-panel data contract in the
+   * navigator settings (`fieldsForType`): the type's own list, else the default list for a
+   * leaf and nothing for a branch.
    */
-  protected readonly fieldKeys = computed<readonly string[]>(() =>
-    resolveDetailFieldKeys(this.tree.configuredFieldKeys(this.node()?.type), this.isBranch())
+  protected readonly fields = computed<readonly DetailField[]>(() =>
+    fieldsForType(this.settings.settings().detailPanel, this.node()?.type, this.isBranch())
   );
 
   protected readonly pinned = computed(() => this.tree.isPinned(this.assetId()));
-  protected readonly showSparkline = computed(() => this.tree.sparkline());
 
   /**
    * The panel reports its context but hosts **no AI button of its own**: it is a hover
@@ -127,119 +139,65 @@ export class AssetDetailPanelComponent {
 
     if (!node) return [];
     const rollup = this.rollup();
-    const configured = this.fieldKeys()
-      .map((key) => detailFieldFor(key))
-      .filter((field): field is NonNullable<typeof field> => field !== undefined)
-      .map((field) => this.toRow(field, node, rollup));
+    const configured = this.fields().map((field) => this.toRow(field, node, rollup));
 
-    // A group is not a turbine with missing data — it is a different subject (see
+    // A group is not a leaf with missing data — it is a different subject (see
     // `branchRows`), so its rollup rows always come first and anything configured for
     // its type is an addition rather than a replacement.
-    return this.isBranch() ? [...branchRows(rollup), ...configured] : configured;
+    return this.isBranch() ? [...branchRows(rollup, this.unit()), ...configured] : configured;
   });
 
   /** One configured field, resolved against the store, the rollup, and the lazy read. */
-  private toRow(field: DetailFieldSpec, node: AssetNode, rollup: AssetRollup): DetailRow {
-    const { spec } = field;
-    const render = field.render ?? 'text';
-
-    if (!isResolvable(spec)) {
-      return { key: spec.key, label: field.label, render, value: null, unavailable: true };
-    }
-
-    if (spec.kind === 'alarm') {
-      // A branch reports its subtree, a leaf its own — the same number the row's dot
-      // is drawn from, so panel and tree can never disagree.
-      const counts = node.childIds.length ? rollup.alarms : node.alarms;
-      const summary = ALARM_SEVERITIES.filter((severity) => counts[severity] > 0)
-        .map((severity) => `${counts[severity]} ${severity}`)
-        .join(', ');
-      return {
-        key: spec.key,
-        label: field.label,
-        render,
-        value: summary || gettext('None'),
-        unavailable: false,
-      };
-    }
-
-    if (spec.kind === 'mo') {
-      // `status` is derived rather than read: the raw `wnd_Status` map is a code
-      // table, and the panel's job is to say what it means in words (NFR-T3).
-      if (render === 'status') {
-        return {
-          key: spec.key,
-          label: field.label,
-          render,
-          value: availabilityLabel(node.availability),
-          unavailable: false,
-        };
-      }
-
-      return {
-        key: spec.key,
-        label: field.label,
-        render,
-        value: formatValue(readPath(node.properties, spec.path), field.precision, field.unit),
-        unavailable: false,
-      };
-    }
-
-    // measurement / latest
-    const reading = this.latest()?.values[spec.series];
-
-    if (!reading) {
-      return {
-        key: spec.key,
-        label: field.label,
-        render,
-        // Distinguish "not read yet" from "the asset does not report it": while the
-        // read is in flight the row shows a placeholder, afterwards a dash.
-        value: this.loading() ? null : '—',
-        unavailable: false,
-      };
-    }
-
-    return {
-      key: spec.key,
+  private toRow(field: DetailField, node: AssetNode, rollup: AssetRollup): DetailRow {
+    const { source } = field;
+    const row = (render: DetailRow['render'], value: string | null): DetailRow => ({
+      key: detailFieldId(field),
       label: field.label,
       render,
-      value: formatValue(reading.value, field.precision, field.unit ?? reading.unit),
+      value,
       unavailable: false,
-    };
+    });
+
+    switch (source.kind) {
+      case 'alarms':
+        // The subtree, attached devices included — the same number the row's dot is drawn
+        // from, so panel and tree can never disagree.
+        return row('alarms', alarmSummary(rollup.alarms) ?? gettext('None'));
+      case 'availability':
+        return row('status', availabilityLabel(effectiveAvailability(node, rollup)));
+      case 'type':
+        return row('text', node.type || '—');
+      case 'lastUpdated':
+        return row('text', formatValue(node.properties['lastUpdated'], field, 'date'));
+      case 'property':
+        return row('text', formatValue(readPath(node.properties, source.path), field));
+
+      case 'measurement': {
+        const reading = this.latest()?.values[source.series];
+
+        // Distinguish "not read yet" from "the asset does not report it": while the read is
+        // in flight the row shows a placeholder, afterwards a dash.
+        if (!reading) return row('text', this.loading() ? null : '—');
+
+        return row(
+          'text',
+          formatValue(reading.value, { ...field, unit: field.unit ?? reading.unit }, 'number')
+        );
+      }
+    }
   }
 
-  /** Normalised sparkline polyline points, or `null` while there is nothing to draw. */
-  protected readonly sparklinePath = computed(() => {
-    const points = this.sparklinePoints();
-
-    if (!points || points.length < 2) return null;
-    const min = Math.min(...points);
-    const max = Math.max(...points);
-    const span = max - min || 1;
-    const stepX = 100 / (points.length - 1);
-    return points
-      .map(
-        (value, index) =>
-          `${(index * stepX).toFixed(2)},${(24 - ((value - min) / span) * 24).toFixed(2)}`
-      )
-      .join(' ');
-  });
-
   constructor() {
-    // One effect drives the whole lazy load, keyed on (asset, selected fields,
-    // sparkline). Changing the asset cancels the previous asset's in-flight read, which
+    // One effect drives the whole lazy load, keyed on (asset, selected fields). Changing the
+    // asset cancels the previous asset's in-flight read, which
     // is what "cancelled on pointer-out" buys us when the pointer crosses rows.
     effect((onCleanup) => {
       const assetId = this.assetId();
-      const fieldKeys = this.fieldKeys();
-      const wantsSparkline = this.tree.sparkline();
+      const fields = this.fields();
 
-      // A group has no measurement series of its own — hovering one used to spend a
-      // request per hover to learn that. Branch rows come from the tier-0 rollup.
+      // A group's rows come from the tier-0 rollup — hovering one must not spend a request. Branch rows come from the tier-0 rollup.
       if (this.isBranch()) {
         this.latest.set(null);
-        this.sparklinePoints.set(null);
         this.loading.set(false);
         this.failed.set(false);
 
@@ -249,7 +207,6 @@ export class AssetDetailPanelComponent {
       const cached = this.details.cachedLatest(assetId);
 
       this.latest.set(cached ?? null);
-      this.sparklinePoints.set(this.details.cachedSparkline(assetId)?.points ?? null);
       this.failed.set(false);
 
       const handles: { cancel: () => void }[] = [];
@@ -261,7 +218,7 @@ export class AssetDetailPanelComponent {
 
       if (!cached) {
         this.loading.set(true);
-        const handle = this.details.loadLatest(assetId, fieldKeys);
+        const handle = this.details.loadLatest(assetId, fields);
 
         handles.push(handle);
         void handle.result.then((values) => {
@@ -269,16 +226,6 @@ export class AssetDetailPanelComponent {
           this.loading.set(false);
           if (values) this.latest.set(values);
           else this.failed.set(true);
-        });
-      }
-
-      if (wantsSparkline && !this.details.cachedSparkline(assetId)) {
-        const handle = this.details.loadSparkline(assetId);
-
-        handles.push(handle);
-        void handle.result.then((sparkline) => {
-          if (stale || !sparkline) return;
-          this.sparklinePoints.set(sparkline.points);
         });
       }
 
@@ -298,7 +245,7 @@ export class AssetDetailPanelComponent {
   /**
    * What the panel currently shows, in words — the rows as rendered, including the
    * "not available" ones, so the assistant can tell a missing data source from a
-   * healthy turbine (`docs/ContextAwareAIChat/ui-to-ai-context.spec.md`).
+   * healthy device (`docs/ContextAwareAIChat/ui-to-ai-context.spec.md`).
    */
   private reportContext(): void {
     const node = this.node();
@@ -318,12 +265,12 @@ export class AssetDetailPanelComponent {
       name: gettext('Asset details'),
       contextData: {
         asset: { name: node.name, type: node.type, path: this.path() },
-        // Availability is a turbine property. Reporting a group's `'unknown'` invited the
-        // assistant to describe a healthy region as being in an unknown state.
-        status: this.isBranch() ? null : node.availability,
+        // Reporting a group's `'unknown'` invited the assistant to describe a healthy group as
+        // being in an unknown state; its subtree counts say it instead.
+        status: this.isBranch() ? null : effectiveAvailability(node, rollup),
         subtree: {
-          turbines: rollup.turbineCount || null,
-          notProducing: rollup.unavailableCount || null,
+          [this.unit()]: unitCount(rollup, this.unit()) || null,
+          unavailableDevices: rollup.unavailableCount || null,
           worstAlarm: rollup.worst ?? 'none',
         },
         pinned: this.pinned(),
@@ -332,10 +279,6 @@ export class AssetDetailPanelComponent {
           label: row.label,
           value: row.unavailable ? 'not available (no data source)' : (row.value ?? 'loading'),
         })),
-        sparkline:
-          this.showSparkline() && !this.isBranch()
-            ? { series: 'power, 24 h', points: this.sparklinePoints()?.length ?? 0 }
-            : null,
         liveValuesFailed: this.failed(),
       },
       metaData: { widgetType: 'ps.asset-detail-panel', assetId: node.id },
@@ -344,68 +287,67 @@ export class AssetDetailPanelComponent {
 }
 
 /**
- * What a **branch** reports. A region/area/park has no `IECMeasurement` series of its
- * own, so running the turbine field catalogue against one produced a panel of dashes with
- * a single filled row (subtree alarms) — which read as broken data rather than as "this
- * is a group". Branches describe their subtree instead, entirely from the tier-0 rollup:
- * no request, and every row is a number the tree's own dot and count already agree with.
- *
- * The ⚙ field configuration deliberately does not apply here — it configures the turbine
- * panel, and a group has nothing to choose from.
+ * What a **branch** reports: its subtree, entirely from the tier-0 rollup — no request, and every
+ * row is a number the tree's own dot and count already agree with. `unit` follows the footer:
+ * assets with the Digital Twin Manager, devices otherwise. Availability is always about devices
+ * (`c8y_Availability` is a device fragment).
  */
-function branchRows(rollup: AssetRollup): DetailRow[] {
-  const producing = Math.max(
-    0,
-    rollup.turbineCount - rollup.unavailableCount - rollup.deratedCount
-  );
-  const alarmSummary = ALARM_SEVERITIES.filter((severity) => rollup.alarms[severity] > 0)
-    .map((severity) => `${rollup.alarms[severity]} ${severity}`)
-    .join(', ');
+export function branchRows(rollup: AssetRollup, unit: CountUnit): DetailRow[] {
+  const row = (
+    key: string,
+    label: string,
+    value: string,
+    render: DetailRow['render'] = 'text'
+  ) => ({
+    key,
+    label,
+    render,
+    value,
+    unavailable: false,
+  });
 
   return [
-    {
-      key: 'turbines',
-      label: gettext('Turbines'),
-      render: 'text',
-      value: String(rollup.turbineCount),
-      unavailable: false,
-    },
-    {
-      key: 'producing',
-      label: gettext('Producing'),
-      render: 'text',
-      value: `${producing} ${gettext('of')} ${rollup.turbineCount}`,
-      unavailable: false,
-    },
-    {
-      key: 'derated',
-      label: gettext('Derated'),
-      render: 'text',
-      value: String(rollup.deratedCount),
-      unavailable: false,
-    },
-    {
-      key: 'notProducing',
-      label: gettext('Not producing'),
-      render: 'text',
-      value: String(rollup.unavailableCount),
-      unavailable: false,
-    },
-    {
-      key: 'alarms',
-      label: gettext('Alarms'),
-      render: 'alarms',
-      value: alarmSummary || gettext('None'),
-      unavailable: false,
-    },
+    row(
+      'count',
+      unit === 'assets' ? gettext('Assets') : gettext('Devices'),
+      String(unitCount(rollup, unit))
+    ),
+    row(
+      'available',
+      gettext('Available'),
+      `${rollup.availableCount} ${gettext('of')} ${rollup.deviceCount}`
+    ),
+    row('unavailable', gettext('Unavailable'), String(rollup.unavailableCount)),
+    row('alarms', gettext('Alarms'), alarmSummary(rollup.alarms) ?? gettext('None'), 'alarms'),
   ];
 }
 
-function formatValue(raw: unknown, precision?: number, unit?: string): string {
+/** A value as text, per the field's `format` (or `fallback` when the field names none). */
+export function formatValue(
+  raw: unknown,
+  field: Pick<DetailField, 'format' | 'unit' | 'precision'>,
+  fallback: DetailField['format'] = 'text'
+): string {
   if (raw === null || raw === undefined || raw === '') return '—';
+  const format = field.format ?? fallback;
+  const unit = field.unit;
 
-  if (typeof raw === 'number') {
-    const text = raw.toFixed(precision ?? 1);
+  if (format === 'date') {
+    const date = new Date(typeof raw === 'number' || typeof raw === 'string' ? raw : NaN);
+
+    return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString();
+  }
+  // `text` keeps a number as stored (a year, an id) unless a precision asks for rounding.
+  const numeric =
+    format !== 'text' || (typeof raw === 'number' && field.precision !== undefined)
+      ? Number(raw)
+      : NaN;
+
+  if (typeof raw !== 'boolean' && Number.isFinite(numeric)) {
+    const text = numeric.toFixed(field.precision ?? 1);
+
+    if (format === 'percent') return `${text} %`;
+
     return unit ? `${text} ${unit}` : text;
   }
   if (typeof raw === 'boolean') return raw ? gettext('Yes') : gettext('No');

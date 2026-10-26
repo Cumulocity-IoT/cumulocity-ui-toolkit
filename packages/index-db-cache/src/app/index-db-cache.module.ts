@@ -2,10 +2,15 @@ import { NgModule } from '@angular/core';
 import { hookActionBar } from '@c8y/ngx-components';
 import { IndexDbCacheActionFactory } from './index-db-cache-action/index-db-cache-action.factory';
 import { DataModule } from '@c8y/ngx-components/api';
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- constructor injection: Angular JIT (aot: false) reads parameter types at runtime
 import { MeasurementInterceptorService } from './index-db-cache-action/services/measurement-interceptor.service';
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- constructor injection: Angular JIT (aot: false) reads parameter types at runtime
 import { NewSeriesInterceptorService } from './index-db-cache-action/services/new-series-interceptor.service';
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- constructor injection: Angular JIT (aot: false) reads parameter types at runtime
 import { OldSeriesInterceptorService } from './index-db-cache-action/services/old-series-interceptor.service';
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- constructor injection: Angular JIT (aot: false) reads parameter types at runtime
 import { NavigationAbortInterceptorService } from './index-db-cache-action/services/navigation-abort.service';
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- constructor injection: Angular JIT (aot: false) reads parameter types at runtime
 import { ApiService } from '@c8y/ngx-components/api';
 
 @NgModule({

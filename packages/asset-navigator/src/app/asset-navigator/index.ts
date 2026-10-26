@@ -1,6 +1,7 @@
 import { hookAction, hookNavigator } from '@c8y/ngx-components';
 import { provideAssetStorePrefetch } from '../core/services/asset-store/asset-store.service';
 import { ExplorerDrawerHostFactory } from './explorer-drawer-host.factory';
+import { provideExplorerDrawerShortcut } from './explorer-drawer-shortcut';
 import { TreeNavigatorNodeFactory } from './tree-navigator.node';
 
 /**
@@ -23,6 +24,9 @@ export const assetTreeNavigatorViewProviders = [
    * 5 min to 30 s for as long as a tree is actually on screen — see `AssetStoreService`.
    */
   provideAssetStorePrefetch(),
+
+  /** The drawer's configurable keyboard shortcut (options menu); none bound by default. */
+  provideExplorerDrawerShortcut(),
 
   /**
    * *Tree* — our asset tree, next to the platform's *Groups* entry. Groups is not hidden

@@ -149,6 +149,9 @@ All commands run from the **repository root** unless noted.
 - **Cumulocity SDK version:** Pinned at `1024.21.x` for all `@c8y/*` packages. Do not bump packages independently; they must be updated together.
 - **Barrel files:** Each feature area should have an `index.ts` that re-exports its public surface.
 - **No `console.warn` / `console.log` in production code.**
+- **Type-only imports and exports use `type`:** `import { type IManagedObject, InventoryService } from '@c8y/client'`, `import type { Foo } from './foo'`, `export type { Bar }`. Per-file compilers — a Vite + OXC dev server, esbuild — cannot see that a name is only a type: a re-exported interface or a missing export breaks the module at runtime (`does not provide an export named …`) while `ng build` still passes. Enforced by `verbatimModuleSyntax` in the root `tsconfig.json` and the ESLint rules `@typescript-eslint/consistent-type-imports` / `consistent-type-exports` (autofixable: `pnpm run lint:fix`).
+  - **Exception — classes Angular injects through a constructor** must stay value imports (`NG2003: No suitable injection token` otherwise), and ESLint would mark them type-only. Use `inject(SomeService)` instead of constructor parameters (also when passing to `super(...)`): then the class is a value and both checks agree.
+  - **No `const enum` values from libraries.** `@c8y/*` declares some enums as `declare const enum` (e.g. `ColumnDataType`) and does not export them at runtime — `ColumnDataType.TextShort` is `undefined` in the Vite dev server. Import the enum as a type and use the literal: `dataType: 'text-short' as ColumnDataType`.
 
 ---
 
