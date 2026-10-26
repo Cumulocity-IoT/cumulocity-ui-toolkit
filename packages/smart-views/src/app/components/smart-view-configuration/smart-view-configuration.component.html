@@ -1,4 +1,4 @@
-<c8y-title>{{ 'Smart views configuration' }}</c8y-title>
+<c8y-title>{{ labels.title | translate }}</c8y-title>
 
 @if (errorMessage()) {
   <div class="alert alert-danger">{{ errorMessage() }}</div>
@@ -15,7 +15,7 @@
   <c8y-column name="icon">
     <ng-template c8yCellRendererDef let-context>
       @if (context.value) {
-        <i [c8yIcon]="context.value" class="text-16"></i>
+        <i class="text-16" [c8yIcon]="context.value"></i>
       }
     </ng-template>
   </c8y-column>

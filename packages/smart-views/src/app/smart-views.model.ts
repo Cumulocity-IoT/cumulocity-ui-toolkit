@@ -67,3 +67,21 @@ export interface SmartViewConfigurationDraft {
   columns: SmartViewColumn[];
   priority: number;
 }
+
+/** Type guard: true when the managed object carries a smart view configuration fragment. */
+export function isSmartViewConfiguration(mo: IManagedObject): mo is SmartViewConfiguration {
+  return !!mo && typeof mo['c8y_SmartViewConfiguration'] === 'object';
+}
+
+/**
+ * Prepares a raw filter expression for `QueriesUtil`'s `__useFilterQueryString`
+ * operator, which only keeps what is inside the outermost parentheses. A bare
+ * expression such as `type eq 'x'` would otherwise be dropped entirely, and one
+ * like `(a) and has(b)` would be cut to `a) and has(b`. Full `$filter=(…)`
+ * strings are passed through unchanged.
+ */
+export function toFilterQueryString(rawQuery: string): string {
+  const trimmed = (rawQuery ?? '').trim();
+
+  return trimmed.startsWith('$filter=') ? trimmed : `(${trimmed})`;
+}

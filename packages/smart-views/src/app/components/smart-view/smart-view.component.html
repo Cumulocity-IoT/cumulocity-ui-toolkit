@@ -9,43 +9,36 @@
   <div class="alert alert-danger m-16" role="alert">
     {{ error }}
   </div>
-} @else if (managedObject(); as mo) {
-  @if (mo.c8y_SmartViewConfiguration) {
-    <c8y-title>{{ mo.name }}</c8y-title>
-    <div class="card">
-      <div class="content-fullpage d-flex d-col">
-        <c8y-data-grid
-          class="flex-grow col-xs-12 no-gutter"
-          [title]="'Smart View'"
-          [columns]="columns()"
-          [pagination]="pagination"
-          [showSearch]="true"
-          [displayOptions]="{
-            striped: true,
-            bordered: true,
-            gridHeader: true,
-            filter: true,
-            hover: true,
-          }"
-          [serverSideDataCallback]="datasource.serverSideDataCallback"
-        >
-          <c8y-column name="id">
-            <ng-container *c8yCellRendererDef="let context">
-              <a
-                class="label text-12 btn-default m-r-4 label-info no-link"
-                [routerLink]="['/group', context.value]"
-                [title]="context.item.name ?? context.value"
-              >
-                {{ context.item.name ?? context.value }}
-              </a>
-            </ng-container>
-          </c8y-column>
-        </c8y-data-grid>
-      </div>
+} @else if (managedObject()) {
+  <div class="card">
+    <div class="content-fullpage d-flex d-col">
+      <c8y-data-grid
+        class="flex-grow col-xs-12 no-gutter"
+        [title]="title()"
+        [columns]="columns()"
+        [pagination]="pagination"
+        [showSearch]="true"
+        [displayOptions]="{
+          striped: true,
+          bordered: true,
+          gridHeader: true,
+          filter: true,
+          hover: true,
+        }"
+        [serverSideDataCallback]="datasource.serverSideDataCallback"
+      >
+        <c8y-column name="id">
+          <ng-container *c8yCellRendererDef="let context">
+            <a
+              class="label text-12 btn-default m-r-4 label-info no-link"
+              [routerLink]="['/group', context.value]"
+              [title]="context.item.name ?? context.value"
+            >
+              {{ context.item.name ?? context.value }}
+            </a>
+          </ng-container>
+        </c8y-column>
+      </c8y-data-grid>
     </div>
-  } @else {
-    <div class="alert alert-warning m-16" role="alert">
-      {{ labels.noConfig }}
-    </div>
-  }
+  </div>
 }

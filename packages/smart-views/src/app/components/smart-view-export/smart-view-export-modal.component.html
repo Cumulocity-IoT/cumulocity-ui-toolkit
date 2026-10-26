@@ -1,8 +1,6 @@
 <c8y-modal [title]="labels.title" [customFooter]="true">
   <div class="p-16">
-
     @switch (state()) {
-
       @case ('loading') {
         <div class="text-center p-24" aria-live="polite">
           <c8y-loading></c8y-loading>
@@ -37,29 +35,28 @@
           {{ labels.done }}
         </div>
       }
-
     }
   </div>
 
-  <div c8y-modal-footer-custom class="modal-footer">
+  <div class="modal-footer" c8y-modal-footer-custom>
     @if (state() === 'done') {
-      <button type="button" class="btn btn-primary" (click)="onDismiss()">
+      <button class="btn btn-primary" (click)="onDismiss()" type="button">
         {{ labels.close }}
       </button>
     } @else {
       <button
-        type="button"
         class="btn btn-default"
         [disabled]="state() === 'exporting'"
         (click)="onDismiss()"
+        type="button"
       >
         {{ labels.cancel }}
       </button>
       <button
-        type="button"
         class="btn btn-primary"
         [disabled]="state() !== 'confirm' || !!errorMessage() || itemCount() === 0"
         (click)="onConfirm()"
+        type="button"
       >
         <i c8yIcon="download-archive"></i>
         {{ labels.export }}

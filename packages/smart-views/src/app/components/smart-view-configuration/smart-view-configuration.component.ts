@@ -1,6 +1,5 @@
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { CommonModule } from '@angular/common';
 import {
   ActionControl,
   BuiltInActionType,
@@ -12,6 +11,7 @@ import {
   Status,
 } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
+import { TranslateService } from '@ngx-translate/core';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { SmartViewConfiguration } from '../../smart-views.model';
 import { SmartViewConfigurationService } from '../../services/smart-view-configuration.service';
@@ -22,13 +22,14 @@ import { CreateSmartViewConfigurationModalComponent } from '../create-smart-view
   selector: 'app-smart-view-configuration',
   templateUrl: './smart-view-configuration.component.html',
   styleUrls: ['./smart-view-configuration.component.less'],
-  imports: [CommonModule, CoreModule],
+  imports: [CoreModule],
 })
 export class SmartViewConfigurationComponent implements OnInit {
   private readonly configurationService = inject(SmartViewConfigurationService);
   private readonly modalService = inject(BsModalService);
   private readonly c8yModalService = inject(ModalService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly translateService = inject(TranslateService);
 
   readonly configurations = signal<SmartViewConfiguration[]>([]);
   readonly loading = signal(true);
@@ -117,7 +118,9 @@ export class SmartViewConfigurationComponent implements OnInit {
   async deleteConfiguration(configuration: SmartViewConfiguration): Promise<void> {
     const confirmed = await this.c8yModalService.confirm(
       gettext('Delete configuration'),
-      gettext(`Are you sure you want to delete "${configuration.name}"?`),
+      this.translateService.instant(gettext('Are you sure you want to delete "{{ name }}"?'), {
+        name: configuration.name,
+      }) as string,
       Status.DANGER,
       { ok: gettext('Delete'), cancel: gettext('Cancel') }
     );

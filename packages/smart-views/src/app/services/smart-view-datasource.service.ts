@@ -14,7 +14,7 @@ import {
   ServerSideDataCallback,
   ServerSideDataResult,
 } from '@c8y/ngx-components';
-import { SmartViewConfiguration } from '../models/smart-view-configuration.model';
+import { SmartViewConfigurationData, toFilterQueryString } from '../smart-views.model';
 
 interface SearchableColumn extends Column {
   searchable: boolean;
@@ -47,11 +47,11 @@ export class SmartViewDatasourceService {
   readonly serverSideDataCallback: ServerSideDataCallback = this.onDataSourceModifier.bind(this);
 
   /**
-   * Initialises the datasource from a {@link SmartViewConfiguration}.
+   * Initialises the datasource from a {@link SmartViewConfigurationData}.
    * Stores the raw query string so it can be combined with search and sort on
    * every modifier change without pre-building an intermediate string.
    */
-  configure(config: SmartViewConfiguration): void {
+  configure(config: SmartViewConfigurationData): void {
     this.rawQuery = config.query;
   }
 
@@ -81,7 +81,7 @@ export class SmartViewDatasourceService {
    */
   private buildQuery(columns: Column[], searchText: string): string {
     const filterParts: QueryObjectFilterComparison[] = [
-      { __useFilterQueryString: this.rawQuery },
+      { __useFilterQueryString: toFilterQueryString(this.rawQuery) },
       ...this.buildColumnFilters(columns),
     ];
 

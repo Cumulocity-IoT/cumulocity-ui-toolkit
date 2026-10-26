@@ -3,15 +3,15 @@
     <c8y-form-group>
       <label for="configName">{{ labels.name }}</label>
       <input
-        id="configName"
         class="form-control"
+        id="configName"
+        [(ngModel)]="name"
+        [placeholder]="labels.namePlaceholder"
+        [attr.aria-label]="labels.name"
         type="text"
         name="configName"
         autocomplete="off"
-        [placeholder]="labels.namePlaceholder"
-        [(ngModel)]="name"
         required
-        [attr.aria-label]="labels.name"
       />
     </c8y-form-group>
 
@@ -24,13 +24,13 @@
       } @else {
         <div class="c8y-select-wrapper">
           <select
-            id="assetDefinition"
-            name="assetDefinition"
             class="form-control"
-            required
+            id="assetDefinition"
             [(ngModel)]="assetDefinitionId"
-            (ngModelChange)="onAssetDefinitionChange()"
             [attr.aria-label]="labels.assetDefinition"
+            (ngModelChange)="onAssetDefinitionChange()"
+            name="assetDefinition"
+            required
           >
             <option value="" disabled selected>{{ labels.assetDefinitionPlaceholder }}</option>
             @for (definition of assetDefinitions(); track definition.id) {
@@ -44,15 +44,15 @@
     <c8y-form-group>
       <label for="configPriority">{{ labels.priority }}</label>
       <input
-        id="configPriority"
         class="form-control"
+        id="configPriority"
+        [(ngModel)]="priority"
+        [attr.aria-label]="labels.priority"
         type="number"
         name="configPriority"
         autocomplete="off"
         min="0"
         step="1"
-        [(ngModel)]="priority"
-        [attr.aria-label]="labels.priority"
       />
       <p class="text-muted small m-t-4">{{ labels.priorityHint }}</p>
     </c8y-form-group>
@@ -61,13 +61,13 @@
       <label>{{ labels.icon }}</label>
       <div class="d-flex a-i-center gap-8">
         <button
-          type="button"
           class="btn btn-default"
           [title]="labels.selectIcon"
           [attr.aria-label]="labels.selectIcon"
           (click)="selectIcon()"
+          type="button"
         >
-          <i [c8yIcon]="icon" class="text-24"></i>
+          <i class="text-24" [c8yIcon]="icon"></i>
           {{ labels.selectIcon }}
         </button>
       </div>
@@ -89,69 +89,69 @@
           </p>
         }
         @for (column of columns; track $index) {
-        <div class="input-group m-b-8">
-          <input
-            class="form-control"
-            type="text"
-            [placeholder]="labels.columnName"
-            [(ngModel)]="column.name"
-            [name]="'columnName' + $index"
-            [attr.aria-label]="labels.columnName"
-          />
-          <input
-            class="form-control"
-            type="text"
-            [placeholder]="labels.columnPath"
-            [(ngModel)]="column.path"
-            [name]="'columnPath' + $index"
-            [attr.aria-label]="labels.columnPath"
-          />
-          <input
-            class="form-control"
-            type="text"
-            [placeholder]="labels.columnHeader"
-            [(ngModel)]="column.header"
-            [name]="'columnHeader' + $index"
-            [attr.aria-label]="labels.columnHeader"
-          />
-          <span class="input-group-btn">
-            <button
-              type="button"
-              class="btn btn-default"
-              [title]="labels.removeColumn"
-              [attr.aria-label]="labels.removeColumn"
-              [disabled]="columns.length === 1"
-              (click)="removeColumn($index)"
-            >
-              <i c8yIcon="minus-circle"></i>
-            </button>
-            @if ($last) {
+          <div class="input-group m-b-8">
+            <input
+              class="form-control"
+              [(ngModel)]="column.name"
+              [placeholder]="labels.columnName"
+              [name]="'columnName' + $index"
+              [attr.aria-label]="labels.columnName"
+              type="text"
+            />
+            <input
+              class="form-control"
+              [(ngModel)]="column.path"
+              [placeholder]="labels.columnPath"
+              [name]="'columnPath' + $index"
+              [attr.aria-label]="labels.columnPath"
+              type="text"
+            />
+            <input
+              class="form-control"
+              [(ngModel)]="column.header"
+              [placeholder]="labels.columnHeader"
+              [name]="'columnHeader' + $index"
+              [attr.aria-label]="labels.columnHeader"
+              type="text"
+            />
+            <span class="input-group-btn">
               <button
-                type="button"
                 class="btn btn-default"
-                [title]="labels.addColumn"
-                [attr.aria-label]="labels.addColumn"
-                (click)="addColumn()"
+                [title]="labels.removeColumn"
+                [attr.aria-label]="labels.removeColumn"
+                [disabled]="columns.length === 1"
+                (click)="removeColumn($index)"
+                type="button"
               >
-                <i c8yIcon="plus-circle"></i>
+                <i c8yIcon="minus-circle"></i>
               </button>
-            }
-          </span>
-        </div>
-      }
+              @if ($last) {
+                <button
+                  class="btn btn-default"
+                  [title]="labels.addColumn"
+                  [attr.aria-label]="labels.addColumn"
+                  (click)="addColumn()"
+                  type="button"
+                >
+                  <i c8yIcon="plus-circle"></i>
+                </button>
+              }
+            </span>
+          </div>
+        }
       }
     </c8y-form-group>
   </div>
 
-  <div c8y-modal-footer-custom class="modal-footer">
-    <button type="button" class="btn btn-default" (click)="onDismiss()">
+  <div class="modal-footer" c8y-modal-footer-custom>
+    <button class="btn btn-default" (click)="onDismiss()" type="button">
       {{ labels.cancel }}
     </button>
     <button
-      type="button"
       class="btn btn-primary"
       [disabled]="!isValid || saving()"
       (click)="onClose()"
+      type="button"
     >
       {{ okLabel }}
     </button>

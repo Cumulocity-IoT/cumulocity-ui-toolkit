@@ -3,12 +3,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { InventoryService } from '@c8y/client';
 import { Column, CoreModule, Pagination } from '@c8y/ngx-components';
-import { isSmartViewManagedObject } from '../../models/smart-view-configuration.model';
 import { gettext } from '@c8y/ngx-components/gettext';
+import { TranslateService } from '@ngx-translate/core';
 import {
-  ISmartViewManagedObject,
+  isSmartViewConfiguration,
   SmartViewColumn,
-} from '../../models/smart-view-configuration.model';
+  SmartViewConfiguration,
+} from '../../smart-views.model';
 import { SmartViewDatasourceService } from '../../services/smart-view-datasource.service';
 
 @Component({
@@ -24,8 +25,9 @@ export class SmartViewComponent implements OnInit {
   private readonly inventoryService = inject(InventoryService);
   readonly datasource = inject(SmartViewDatasourceService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly translateService = inject(TranslateService);
 
-  readonly managedObject = signal<ISmartViewManagedObject | null>(null);
+  readonly managedObject = signal<SmartViewConfiguration | null>(null);
   readonly loading = signal(true);
   readonly errorMessage = signal<string | null>(null);
   readonly columns = signal<Column[]>([]);
@@ -56,7 +58,7 @@ export class SmartViewComponent implements OnInit {
     this.columns.set([]);
 
     if (!deviceId) {
-      this.errorMessage.set('No device ID provided in the route.');
+      this.errorMessage.set(this.translate(gettext('No smart view ID provided in the route.')));
       this.loading.set(false);
 
       return;
@@ -65,21 +67,23 @@ export class SmartViewComponent implements OnInit {
     try {
       const { data } = await this.inventoryService.detail(deviceId);
 
-      this.managedObject.set(data);
+      this.title.set((data.name as string | undefined) ?? deviceId);
 
-      // data carries [key: string]: any — read through unknown to stay type-safe.
-      if (isSmartViewManagedObject(data)) {
+      if (isSmartViewConfiguration(data)) {
         const config = data.c8y_SmartViewConfiguration;
 
-        this.title.set(data.name ?? deviceId);
-
-        if (config) {
-          this.datasource.configure(config);
-          this.columns.set(this.buildColumns(config.columns));
-        }
+        this.datasource.configure(config);
+        this.columns.set(this.buildColumns(config.columns ?? []));
+        this.managedObject.set(data);
+      } else {
+        this.errorMessage.set(this.translate(this.labels.noConfig));
       }
     } catch {
-      this.errorMessage.set(`Could not load managed object with ID "${deviceId}".`);
+      this.errorMessage.set(
+        this.translate(gettext('Could not load smart view with ID "{{ id }}".'), {
+          id: deviceId,
+        })
+      );
     } finally {
       this.loading.set(false);
     }
@@ -94,5 +98,9 @@ export class SmartViewComponent implements OnInit {
       filterable: col.path !== 'id',
       searchable: col.path !== 'id',
     }));
+  }
+
+  private translate(key: string, params?: Record<string, unknown>): string {
+    return this.translateService.instant(key, params) as string;
   }
 }

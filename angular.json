@@ -914,12 +914,7 @@
             "polyfills": [
               "zone.js"
             ],
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "packages/smart-views/public"
-              }
-            ],
+            "assets": [],
             "inlineStyleLanguage": "less",
             "styles": [
               "packages/smart-views/src/styles.less"

@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { IManagedObject, InventoryService, QueriesUtil } from '@c8y/client';
+import { toFilterQueryString } from '../smart-views.model';
 
 /**
  * Fetches all inventory items that match a raw Cumulocity OData filter query,
@@ -76,7 +77,7 @@ export class SmartViewExportService {
    */
   private toInventoryQuery(rawQuery: string): string {
     return this.queriesUtil.buildQuery({
-      __filter: { __useFilterQueryString: rawQuery },
+      __filter: { __useFilterQueryString: toFilterQueryString(rawQuery) },
     });
   }
 }

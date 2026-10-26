@@ -1,32 +1,38 @@
 import { inject, Injectable } from '@angular/core';
-import { InventoryService } from '@c8y/client';
 import { NavigatorNode, NavigatorNodeFactory } from '@c8y/ngx-components';
-import { SmartViewConfiguration } from '../../smart-views.model';
+import { from, Observable, startWith, switchMap } from 'rxjs';
+import { SmartViewConfigurationService } from '../../services/smart-view-configuration.service';
 
-@Injectable()
+/** Default navigator priority for a smart view without an explicit priority. */
+const DEFAULT_PRIORITY = 500;
+
+/**
+ * Adds one navigator entry per smart view configuration. Re-evaluates whenever a
+ * configuration is created, updated or deleted, so the menu stays in sync
+ * without a page reload.
+ */
+@Injectable({ providedIn: 'root' })
 export class SmartViewFactory implements NavigatorNodeFactory {
-  private inventoryService = inject(InventoryService);
+  private readonly configurationService = inject(SmartViewConfigurationService);
 
-  async get() {
-    const smartViewNavigatorNodes: NavigatorNode[] = [];
+  get(): Observable<NavigatorNode[]> {
+    return this.configurationService.configurationsChanged$.pipe(
+      startWith(undefined),
+      switchMap(() => from(this.loadNodes()))
+    );
+  }
 
-    const smartViewConfigurations = (
-      await this.inventoryService.list({ type: 'c8y_SmartViewConfiguration' })
-    ).data as SmartViewConfiguration[];
+  private async loadNodes(): Promise<NavigatorNode[]> {
+    const configurations = await this.configurationService.listConfigurations();
 
-    if (!smartViewConfigurations || smartViewConfigurations.length === 0) {
-      return smartViewNavigatorNodes;
-    }
-
-    smartViewConfigurations.forEach((config) => {
-      smartViewNavigatorNodes.push({
-        label: config.name,
-        path: `smart-views/${config.id}`,
-        icon: config.c8y_SmartViewConfiguration.icon,
-        priority: config.c8y_SmartViewConfiguration.priority ?? 500,
-      } as NavigatorNode);
-    });
-
-    return smartViewNavigatorNodes;
+    return configurations.map(
+      (config) =>
+        new NavigatorNode({
+          label: config.name,
+          path: `smart-views/${config.id}`,
+          icon: config.c8y_SmartViewConfiguration?.icon,
+          priority: config.c8y_SmartViewConfiguration?.priority ?? DEFAULT_PRIORITY,
+        })
+    );
   }
 }

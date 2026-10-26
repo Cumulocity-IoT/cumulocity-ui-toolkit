@@ -5,9 +5,10 @@ import { gettext } from '@c8y/ngx-components/gettext';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { CsvExportService } from '~services/csv-export.service';
 import {
-  ISmartViewManagedObject,
+  isSmartViewConfiguration,
   SmartViewColumn,
-} from '../../models/smart-view-configuration.model';
+  SmartViewConfiguration,
+} from '../../smart-views.model';
 import { SmartViewExportService } from '../../services/smart-view-export.service';
 
 type ExportState = 'loading' | 'confirm' | 'exporting' | 'done';
@@ -40,7 +41,7 @@ export class SmartViewExportModalComponent implements OnInit {
   readonly progress = signal(0);
   readonly errorMessage = signal<string | null>(null);
 
-  private smartViewMo: ISmartViewManagedObject | null = null;
+  private smartViewMo: SmartViewConfiguration | null = null;
 
   readonly labels = {
     title: gettext('Export Smart View as CSV'),
@@ -96,18 +97,16 @@ export class SmartViewExportModalComponent implements OnInit {
     try {
       const { data } = await this.inventoryService.detail(this.smartViewId);
 
-      this.smartViewMo = data;
-
-      const config = this.smartViewMo.c8y_SmartViewConfiguration;
-
-      if (!config) {
+      if (!isSmartViewConfiguration(data)) {
         this.errorMessage.set(gettext('This managed object has no smart-view configuration.'));
         this.state.set('confirm');
 
         return;
       }
 
-      const count = await this.exportService.countItems(config.query);
+      this.smartViewMo = data;
+
+      const count = await this.exportService.countItems(data.c8y_SmartViewConfiguration.query);
 
       this.itemCount.set(count);
     } catch {
