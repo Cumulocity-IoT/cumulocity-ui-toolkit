@@ -10,7 +10,7 @@ export class FavoritesManagerNavigationFactory implements NavigatorNodeFactory {
     this.FAVORITES_LIST_NAVIGATOR_NODE = new NavigatorNode({
       label: gettext('favorites.title'),
       path: '/favorites',
-      icon: 'mark-as-favorite',
+      icon: 'search-in-list',
       priority: 2000,
     });
   }
