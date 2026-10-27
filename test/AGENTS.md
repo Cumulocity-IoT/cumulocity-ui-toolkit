@@ -92,6 +92,7 @@ downloads the new cockpit on the next run and records its checksum in `c8y-ui.js
 | Run one plugin's suite on the mock | `pnpm run e2e:mock <name>` (`--browser=chrome` locally; CI uses chromium) |
 | Same, in the Cypress UI | `pnpm run e2e:mock <name> --open` |
 | Re-pull the world from windy-dev | `pnpm run e2e:world:pull` (`e2e:mock` does it when the file is missing) |
+| Run one plugin's suite in another cockpit release | `E2E_SHELL_VERSION=1024.22.1 pnpm run e2e:mock <name>` (what `shell-compat.yml` does daily with the latest CD release; `E2E_MOCK_GAPS=<file>` lists the requests the mock does not emulate). Rewrites `c8y-ui.json` → `version` and adds the checksums; do not commit that |
 
 - `c8y-ui.json` — mock config: version (synced automatically), shell `cockpit`, world, ports
   (mock 8111, dev server 9001), `auth: login` (so `cy.getAuth().login()` works; any password

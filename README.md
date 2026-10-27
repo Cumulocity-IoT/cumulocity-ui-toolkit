@@ -403,6 +403,7 @@ There is intentionally no "run every spec" script: the bare `e2e:run` / `e2e:ope
 |---|---|---|
 | `.github/workflows/pull-request.yml` | Pull request | Detects changed packages via `git diff` against `main` and runs lint → unit tests → build per changed package in a matrix. If root config files changed, an additional `verify-root-config` job runs `lint`, `pnpm test`, `pnpm run build` for the **whole** workspace and checks that the generated `package.json` scripts are up to date. |
 | `.github/workflows/e2e-test.yml` | Pull request | Same change detection, then per changed package: `serve:<name>` on port 9001, `wait-on`, `e2e:run:<name>`. Screenshots are uploaded on failure. Requires the `e2e` GitHub environment for tenant credentials. |
+| `.github/workflows/shell-compat.yml` | Daily, manual dispatch | When a newer cockpit CD release is out (GitHub `releases/latest`, newer than the pinned Web SDK version), runs every plugin's e2e suite on the tenant mock inside that cockpit (`E2E_SHELL_VERSION`). A failure opens an issue labelled `shell-compat` (or comments on the open one for that version); a pass closes the issues of that version and older ones. Each version is tested once per commit on `main`. Requires the `e2e` GitHub environment for the windy-dev world. |
 | `.github/workflows/relase-after-tag.yml` | Tag push | Reads all projects from `angular.json`, builds each, and attaches versioned ZIPs to the release. |
 | `.github/workflows/clank8y.yml` | Manual dispatch | Runs an AI review pass. |
 
