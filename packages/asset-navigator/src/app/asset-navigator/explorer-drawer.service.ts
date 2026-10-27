@@ -82,6 +82,45 @@ export class ExplorerDrawerService {
     this.openState.set(opening);
   }
 
+  openDrawer(anchor?: { left: number; top: number }): void {
+    // An explicit anchor wins, but the shell is still watched: the caller measured *once*, and
+    // the navigator can collapse while the drawer is open either way.
+    if (anchor) this.anchorState.set(anchor);
+    else this.measure();
+    this.observeShell();
+    this.openState.set(true);
+  }
+
+  close(): void {
+    this.stopObserving();
+    this.openState.set(false);
+  }
+
+  setAnchor(anchor: { left: number; top: number }): void {
+    this.anchorState.set(anchor);
+  }
+
+  async togglePinned(): Promise<void> {
+    const pinned = !this.pinnedState();
+
+    this.pinnedState.set(pinned);
+    await this.persist(PREF_PINNED, pinned);
+  }
+
+  /** Live width while dragging. Clamped; persisted only when the drag ends. */
+  setWidth(width: number): void {
+    this.widthState.set(Math.min(DRAWER_MAX_WIDTH, Math.max(DRAWER_MIN_WIDTH, Math.round(width))));
+  }
+
+  beginResize(): void {
+    this.resizingState.set(true);
+  }
+
+  async endResize(): Promise<void> {
+    this.resizingState.set(false);
+    await this.persist(PREF_WIDTH, this.widthState());
+  }
+
   /**
    * Measures where the drawer should sit, from the shell's own elements.
    *
@@ -182,45 +221,6 @@ export class ExplorerDrawerService {
   private stopObserving(): void {
     this.stopObservingFn?.();
     this.stopObservingFn = null;
-  }
-
-  openDrawer(anchor?: { left: number; top: number }): void {
-    // An explicit anchor wins, but the shell is still watched: the caller measured *once*, and
-    // the navigator can collapse while the drawer is open either way.
-    if (anchor) this.anchorState.set(anchor);
-    else this.measure();
-    this.observeShell();
-    this.openState.set(true);
-  }
-
-  close(): void {
-    this.stopObserving();
-    this.openState.set(false);
-  }
-
-  setAnchor(anchor: { left: number; top: number }): void {
-    this.anchorState.set(anchor);
-  }
-
-  async togglePinned(): Promise<void> {
-    const pinned = !this.pinnedState();
-
-    this.pinnedState.set(pinned);
-    await this.persist(PREF_PINNED, pinned);
-  }
-
-  /** Live width while dragging. Clamped; persisted only when the drag ends. */
-  setWidth(width: number): void {
-    this.widthState.set(Math.min(DRAWER_MAX_WIDTH, Math.max(DRAWER_MIN_WIDTH, Math.round(width))));
-  }
-
-  beginResize(): void {
-    this.resizingState.set(true);
-  }
-
-  async endResize(): Promise<void> {
-    this.resizingState.set(false);
-    await this.persist(PREF_WIDTH, this.widthState());
   }
 
   private async load(): Promise<void> {

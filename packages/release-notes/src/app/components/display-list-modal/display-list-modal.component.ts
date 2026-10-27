@@ -22,12 +22,12 @@ export class ReleaseNotesDisplayListModalComponent implements OnInit {
     void this.loadReleaseNotes();
   }
 
+  close(): void {
+    this.bsModalRef.hide();
+  }
+
   private async loadReleaseNotes(): Promise<void> {
     this.releaseNotes = await this.releaseNoteService.list(this.showOnlyNewReleases);
     this.releaseNoteService.setLastChecked();
-  }
-
-  close(): void {
-    this.bsModalRef.hide();
   }
 }

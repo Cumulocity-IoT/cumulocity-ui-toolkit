@@ -158,23 +158,6 @@ export class InventoryFieldPickerComponent implements OnInit {
   protected readonly selected = signal(new Set<string>());
   protected readonly visibleRows = signal<FieldRow[]>([]);
 
-  ngOnInit(): void {
-    this.rows = buildRows(this.sampleRows, this.dtmFields);
-    this.updateVisible();
-
-    // Dismissal by backdrop or `Esc` destroys this component without going through
-    // `close()`, so `onHidden` is the only signal that covers every path. It is typed
-    // optional on `BsModalRef` (only `BsModalService.show` populates it) — assert it rather
-    // than degrade quietly, because the failure mode is an `await` that never returns.
-    if (!this.bsModalRef.onHidden) {
-      throw new Error(
-        'InventoryFieldPickerComponent: BsModalRef.onHidden is missing — open this via ' +
-          'BsModalService.show(), and re-check the ngx-bootstrap modal API if it is absent there.'
-      );
-    }
-    this.bsModalRef.onHidden.subscribe(() => this.dismiss('dismissed'));
-  }
-
   protected toggleExpand(path: string): void {
     this.expanded.update((current) => {
       const next = new Set(current);
@@ -198,23 +181,6 @@ export class InventoryFieldPickerComponent implements OnInit {
     });
   }
 
-  private updateVisible(): void {
-    const expanded = this.expanded();
-
-    this.visibleRows.set(
-      this.rows.filter((row) => {
-        // A row is visible when every ancestor object is expanded.
-        const parts = row.path.split('.');
-
-        for (let i = 1; i < parts.length; i++) {
-          if (!expanded.has(parts.slice(0, i).join('.'))) return false;
-        }
-
-        return true;
-      })
-    );
-  }
-
   protected save(): void {
     const byPath = new Map(this.rows.map((row) => [row.path, row]));
 
@@ -235,6 +201,43 @@ export class InventoryFieldPickerComponent implements OnInit {
   protected close(): void {
     this.dismiss('cancelled');
     this.bsModalRef.hide();
+  }
+
+  ngOnInit(): void {
+    this.rows = buildRows(this.sampleRows, this.dtmFields);
+    this.updateVisible();
+
+    // Dismissal by backdrop or `Esc` destroys this component without going through
+    // `close()`, so `onHidden` is the only signal that covers every path. It is typed
+    // optional on `BsModalRef` (only `BsModalService.show` populates it) — assert it rather
+    // than degrade quietly, because the failure mode is an `await` that never returns.
+    if (!this.bsModalRef.onHidden) {
+      throw new Error(
+        'InventoryFieldPickerComponent: BsModalRef.onHidden is missing — open this via ' +
+          'BsModalService.show(), and re-check the ngx-bootstrap modal API if it is absent there.'
+      );
+    }
+    // No `takeUntilDestroyed`: ngx-bootstrap destroys this component *before* it emits
+    // `onHidden`, so that would unsubscribe first and the picker's promise would never settle.
+    // The emitter belongs to this one modal and is dropped with it.
+    this.bsModalRef.onHidden.subscribe(() => this.dismiss('dismissed'));
+  }
+
+  private updateVisible(): void {
+    const expanded = this.expanded();
+
+    this.visibleRows.set(
+      this.rows.filter((row) => {
+        // A row is visible when every ancestor object is expanded.
+        const parts = row.path.split('.');
+
+        for (let i = 1; i < parts.length; i++) {
+          if (!expanded.has(parts.slice(0, i).join('.'))) return false;
+        }
+
+        return true;
+      })
+    );
   }
 
   private dismiss(reason: string): void {

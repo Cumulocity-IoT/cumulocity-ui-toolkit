@@ -36,7 +36,7 @@ jobs:
           # A change to shared build/lint/test configuration affects every package,
           # but matches no package directory — without this the whole workflow
           # would be skipped for such a PR.
-          if echo "$changed" | grep -qE '^(angular\.json|tsconfig\.json|eslint\.config\.mjs|karma\.conf\.js|package\.json|pnpm-workspace\.yaml|pnpm-lock\.yaml|\.npmrc|\.pnpmfile\.cjs|\.prettierrc|tools/)'; then
+          if echo "$changed" | grep -qE '^(angular\.json|tsconfig\.json|eslint\.config\.mjs|karma\.conf\.js|package\.json|pnpm-workspace\.yaml|pnpm-lock\.yaml|\.npmrc|\.prettierrc|tools/)'; then
             echo "root-config=true" >> $GITHUB_OUTPUT
           else
             echo "root-config=false" >> $GITHUB_OUTPUT

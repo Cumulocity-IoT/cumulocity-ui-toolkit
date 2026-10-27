@@ -38,7 +38,6 @@ cumulocity-ui-toolkit/
 ├── package.json              # Root scripts and shared dependencies
 ├── pnpm-workspace.yaml       # Workspace: packages/* + test/
 ├── .npmrc                    # shamefully-hoist=true
-├── .pnpmfile.cjs             # Forces @c8y/devkit to use TypeScript 5.9.x
 ├── tsconfig.json             # Root TypeScript config with path aliases for shared/
 ├── karma.conf.js             # Shared Karma configuration (Jasmine, Chrome, coverage)
 ├── eslint.config.mjs         # Shared flat ESLint config
@@ -99,7 +98,6 @@ packages:
 - `test/` is a workspace member but has its **own lockfile and `node_modules`** — install it with `pnpm -C test install`. The `e2e:*` root scripts all delegate via `pnpm -C test exec`.
 - `pnpm-workspace.yaml` also sets `minimumReleaseAge: 10080` (7 days), so freshly published versions are not picked up immediately. `shared` is exempt via `minimumReleaseAgeExclude`.
 - `.npmrc` sets `shamefully-hoist=true`, which hoists all packages to the root `node_modules/`. This is required for Angular's build tooling and the Cumulocity devkit to resolve peer dependencies. It also enables `auto-install-peers`, `strict-peer-dependencies`, and `ignore-scripts`.
-- `.pnpmfile.cjs` pins the TypeScript version resolved by `@c8y/devkit` to 5.9.3 to match the workspace, preventing a `@ngtools/webpack` Debug Failure at build time.
 
 ---
 
@@ -163,7 +161,7 @@ Each plugin also has its own `README.md` describing the plugin itself — this r
 
 All components and pipes in this workspace are standalone — nothing sets `standalone: false`. Plugin entrypoints export **provider arrays** (e.g. `KpiAggregatorWidgetPluginProviders`, `SmartViewsPluginProviders`) built from the SDK hook functions, and the `module` field of each `cumulocity.config.ts` export names one of those arrays. Several files are still named `*.module.ts` for historical reasons while exporting only a provider array.
 
-The one real remaining `@NgModule` is `packages/index-db-cache/src/app/index-db-cache.module.ts`, which uses its constructor to register HTTP interceptors with `ApiService`. A comment in that file sketches the `provideAppInitializer` replacement for 1023.
+No `@NgModule` remains. index-db-cache, the last one, registers its HTTP interceptors with `ApiService` from a `provideEnvironmentInitializer` in its provider array (`index-db-cache.providers.ts`); the shell runs it when it creates the plugin's injector.
 
 ### `cumulocity.config.ts`
 

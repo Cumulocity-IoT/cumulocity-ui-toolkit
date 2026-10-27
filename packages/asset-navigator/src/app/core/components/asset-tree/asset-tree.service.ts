@@ -346,7 +346,12 @@ export class AssetTreeService {
     );
 
     this.state.recent.set(next);
-    await this.preferences.set(PREF_RECENT, next);
+
+    try {
+      await this.preferences.set(PREF_RECENT, next);
+    } catch {
+      // Kept for this session: recents are a convenience, a failed write is no error.
+    }
   }
 
   // ── preferences ──────────────────────────────────────────────────────────────

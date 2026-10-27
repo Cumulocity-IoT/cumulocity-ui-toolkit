@@ -1,4 +1,4 @@
-import { CacheEventsService } from './cache-events.service';
+import { TestBed } from '@angular/core/testing';
 import { MeasurementCacheService } from './measurement-cache.service';
 
 describe('MeasurementCacheService.computeGaps', () => {
@@ -9,7 +9,7 @@ describe('MeasurementCacheService.computeGaps', () => {
   const d = (s: string): Date => new Date(s);
 
   beforeEach(() => {
-    service = new MeasurementCacheService(new CacheEventsService());
+    service = TestBed.inject(MeasurementCacheService);
   });
 
   it('returns the full range as one gap when coverage is empty', () => {

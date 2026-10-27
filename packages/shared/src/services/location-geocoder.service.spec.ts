@@ -5,7 +5,7 @@ describe('LocationGeocoderService', () => {
   it('returns parsed coordinates when the API has a result', async () => {
     const fetchSpy: any = spyOn(FetchClient.prototype, 'fetch').and.returnValue(
       Promise.resolve({
-        // eslint-disable-next-line @typescript-eslint/require-await, @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/require-await
         json: async () => [{ lat: '12.34', lon: '56.78' }],
       } as any)
     );
@@ -20,7 +20,7 @@ describe('LocationGeocoderService', () => {
   it('returns undefined when no geocoding result is available', async () => {
     spyOn(FetchClient.prototype, 'fetch').and.returnValue(
       Promise.resolve({
-        // eslint-disable-next-line @typescript-eslint/require-await, @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/require-await
         json: async () => [],
       } as any)
     );

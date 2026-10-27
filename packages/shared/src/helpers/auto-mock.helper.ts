@@ -26,7 +26,7 @@ export function autoMock<T>(obj: new (...args: any[]) => T): T {
   const allMethods = keys.filter((key) => {
     try {
       return typeof obj.prototype[key] === 'function';
-    } catch (error) {
+    } catch {
       return false;
     }
   });

@@ -63,20 +63,6 @@ export class OperationsWidgetConfigComponent {
     }
   }
 
-  /**
-   * `buttons` and `fields` are optional on the persisted config, so every access
-   * goes through these two helpers instead of repeating the guards inline.
-   */
-  private fieldsOf(buttonIndex: number): OperationParamConfig[] | undefined {
-    const button = this.config.buttons?.[buttonIndex];
-
-    if (!button) {
-      return undefined;
-    }
-
-    return (button.fields ??= []);
-  }
-
   addField(buttonIndex: number, placeholder: { key: string; path: string }) {
     this.fieldsOf(buttonIndex)?.push({
       key: placeholder.key,
@@ -186,6 +172,20 @@ export class OperationsWidgetConfigComponent {
     for (const key of removedFieldKeys) {
       this.removeField(buttonIndex, key);
     }
+  }
+
+  /**
+   * `buttons` and `fields` are optional on the persisted config, so every access
+   * goes through these two helpers instead of repeating the guards inline.
+   */
+  private fieldsOf(buttonIndex: number): OperationParamConfig[] | undefined {
+    const button = this.config.buttons?.[buttonIndex];
+
+    if (!button) {
+      return undefined;
+    }
+
+    return (button.fields ??= []);
   }
 
   private setSupportedOperations(): void {

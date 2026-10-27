@@ -147,46 +147,6 @@ export class AssetDetailPanelComponent {
     return this.isBranch() ? [...branchRows(rollup, this.unit()), ...configured] : configured;
   });
 
-  /** One configured field, resolved against the store, the rollup, and the lazy read. */
-  private toRow(field: DetailField, node: AssetNode, rollup: AssetRollup): DetailRow {
-    const { source } = field;
-    const row = (render: DetailRow['render'], value: string | null): DetailRow => ({
-      key: detailFieldId(field),
-      label: field.label,
-      render,
-      value,
-      unavailable: false,
-    });
-
-    switch (source.kind) {
-      case 'alarms':
-        // The subtree, attached devices included — the same number the row's dot is drawn
-        // from, so panel and tree can never disagree.
-        return row('alarms', alarmSummary(rollup.alarms) ?? gettext('None'));
-      case 'availability':
-        return row('status', availabilityLabel(effectiveAvailability(node, rollup)));
-      case 'type':
-        return row('text', node.type || '—');
-      case 'lastUpdated':
-        return row('text', formatValue(node.properties['lastUpdated'], field, 'date'));
-      case 'property':
-        return row('text', formatValue(readPath(node.properties, source.path), field));
-
-      case 'measurement': {
-        const reading = this.latest()?.values[source.series];
-
-        // Distinguish "not read yet" from "the asset does not report it": while the read is
-        // in flight the row shows a placeholder, afterwards a dash.
-        if (!reading) return row('text', this.loading() ? null : '—');
-
-        return row(
-          'text',
-          formatValue(reading.value, { ...field, unit: field.unit ?? reading.unit }, 'number')
-        );
-      }
-    }
-  }
-
   constructor() {
     // One effect drives the whole lazy load, keyed on (asset, selected fields). Changing the
     // asset cancels the previous asset's in-flight read, which
@@ -240,6 +200,46 @@ export class AssetDetailPanelComponent {
 
   protected onPin(): void {
     this.pinToggled.emit();
+  }
+
+  /** One configured field, resolved against the store, the rollup, and the lazy read. */
+  private toRow(field: DetailField, node: AssetNode, rollup: AssetRollup): DetailRow {
+    const { source } = field;
+    const row = (render: DetailRow['render'], value: string | null): DetailRow => ({
+      key: detailFieldId(field),
+      label: field.label,
+      render,
+      value,
+      unavailable: false,
+    });
+
+    switch (source.kind) {
+      case 'alarms':
+        // The subtree, attached devices included — the same number the row's dot is drawn
+        // from, so panel and tree can never disagree.
+        return row('alarms', alarmSummary(rollup.alarms) ?? gettext('None'));
+      case 'availability':
+        return row('status', availabilityLabel(effectiveAvailability(node, rollup)));
+      case 'type':
+        return row('text', node.type || '—');
+      case 'lastUpdated':
+        return row('text', formatValue(node.properties['lastUpdated'], field, 'date'));
+      case 'property':
+        return row('text', formatValue(readPath(node.properties, source.path), field));
+
+      case 'measurement': {
+        const reading = this.latest()?.values[source.series];
+
+        // Distinguish "not read yet" from "the asset does not report it": while the read is
+        // in flight the row shows a placeholder, afterwards a dash.
+        if (!reading) return row('text', this.loading() ? null : '—');
+
+        return row(
+          'text',
+          formatValue(reading.value, { ...field, unit: field.unit ?? reading.unit }, 'number')
+        );
+      }
+    }
   }
 
   /**

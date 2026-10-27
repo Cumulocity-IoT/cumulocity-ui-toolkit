@@ -1,3 +1,7 @@
+import { TestBed } from '@angular/core/testing';
+import { OldSeriesCacheService } from './old-series-cache.service';
+import { CacheStateService } from './cache-state.service';
+import { CacheLogService } from './cache-log.service';
 import { OldSeriesInterceptorService } from './old-series-interceptor.service';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -30,7 +34,15 @@ describe('OldSeriesInterceptorService.tryParseParams', () => {
   });
 
   beforeEach(() => {
-    service = new OldSeriesInterceptorService(null as any, null as any, null as any);
+    // URL matching and parameter parsing do not touch the injected services: stub them
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: OldSeriesCacheService, useValue: {} },
+        { provide: CacheStateService, useValue: {} },
+        { provide: CacheLogService, useValue: {} },
+      ],
+    });
+    service = TestBed.inject(OldSeriesInterceptorService);
   });
 
   // ─── URL matching ────────────────────────────────────────────────────────────

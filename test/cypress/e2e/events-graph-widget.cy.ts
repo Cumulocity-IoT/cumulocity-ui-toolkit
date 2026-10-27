@@ -164,17 +164,17 @@ describe('Events Graph Widget', () => {
     cy.intercept('GET', '**/event/events?*').as('events');
     visitWithConfig({});
 
-    cy.wait('@events').its('request.query').should('deep.include', {
-      source: device.id,
-      type: TYPE,
-      pageSize: '2000',
-      revert: 'true',
-    });
-    // the state active at the window start is looked up separately
-    cy.wait('@events').its('request.query').should('deep.include', {
-      source: device.id,
-      type: TYPE,
-      pageSize: '1',
+    // in parallel: the time box newest first, page by page, and the state active at its start
+    cy.wait(['@events', '@events']).then((calls) => {
+      const queries = calls.map((call) => call.request.query);
+      const inBox = queries.find((query) => query.pageSize === '2000');
+      const before = queries.find((query) => query.pageSize === '1');
+
+      expect(inBox).to.deep.include({ source: device.id, type: TYPE, currentPage: '1' });
+      expect(inBox).not.to.have.property('revert');
+      expect(before).to.deep.include({ source: device.id, type: TYPE });
+      expect(before).to.have.property('dateTo');
+      expect(before).not.to.have.property('dateFrom');
     });
     cy.get(`${WIDGET} ${cy_('--chart')} canvas`).should('be.visible');
     cy.get(`${WIDGET} ${cy_('--reload-button')}`).should('not.exist');
@@ -190,8 +190,8 @@ describe('Events Graph Widget', () => {
     });
 
     cy.get(`${WIDGET} ${cy_('--chart')} canvas`).should('be.visible');
-    // the other type has no events → no lookup of the previous state
-    cy.get('@events.all').should('have.length', 3);
+    // the earlier state is looked up for every type, with or without events in the time box
+    cy.get('@events.all').should('have.length', 4);
     cy.get('@events.all').then((calls) => {
       const types = (calls as unknown as { request: { query: { type: string } } }[]).map(
         (c) => c.request.query.type
@@ -372,6 +372,58 @@ describe('Events Graph Widget', () => {
       cy.get(`${WIDGET} ${cy_('--cursor-lane')}`).should('have.length', 2);
       cy.get(`${WIDGET} ${cy_('--cursor-lane')}`).first().should('contain.text', device.name);
       cy.get(`${WIDGET} ${cy_('--cursor-lane')}`).last().should('contain.text', pump.name);
+    });
+  });
+
+  describe('placing the states on the time axis', () => {
+    /** The readout of the time cursor at `fraction` of the plot width. */
+    function stateAt(fraction: number): Cypress.Chainable<string> {
+      cy.get(`${WIDGET} ${cy_('--chart')} canvas`)
+        .should('be.visible')
+        .then(($canvas) => {
+          const { width, height } = $canvas[0].getBoundingClientRect();
+
+          cy.wrap($canvas).trigger('mousemove', width * fraction, height / 2);
+        });
+
+      return cy.get(`${WIDGET} ${cy_('--cursor-state')}`).first().invoke('text');
+    }
+
+    function visitDevice(source: IManagedObject) {
+      createDashboard(source, {
+        ...BASE_CONFIG,
+        device: { id: source.id, name: source.name },
+      }).then((dashboard) =>
+        cy.visitApp(`device/${source.id}/dashboard/${dashboard.id}`, {
+          language: 'en',
+          waitFor: WIDGET,
+        })
+      );
+    }
+
+    function deviceWithEvent(name: string, hoursAgo: number, text: string) {
+      return cy.createDevice({ name: `${name} ${Date.now()}` }).then((created) => {
+        const time = new Date(Date.now() - hoursAgo * 3600 * 1000).toISOString();
+
+        cy.c8yclient((c) => c.event.create({ source: { id: created.id }, type: TYPE, text, time }));
+
+        return cy.wrap(created);
+      });
+    }
+
+    it('starts a bar at its event time, not at the start of the time box', () => {
+      // the only event: 2 h into the 4 h window, nothing before it
+      deviceWithEvent('Late start', 2, 'RUNNING').then((late) => visitDevice(late));
+
+      stateAt(0.15).should('equal', '–');
+      stateAt(0.9).should('equal', 'Running');
+    });
+
+    it('shows the state a device has been in since before the time box', () => {
+      // changed 5 h ago — before the 4 h window — and nothing since
+      deviceWithEvent('Long stop', 5, 'STOPPED').then((stopped) => visitDevice(stopped));
+
+      stateAt(0.5).should('equal', 'Stopped');
     });
   });
 });

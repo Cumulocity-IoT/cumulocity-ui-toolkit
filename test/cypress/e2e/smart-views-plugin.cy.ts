@@ -304,6 +304,33 @@ describe('Smart Views', () => {
       gridRow(`${name} v2`).should('exist');
     });
 
+    it('keeps a hand-written query when a configuration is renamed', () => {
+      const name = uniqueName('Handwritten');
+      const query = "(name eq 'WTG*') and has(c8y_IsAsset)";
+
+      createAssetDefinition()
+        .then((definition) =>
+          createConfiguration(name, {
+            assetDefinitionId: definition.id,
+            assetDefinitionName: ASSET_TYPE,
+            query,
+          })
+        )
+        .then((config) => {
+          cy.intercept('PUT', `**/inventory/managedObjects/${config.id}`).as('update');
+        });
+      visitConfigurationPage();
+
+      gridRow(name)
+        .find('[data-cy="c8y-data-grid--edit-button-in-row"]')
+        .first()
+        .click({ force: true });
+      cy.get(NAME_INPUT).should('have.value', name).clear().type(`${name} v2`);
+      cy.get(SAVE).click();
+
+      cy.wait('@update').its('request.body.c8y_SmartViewConfiguration.query').should('eq', query);
+    });
+
     it('deletes a configuration after confirmation', () => {
       const name = uniqueName('Deletable');
 

@@ -63,39 +63,6 @@ export class PopupComponent {
     return values;
   });
 
-  /**
-   * Recursively extracts all leaf properties from an object, returning a flat
-   * array of `PropertiesListItem` entries. Handles nested objects and arrays.
-   */
-  private extractObjectProperties(
-    obj: Record<string, unknown>,
-    basePath: string
-  ): PropertiesListItem[] {
-    const items: PropertiesListItem[] = [];
-
-    for (const [key, value] of Object.entries(obj)) {
-      const fullKey = `${basePath}.${key}`;
-
-      if (value === undefined || value === null) {
-        continue;
-      }
-
-      if (typeof value === 'object' && !Array.isArray(value)) {
-        // Recurse into nested objects
-        items.push(...this.extractObjectProperties(value as Record<string, unknown>, fullKey));
-      } else {
-        // Leaf value: create a property entry with the resolved value
-        items.push({
-          label: fullKey,
-          value: `${value as string | number | boolean}`,
-          type: Array.isArray(value) ? 'array' : 'string',
-        });
-      }
-    }
-
-    return items;
-  }
-
   /** Whether asset properties are configured (regardless of MO load state). */
   hasAssetProperties = computed(() => !isEmpty(this.cfg().assetProperties));
 
@@ -158,38 +125,6 @@ export class PopupComponent {
     void this.startFetch();
   }
 
-  private startFetch(): Promise<void[]> {
-    this.isLoading.set(true);
-    const promises: Promise<void>[] = [this.fetchDevice()];
-
-    if (this.cfg().showDate) {
-      promises.push(this.fetchLatestDate());
-    }
-
-    return Promise.all(promises).finally(() => this.isLoading.set(false));
-  }
-
-  private fetchDevice(): Promise<void> {
-    return this.inventory.detail(this.content().deviceId).then((result) => {
-      this.mo.set(result.data);
-    });
-  }
-
-  private fetchLatestDate(): Promise<void> {
-    const eventFilter = {
-      pageSize: 1,
-      withTotalPages: false,
-      fragmentType: 'c8y_Position',
-      source: this.content().deviceId,
-    };
-
-    return this.events.list(eventFilter).then((result) => {
-      if (!isEmpty(result.data)) {
-        this.lastUpdated.set(result.data[0].time);
-      }
-    });
-  }
-
   toggleActive(): void {
     this.active.set(!this.active());
     this.line = [];
@@ -222,4 +157,69 @@ export class PopupComponent {
   }
 
   onHide(): void {}
+
+  /**
+   * Recursively extracts all leaf properties from an object, returning a flat
+   * array of `PropertiesListItem` entries. Handles nested objects and arrays.
+   */
+  private extractObjectProperties(
+    obj: Record<string, unknown>,
+    basePath: string
+  ): PropertiesListItem[] {
+    const items: PropertiesListItem[] = [];
+
+    for (const [key, value] of Object.entries(obj)) {
+      const fullKey = `${basePath}.${key}`;
+
+      if (value === undefined || value === null) {
+        continue;
+      }
+
+      if (typeof value === 'object' && !Array.isArray(value)) {
+        // Recurse into nested objects
+        items.push(...this.extractObjectProperties(value as Record<string, unknown>, fullKey));
+      } else {
+        // Leaf value: create a property entry with the resolved value
+        items.push({
+          label: fullKey,
+          value: `${value as string | number | boolean}`,
+          type: Array.isArray(value) ? 'array' : 'string',
+        });
+      }
+    }
+
+    return items;
+  }
+
+  private startFetch(): Promise<void[]> {
+    this.isLoading.set(true);
+    const promises: Promise<void>[] = [this.fetchDevice()];
+
+    if (this.cfg().showDate) {
+      promises.push(this.fetchLatestDate());
+    }
+
+    return Promise.all(promises).finally(() => this.isLoading.set(false));
+  }
+
+  private fetchDevice(): Promise<void> {
+    return this.inventory.detail(this.content().deviceId).then((result) => {
+      this.mo.set(result.data);
+    });
+  }
+
+  private fetchLatestDate(): Promise<void> {
+    const eventFilter = {
+      pageSize: 1,
+      withTotalPages: false,
+      fragmentType: 'c8y_Position',
+      source: this.content().deviceId,
+    };
+
+    return this.events.list(eventFilter).then((result) => {
+      if (!isEmpty(result.data)) {
+        this.lastUpdated.set(result.data[0].time);
+      }
+    });
+  }
 }

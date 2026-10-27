@@ -120,11 +120,6 @@ export class AssetTreeRowComponent {
   protected readonly branchLoading = computed(() => this.branchStatus() === 'loading');
   protected readonly branchFailed = computed(() => this.branchStatus() === 'error');
 
-  protected onLoadMore(event: MouseEvent): void {
-    event.stopPropagation();
-    this.loadMore.emit();
-  }
-
   /**
    * The descendant count on branch rows — assets with the Digital Twin Manager, devices
    * otherwise (`countUnitFor`); leaves show nothing (§3.3). The unit is in the title.
@@ -139,6 +134,11 @@ export class AssetTreeRowComponent {
 
     return branchBadgeCount(row.rollup, this.countUnit()) || null;
   });
+
+  protected onLoadMore(event: MouseEvent): void {
+    event.stopPropagation();
+    this.loadMore.emit();
+  }
 
   protected onToggle(event: MouseEvent): void {
     // The twisty must never also select — expanding to look inside is not choosing.

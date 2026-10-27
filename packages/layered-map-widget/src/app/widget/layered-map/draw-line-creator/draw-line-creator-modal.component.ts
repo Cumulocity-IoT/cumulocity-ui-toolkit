@@ -82,14 +82,6 @@ export class DrawLineCreatorModalComponent implements AfterViewInit {
     this.map.dragging?.enable();
   }
 
-  private setMapCursor(cursor: string): void {
-    const container = document.getElementById('draw-line-map');
-
-    if (container) {
-      container.style.cursor = cursor;
-    }
-  }
-
   resetLine(): void {
     this.coordinates = [];
 
@@ -155,5 +147,13 @@ export class DrawLineCreatorModalComponent implements AfterViewInit {
       coords: this.coordinates,
       createDate: new Date(),
     });
+  }
+
+  private setMapCursor(cursor: string): void {
+    const container = document.getElementById('draw-line-map');
+
+    if (container) {
+      container.style.cursor = cursor;
+    }
   }
 }

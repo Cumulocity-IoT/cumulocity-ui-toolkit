@@ -155,4 +155,69 @@ describe('NavigatorSettingsService', () => {
       expect(service.settings().detailPanel).toEqual(DEFAULT_SETTINGS.detailPanel);
     });
   });
+  describe('concurrent changes', () => {
+    it('creates one settings object for quick successive first changes (SSO users)', async () => {
+      const service = setup({ userOrigin: 'OAUTH2' });
+      let created!: () => void;
+
+      inventory.create.and.returnValue(
+        new Promise((resolve) => (created = () => resolve({ data: { id: '77' } } as never)))
+      );
+      await service.load();
+
+      const first = service.update({ maxRecent: 3 });
+      const second = service.update({ maxRecent: 4 });
+
+      await Promise.resolve();
+      created();
+      await Promise.all([first, second]);
+
+      expect(inventory.create).toHaveBeenCalledTimes(1);
+      expect(inventory.update).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          id: '77',
+          [SETTINGS_FRAGMENT]: jasmine.objectContaining({ maxRecent: 4 }),
+        })
+      );
+    });
+
+    it('stores the latest settings last, whatever order the requests take', async () => {
+      const service = setup();
+      const pending: (() => void)[] = [];
+
+      users.updateCurrent.and.callFake(
+        () => new Promise((resolve) => pending.push(() => resolve({ data: {} } as never)))
+      );
+      await service.load();
+
+      const first = service.update({ maxRecent: 3 });
+      const second = service.update({ maxRecent: 4 });
+
+      // only one write may be on the wire at a time
+      await new Promise((resolve) => setTimeout(resolve));
+      expect(pending.length).toBe(1);
+      pending.shift()!();
+      await new Promise((resolve) => setTimeout(resolve));
+      pending.shift()!();
+      await Promise.all([first, second]);
+
+      const lastWrite = users.updateCurrent.calls.mostRecent().args[0] as {
+        customProperties: Record<string, { maxRecent: number }>;
+      };
+
+      expect(lastWrite.customProperties[SETTINGS_FRAGMENT].maxRecent).toBe(4);
+    });
+
+    it('keeps a change made before the stored settings arrived', async () => {
+      const service = setup({ [SETTINGS_FRAGMENT]: { showSearch: false } });
+
+      // the menu changes a setting while the stored settings are still being read
+      const loading = service.load();
+
+      await Promise.all([loading, service.update({ maxRecent: 3 })]);
+
+      expect(service.settings().maxRecent).toBe(3);
+      expect(service.settings().showSearch).toBeFalse();
+    });
+  });
 });

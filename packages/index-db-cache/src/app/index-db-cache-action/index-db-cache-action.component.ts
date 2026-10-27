@@ -139,7 +139,10 @@ export class IndexDbCacheActionComponent {
         this.observeShell();
       }
     });
-    inject(DestroyRef).onDestroy(() => this.unobserveShell());
+    inject(DestroyRef).onDestroy(() => {
+      this.unobserveShell();
+      if (this.ledHandle !== null) clearTimeout(this.ledHandle);
+    });
   }
 
   toggle(): void {
@@ -208,17 +211,27 @@ export class IndexDbCacheActionComponent {
     window.addEventListener('resize', measure);
 
     let frame: number | null = null;
-    const followFrames = () => {
-      measure();
-      frame = requestAnimationFrame(followFrames);
-    };
-    const onTransitionRun = () => {
-      if (frame === null) followFrames();
-    };
-    const onTransitionEnd = () => {
+    let followUntil = 0;
+    const stopFollowing = () => {
       if (frame !== null) cancelAnimationFrame(frame);
       frame = null;
       measure();
+    };
+    const followFrames = () => {
+      measure();
+      // capped: should a `transitionend` never arrive, the loop must not run on forever
+      frame = performance.now() < followUntil ? requestAnimationFrame(followFrames) : null;
+    };
+    // Transition events bubble: only the navigator's *own* transitions move it — a child's
+    // (a node expanding) neither starts nor stops following.
+    const onTransitionRun = (event: Event) => {
+      if (event.target !== event.currentTarget) return;
+      followUntil = performance.now() + MAX_FOLLOW_MS;
+      if (frame === null) followFrames();
+    };
+    const onTransitionEnd = (event: Event) => {
+      if (event.target !== event.currentTarget) return;
+      stopFollowing();
     };
 
     navigators.forEach((element) => {
@@ -244,6 +257,9 @@ export class IndexDbCacheActionComponent {
     this.stopObservingShell = null;
   }
 }
+
+/** Longest the drawer follows one navigator transition frame by frame. */
+const MAX_FOLLOW_MS = 2_000;
 
 /** The shell's page toolbar (action bar) — possibly several stacked, the lowest one counts. */
 const TOOLBAR_SELECTOR = 'c8y-action-bar, .c8y-ui-action-bar';

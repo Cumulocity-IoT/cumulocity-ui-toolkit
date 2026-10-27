@@ -60,49 +60,6 @@ export class CenterMapModalComponent implements AfterViewInit, OnDestroy {
     void this.initAfterView();
   }
 
-  private async initAfterView(): Promise<void> {
-    this.leaf = await this.mapService.getLeaflet();
-    const options: L.MapOptions = {
-      zoom: 15,
-      layers: [this.leaf.tileLayer(OSM_TILE_URL, { ...OSM_TILE_OPTIONS })],
-      center: this.leaf.latLng(51.23544, 6.79599), // Düsseldorf
-      attributionControl: false,
-      scrollWheelZoom: false,
-    };
-
-    this.map = this.leaf
-      .map(this.mapReference.nativeElement as HTMLElement, options)
-      .setView(this.leaf.latLng(51.505, -0.09), 13);
-
-    const { lat, long, zoomLevel } = this.center();
-
-    if (lat && long && zoomLevel) {
-      const bounds = this.leaf.latLng(lat, long);
-
-      this.map.setView(bounds, zoomLevel);
-    }
-
-    fromEvent<L.LeafletEvent>(this.map, 'zoomend')
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(() => {
-        const zoom = this.map?.getZoom();
-
-        if (zoom !== undefined) {
-          this.patchCenter({ zoomLevel: zoom });
-        }
-      });
-
-    fromEvent<L.DragEndEvent>(this.map, 'dragend')
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(() => {
-        const center = this.map?.getCenter();
-
-        if (center) {
-          this.patchCenter({ lat: center.lat, long: center.lng });
-        }
-      });
-  }
-
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
@@ -163,5 +120,48 @@ export class CenterMapModalComponent implements AfterViewInit, OnDestroy {
   // called if save is pressed
   onClose(): void {
     this.closeSubject.next(this.center());
+  }
+
+  private async initAfterView(): Promise<void> {
+    this.leaf = await this.mapService.getLeaflet();
+    const options: L.MapOptions = {
+      zoom: 15,
+      layers: [this.leaf.tileLayer(OSM_TILE_URL, { ...OSM_TILE_OPTIONS })],
+      center: this.leaf.latLng(51.23544, 6.79599), // Düsseldorf
+      attributionControl: false,
+      scrollWheelZoom: false,
+    };
+
+    this.map = this.leaf
+      .map(this.mapReference.nativeElement as HTMLElement, options)
+      .setView(this.leaf.latLng(51.505, -0.09), 13);
+
+    const { lat, long, zoomLevel } = this.center();
+
+    if (lat && long && zoomLevel) {
+      const bounds = this.leaf.latLng(lat, long);
+
+      this.map.setView(bounds, zoomLevel);
+    }
+
+    fromEvent<L.LeafletEvent>(this.map, 'zoomend')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        const zoom = this.map?.getZoom();
+
+        if (zoom !== undefined) {
+          this.patchCenter({ zoomLevel: zoom });
+        }
+      });
+
+    fromEvent<L.DragEndEvent>(this.map, 'dragend')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        const center = this.map?.getCenter();
+
+        if (center) {
+          this.patchCenter({ lat: center.lat, long: center.lng });
+        }
+      });
   }
 }

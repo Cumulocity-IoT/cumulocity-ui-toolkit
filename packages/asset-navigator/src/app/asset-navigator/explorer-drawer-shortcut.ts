@@ -23,7 +23,8 @@ export function provideExplorerDrawerShortcut() {
 
         if (!chord || settings.recordingShortcut() || !matchesChord(chord, event)) return;
         event.preventDefault();
-        event.stopPropagation();
+        // other window listeners too (the search shortcut), not only the page below
+        event.stopImmediatePropagation();
         drawer.toggle();
       },
       { capture: true }

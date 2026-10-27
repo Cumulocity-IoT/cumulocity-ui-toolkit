@@ -64,7 +64,7 @@ function clearReminders(): void {
     });
 }
 
-function stubTenantOption(key: 'types' | 'config', value: unknown): void {
+function stubTenantOption(key: 'types' | 'config' | 'defaults', value: unknown): void {
   cy.intercept('GET', `/tenant/options/c8y.reminder/${key}`, {
     statusCode: 200,
     body: { category: 'c8y.reminder', key, value: JSON.stringify(value) },
@@ -269,6 +269,25 @@ describe('Reminder', () => {
     cy.window().its('localStorage').invoke('getItem', 'c8y_rpConfig').should('contain', '"browser":true');
     cy.get('[data-cy="reminder--toast-toggle"]').uncheck({ force: true });
     cy.window().its('localStorage').invoke('getItem', 'c8y_rpConfig').should('contain', '"toast":false');
+  });
+
+  it('applies the tenant notification defaults to a browser that stored settings before', () => {
+    stubTenantOption('defaults', { toast: true, browser: false });
+    visit();
+    // what versions before 2.0.0 stored on every config write, whether the user touched the
+    // notification switches or not
+    cy.window().then((win) =>
+      win.localStorage.setItem(
+        'c8y_rpConfig',
+        JSON.stringify({ toast: false, browser: false, filter: { reminderType: '' }, useContext: false })
+      )
+    );
+    cy.reload();
+    cy.get('[data-cy="reminder--indicator"]').should('be.visible');
+    openDrawer();
+
+    cy.get('[data-cy="reminder--toast-toggle"]').should('be.checked');
+    cy.get('[data-cy="reminder--browser-toggle"]').should('not.be.checked');
   });
 
   it('shows a toast when a reminder becomes due and toasts are enabled', () => {

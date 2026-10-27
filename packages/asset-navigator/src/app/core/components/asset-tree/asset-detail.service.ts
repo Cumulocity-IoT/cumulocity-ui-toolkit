@@ -13,8 +13,12 @@ import { seriesFor } from './asset-detail-fields';
  * - one request per asset, issued only on **committed hover intent** — the caller
  *   waits out the open delay before calling, and never prefetches on mouse-move;
  * - discarded on pointer-out (see `LoadHandle.cancel`);
- * - cached per asset for the session.
+ * - cached per asset for {@link LATEST_MAX_AGE_MS} — the tree's own poll cadence, so the
+ *   panel is never older than the tree around it.
  */
+
+/** How long latest values are reused before the next hover fetches them again. */
+export const LATEST_MAX_AGE_MS = 30_000;
 
 /** Latest values keyed `<fragment>.<series>`, plus their units. */
 export interface AssetLatestValues {
@@ -38,12 +42,17 @@ export interface LoadHandle<T> {
 export class AssetDetailService {
   private readonly inventory = inject(InventoryService);
 
-  /** Session cache. Keyed by asset id; the value set is a superset per asset. */
-  private readonly latestCache = new Map<string, AssetLatestValues>();
+  /** Keyed by asset id; the value set is a superset per asset. */
+  private readonly latestCache = new Map<
+    string,
+    { latest: AssetLatestValues; fetchedAt: number }
+  >();
+
   private readonly inFlight = new Map<string, Promise<AssetLatestValues>>();
 
+  /** The last values read for the asset, however old — to paint at once while refreshing. */
   cachedLatest(assetId: string): AssetLatestValues | undefined {
-    return this.latestCache.get(assetId);
+    return this.latestCache.get(assetId)?.latest;
   }
 
   /**
@@ -57,10 +66,11 @@ export class AssetDetailService {
    */
   loadLatest(assetId: string, fields: readonly DetailField[]): LoadHandle<AssetLatestValues> {
     const needed = seriesFor(fields);
-    const cached = this.latestCache.get(assetId);
+    const entry = this.latestCache.get(assetId);
+    const fresh = entry && Date.now() - entry.fetchedAt < LATEST_MAX_AGE_MS;
 
-    if (!needed.length || cached) {
-      return { result: Promise.resolve(cached ?? { values: {} }), cancel: () => undefined };
+    if (!needed.length || fresh) {
+      return { result: Promise.resolve(entry?.latest ?? { values: {} }), cancel: () => undefined };
     }
 
     let cancelled = false;
@@ -123,7 +133,7 @@ export class AssetDetailService {
 
     const result: AssetLatestValues = { values, asOf };
 
-    this.latestCache.set(assetId, result);
+    this.latestCache.set(assetId, { latest: result, fetchedAt: Date.now() });
 
     return result;
   }

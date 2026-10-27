@@ -1,14 +1,11 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { type IFetchResponse } from '@c8y/client';
 import { type ApiCall, type HttpHandler, type HttpInterceptor } from '@c8y/ngx-components/api';
-import { type Observable, firstValueFrom, from } from 'rxjs';
+import { type Observable, firstValueFrom } from 'rxjs';
 import { type CumulocityMeasurement, type MeasurementCollection } from './chart-data.service';
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- constructor injection: Angular JIT (aot: false) reads parameter types at runtime
 import { CacheLogService } from './cache-log.service';
-import { MIN_HISTORICAL_MS, clampCoverageTo } from './interceptor-helpers';
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- constructor injection: Angular JIT (aot: false) reads parameter types at runtime
+import { MIN_HISTORICAL_MS, clampCoverageTo, withNetworkFallback } from './interceptor-helpers';
 import { CacheStateService } from './cache-state.service';
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- constructor injection: Angular JIT (aot: false) reads parameter types at runtime
 import { MeasurementCacheService } from './measurement-cache.service';
 import { get, has } from 'lodash';
 
@@ -79,12 +76,9 @@ function buildFakeResponse(body: unknown, url: string): IFetchResponse {
  */
 @Injectable({ providedIn: 'root' })
 export class MeasurementInterceptorService implements HttpInterceptor {
-  constructor(
-    private readonly cache: MeasurementCacheService,
-    private readonly cacheState: CacheStateService,
-    private readonly logService: CacheLogService
-  ) {}
-
+  private readonly cache = inject(MeasurementCacheService);
+  private readonly cacheState = inject(CacheStateService);
+  private readonly logService = inject(CacheLogService);
   intercept(req: ApiCall, next: HttpHandler): Observable<IFetchResponse> {
     if (!this.cacheState.isActive) return next.handle(req);
 
@@ -92,7 +86,7 @@ export class MeasurementInterceptorService implements HttpInterceptor {
 
     if (!params) return next.handle(req);
 
-    return from(this.handleWithCache(params, req, next));
+    return withNetworkFallback(this.handleWithCache(params, req, next), req, next);
   }
 
   // ─── Eligibility parsing ──────────────────────────────────────────────────────
@@ -103,6 +97,12 @@ export class MeasurementInterceptorService implements HttpInterceptor {
     const params = req.options?.params;
 
     if (!params || !has(params, 'dateFrom') || !has(params, 'dateTo')) return null;
+
+    // The cache answers with the whole window, oldest first, on one page, for every
+    // measurement of the fragment: requests asking for anything else go to the network.
+    if (String(get(params, 'revert')) === 'true') return null;
+    if (+(get(params, 'currentPage') ?? 1) > 1) return null;
+    if (has(params, 'type')) return null;
 
     // Match the list endpoint only — the series endpoint ends with /series
 

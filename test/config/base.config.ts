@@ -48,9 +48,7 @@ export function baseConfig(remote?: string, pattern?: string[], packageName?: st
         // cy.visitApp (@cumulocity-iot/ui-sdk/cypress): the shell to load the plugin into, and the
         // `?remotes=` value ({ contextPath: modules }) built by the per-plugin config.
         C8Y_SHELL:
-          process.env.CYPRESS_C8Y_SHELL_TARGET ||
-          process.env.C8Y_SHELL_TARGET ||
-          'cockpit-test-1023',
+          process.env.CYPRESS_C8Y_SHELL_TARGET || process.env.C8Y_SHELL_TARGET || 'cockpit',
         C8Y_REMOTES: remote || '',
         C8Y_USERNAME: process.env.CYPRESS_C8Y_USERNAME || process.env.C8Y_USERNAME,
         C8Y_PASSWORD: process.env.CYPRESS_C8Y_PASSWORD || process.env.C8Y_PASSWORD,

@@ -2,6 +2,7 @@ import {
   Injectable,
   type Signal,
   type WritableSignal,
+  computed,
   inject,
   isDevMode,
   signal,
@@ -34,10 +35,10 @@ import type { IManagedObject } from '@c8y/client';
  *
  * **What this does NOT do is sweep the asset hierarchy.** `AssetStoreService` already holds
  * the fleet — one `isinhierarchyof` sweep, polled, shared across every plugin bundle
- * through `Symbol.for('c8y-ps.asset-store.v1')`. Re-fetching it here would be a second
- * copy of the same data on the same page, so assets are *read from that cache* and only the
- * remainder — the devices the fleet sweep deliberately excludes (`has(c8y_IsAsset)` skips
- * controllers, RTUs and SCADA boxes) — is fetched, once.
+ * through `Symbol.for('c8y-ps.asset-store.v2')`. Re-fetching it here would be a second
+ * copy of the same data on the same page, so assets are *read from that cache* — live, so
+ * names, status and alarm counts follow the store's poll — and only the remainder, the
+ * devices the sweep does not hold, is fetched, once.
  *
  * The consequence, stated because it is a real limit: an asset **outside** the swept root
  * is in neither source, so global search will not find it. `verifyCoverage` compares what
@@ -45,11 +46,11 @@ import type { IManagedObject } from '@c8y/client';
  * this shows up as a log line rather than as a mystery missing row. The fix, if a tenant
  * needs it, is `AssetStoreService.configure({ rootId })` — not a second sweep here.
  */
-const CORE_SYMBOL = Symbol.for('c8y-ps.search-corpus.v1');
+const CORE_SYMBOL = Symbol.for('c8y-ps.search-corpus.v2');
 
 interface SearchCorpusCore {
-  /** The assembled corpus, or `null` before the first load / when too large to hold. */
-  corpus: WritableSignal<readonly SearchResult[] | null>;
+  /** The devices fetched for the corpus, or `null` before the first load / when too large. */
+  devices: WritableSignal<readonly SearchResult[] | null>;
   mode: WritableSignal<SearchMode | null>;
   /** Sticky: once the tenant is known to be too large, stop probing on every search. */
   tooLarge: boolean;
@@ -63,7 +64,7 @@ function resolveCore(): SearchCorpusCore {
   const host = globalThis as GlobalWithCore;
 
   host[CORE_SYMBOL] ??= {
-    corpus: signal<readonly SearchResult[] | null>(null),
+    devices: signal<readonly SearchResult[] | null>(null),
     mode: signal<SearchMode | null>(null),
     tooLarge: false,
     loading: null,
@@ -80,17 +81,26 @@ export class SearchCorpusService {
 
   /** Which mode the tenant resolved to, or `null` before the first probe. */
   readonly mode: Signal<SearchMode | null> = this.core.mode.asReadonly();
-  /** The held corpus, or `null` in passthrough mode. */
-  readonly corpus: Signal<readonly SearchResult[] | null> = this.core.corpus.asReadonly();
+  /**
+   * The held corpus, or `null` in passthrough mode: the fetched devices plus the fleet as
+   * the store currently holds it — a new poll updates names, status and alarm chips.
+   */
+  readonly corpus: Signal<readonly SearchResult[] | null> = computed(() => {
+    const devices = this.core.devices();
+    const hierarchy = this.assets.hierarchy();
+
+    return devices && hierarchy ? mergeCorpus(devices, storeResults(hierarchy)) : null;
+  });
 
   /**
-   * The whole corpus, or `undefined` when the tenant is too large to hold. Loads at most
-   * once per session; concurrent callers share one request.
+   * The whole corpus, or `undefined` when it cannot be held — the tenant is too large, or
+   * the fleet or the size are not known yet (then the next search tries again). Devices are
+   * fetched at most once per session; concurrent callers share one request.
    */
   async load(): Promise<readonly SearchResult[] | undefined> {
     if (this.core.tooLarge) return undefined;
 
-    const cached = this.core.corpus();
+    const cached = this.corpus();
 
     if (cached) return cached;
 
@@ -137,7 +147,15 @@ export class SearchCorpusService {
   private async assemble(): Promise<readonly SearchResult[] | undefined> {
     const total = await this.probeSize();
 
-    if (total === undefined || total > PREFETCH_THRESHOLD) {
+    // A failed probe says nothing about the size: search the platform this time, and probe
+    // again next time — only a tenant known to be too large stays in passthrough mode.
+    if (total === undefined) {
+      this.core.mode.set('passthrough');
+
+      return undefined;
+    }
+
+    if (total > PREFETCH_THRESHOLD) {
       this.core.tooLarge = true;
       this.core.mode.set('passthrough');
 
@@ -151,22 +169,19 @@ export class SearchCorpusService {
       await this.assets.refresh();
     }
 
-    const hierarchy = this.assets.hierarchy();
-    const fromStore = hierarchy ? storeResults(hierarchy) : [];
-    const devices = await this.fetchDevices();
+    // The sweep failed: a corpus without assets would hide them all for the session.
+    if (!this.assets.hierarchy()) {
+      this.core.mode.set('passthrough');
 
-    // Ids can legitimately appear in both (a turbine that is also a device), and the store
-    // projection is the richer one — it carries the rolled-up breadcrumb.
-    const byId = new Map<string, SearchResult>();
+      return undefined;
+    }
 
-    for (const device of devices) byId.set(device.id, device);
-    for (const asset of fromStore) byId.set(asset.id, asset);
+    this.core.devices.set(this.core.devices() ?? (await this.fetchDevices()));
+    this.core.mode.set('prefetched');
 
-    const corpus = [...byId.values()];
+    const corpus = this.corpus() ?? [];
 
     this.verifyCoverage(corpus.length, total);
-    this.core.corpus.set(corpus);
-    this.core.mode.set('prefetched');
 
     return corpus;
   }
@@ -307,4 +322,21 @@ function toStoreResult(
     highlights: [],
     ...(totalAlarms > 0 ? { alarms: { ...node.alarms } } : {}),
   };
+}
+
+/**
+ * Devices and fleet assets as one corpus. Ids can legitimately appear in both (a turbine that
+ * is also a device), and the store projection is the richer one — it carries the rolled-up
+ * breadcrumb — so it wins.
+ */
+export function mergeCorpus(
+  devices: readonly SearchResult[],
+  fromStore: readonly SearchResult[]
+): SearchResult[] {
+  const byId = new Map<string, SearchResult>();
+
+  for (const device of devices) byId.set(device.id, device);
+  for (const asset of fromStore) byId.set(asset.id, asset);
+
+  return [...byId.values()];
 }

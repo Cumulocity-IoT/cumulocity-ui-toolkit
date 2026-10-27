@@ -265,35 +265,6 @@ export class GeoMapComponent implements AfterViewInit {
     }
   }
 
-  /**
-   * Fit the view to the current items when they are a different set than the
-   * one already fitted.
-   *
-   * **Guarded on a laid-out container**: markers routinely arrive while the map
-   * still measures 0×0 (a dashboard card initialising, a pane that is still
-   * collapsed). `fitBounds` on a zero-size map computes a nonsense zoom — that
-   * is how a park of turbines ended up rendered as the whole world several
-   * times over. Skipping leaves `fittedTo` unset, and the ResizeObserver runs
-   * this again the moment the container has a size.
-   */
-  private autoFit(): void {
-    if (this.autoFitDisabled) return;
-    const positioned = [...this.itemsById.values()].filter((i) => i.position);
-
-    if (!positioned.length) return;
-    const signature = positioned
-      .map((i) => i.id)
-      .sort()
-      .join(',');
-
-    if (signature === this.fittedTo) return;
-    const size = this.map.getSize();
-
-    if (size.x < 2 || size.y < 2) return;
-    this.fittedTo = signature;
-    this.fitToItems();
-  }
-
   fitToItems(itemIds?: string[]): void {
     const items = itemIds
       ? itemIds.map((id) => this.itemsById.get(id)).filter((i) => i?.position)
@@ -323,6 +294,35 @@ export class GeoMapComponent implements AfterViewInit {
   /** Escape hatch only — container resizes are handled automatically. */
   invalidateSize(): void {
     this.map?.invalidateSize({ pan: false });
+  }
+
+  /**
+   * Fit the view to the current items when they are a different set than the
+   * one already fitted.
+   *
+   * **Guarded on a laid-out container**: markers routinely arrive while the map
+   * still measures 0×0 (a dashboard card initialising, a pane that is still
+   * collapsed). `fitBounds` on a zero-size map computes a nonsense zoom — that
+   * is how a park of turbines ended up rendered as the whole world several
+   * times over. Skipping leaves `fittedTo` unset, and the ResizeObserver runs
+   * this again the moment the container has a size.
+   */
+  private autoFit(): void {
+    if (this.autoFitDisabled) return;
+    const positioned = [...this.itemsById.values()].filter((i) => i.position);
+
+    if (!positioned.length) return;
+    const signature = positioned
+      .map((i) => i.id)
+      .sort()
+      .join(',');
+
+    if (signature === this.fittedTo) return;
+    const size = this.map.getSize();
+
+    if (size.x < 2 || size.y < 2) return;
+    this.fittedTo = signature;
+    this.fitToItems();
   }
 
   // ── Sync (diff by id — never rebuild the layer) ────────────────────────────
