@@ -1,5 +1,11 @@
 # UI Toolkit Changelog
 
+## 2026.10.27 — shell compatibility check
+
+**CI**: `shell-compat.yml` checks daily whether a newer cockpit CD release than the pinned Web SDK version is out and, if so, runs every plugin's e2e suite on the tenant mock inside it. A failure opens a `shell-compat` issue (or comments on the open one for that version); a pass closes it. `e2e-test.yml` names its screenshot artifacts per plugin, so PRs that change several plugins no longer fail on duplicate artifact names.
+
+**Test infrastructure**: `e2e-mock.mts` takes `E2E_SHELL_VERSION` (run in another cockpit release) and `E2E_MOCK_GAPS=<file>` (list the requests the mock does not emulate).
+
 ## 2026.10.27 — Web SDK 1024 / Angular 21 (release v1.0.0)
 
 **Breaking**: all plugins are built for Cumulocity Web SDK 1024.21.x and Angular 21 and need a 1024 cockpit; release v1.0.0 is the first of that line. Every plugin last released on 1023 gets a new major (0.x: minor) version — see each plugin's changelog.
