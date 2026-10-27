@@ -1,17 +1,21 @@
 import {
   inject,
   input,
-  AfterViewInit,
+  type AfterViewInit,
   Component,
   ElementRef,
   Input,
-  OnDestroy,
+  type OnDestroy,
   ViewChild,
 } from '@angular/core';
 import type * as L from 'leaflet';
 import { isEmpty, isNil } from 'lodash';
-import { fromEvent, Subject, Subscription } from 'rxjs';
-import { ILayeredMapWidgetConfig, isQueryLayerConfig, MyLayer } from './layered-map-widget.model';
+import { fromEvent, Subject, type Subscription } from 'rxjs';
+import {
+  type ILayeredMapWidgetConfig,
+  isQueryLayerConfig,
+  type MyLayer,
+} from './layered-map-widget.model';
 import {
   BASE_TILE_LAYERS,
   customEntryToDef,
@@ -26,8 +30,8 @@ import { AlarmPollingService } from './service/alarm-polling.service';
 import { PositionPollingService } from './service/position-polling.service';
 import { EventPollingService } from './service/event-polling.service';
 import { escapeHtml, safeCssColor, safeIconName } from './utils/sanitize';
-import { IManagedObject } from '@c8y/client';
-import { CoreModule, DashboardChildComponent } from '@c8y/ngx-components';
+import { type IManagedObject } from '@c8y/client';
+import { CoreModule } from '@c8y/ngx-components';
 
 @Component({
   selector: 'layered-map-widget',
@@ -77,16 +81,15 @@ export class LayeredMapWidgetComponent implements AfterViewInit, OnDestroy {
 
   private customBaseTileLayerService = inject(CustomBaseTileLayerService);
 
-  constructor(child: DashboardChildComponent) {
-    child.changeEnd
-      .pipe(
-        filter((child) => child.lastChange === 'resize'),
-        takeUntil(this.destroy$)
-      )
-      .subscribe(() => {
-        this.map?.invalidateSize();
-      });
-  }
+  private customTileLayers: import('./base-tile-layers').CustomBaseTileLayerEntry[] = [];
+
+  /**
+   * Leaflet only re-measures on window resize. Widget resizes (drag, size presets,
+   * fullscreen) change the container alone — and since the GridStack dashboard of Web SDK
+   * 1024 the dashboard child's `changeEnd` no longer fires for them.
+   */
+  private resizeObserver?: ResizeObserver;
+  private resizeFrame = 0;
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   async ngAfterViewInit() {
@@ -97,48 +100,6 @@ export class LayeredMapWidgetComponent implements AfterViewInit, OnDestroy {
       }),
     ]);
     this.initMap();
-  }
-
-  private customTileLayers: import('./base-tile-layers').CustomBaseTileLayerEntry[] = [];
-
-  private initMap() {
-    const options: L.MapOptions = this.options() ?? {
-      // zoom: 15,
-      // center: this.leaf.latLng(29.3117, 47.4818),
-      attributionControl: false,
-      scrollWheelZoom: false,
-    };
-
-    this.map = this.leaf.map(this.mapReference.nativeElement as HTMLElement, options);
-
-    if (this.config?.manualCenter) {
-      const { lat, long, zoomLevel } = this.config.manualCenter;
-
-      if (!isNil(lat) && !isNil(long)) {
-        const bounds = this.leaf.latLng(lat, long);
-
-        this.map.setView(bounds, zoomLevel ?? 10);
-      }
-    }
-
-    fromEvent<L.PopupEvent>(this.map, 'popupopen')
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((e) => this.onPopupOpen(e));
-
-    fromEvent<L.PopupEvent>(this.map, 'popupclose')
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((e) => this.onPopupClose(e));
-
-    fromEvent<L.LayersControlEvent>(this.map, 'overlayadd')
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((e) => this.onOverlayAdd(e));
-
-    fromEvent<L.LayersControlEvent>(this.map, 'overlayremove')
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((e) => this.onOverlayRemove(e));
-
-    // this.map!.invalidateSize();
-    this.draw(this.config);
   }
 
   onPopupOpen(event: L.PopupEvent): void {
@@ -182,6 +143,64 @@ export class LayeredMapWidgetComponent implements AfterViewInit, OnDestroy {
       layer.active = false;
       this.refitBoundsIfAutoCenter();
     }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+    this.resizeObserver?.disconnect();
+    cancelAnimationFrame(this.resizeFrame);
+
+    try {
+      this.tearDownRealtime();
+      this.layerService.tearDown(this.allLayers);
+      this.map?.clearAllEventListeners();
+    } finally {
+      // `remove()` releases the tile layers, DOM listeners and internal timers.
+      // Without it every dashboard layout change leaks a map instance.
+      this.map?.remove();
+    }
+  }
+
+  private initMap() {
+    const options: L.MapOptions = this.options() ?? {
+      // zoom: 15,
+      // center: this.leaf.latLng(29.3117, 47.4818),
+      attributionControl: false,
+      scrollWheelZoom: false,
+    };
+
+    this.map = this.leaf.map(this.mapReference.nativeElement as HTMLElement, options);
+    this.observeContainerSize(this.mapReference.nativeElement as HTMLElement);
+
+    if (this.config?.manualCenter) {
+      const { lat, long, zoomLevel } = this.config.manualCenter;
+
+      if (!isNil(lat) && !isNil(long)) {
+        const bounds = this.leaf.latLng(lat, long);
+
+        this.map.setView(bounds, zoomLevel ?? 10);
+      }
+    }
+
+    fromEvent<L.PopupEvent>(this.map, 'popupopen')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((e) => this.onPopupOpen(e));
+
+    fromEvent<L.PopupEvent>(this.map, 'popupclose')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((e) => this.onPopupClose(e));
+
+    fromEvent<L.LayersControlEvent>(this.map, 'overlayadd')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((e) => this.onOverlayAdd(e));
+
+    fromEvent<L.LayersControlEvent>(this.map, 'overlayremove')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((e) => this.onOverlayRemove(e));
+
+    // this.map!.invalidateSize();
+    this.draw(this.config);
   }
 
   private refitBoundsIfAutoCenter(): void {
@@ -374,21 +393,6 @@ export class LayeredMapWidgetComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-
-    try {
-      this.tearDownRealtime();
-      this.layerService.tearDown(this.allLayers);
-      this.map?.clearAllEventListeners();
-    } finally {
-      // `remove()` releases the tile layers, DOM listeners and internal timers.
-      // Without it every dashboard layout change leaks a map instance.
-      this.map?.remove();
-    }
-  }
-
   private buildLayerLabel(cfg: import('./layered-map-widget.model').BasicLayerConfig): string {
     // Layer configuration is persisted per dashboard and shared between users,
     // so name, colour and icon are untrusted — see utils/sanitize.ts.
@@ -409,5 +413,14 @@ export class LayeredMapWidgetComponent implements AfterViewInit, OnDestroy {
       this.layerSubs.forEach((sub) => sub.unsubscribe());
     }
     this.positionUpdateSub?.unsubscribe();
+  }
+
+  private observeContainerSize(container: HTMLElement): void {
+    this.resizeObserver = new ResizeObserver(() => {
+      // one re-measure per frame, however many size steps a drag produces
+      cancelAnimationFrame(this.resizeFrame);
+      this.resizeFrame = requestAnimationFrame(() => this.map?.invalidateSize());
+    });
+    this.resizeObserver.observe(container);
   }
 }

@@ -1,0 +1,186 @@
+// The drawer is hosted by the top-bar action component (the *Tree* navigator entry is
+// rendered by the shell and has no element of ours to hang it from), so it is
+// fixed-positioned against the viewport and anchored to the navigator's right edge.
+//
+// It anchors to the navigator's right edge and to the **bottom of the header bar** —
+// `.app-main-header` is fixed at `z-index: 1031` against this drawer's 1030, so anything the
+// drawer draws above that line is painted over by the header.
+//
+// `left`/`top` below are the fallbacks for the standard shell. `ExplorerDrawerService`
+// measures the real shell on open and overrides them inline, and keeps re-measuring for as
+// long as the drawer is open so it follows the navigator's rail collapse.
+
+:host {
+  display: contents;
+}
+
+.ps-drawer__backdrop {
+  position: fixed;
+  inset: 0;
+  // Transparent on purpose: this is a navigation surface, not a modal. It exists only
+  // to catch the outside click that closes an unpinned drawer.
+  background: transparent;
+  z-index: 1029;
+}
+
+.ps-drawer {
+  // The chrome above the hierarchy — header, breadcrumb path, Pinned & Recent. The breadcrumb
+  // absorbs the remainder, so adjust `--ps-drawer-chrome-height` and the rest follows.
+  //
+  // It used to be sized to continue the rule under the navigator's `.title` block
+  // (`min-height: 108px`) as one line. That is no longer generally achievable: the drawer now
+  // starts below the header bar (y=64) rather than at the viewport top, leaving 44px to that
+  // rule where the drawer's own header and quick-access row already need 78. So
+  // `ExplorerDrawerService` applies a measured value only when it fits and otherwise leaves
+  // this one standing — see `MIN_CHROME_HEIGHT` there, and keep the two in step.
+  --ps-drawer-chrome-height: 108px;
+  --ps-drawer-header-height: 46px;
+  --ps-tree-quick-row-height: 32px;
+
+  position: fixed;
+  bottom: 0;
+  // Fallbacks for the standard shell, used only when the measurement misses: the expanded
+  // navigator's width (`--c8y-navigator-panel-width`, 240px) and the header bar's height
+  // (`$header-bar-height`, 64px — SCSS only, so it cannot be read at runtime).
+  //
+  // These were `left: 64px; top: 48px` — the header height in the `left` slot and the rail
+  // width in the `top` slot, i.e. transposed. It never showed, because a successful
+  // measurement overrides both inline.
+  left: 240px;
+  top: 64px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background-color: var(--c8y-root-component-background-default, #fff);
+  border-right: 1px solid var(--c8y-root-component-border-color, rgba(0, 0, 0, 0.12));
+  box-shadow: 4px 0 14px -6px rgba(0, 0, 0, 0.28);
+  // Above the backdrop, and above the cascade panels it hosts — rule 3 in §6.4 wants
+  // the drawer never covered by its own panels.
+  z-index: 1030;
+
+  // NOT `overflow: hidden`: the cascade grows out of the right edge and must not be
+  // clipped. Everything that scrolls does so in its own child.
+  overflow: visible;
+
+  animation: ps-drawer-in 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  &--resizing {
+    // No transition while dragging, or the panel lags the pointer.
+    animation: none;
+    user-select: none;
+  }
+}
+
+@keyframes ps-drawer-in {
+  from {
+    transform: translateX(-12px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ps-drawer {
+    animation: none;
+  }
+}
+
+.ps-drawer__header {
+  flex: 0 0 auto;
+  height: var(--ps-drawer-header-height);
+  gap: 4px;
+  padding: 0 6px 0 10px;
+  border-bottom: 1px solid var(--c8y-root-component-border-color, rgba(0, 0, 0, 0.08));
+}
+
+.ps-drawer__title {
+  font-weight: 600;
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+// Visuals come from the platform's `input-group-search`; this only places it.
+.ps-drawer__spacer {
+  flex: 1 1 auto;
+}
+
+.ps-drawer__search {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.ps-drawer__action {
+  flex: 0 0 auto;
+  background: none;
+  border: 0;
+  padding: 2px 4px;
+  color: var(--c8y-palette-gray-40, #6f7b8a);
+
+  &.active {
+    color: var(--c8y-brand-primary, #119d11);
+  }
+}
+
+.ps-drawer__path {
+  flex: 0 0 auto;
+  // Absorbs the remainder of the 108px chrome budget (minus the 1px rule below the quick row).
+  height: calc(
+    var(--ps-drawer-chrome-height) - var(--ps-drawer-header-height) - var(--ps-tree-quick-row-height) - 1px
+  );
+  // Line-height centring rather than flex: the segments must stay one nowrap run that clips at
+  // the right edge, and flex children would shrink instead.
+  line-height: calc(
+    var(--ps-drawer-chrome-height) - var(--ps-drawer-header-height) - var(--ps-tree-quick-row-height) - 1px
+  );
+  padding: 0 10px;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  border-bottom: 1px solid var(--c8y-root-component-border-color, rgba(0, 0, 0, 0.08));
+}
+
+.ps-drawer__path-sep {
+  margin: 0 3px;
+  opacity: 0.6;
+}
+
+.ps-drawer__path-last {
+  color: var(--c8y-text-color, inherit);
+  font-weight: 600;
+}
+
+.ps-drawer__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  // Also `visible`: the tree hosts the cascade, which must reach past this box.
+  overflow: visible;
+}
+
+.ps-drawer__grip {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  // Above the cascade so the grip stays grabbable while a panel is open.
+  z-index: 1;
+
+  &:hover,
+  &:focus-visible {
+    background-color: var(--c8y-brand-primary, #119d11);
+    opacity: 0.5;
+  }
+
+  // The grip is keyboard-operable (arrow keys resize), so it keeps the platform's focus
+  // ring rather than suppressing the outline — the fill alone is also the hover look, and
+  // would leave a keyboard user unable to tell whether the grip has focus.
+  &:focus-visible {
+    outline: 2px solid var(--c8y-component-color-focus, var(--c8y-root-component-color-focus));
+    outline-offset: -2px;
+  }
+}

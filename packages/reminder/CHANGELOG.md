@@ -1,5 +1,21 @@
 # Reminder Plugin Changelog
 
+## 2.0.0
+
+### Breaking Changes
+
+- Built for Cumulocity Web SDK 1024.21.x / Angular 21: needs a cockpit on 1024 or newer (part of toolkit release v1.0.0). Stay on 1.4.6 for 1023 shells.
+
+### Features
+
+- **Tenant notification defaults**: the new tenant option `c8y.reminder` / `defaults` (e.g. `{"browser": true, "toast": true}`) presets the toast and browser notification switches for users who have not stored their own settings yet. Stored user settings still win; a missing option keeps both off. Idea taken from #97.
+
+### Bug Fixes
+
+- **Drawer layout**: the group headers (DUE / UPCOMING / CLEARED) use the drawer's 16px inset like the rest of the drawer; the counts and chevrons no longer touch the drawer edges and the focus outline is no longer clipped.
+- Tenant notification defaults also apply to existing users: only switches a user set themselves keep their stored value (older versions stored every switch).
+- A tenant option that is valid JSON but no object (e.g. `null`) no longer stops the plugin from starting.
+
 ## 1.4.5
 
 ### Features

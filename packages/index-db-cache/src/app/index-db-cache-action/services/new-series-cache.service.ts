@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
-import { AggregatedISeries } from './chart-data.service';
+import { Injectable, inject } from '@angular/core';
+import { type AggregatedISeries } from './chart-data.service';
 import { CacheEventsService } from './cache-events.service';
 import { COVERAGE_TTL_MS, asError } from './interceptor-helpers';
 
@@ -72,9 +72,8 @@ interface CoverageRecord {
  */
 @Injectable({ providedIn: 'root' })
 export class NewSeriesCacheService {
+  private readonly events = inject(CacheEventsService);
   private dbPromise: Promise<IDBDatabase> | null = null;
-
-  constructor(private readonly events: CacheEventsService) {}
 
   // ─── Cache reads ─────────────────────────────────────────────────────────────
 
@@ -399,7 +398,23 @@ export class NewSeriesCacheService {
         db.createObjectStore(STORE_COVERAGE, { keyPath: ['deviceId', 'series', 'aggKey', 'from'] });
       };
 
-      req.onsuccess = () => resolve(req.result);
+      // Another tab holds an older connection and does not release it: fail now, so the
+      // interceptors fall back to the network instead of every request waiting forever.
+      req.onblocked = () => {
+        this.dbPromise = null;
+        reject(new Error('IndexedDB upgrade blocked by another tab'));
+      };
+
+      req.onsuccess = () => {
+        const db = req.result;
+
+        // A newer version (another tab) wants to upgrade: let it, reopen on next use.
+        db.onversionchange = () => {
+          db.close();
+          this.dbPromise = null;
+        };
+        resolve(db);
+      };
 
       req.onerror = () => {
         // If IndexedDB is unavailable (private browsing, CSP, etc.) callers

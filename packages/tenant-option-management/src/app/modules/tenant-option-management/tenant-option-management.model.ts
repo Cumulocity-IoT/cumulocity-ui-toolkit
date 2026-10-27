@@ -1,4 +1,4 @@
-import { IManagedObject, ITenantOption } from '@c8y/client';
+import { type IManagedObject, type ITenantOption } from '@c8y/client';
 
 export const ImportStatusEnum = {
   LOADING: 'LOADING',
@@ -7,6 +7,7 @@ export const ImportStatusEnum = {
   OVERWRITE: 'OVERWRITE',
   UPDATED: 'UPDATED',
   ADDED: 'ADDED',
+  FAILED: 'FAILED',
 } as const satisfies Record<string, string>;
 
 export type ImportStatus = (typeof ImportStatusEnum)[keyof typeof ImportStatusEnum];
@@ -39,9 +40,16 @@ export function isImportableTenantOption(
     return false;
   }
 
-  const { category, key } = value as Partial<ITenantOption>;
+  const { category, key, value: optionValue } = value as Partial<ITenantOption>;
 
-  return typeof category === 'string' && !!category && typeof key === 'string' && !!key;
+  return (
+    typeof category === 'string' &&
+    !!category &&
+    typeof key === 'string' &&
+    !!key &&
+    // the platform stores tenant option values as strings
+    typeof optionValue === 'string'
+  );
 }
 
 export interface TenantOptionConfiguration extends IManagedObject {

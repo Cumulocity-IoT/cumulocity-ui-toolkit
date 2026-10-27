@@ -5,6 +5,7 @@ on:
 
 permissions:
   contents: read
+  packages: read # @cumulocity-iot/ui-sdk from GitHub Packages
   pull-requests: write
 
 jobs:
@@ -35,7 +36,7 @@ jobs:
           # A change to shared build/lint/test configuration affects every package,
           # but matches no package directory — without this the whole workflow
           # would be skipped for such a PR.
-          if echo "$changed" | grep -qE '^(angular\.json|tsconfig\.json|eslint\.config\.mjs|karma\.conf\.js|package\.json|pnpm-workspace\.yaml|pnpm-lock\.yaml|\.npmrc|\.pnpmfile\.cjs|\.prettierrc|tools/)'; then
+          if echo "$changed" | grep -qE '^(angular\.json|tsconfig\.json|eslint\.config\.mjs|karma\.conf\.js|package\.json|pnpm-workspace\.yaml|pnpm-lock\.yaml|\.npmrc|\.prettierrc|tools/)'; then
             echo "root-config=true" >> $GITHUB_OUTPUT
           else
             echo "root-config=false" >> $GITHUB_OUTPUT
@@ -61,10 +62,16 @@ jobs:
         with:
           node-version: '24'
           cache: 'pnpm'
+          # the test workspace's @cumulocity-iot/ui-sdk comes from GitHub Packages
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@cumulocity-iot'
 
       - name: Install root dependencies
         run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Fixable advisories get an override, unfixable ones an ignore entry; see AGENTS.md → Dependency Audit.
       - name: Audit dependencies (high+)
         run: pnpm audit --audit-level high
 
@@ -147,10 +154,16 @@ jobs:
         with:
           node-version: '24'
           cache: 'pnpm'
+          # the test workspace's @cumulocity-iot/ui-sdk comes from GitHub Packages
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@cumulocity-iot'
 
       - name: Install root dependencies
         run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Fixable advisories get an override, unfixable ones an ignore entry; see AGENTS.md → Dependency Audit.
       - name: Audit dependencies (high+)
         run: pnpm audit --audit-level high
 

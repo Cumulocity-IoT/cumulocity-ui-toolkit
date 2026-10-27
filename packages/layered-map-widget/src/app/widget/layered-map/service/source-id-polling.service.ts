@@ -1,9 +1,13 @@
 import { inject } from '@angular/core';
-import { IManagedObject, InventoryService } from '@c8y/client';
+import { type IManagedObject, InventoryService } from '@c8y/client';
 import { isEmpty } from 'lodash';
-import { EMPTY, from, Observable, timer } from 'rxjs';
+import { EMPTY, from, type Observable, timer } from 'rxjs';
 import { catchError, exhaustMap, filter } from 'rxjs/operators';
-import { MyLayer, PollingDelta, QueryLayerConfig } from '../layered-map-widget.model';
+import {
+  type MyLayer,
+  type PollingDelta,
+  type QueryLayerConfig,
+} from '../layered-map-widget.model';
 
 /** Inventory page size used when resolving source ids to managed objects. */
 const PAGE_SIZE = 100;
@@ -31,12 +35,6 @@ export abstract class SourceIdPollingService {
       // request skips this tick instead of terminating the polling for good.
       exhaustMap(() => from(this.checkForUpdates(layer)).pipe(catchError(() => EMPTY))),
       filter((delta) => delta.add.length > 0 || delta.remove.length > 0)
-    );
-  }
-
-  private checkForUpdates(layer: MyLayer): Promise<PollingDelta> {
-    return this.fetchMatchingSourceIds(layer.config).then((sources) =>
-      this.toPollingDelta(sources, layer)
     );
   }
 
@@ -87,5 +85,11 @@ export abstract class SourceIdPollingService {
     }
 
     return mos;
+  }
+
+  private checkForUpdates(layer: MyLayer): Promise<PollingDelta> {
+    return this.fetchMatchingSourceIds(layer.config).then((sources) =>
+      this.toPollingDelta(sources, layer)
+    );
   }
 }

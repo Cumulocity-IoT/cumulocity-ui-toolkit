@@ -1,12 +1,17 @@
 import { inject, Injectable } from '@angular/core';
-import { ITenantOption, InventoryService, TenantOptionsService, UserService } from '@c8y/client';
+import {
+  type ITenantOption,
+  InventoryService,
+  TenantOptionsService,
+  UserService,
+} from '@c8y/client';
 import { AlertService } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { TranslateService } from '@ngx-translate/core';
 import {
-  TenantOptionConfiguration,
-  TenantOptionConfigurationItem,
-  TenantOptionRow,
+  type TenantOptionConfiguration,
+  type TenantOptionConfigurationItem,
+  type TenantOptionRow,
 } from './tenant-option-management.model';
 
 @Injectable()
@@ -110,6 +115,84 @@ export class TenantOptionManagementService {
     return { id: `${option.category}-${option.key}`, value: option.value ?? '', ...item };
   }
 
+  /**
+   * Fetches **all** tenant options for the given `category` (paginated, like
+   * {@link getAllOptions}) and registers every one of them in the plugin's
+   * configuration managed object in a single batch.
+   *
+   * Unlike {@link allowListOption}, entries that are already registered are
+   * silently skipped rather than aborting the whole operation, and the
+   * configuration is fetched/persisted exactly once regardless of how many
+   * options are imported.
+   *
+   * Rejects with a clear `Error` when no tenant options exist for `category`.
+   */
+  async allowListOptionsByCategory(category: string): Promise<TenantOptionRow[]> {
+    const options: ITenantOption[] = [];
+    const response = await this.tenantOption.list({
+      category,
+      pageSize: this.MAX_PAGE_SIZE,
+      withTotalPages: true,
+    });
+
+    options.push(...response.data);
+
+    for (
+      let currentPage = (response.paging?.currentPage ?? 1) + 1;
+      currentPage <= (response.paging?.totalPages ?? 0);
+      currentPage++
+    ) {
+      const { data } = await this.tenantOption.list({
+        category,
+        pageSize: this.MAX_PAGE_SIZE,
+        currentPage,
+      });
+
+      options.push(...data);
+    }
+
+    // `GET /tenant/options` does not reliably honour a `category` filter, so narrow it down here.
+    const categoryOptions = options.filter((option) => option.category === category);
+
+    if (!categoryOptions.length) {
+      return Promise.reject(new Error(`No tenant options found for category "${category}"`));
+    }
+
+    const config = await this.getConfiguration();
+    const user = await this.getUser();
+    const addedRows: TenantOptionRow[] = [];
+
+    for (const option of categoryOptions) {
+      const alreadyRegistered = config.options.some(
+        (o) => o.category === option.category && o.key === option.key
+      );
+
+      if (alreadyRegistered) {
+        continue;
+      }
+
+      const item: TenantOptionConfigurationItem = {
+        key: option.key,
+        category: option.category,
+        lastUpdated: new Date().toISOString(),
+        user,
+      };
+
+      config.options.push(item);
+      addedRows.push({
+        id: `${option.category}-${option.key}`,
+        value: option.value ?? '',
+        ...item,
+      });
+    }
+
+    if (addedRows.length) {
+      await this.inventory.update({ id: config.id, options: config.options });
+    }
+
+    return addedRows;
+  }
+
   async updateOption(row: ITenantOption & { value: string }): Promise<TenantOptionRow> {
     const option: ITenantOption = {
       category: row.category,
@@ -118,7 +201,11 @@ export class TenantOptionManagementService {
     };
 
     await this.tenantOption.update(option).then((res) => res.data);
-    const item = await this.updateOptionForConfiguration(option);
+    // An option that exists on the tenant but is not yet managed by the plugin
+    // (e.g. overwritten through a file import) is registered instead of failing.
+    const item = await this.updateOptionForConfiguration(option).catch(() =>
+      this.addOptionToConfiguration(option)
+    );
     return { id: `${option.category}-${option.key}`, value: option.value ?? '', ...item };
   }
 

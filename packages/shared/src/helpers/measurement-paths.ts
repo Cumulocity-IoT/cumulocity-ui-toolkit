@@ -1,4 +1,4 @@
-import { IMeasurement } from '@c8y/client';
+import { type IMeasurement } from '@c8y/client';
 import { get } from 'lodash';
 
 /** Measurement properties that are metadata, not measurement fragments. */

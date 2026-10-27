@@ -1,0 +1,93 @@
+:host {
+  display: block;
+}
+
+.ps-fieldcfg {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px 10px;
+  font-size: var(--ps-tree-font-sm, 14px);
+}
+
+.ps-fieldcfg__header {
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.ps-fieldcfg__scope {
+  margin: 0 0 2px;
+  font-size: var(--ps-tree-font-label, 12px);
+}
+
+.ps-fieldcfg__note {
+  margin: 0 0 2px;
+  font-size: var(--ps-tree-font-label, 12px);
+  line-height: 1.3;
+}
+
+// The MO path of a picked field. Truncates rather than wraps: a nested path is long, and
+// a wrapping row would break the panel's fixed row rhythm.
+.ps-fieldcfg__path {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-left: auto;
+  padding: 0 2px;
+  background: none;
+  font-size: var(--ps-tree-font-label, 12px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ps-fieldcfg__hint {
+  margin: 6px 0 2px;
+  font-size: var(--ps-tree-font-label, 12px);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ps-fieldcfg__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ps-fieldcfg__item {
+  gap: 4px;
+  padding: 1px 0;
+
+  // Keep the drop placeholder the same height as a row, so reordering does not make
+  // the whole panel jump (and with it the cascade's clamp).
+  &.cdk-drag-placeholder {
+    opacity: 0.4;
+  }
+}
+
+.ps-fieldcfg__grip {
+  flex: 0 0 12px;
+  width: 12px;
+  cursor: grab;
+  font-size: var(--ps-tree-font-xs, 13px);
+}
+
+.ps-fieldcfg__label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-weight: normal;
+  cursor: pointer;
+
+  input {
+    margin: 0;
+  }
+}
+
+.ps-fieldcfg__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--c8y-root-component-border-color, rgba(0, 0, 0, 0.12));
+}

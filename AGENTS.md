@@ -6,9 +6,9 @@ Guidance for AI agents working in this repository.
 
 ## Project Overview
 
-This is a **pnpm monorepo** of Angular 20 UI plugins (widgets) for the Cumulocity IoT platform, maintained by the Cumulocity UI Guild. Each plugin is a self-contained Cumulocity package that can be built and deployed independently.
+This is a **pnpm monorepo** of Angular 21 UI plugins (widgets) for the Cumulocity IoT platform, maintained by the Cumulocity UI Guild. Each plugin is a self-contained Cumulocity package that can be built and deployed independently.
 
-**Tech stack:** Angular 20 · TypeScript 5.9 · pnpm 10 workspaces · Karma + Jasmine (unit) · Cypress (e2e) · ESLint · ng-packagr (shared library build) · `@c8y/devkit` (plugin build) · Cumulocity Web SDK 1023.14.x
+**Tech stack:** Angular 21 · TypeScript 5.9 · pnpm 10 workspaces · Karma + Jasmine (unit) · Cypress (e2e) · ESLint · ng-packagr (shared library build) · `@c8y/devkit` (plugin build) · Cumulocity Web SDK 1024.21.x
 
 ---
 
@@ -20,7 +20,6 @@ cumulocity-ui-toolkit/
 ├── package.json              # Root scripts and shared dependencies
 ├── pnpm-workspace.yaml       # Workspace: packages/* + test/
 ├── .npmrc                    # shamefully-hoist=true
-├── .pnpmfile.cjs             # Forces @c8y/devkit to use TypeScript 5.9.x
 ├── karma.conf.js             # Shared Karma config (Jasmine, Chrome, ChromeHeadlessCI)
 ├── eslint.config.mjs         # Shared flat ESLint config
 ├── tsconfig.json             # Root TypeScript config with path aliases for shared/
@@ -31,7 +30,9 @@ cumulocity-ui-toolkit/
 │   │   ├── tsconfig.json
 │   │   ├── tsconfig.spec.json
 │   │   └── src/index.ts      # Barrel export – the public API of shared/
+│   ├── asset-navigator/      # asset tree explorer drawer + global asset search (⌘K)
 │   ├── energy-consumption-widget/
+│   ├── events-graph-widget/  # device events as colored state bars on a timeline (echarts)
 │   ├── favorites-manager/
 │   ├── index-db-cache/
 │   ├── kpi-widget/
@@ -39,7 +40,7 @@ cumulocity-ui-toolkit/
 │   ├── operations-widget/
 │   ├── release-notes/
 │   ├── reminder/
-│   ├── smart-views/          # NOT registered in angular.json (no build/test targets)
+│   ├── smart-views/
 │   └── tenant-option-management/
 │
 ├── test/                     # Cypress e2e suite (own pnpm workspace)
@@ -67,13 +68,15 @@ All commands run from the **repository root** unless noted.
 | Build all plugins | `pnpm run build` |
 | Build a single plugin | `pnpm run build:<name>` (e.g. `build:kpi-widget`) |
 | Serve a plugin locally | `pnpm run serve:<name>` (requires `C8Y_BASEURL` + `C8Y_SHELL_TARGET` env vars) |
+| Develop on the tenant mock with hot reload | `pnpm run dev` (all plugins) or `pnpm run dev <folder> …`; open the printed URL (router on `DEV_PORT`, default 4200; mock on `DEV_MOCK_PORT`, default 8111). `tools/dev.mts` runs `c8y-ui dev --apps` of the ui-sdk; each plugin's `vite.config.ts` is `c8yVite({ config })` — no local Vite configuration beyond that. Dev only: builds and e2e stay on the devkit. |
 | Run all unit tests | `pnpm test` |
 | Run unit tests for one plugin (CI) | `pnpm run test:<name>` (e.g. `test:favorites-manager`) |
 | Run unit tests for one plugin (watch) | `pnpm run test:watch:<name>` |
 | Lint | `pnpm run lint` |
 | Lint with auto-fix | `pnpm run lint:fix` |
 | Run Cypress e2e (all) | `pnpm run e2e:run` |
-| Run Cypress e2e (one plugin) | `pnpm run e2e:run:<name>` |
+| Run Cypress e2e on the tenant mock (one plugin) | `pnpm run e2e:mock <name>` |
+| Run Cypress e2e on a real tenant (one plugin) | `pnpm run e2e:run:<name>` |
 | Open Cypress UI | `pnpm run e2e:open` |
 | Regenerate package.json scripts | `pnpm run generate:scripts` |
 | Clean dist/ | `pnpm run clean` |
@@ -105,7 +108,7 @@ All commands run from the **repository root** unless noted.
 - Test files: `**/*.spec.ts` inside `packages/`.
 - The root `karma.conf.js` is shared by all projects.
 - Each package has a `tsconfig.spec.json` with `"types": ["jasmine", "node"]`.
-- All 10 Angular projects in `angular.json` (`shared` + 9 plugins; `smart-views` is not registered) have a `test` architect target.
+- All 13 Angular projects in `angular.json` (`shared` + 12 plugins) have a `test` architect target.
 - Run a single project: `pnpm exec ng test <project> --watch=false --browsers=ChromeHeadlessCI`
 - `ChromeHeadlessCI` custom launcher (defined in `karma.conf.js`) adds `--no-sandbox --disable-gpu --disable-dev-shm-usage` — required in CI.
 - Test helper for creating Jasmine spies: `packages/shared/src/helpers/auto-mock.helper.ts`.
@@ -119,32 +122,39 @@ All commands run from the **repository root** unless noted.
 - Detailed suite documentation lives in **`test/AGENTS.md`** (support library, factories, intercepts, page objects, selectors, cleanup pattern). Read it before writing any spec.
 - Located in `test/` (separate pnpm workspace — run `pnpm install` inside `test/` if needed).
 - One spec file per plugin: `test/cypress/e2e/<plugin-name>.cy.ts`.
-- Per-plugin configs in `test/config/<plugin-name>.config.ts` import `cumulocity.config.ts` from the plugin and derive the `C8Y_SHELL_EXTENSION` (Module Federation remotes) dynamically from `runTime.remotes`. All delegate to `test/config/base.config.ts`.
-- Reusable test infrastructure lives in `test/cypress/support/` (`commands.ts` with `cy.visitShellAndWaitForSelector`, plus `api/`, `factories/`, `intercepts/`, `page-objects/`, `selectors/`, `utils/`). `cypress-terminal-report` is installed — failed runs print the full request trace.
+- Per-plugin configs in `test/config/<plugin-name>.config.ts` import `cumulocity.config.ts` from the plugin and derive the Module Federation remotes (exposed to specs as `C8Y_REMOTES`, with the shell as `C8Y_SHELL`) from the plugin's runtime config. All delegate to `test/config/base.config.ts`.
+- Generic helpers come from `@cumulocity-iot/ui-sdk`: `cy.visitApp` and the dashboard page objects (`@cumulocity-iot/ui-sdk/cypress`), data factories (`@cumulocity-iot/ui-sdk/factories`). `test/cypress/support/` keeps only repo-specific bits (`cy.createDevice`, an asset-navigator intercept). `cypress-terminal-report` is installed — failed runs print the full request trace.
 - `test/tsconfig.json` has `resolveJsonModule: true` and `skipLibCheck: true`.
-- Requires a live Cumulocity tenant plus the plugin served locally (`pnpm run serve:<plugin>`). Environment comes from a **`.env` file at the repository root**, loaded by `base.config.ts` via `dotenv`. Keys (the config file is the authority on the mapping): required `C8Y_USERNAME`, `C8Y_PASSWORD`, `C8Y_TENANT`; optional `C8Y_CYPRESS_URL` (dev-server URL, default `http://localhost:9001/`, exposed to specs as `C8Y_BASEURL`) and `C8Y_SHELL_TARGET` (default `cockpit-test-1023`). `C8Y_TOKEN` is populated automatically via `oauthLogin` at startup.
+- **Default: the tenant mock.** `pnpm run e2e:mock <plugin>` runs the suite against the `@cumulocity-iot/ui-sdk` mock — windy-dev world (pulled at runtime into the git-ignored `test/mock/windy-dev.json` via go-c8y-cli) plus the cockpit release of the workspace's current Web SDK version, picked up from the root `package.json` automatically. CI (`e2e-test.yml`) runs this. `shell-compat.yml` runs it daily for every plugin inside the latest cockpit CD release (`E2E_SHELL_VERSION`) and opens a `shell-compat` issue when it fails. Details in `test/AGENTS.md` → Running Tests.
+- Against a real tenant: requires a live Cumulocity tenant plus the plugin served locally (`pnpm run serve:<plugin>`). Environment comes from a **`.env` file at the repository root**, loaded by `base.config.ts` via `dotenv`. Keys (the config file is the authority on the mapping): required `C8Y_USERNAME`, `C8Y_PASSWORD`, `C8Y_TENANT`; optional `C8Y_CYPRESS_URL` (dev-server URL, default `http://localhost:9001/`, exposed to specs as `C8Y_BASEURL`) and `C8Y_SHELL_TARGET` (default `cockpit`). `C8Y_TOKEN` is populated automatically via `oauthLogin` at startup.
 
 ---
 
 ## Code Conventions
 
-- **Angular version:** `^20.x`. Do not use APIs from later Angular versions.
+- **Angular version:** `^21.x`. Do not use APIs from later Angular versions.
 - **Standalone components only:** All components and pipes are `standalone: true`. There are **no NgModules** in plugin code.
 - **Provider arrays replace NgModules:** Plugin entrypoints export named provider arrays (e.g. `EnergyConsumptionWidgetPluginProviders`). Deprecated `*Module` aliases may be kept for backward compatibility but must alias the provider array, not a real NgModule class.
 - **`cumulocity.config.ts`:** `exports[].module` and `remotes` entries must reference the provider array name. `exports[].path` must point to the file that exports it.
 - **Widget hooks:** Use `hookWidget` with `loadComponent` / `loadConfigComponent` (lazy). Never use the static `component` / `configComponent` fields on widget definitions.
-- **Route hooks:** Use `hookRoute` with `loadComponent` (lazy).
+- **Route hooks:** Use `hookRoute` with `loadComponent` (lazy). A plugin may export only a `hookRoute` provider array (no `hookWidget`) when it registers a standalone page rather than a dashboard widget.
+- **Multiple plugins per package:** A single `cumulocity.config.ts` can declare multiple `exports` entries (each with its own `module` name) and list all of them in `remotes`. Each export maps to a separate named provider array in `src/app/index.ts`. Example: `packages/smart-views` exports both `SmartViewsPluginProviders` (device route) and `SmartViewsConfigurationPluginProviders` (navigator entry + configuration route).
+- **Navigator + route pair:** When registering a navigator menu entry, always pair `hookNavigator(new NavigatorNode({ path, label, icon }))` with a matching `hookRoute({ path, loadComponent })` using the same `path` string. Both can live in the same provider array.
 - **Drawer / action hooks:** `hookDrawer` and `hookAction` accept only a static `component` reference — SDK types have no lazy option. This is correct and expected.
 - **`gettext` import:** Always import from `@c8y/ngx-components/gettext`, never from the main `@c8y/ngx-components` barrel.
 - **Locale imports in `bootstrap.ts`:** The `./locales/de.po` import must appear after `@angular/compiler` and before other Angular imports.
 - **Dependency injection:** Prefer `inject()` over constructor injection in new code.
 - **Constructor side-effects:** Never perform async work or call services in a constructor. Use `ngOnInit()`.
+- **Template control flow:** Always use Angular's built-in control flow syntax (`@if`, `@else if`, `@else`, `@for`, `@switch`). Never use the legacy structural directives `*ngIf`, `*ngFor`, `*ngSwitch`, or bare `<ng-container *ngIf=…>` wrappers. `CommonModule` must not be imported solely to enable those directives.
 - **Style:** LESS (`.less`) for component styles.
 - **Linting:** Flat ESLint config (`eslint.config.mjs`) covers TypeScript and Angular templates.
 - **No cross-package relative imports** — always use the path aliases, never `../../shared/src/...`.
-- **Cumulocity SDK version:** Pinned at `1023.14.x` for all `@c8y/*` packages. Do not bump packages independently; they must be updated together.
+- **Cumulocity SDK version:** Pinned at `1024.21.x` for all `@c8y/*` packages. Do not bump packages independently; they must be updated together.
 - **Barrel files:** Each feature area should have an `index.ts` that re-exports its public surface.
 - **No `console.warn` / `console.log` in production code.**
+- **Type-only imports and exports use `type`:** `import { type IManagedObject, InventoryService } from '@c8y/client'`, `import type { Foo } from './foo'`, `export type { Bar }`. Per-file compilers — a Vite + OXC dev server, esbuild — cannot see that a name is only a type: a re-exported interface or a missing export breaks the module at runtime (`does not provide an export named …`) while `ng build` still passes. Enforced by `verbatimModuleSyntax` in the root `tsconfig.json` and the ESLint rules `@typescript-eslint/consistent-type-imports` / `consistent-type-exports` (autofixable: `pnpm run lint:fix`).
+  - **Exception — classes Angular injects through a constructor** must stay value imports (`NG2003: No suitable injection token` otherwise), and ESLint would mark them type-only. Use `inject(SomeService)` instead of constructor parameters (also when passing to `super(...)`): then the class is a value and both checks agree.
+  - **No `const enum` values from libraries.** `@c8y/*` declares some enums as `declare const enum` (e.g. `ColumnDataType`) and does not export them at runtime — `ColumnDataType.TextShort` is `undefined` in the Vite dev server. Import the enum as a type and use the literal: `dataType: 'text-short' as ColumnDataType`.
 
 ---
 
@@ -152,7 +162,7 @@ All commands run from the **repository root** unless noted.
 
 The `tools/generate-scripts.mts` file is an **ESM TypeScript** script (`.mts` extension — run with `node --experimental-strip-types`). It reads all projects from `angular.json` and regenerates the `build:*`, `serve:*`, `test:*`, and `test:watch:*` entries in `package.json`. The source of truth for which projects get test scripts is whether the project has a `@angular/build:karma` test target in `angular.json`.
 
-The root `test` script (which chains all 10 suites sequentially) is also regenerated. Do **not** hand-edit anything after the `--generated----------` marker in `package.json`. CI verifies this: a change to root configuration re-runs `generate:scripts` and fails if `package.json` is stale.
+The root `test` script (which chains all 12 suites sequentially) is also regenerated. Do **not** hand-edit anything after the `--generated----------` marker in `package.json`. CI verifies this: a change to root configuration re-runs `generate:scripts` and fails if `package.json` is stale.
 
 ---
 
@@ -161,6 +171,44 @@ The root `test` script (which chains all 10 suites sequentially) is also regener
 - Output: a ZIP archive per plugin in `dist/` (e.g. `dist/cumulocity-kpi-widget-plugin.zip`).
 - Post-build, `tools/postbuild.js` renames the generated ZIP to include the version from the plugin's `package.json` (e.g. `dist/cumulocity-kpi-widget-plugin_1.0.4.zip`).
 - The `clean` script removes the entire `dist/` directory before each build.
+
+---
+
+## Changelogs
+
+Changelogs are **mandatory**: every change that a user, deployer or contributor would notice is documented in the same PR that makes it.
+
+- **Per plugin:** `packages/<plugin>/CHANGELOG.md` (`# <Plugin name> Changelog`). Create it if the plugin has none yet.
+  - One `## <version>` heading per release; the version matches the plugin's `package.json` `version`. Bumping the version and adding its changelog section go together.
+  - Group entries under `### Features`, `### Bug Fixes`, `### Breaking Changes`, `### Dependencies` (only the groups that apply), one bullet per change, written for the reader of the release — what changed and why it matters, not which files moved.
+  - **Keep entries brief**: one or two sentences per bullet, the user-visible effect first. Details belong in the PR, the code or the README, not in the changelog.
+- **Repository-wide:** the root `CHANGELOG.md` (`## YYYY.MM.DD` headings) for changes that are not tied to one plugin: shared library, build tooling, CI workflows, test infrastructure, Web SDK / Angular upgrades.
+- A change that touches several plugins (e.g. a Web SDK bump) gets a root entry **and** an entry in each affected plugin's changelog.
+- Pure refactors without behavioral effect, test-only changes inside one plugin, and docs typo fixes need no entry.
+
+---
+
+## Dependency Audit
+
+CI runs `pnpm audit --audit-level high` before every build and test job; any unignored high or critical advisory fails the PR.
+
+- **A patched release exists** → force it with an entry in `pnpm.overrides` (`package.json`), scoped to the major (e.g. `"undici@7": "^7.30.1"`). Never ignore a fixable advisory.
+- **No patched release** → add the GHSA id to `pnpm.auditConfig.ignoreGhsas` (`package.json`) **and** a row to the table below. pnpm 10.6 reads `auditConfig` only from `package.json`, which cannot hold comments, so this table is the justification.
+- Re-check every row when the Web SDK or Cypress is bumped, and remove entries that have become fixable.
+
+| GHSA | Package | Why it is accepted |
+|---|---|---|
+| GHSA-4w4v-5hc9-xrr2 | `angular@1.8.3` (AngularJS) | End of life, no fix (ReDoS). Shipped by `@c8y/ng1-modules`, the Web SDK's AngularJS layer; goes away only when Cumulocity drops AngularJS. |
+| GHSA-7x27-g8rg-x87w | `angular@1.8.3` (AngularJS) | End of life, no fix (XSS). Same source as above. |
+| GHSA-jmr9-qjv8-65gv | `extract-zip@2.0.1` | No fix (symlink path traversal). Cypress only, unpacks its own binary; dev/test, not shipped. |
+| GHSA-7pqw-9j4j-h8q3 | `extract-zip@2.0.1` | No fix (arbitrary file write via symlinks). Same source as above. |
+| GHSA-ch52-4w7c-c8xp | `http-cache-semantics@4.2.0` | No fix (cross-user cache disclosure). Via `make-fetch-happen` in the npm/Angular CLI tooling; build only, not bundled. |
+
+Overrides that are not security fixes (same reason: `package.json` cannot hold comments):
+
+| Override | Why |
+|---|---|
+| `"@angular-devkit/build-angular@21": "21.2.27"` | 21.2.28 pulls webpack 5.112, which breaks `license-webpack-plugin` in every plugin build (`@c8y/devkit:build`). Drop it once a build-angular or webpack release fixes that; the Karma test builder (`@angular/build`) is unaffected and stays on the latest 21.2. |
 
 ---
 
@@ -231,7 +279,7 @@ Hosted MCP server for the official Cumulocity IoT API and SDK docs. Use it as a 
 
 Agents should consult these authoritative references when writing or reviewing code:
 
-- **Angular 20 full API & guide context:** [https://angular.dev/assets/context/llms-full.txt](https://angular.dev/assets/context/llms-full.txt) — use this when working with Angular APIs, decorators, lifecycle hooks, signals, or framework patterns.
+- **Angular 21 full API & guide context:** [https://angular.dev/assets/context/llms-full.txt](https://angular.dev/assets/context/llms-full.txt) — use this when working with Angular APIs, decorators, lifecycle hooks, signals, or framework patterns.
 - **Mastering TypeScript skill:** [https://github.com/SpillwaveSolutions/mastering-typescript-skill/tree/main/mastering-typescript](https://github.com/SpillwaveSolutions/mastering-typescript-skill/tree/main/mastering-typescript) — follow the patterns and conventions described here for all TypeScript code in this repository.
 
 ---
@@ -241,6 +289,7 @@ Agents should consult these authoritative references when writing or reviewing c
 - Do **not** add Jest, `jest-preset-angular`, or any `jest.*` / `setup-jest.*` files. The test stack is Karma + Jasmine exclusively.
 - Do **not** manually add `serve:*`, `build:*`, `test:*`, or `test:watch:*` scripts to the root `package.json` — use `generate:scripts`.
 - Do **not** edit `dist/` — it is ephemeral build output.
+- Do **not** open a PR with user-facing changes but no changelog entry — see [Changelogs](#changelogs).
 - Do **not** install packages directly into a plugin's `node_modules`; all dependencies are hoisted to the root via pnpm (`.npmrc`: `shamefully-hoist=true`).
 - Do **not** use `CommonJS require()` in Angular source files — this is an ESM workspace.
 - Do **not** create NgModules (`@NgModule`). Use standalone components and provider arrays.

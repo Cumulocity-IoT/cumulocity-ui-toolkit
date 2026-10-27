@@ -6,7 +6,7 @@
     </h3>
   </ng-container>
   <div class="modal-body">
-    <input class="m-16" type="file" (change)="onFileSelected($event)" accept="application/json" />
+    <input class="m-16" type="file" data-cy="file-import--file" (change)="onFileSelected($event)" accept="application/json" />
     @if (rows.length > 0) {
       <c8y-data-grid [title]="'Tenant Options' | translate" [columns]="columns" [rows]="rows" [pagination]="pagination"
         [actionControls]="[]" [displayOptions]="displayOptions" [selectable]="selectable"
@@ -16,11 +16,11 @@
 
   </div>
   <div class="modal-footer separator-top bg-level-0 sticky-bottom">
-    <button title="{{ 'Cancel' | translate }}" class="btn btn-default" type="button" (click)="close()">
+    <button title="{{ 'Cancel' | translate }}" class="btn btn-default" type="button" (click)="close()" data-cy="file-import--cancel">
       {{ 'Cancel' | translate }}
     </button>
-    <button title="{{ 'Import' | translate }}" class="btn btn-primary" type="button" (click)="import()"
-      [class.btn-pending]="isLoading">
+    <button title="{{ 'Import' | translate }}" class="btn btn-primary" type="button" (click)="import()" data-cy="file-import--import"
+      [class.btn-pending]="isLoading" [disabled]="isLoading">
       {{ 'Import' | translate }}
     </button>
   </div>

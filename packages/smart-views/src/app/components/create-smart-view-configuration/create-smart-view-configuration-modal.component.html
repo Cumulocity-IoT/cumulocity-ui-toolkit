@@ -1,0 +1,173 @@
+<c8y-modal [title]="title" [customFooter]="true">
+  <div class="p-16">
+    <c8y-form-group>
+      <label for="configName">{{ labels.name }}</label>
+      <input
+        class="form-control"
+        id="configName"
+        [(ngModel)]="name"
+        [placeholder]="labels.namePlaceholder"
+        [attr.aria-label]="labels.name"
+        data-cy="smart-views--config-name"
+        type="text"
+        name="configName"
+        autocomplete="off"
+        required
+      />
+    </c8y-form-group>
+
+    <c8y-form-group>
+      <label for="assetDefinition">{{ labels.assetDefinition }}</label>
+      @if (loadingDefinitions()) {
+        <c8y-loading></c8y-loading>
+      } @else if (assetDefinitions().length === 0) {
+        <p class="text-muted" data-cy="smart-views--config-no-definitions">
+          {{ labels.noDefinitions }}
+        </p>
+      } @else {
+        <div class="c8y-select-wrapper">
+          <select
+            class="form-control"
+            id="assetDefinition"
+            [(ngModel)]="assetDefinitionId"
+            [attr.aria-label]="labels.assetDefinition"
+            (ngModelChange)="onAssetDefinitionChange()"
+            data-cy="smart-views--config-asset-definition"
+            name="assetDefinition"
+            required
+          >
+            <option value="" disabled selected>{{ labels.assetDefinitionPlaceholder }}</option>
+            @for (definition of assetDefinitions(); track definition.id) {
+              <option [value]="definition.id">{{ definition.name }}</option>
+            }
+          </select>
+        </div>
+      }
+    </c8y-form-group>
+
+    <c8y-form-group>
+      <label for="configPriority">{{ labels.priority }}</label>
+      <input
+        class="form-control"
+        id="configPriority"
+        [(ngModel)]="priority"
+        [attr.aria-label]="labels.priority"
+        data-cy="smart-views--config-priority"
+        type="number"
+        name="configPriority"
+        autocomplete="off"
+        min="0"
+        step="1"
+      />
+      <p class="text-muted small m-t-4">{{ labels.priorityHint }}</p>
+    </c8y-form-group>
+
+    <c8y-form-group>
+      <label>{{ labels.icon }}</label>
+      <div class="d-flex a-i-center gap-8">
+        <button
+          class="btn btn-default"
+          [title]="labels.selectIcon"
+          [attr.aria-label]="labels.selectIcon"
+          (click)="selectIcon()"
+          data-cy="smart-views--config-icon"
+          type="button"
+        >
+          <i class="text-24" [c8yIcon]="icon"></i>
+          {{ labels.selectIcon }}
+        </button>
+      </div>
+    </c8y-form-group>
+
+    <c8y-form-group>
+      <label>{{ labels.columns }}</label>
+
+      @if (loadingProperties()) {
+        <div class="text-center p-8" aria-live="polite">
+          <c8y-loading></c8y-loading>
+          <p class="text-muted small m-t-4">{{ labels.loadingProperties }}</p>
+        </div>
+      } @else {
+        @if (columnsFromDefinition()) {
+          <p class="text-muted small m-b-8" data-cy="smart-views--config-columns-from-definition">
+            <i c8yIcon="info-circle"></i>
+            {{ labels.columnsFromDefinition }}
+          </p>
+        }
+        @for (column of columns; track $index) {
+          <div class="input-group m-b-8" data-cy="smart-views--config-column">
+            <input
+              class="form-control"
+              [(ngModel)]="column.name"
+              [placeholder]="labels.columnName"
+              [name]="'columnName' + $index"
+              [attr.aria-label]="labels.columnName"
+              type="text"
+            />
+            <input
+              class="form-control"
+              [(ngModel)]="column.path"
+              [placeholder]="labels.columnPath"
+              [name]="'columnPath' + $index"
+              [attr.aria-label]="labels.columnPath"
+              type="text"
+            />
+            <input
+              class="form-control"
+              [(ngModel)]="column.header"
+              [placeholder]="labels.columnHeader"
+              [name]="'columnHeader' + $index"
+              [attr.aria-label]="labels.columnHeader"
+              type="text"
+            />
+            <span class="input-group-btn">
+              <button
+                class="btn btn-default"
+                [title]="labels.removeColumn"
+                [attr.aria-label]="labels.removeColumn"
+                [disabled]="columns.length === 1"
+                (click)="removeColumn($index)"
+                data-cy="smart-views--config-remove-column"
+                type="button"
+              >
+                <i c8yIcon="minus-circle"></i>
+              </button>
+              @if ($last) {
+                <button
+                  class="btn btn-default"
+                  [title]="labels.addColumn"
+                  [attr.aria-label]="labels.addColumn"
+                  (click)="addColumn()"
+                  data-cy="smart-views--config-add-column"
+                  type="button"
+                >
+                  <i c8yIcon="plus-circle"></i>
+                </button>
+              }
+            </span>
+          </div>
+        }
+      }
+    </c8y-form-group>
+  </div>
+
+  <div class="modal-footer" c8y-modal-footer-custom>
+    <button
+      class="btn btn-default"
+      (click)="onDismiss()"
+      data-cy="smart-views--config-cancel"
+      type="button"
+    >
+      {{ labels.cancel }}
+    </button>
+    <button
+      class="btn btn-primary"
+      [disabled]="!isValid || saving()"
+      (click)="onClose()"
+      data-cy="smart-views--config-save"
+      type="button"
+    >
+      {{ okLabel }}
+    </button>
+  </div>
+</c8y-modal>

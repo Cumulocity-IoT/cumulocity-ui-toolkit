@@ -1,3 +1,6 @@
+// Models
+export type * from './models/dtm.model';
+
 // Components
 export * from './components/alarm-icon/alarm-icon.component';
 export * from './components/auto-refresh/ps-auto-refresh.component';
@@ -5,7 +8,7 @@ export * from './components/domain-object-editor/domain-model-editor.component';
 export * from './components/query-display/ps-query-display.component';
 export * from './components/query-display/query-validator';
 export * from './components/query-display/reverse-queries-util';
-export * from './components/query-display/reverse-queries-util.model';
+export type * from './components/query-display/reverse-queries-util.model';
 
 // Query forms and helpers
 export * from './components/_formly-fields/query-forms/formly-query-blocks';
@@ -23,8 +26,8 @@ export * from './helpers/route-context.helper';
 export * from './helpers/widget-preview.helper';
 
 // Models
-export * from './models/formly.model';
-export * from './models/modal-tab.model';
+export type * from './models/formly.model';
+export type * from './models/modal-tab.model';
 
 // Pipes
 export * from './pipes/c8y-measurement.pipe';
@@ -36,6 +39,7 @@ export * from './pipes/replace.pipe';
 export * from './pipes/sort.pipe';
 
 // Services
+export * from './services/csv-export.service';
 export * from './services/active-tab.service';
 export * from './services/application-availability.service';
 export * from './services/data-grid-patch.service';

@@ -1,7 +1,7 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, type OnInit } from '@angular/core';
 import { CoreModule } from '@c8y/ngx-components';
 import { BsModalRef } from 'ngx-bootstrap/modal';
-import { ReleaseNote } from '../../models/release-notes.model';
+import { type ReleaseNote } from '../../models/release-notes.model';
 import { ReleaseNotesService } from '../../services/release-notes.service';
 
 @Component({
@@ -22,12 +22,12 @@ export class ReleaseNotesDisplayListModalComponent implements OnInit {
     void this.loadReleaseNotes();
   }
 
+  close(): void {
+    this.bsModalRef.hide();
+  }
+
   private async loadReleaseNotes(): Promise<void> {
     this.releaseNotes = await this.releaseNoteService.list(this.showOnlyNewReleases);
     this.releaseNoteService.setLastChecked();
-  }
-
-  close(): void {
-    this.bsModalRef.hide();
   }
 }

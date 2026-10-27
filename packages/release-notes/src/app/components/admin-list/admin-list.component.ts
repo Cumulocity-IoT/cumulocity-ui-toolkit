@@ -1,9 +1,9 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, type OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AlertService, CoreModule } from '@c8y/ngx-components';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { take } from 'rxjs/operators';
-import { ReleaseNote } from '../../models/release-notes.model';
+import { type ReleaseNote } from '../../models/release-notes.model';
 import { ReleaseNotesService } from '../../services/release-notes.service';
 import { ReminderNotesAdminModalComponent } from '../admin-modal/admin-modal.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -42,6 +42,7 @@ export class ReminderNotesAdminListComponent implements OnInit {
   async delete(release: ReleaseNote): Promise<void> {
     try {
       await this.releaseNotesService.delete(release.id);
+      this.releaseNotes = this.releaseNotes.filter((r) => r.id !== release.id);
       this.alertService.success(
         this.translateService.instant('Release {{version}} deleted', {
           version: release.version,
@@ -49,7 +50,7 @@ export class ReminderNotesAdminListComponent implements OnInit {
       );
     } catch (error) {
       this.alertService.danger(
-        this.translateService.instant('Could not update release note') as string,
+        this.translateService.instant('Could not delete release note') as string,
         error as string
       );
     }
@@ -96,8 +97,7 @@ export class ReminderNotesAdminListComponent implements OnInit {
             }) as string)
       );
     } catch (error) {
-      // Mirrors the handling in `delete()` — the user has to know the publish
-      // state did not change.
+      // The user has to know the publish state did not change.
       this.alertService.danger(
         this.translateService.instant('Could not update release note') as string,
         error as string

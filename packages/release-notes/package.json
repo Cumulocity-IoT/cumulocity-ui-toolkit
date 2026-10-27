@@ -1,6 +1,6 @@
 {
   "name": "cumulocity-release-notes-plugin",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Provides the functionality to create release notes that can then be viewed by other users.",
   "author": "@dirk-peter-c8y",
   "homepage": "https://github.com/Cumulocity-IoT/cumulocity-ui-toolkit/tree/main/packages/release-notes",

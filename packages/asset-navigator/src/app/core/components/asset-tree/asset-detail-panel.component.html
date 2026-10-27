@@ -1,0 +1,87 @@
+@if (node(); as asset) {
+  <div class="ps-detail">
+    <header class="ps-detail__header d-flex a-i-center">
+      @if (icon()) {
+        <i class="ps-detail__icon" [c8yIcon]="icon()" aria-hidden="true"></i>
+      }
+      <span class="ps-detail__title text-truncate" data-cy="asset-navigator--detail-title" [attr.title]="asset.name">{{ asset.name }}</span>
+
+      @if (configurable()) {
+        <button
+          class="btn-clean ps-detail__cog m-l-auto"
+          type="button"
+          data-cy="asset-navigator--detail-configure"
+          [attr.aria-label]="'Configure fields' | translate"
+          [attr.title]="'Configure fields' | translate"
+          (click)="openConfig.emit()"
+        >
+          <i c8yIcon="cog"></i>
+        </button>
+      }
+    </header>
+
+    <!-- The path the cramped sidebar list never had room for (§6.1, P5). -->
+    <p class="ps-detail__path text-muted text-truncate" [attr.title]="path()">{{ path() }}</p>
+
+    <dl class="ps-detail__fields">
+      @for (row of rows(); track row.key) {
+        <div
+          class="ps-detail__field d-flex a-i-baseline"
+          data-cy="asset-navigator--detail-field"
+          [attr.data-field-id]="row.key"
+        >
+          <dt class="text-muted">{{ row.label | translate }}</dt>
+          <dd data-cy="asset-navigator--detail-value"
+            [class.text-muted]="row.unavailable"
+            [class.ps-detail__value--status]="row.render === 'status'"
+          >
+            @if (row.unavailable) {
+              <!--
+                Declared but not resolvable yet. Saying so is the point: a blank row
+                would read as "this asset is fine" (NFR-T5).
+              -->
+              <span [attr.title]="'This field needs a data source that is not available yet' | translate">
+                {{ 'Not available' | translate }}
+              </span>
+            } @else if (row.value === null) {
+              <span class="ps-detail__pending" aria-hidden="true"></span>
+            } @else {
+              {{ row.value | translate }}
+            }
+          </dd>
+        </div>
+      }
+    </dl>
+
+    @if (failed()) {
+      <p class="ps-detail__error text-muted">
+        <i c8yIcon="exclamation-circle"></i>
+        {{ 'Live values could not be loaded.' | translate }}
+      </p>
+    }
+
+    <footer class="ps-detail__actions d-flex">
+      <button class="btn btn-default btn-sm" type="button" (click)="open.emit({ newTab: false })" data-cy="asset-navigator--detail-open">
+        {{ 'Open' | translate }}
+      </button>
+      <button class="btn btn-default btn-sm" type="button" (click)="open.emit({ newTab: true })">
+        {{ 'New tab' | translate }}
+      </button>
+      <button
+        class="btn btn-default btn-sm"
+        type="button"
+        [class.active]="pinned()"
+        (click)="onPin()" data-cy="asset-navigator--detail-pin"
+      >
+        <i [c8yIcon]="pinned() ? 'star' : 'star-o'"></i>
+        {{ (pinned() ? 'Unpin' : 'Pin') | translate }}
+      </button>
+      <button class="btn btn-default btn-sm" type="button" (click)="openAlarms.emit()" data-cy="asset-navigator--detail-alarms">
+        {{ 'Alarms' | translate }}
+      </button>
+    </footer>
+  </div>
+} @else {
+  <!-- The asset left the store between hover and render (deleted, or lost access). -->
+  <p class="ps-detail__gone text-muted p-16">{{ 'This asset is no longer available.' | translate }}</p>
+}

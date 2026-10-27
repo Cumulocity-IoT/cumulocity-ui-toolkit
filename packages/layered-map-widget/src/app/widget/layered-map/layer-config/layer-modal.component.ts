@@ -1,15 +1,15 @@
 import { Component, inject } from '@angular/core';
-import { AlertService, CoreModule, ModalLabels } from '@c8y/ngx-components';
+import { AlertService, CoreModule, type ModalLabels } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { IconSelectorService } from '@c8y/ngx-components/icon-selector';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Subject } from 'rxjs';
 import { QueryFormsTabComponent } from '~components/_formly-fields/query-forms/query-forms-tab.component';
-import { DtmAssetType, DtmService } from '~services/dtm.service';
+import { type DtmAssetType, DtmService } from '~services/dtm.service';
 import {
-  BasicLayerConfig,
+  type BasicLayerConfig,
   isQueryLayerConfig,
-  QueryLayerConfig,
+  type QueryLayerConfig,
 } from '../layered-map-widget.model';
 
 @Component({
@@ -72,25 +72,6 @@ export class LayerModalComponent {
     return (
       this.type !== 'Unset' && !!this.layer.name && (!this.isAssetLayer || !!this.selectedAssetType)
     );
-  }
-
-  private async loadAssetTypes(): Promise<void> {
-    if (this.assetTypes.length || this.loadingAssetTypes) {
-      return;
-    }
-
-    this.loadingAssetTypes = true;
-
-    try {
-      this.assetTypes = await this.dtm.getAssetTypes();
-    } catch (e) {
-      this.assetTypes = [];
-      // Without this the asset-type picker just renders empty, which reads as
-      // "no asset types exist" rather than "we could not load them".
-      this.alert.danger(gettext('Could not load the asset types.'), e as string);
-    } finally {
-      this.loadingAssetTypes = false;
-    }
   }
 
   onAssetTypeSelect(identifier: string): void {
@@ -211,5 +192,24 @@ export class LayerModalComponent {
   // called if save is pressed
   onClose(): void {
     this.closeSubject.next(this.layer as QueryLayerConfig);
+  }
+
+  private async loadAssetTypes(): Promise<void> {
+    if (this.assetTypes.length || this.loadingAssetTypes) {
+      return;
+    }
+
+    this.loadingAssetTypes = true;
+
+    try {
+      this.assetTypes = await this.dtm.getAssetTypes();
+    } catch (e) {
+      this.assetTypes = [];
+      // Without this the asset-type picker just renders empty, which reads as
+      // "no asset types exist" rather than "we could not load them".
+      this.alert.danger(gettext('Could not load the asset types.'), e as string);
+    } finally {
+      this.loadingAssetTypes = false;
+    }
   }
 }

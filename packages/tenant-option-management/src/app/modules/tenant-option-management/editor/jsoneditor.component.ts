@@ -1,11 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /*
  * Copyright (c) 2022 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA,
  * and/or its subsidiaries and/or its affiliates and/or their licensors.
@@ -31,8 +23,8 @@ import {
   Component,
   ElementRef,
   Input,
-  OnInit,
-  OnDestroy,
+  type OnInit,
+  type OnDestroy,
   ViewChild,
   Output,
   EventEmitter,
@@ -41,16 +33,16 @@ import {
   ViewEncapsulation,
   inject,
 } from '@angular/core';
-import JSONEditor from 'jsoneditor';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import JSONEditor, { type EditableNode, type JSONPath, type SerializableNode } from 'jsoneditor';
+import { type ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import {
-  JsonEditorOptions,
-  JsonEditorMode,
-  JsonEditorTreeNode,
-  IError,
+  type JsonEditorOptions,
+  type JsonEditorMode,
+  type JsonEditorTreeNode,
+  type IError,
+  createJsonEditorOptions,
 } from './jsoneditor-options';
 import { isEmpty } from 'lodash';
-import { CoreModule } from '@c8y/ngx-components';
 
 @Component({
   selector: 'mapping-json-editor',
@@ -70,25 +62,47 @@ import { CoreModule } from '@c8y/ngx-components';
   ],
   encapsulation: ViewEncapsulation.None,
   standalone: true,
-  imports: [CoreModule],
 })
 export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDestroy {
-  private editor: any;
   public id = 'angjsoneditor' + Math.floor(Math.random() * 1000000);
   disabled = false;
   isFocused = false;
-  selectionList: any = [];
 
   public optionsChanged = false;
 
   @ViewChild('jsonEditorContainer', { static: true })
-  jsonEditorContainer: ElementRef;
+  jsonEditorContainer!: ElementRef<HTMLDivElement>;
 
-  private _data: object = {};
+  @Input() options: JsonEditorOptions = createJsonEditorOptions();
 
-  @Input() options: JsonEditorOptions = new JsonEditorOptions();
-  @Input('data')
-  set data(value: object) {
+  @Input() debug = false;
+
+  /** The parsed content after every change (not emitted while the text is invalid JSON). */
+  @Output()
+  change = new EventEmitter<unknown>();
+
+  /** Kept for API compatibility with the upstream component; never emitted. */
+  @Output()
+  onInit = new EventEmitter<void>();
+
+  @Output()
+  jsonChange = new EventEmitter<unknown>();
+
+  @Output()
+  textChange = new EventEmitter<string>();
+
+  @Output()
+  onPathChanged = new EventEmitter<string>();
+
+  private editor?: JSONEditor;
+  /** The options the current editor was created with, reused when only the data changes. */
+  private appliedOptions?: JsonEditorOptions;
+  private selectionList: HTMLElement[] = [];
+  private _data: unknown = {};
+  private elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  @Input()
+  set data(value: unknown) {
     this._data = value;
 
     if (this.editor) {
@@ -97,62 +111,42 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
     }
   }
 
-  @Input() debug = false;
-
-  @Output()
-  change: EventEmitter<any> = new EventEmitter<any>();
-
-  @Output()
-  onInit: EventEmitter<any> = new EventEmitter<any>();
-
-  @Output()
-  jsonChange: EventEmitter<any> = new EventEmitter<any>();
-
-  @Output()
-  textChange = new EventEmitter<string>();
-
-  @Output()
-  onPathChanged: EventEmitter<string> = new EventEmitter<string>();
-
-  private elementRef = inject(ElementRef);
-
   ngOnInit() {
     let optionsBefore = this.options;
 
-    if (!this.optionsChanged && this.editor) {
-      optionsBefore = this.editor.options;
+    if (!this.optionsChanged && this.appliedOptions) {
+      optionsBefore = this.appliedOptions;
     }
 
-    if (!this.options.onChangeText && this.textChange) {
-      this.options.onChangeText = this.onChangeText.bind(this);
+    if (!this.options.onChangeText) {
+      this.options.onChangeText = (text) => this.onChangeText(text);
     }
 
-    if (!this.options.onChangeJSON && this.jsonChange) {
-      this.options.onChangeJSON = this.onChangeJSON.bind(this);
+    if (!this.options.onChangeJSON) {
+      this.options.onChangeJSON = () => this.onChangeJSON();
     }
 
-    if (!this.options.onChange && this.change) {
-      this.options.onChange = this.onChange.bind(this);
+    if (!this.options.onChange) {
+      this.options.onChange = () => this.onChange();
     }
 
     if (!this.options.onEvent) {
-      this.options.onEvent = this.delegateSetSelection.bind(this);
+      this.options.onEvent = (node, event) => this.delegateSetSelection(node, event);
     }
 
-    const optionsCopy = Object.assign({}, optionsBefore);
-
-    // expandAll is an option only supported by ang-jsoneditor and not by the the original jsoneditor.
-    delete optionsCopy.expandAll;
-
-    if (!this.jsonEditorContainer.nativeElement) {
-      console.error(`Can't find the ElementRef reference for jsoneditor)`);
+    if (!this.options.onBlur) {
+      this.options.onBlur = () => this.onTouched();
     }
 
+    // expandAll is applied by this wrapper; jsoneditor rejects options it does not know
+    const { expandAll: _expandAll, ...optionsCopy } = optionsBefore;
+
+    // jsoneditor warns about onChangeJSON in the text modes, where it never fires
     if (optionsCopy.mode === 'text' || optionsCopy.mode === 'code') {
-      // @ts-ignore
-      optionsCopy.onChangeJSON = null;
+      delete optionsCopy.onChangeJSON;
     }
     this.editor = new JSONEditor(this.jsonEditorContainer.nativeElement, optionsCopy, this._data);
+    this.appliedOptions = optionsCopy;
 
     if (this.options.expandAll) {
       this.editor.expandAll();
@@ -163,26 +157,22 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
     this.destroy();
   }
 
-  hasObservers(eventEmitter: EventEmitter<any>): boolean {
-    return eventEmitter.observers.length > 0;
+  hasObservers(eventEmitter: { readonly observed: boolean }): boolean {
+    return eventEmitter.observed;
   }
-  /**
-   * ngModel
-   * ControlValueAccessor
-   */
 
   // ControlValueAccessor implementation
-  writeValue(value: any) {
+  writeValue(value: unknown) {
     this.data = value;
   }
 
   // Implemented as part of ControlValueAccessor
-  registerOnChange(fn: any) {
+  registerOnChange(fn: (value: unknown) => void) {
     this.onChangeModel = fn;
   }
 
   // Implemented as part of ControlValueAccessor.
-  registerOnTouched(fn: any) {
+  registerOnTouched(fn: () => void) {
     this.onTouched = fn;
   }
 
@@ -194,9 +184,9 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
   public onChange() {
     if (this.editor) {
       try {
-        const json = this.editor.get();
+        const json: unknown = this.editor.get();
 
-        this.onChangeModel();
+        this.onChangeModel(json);
         this.change.emit(json);
       } catch (e) {
         if (this.debug) {
@@ -239,63 +229,55 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
    */
 
   public collapseAll() {
-    this.editor.collapseAll();
+    this.editor?.collapseAll();
   }
 
   public expandAll() {
-    this.editor.expandAll();
+    this.editor?.expandAll();
   }
 
   public focus() {
-    this.editor.focus();
+    this.editor?.focus();
   }
 
-  public get(): JSON {
-    return this.editor.get();
+  public get(): unknown {
+    return this.editor?.get();
   }
 
-  public getMode(): JsonEditorMode {
-    return this.editor.getMode() as JsonEditorMode;
+  public getMode(): JsonEditorMode | undefined {
+    return this.editor?.getMode();
   }
 
-  public getName(): string {
-    return this.editor.getName();
+  public getName(): string | undefined {
+    return this.editor?.getName();
   }
 
   public getText(): string {
-    return this.editor.getText();
+    return this.editor?.getText() ?? '';
   }
 
-  public set(json: JSON) {
-    this.editor.set(json);
+  public set(json: unknown) {
+    this.editor?.set(json);
   }
 
   public setMode(mode: JsonEditorMode) {
-    this.editor.setMode(mode);
+    this.editor?.setMode(mode);
   }
 
   public setName(name: string) {
-    this.editor.setName(name);
+    this.editor?.setName(name);
   }
 
-  public setSelection(start: any, end: any) {
-    this.editor.setSelection(start, end);
+  public setSelection(start: { path: JSONPath }, end: { path: JSONPath }) {
+    this.editor?.setSelection(start, end);
   }
 
-  public getSelection(): any {
-    return this.editor.getSelection();
+  public getSelection(): { start: SerializableNode; end: SerializableNode } | undefined {
+    return this.editor?.getSelection();
   }
 
-  public getValidateSchema(): any {
-    return this.editor.validateSchema;
-  }
-
-  public setSchema(schema: any, schemaRefs: any) {
-    this.editor.setSchema(schema, schemaRefs);
-  }
-
-  public search(query: string) {
-    this.editor.search(query);
+  public setSchema(schema: object, schemaRefs?: object) {
+    this.editor?.setSchema(schema, schemaRefs);
   }
 
   public setOptions(newOptions: JsonEditorOptions) {
@@ -307,26 +289,24 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
     this.ngOnInit();
   }
 
-  public update(json: JSON) {
-    this.editor.update(json);
+  public update(json: unknown) {
+    this.editor?.update(json);
   }
 
   public destroy() {
     this.editor?.destroy();
   }
 
-  public getEditor() {
+  public getEditor(): JSONEditor | undefined {
     return this.editor;
   }
 
   public isValidJson() {
     try {
-      const text = this.getText();
-
-      JSON.parse(text);
+      JSON.parse(this.getText());
 
       return true;
-    } catch (e) {
+    } catch {
       return false;
     }
   }
@@ -336,7 +316,7 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
     const selection = { path: levels };
 
     try {
-      this.editor.setSelection(selection, selection);
+      this.editor?.setSelection(selection, selection);
     } catch (error) {
       console.error('Set selection to path not possible:', levels, error);
     }
@@ -346,14 +326,16 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
     }
   }
 
-  private delegateSetSelection(node: any, event: any) {
-    if (event.type == 'click') {
+  private delegateSetSelection(node: EditableNode, event: Event) {
+    if (event.type === 'click') {
       // reset style on previously selected items
       for (const item of this.selectionList) {
-        item.setAttribute('style', null);
+        item.removeAttribute('style');
       }
       // set style on currently selected items
-      this.selectionList = this.elementRef.nativeElement.querySelectorAll('.jsoneditor-selected');
+      this.selectionList = Array.from(
+        this.elementRef.nativeElement.querySelectorAll<HTMLElement>('.jsoneditor-selected')
+      );
 
       for (const item of this.selectionList) {
         item.setAttribute('style', `background: lightgrey;`);
@@ -361,7 +343,7 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
       const selection = { path: node.path };
 
       try {
-        this.editor.setSelection(selection, selection);
+        this.editor?.setSelection(selection, selection);
       } catch (error) {
         console.error('Set selection to path not possible:', node.path, error);
       }
@@ -373,13 +355,12 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
   }
 
   // Implemented as part of ControlValueAccessor.
-  // @ts-ignore
-  private onTouched = () => {};
+  private onTouched: () => void = () => undefined;
 
   // Implemented as part of ControlValueAccessor.
-  private onChangeModel = () => {};
+  private onChangeModel: (value: unknown) => void = () => undefined;
 
-  private editorPath2jsonPath(levels: string[]): string {
+  private editorPath2jsonPath(levels: JSONPath): string {
     let path = '';
 
     levels.forEach((n) => {
@@ -400,7 +381,7 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
     return path;
   }
 
-  private jsonPath2EditorPath(path: string): string[] {
+  private jsonPath2EditorPath(path: string): JSONPath {
     const ns = path.split('.');
 
     // if payload is an json array then we have to transform the path
@@ -413,7 +394,6 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
       }
     }
     const levels: string[] = [];
-    //const patternArray = /.*(?=\[*)/
     const patternArray = /^[^[]+/;
     const patternIndex = /(?<=\[)(-?\d*)(?=\])/;
 
@@ -434,4 +414,10 @@ export class JsonEditorComponent implements ControlValueAccessor, OnInit, OnDest
     return levels;
   }
 }
-export { JsonEditorOptions, JsonEditorMode, JsonEditorTreeNode, IError };
+export {
+  createJsonEditorOptions,
+  type JsonEditorOptions,
+  type JsonEditorMode,
+  type JsonEditorTreeNode,
+  type IError,
+};

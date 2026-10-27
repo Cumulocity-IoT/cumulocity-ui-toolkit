@@ -1,0 +1,112 @@
+<div class="ps-fieldcfg" data-cy="asset-navigator--fieldcfg">
+  <header class="ps-fieldcfg__header d-flex a-i-center">
+    <span class="text-bold">{{ 'Detail fields' | translate }}</span>
+    @if (closable()) {
+      <button
+        class="btn-clean m-l-auto text-muted"
+        type="button"
+        data-cy="asset-navigator--fieldcfg-close"
+        [attr.aria-label]="'Close' | translate"
+        (click)="closed.emit()"
+      >
+        <i c8yIcon="times"></i>
+      </button>
+    }
+  </header>
+
+  <!--
+    Which list is being configured, spelled out: the selection applies to every asset of
+    this type (or to every leaf type without its own list), not to one asset.
+  -->
+  <p class="ps-fieldcfg__scope text-muted" data-cy="asset-navigator--fieldcfg-scope" [attr.title]="assetType()">
+    @if (assetType() === null) {
+      {{ 'Default for all types without their own list' | translate }}
+    } @else {
+      {{ 'For all' | translate }} <span class="text-medium">{{ typeLabel() }}</span>
+      {{ 'assets' | translate }}
+    }
+  </p>
+
+  @if (!hasOwnEntry()) {
+    <p class="text-muted ps-fieldcfg__note" data-cy="asset-navigator--fieldcfg-inherited">
+      {{ (isBranch() ? 'No fields of its own yet.' : 'Uses the default fields until you change them.') | translate }}
+    </p>
+  }
+
+  @if (isBranch()) {
+    <p class="text-muted ps-fieldcfg__note">
+      {{ 'Counts, availability and alarms are always shown for a group — add properties below.' | translate }}
+    </p>
+  }
+
+  <p class="text-muted ps-fieldcfg__hint">
+    {{ 'Shown, in order. Drag to reorder.' | translate }}
+  </p>
+
+  <ul class="ps-fieldcfg__list" cdkDropList (cdkDropListDropped)="drop($event)">
+    @for (field of selected(); track fieldId(field)) {
+      <li
+        class="ps-fieldcfg__item d-flex a-i-center"
+        cdkDrag
+        data-cy="asset-navigator--fieldcfg-selected"
+        [attr.data-field-id]="fieldId(field)"
+      >
+        <i class="ps-fieldcfg__grip text-muted" cdkDragHandle c8yIcon="drag" aria-hidden="true"></i>
+        <label class="ps-fieldcfg__label">
+          <input type="checkbox" [checked]="true" (change)="toggleField(field)" />
+          <span>{{ field.label | translate }}</span>
+        </label>
+        @if (pathOf(field); as path) {
+          <!-- A picked inventory path: unchecking drops it entirely, so it shows what it reads. -->
+          <code class="ps-fieldcfg__path text-muted" [attr.title]="path">{{ path }}</code>
+        }
+      </li>
+    } @empty {
+      <li class="ps-fieldcfg__item text-muted">{{ 'No fields selected.' | translate }}</li>
+    }
+  </ul>
+
+  @if (available().length) {
+    <p class="text-muted ps-fieldcfg__hint">{{ 'Available' | translate }}</p>
+    <ul class="ps-fieldcfg__list">
+      @for (field of available(); track fieldId(field)) {
+        <li
+          class="ps-fieldcfg__item d-flex a-i-center"
+          data-cy="asset-navigator--fieldcfg-available"
+          [attr.data-field-id]="fieldId(field)"
+        >
+          <span class="ps-fieldcfg__grip" aria-hidden="true"></span>
+          <label class="ps-fieldcfg__label">
+            <input type="checkbox" [checked]="false" (change)="toggleField(field)" />
+            <span>{{ field.label | translate }}</span>
+          </label>
+        </li>
+      }
+    </ul>
+  }
+
+  <footer class="ps-fieldcfg__footer">
+    <!--
+      The same picker the overview's config drawer uses for its table columns and popup
+      sections, over the fragments these assets actually carry.
+    -->
+    <button
+      class="btn btn-default btn-sm"
+      type="button"
+      data-cy="asset-navigator--fieldcfg-add-properties"
+      [disabled]="!hasSamples()"
+      (click)="addInventoryFields()"
+    >
+      <i c8yIcon="cubes"></i> {{ 'Add asset properties' | translate }}
+    </button>
+    <button
+      class="btn btn-default btn-sm"
+      type="button"
+      data-cy="asset-navigator--fieldcfg-reset"
+      [disabled]="!hasOwnEntry()"
+      (click)="reset()"
+    >
+      {{ 'Reset to default' | translate }}
+    </button>
+  </footer>
+</div>

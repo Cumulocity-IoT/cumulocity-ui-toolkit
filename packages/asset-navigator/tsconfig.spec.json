@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/spec",
+    "types": ["jasmine", "node"],
+    // Ported from c8y-windy-solution, which compiles without strict null checks.
+    "strictNullChecks": false
+  },
+  "include": ["src/**/*.spec.ts", "src/**/*.d.ts"]
+}

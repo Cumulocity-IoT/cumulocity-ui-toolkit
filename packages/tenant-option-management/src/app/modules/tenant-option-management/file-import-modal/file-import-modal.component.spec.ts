@@ -4,7 +4,11 @@ import { AlertService, ModalService } from '@c8y/ngx-components';
 import { TranslateService } from '@ngx-translate/core';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { provideMock } from '~helpers/auto-mock.helper';
-import { ImportStatusEnum, TenantOptionImportRow } from '../tenant-option-management.model';
+import {
+  ImportStatusEnum,
+  isImportableTenantOption,
+  type TenantOptionImportRow,
+} from '../tenant-option-management.model';
 import { TenantOptionManagementService } from '../tenant-option-management.service';
 import { FileImportModalComponent } from './file-import-modal.component';
 
@@ -161,6 +165,51 @@ describe('FileImportModalComponent', () => {
 
       expect(component.selectedItems.map((r) => r.id)).toEqual(['n']);
       expect(component.rows[0].status).toBe(ImportStatusEnum.CONFLICT);
+    });
+  });
+  describe('import() with failures', () => {
+    it('imports the remaining options, marks the failed one and stays open', async () => {
+      const failing = row({ id: 'cat-a', key: 'a' });
+      const ok = row({ id: 'cat-b', key: 'b' });
+
+      component.rows = [failing, ok];
+      component.selectedItems = [failing, ok];
+      (optionsManagement.addOption as unknown as jasmine.Spy).and.callFake(
+        (option: { key: string }) =>
+          option.key === 'a' ? Promise.reject(new Error('403')) : Promise.resolve({})
+      );
+
+      await component.import();
+
+      expect(component.rows.map((r) => r.status)).toEqual([
+        ImportStatusEnum.FAILED,
+        ImportStatusEnum.ADDED,
+      ]);
+      expect(component.isLoading).toBeFalse();
+      expect(alertService.danger).toHaveBeenCalled();
+      expect(alertService.success).not.toHaveBeenCalled();
+      expect(TestBed.inject(BsModalRef).hide).not.toHaveBeenCalled();
+    });
+
+    it('ignores a second import while one is running', async () => {
+      component.rows = [row()];
+      component.selectedItems = [row()];
+      component.isLoading = true;
+
+      await component.import();
+
+      expect(optionsManagement.addOption).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('isImportableTenantOption()', () => {
+    it('requires a category, a key and a text value', () => {
+      expect(isImportableTenantOption({ category: 'c', key: 'k', value: 'v' })).toBeTrue();
+      expect(isImportableTenantOption({ category: 'c', key: 'k', value: '' })).toBeTrue();
+      expect(isImportableTenantOption({ category: 'c', key: 'k' })).toBeFalse();
+      expect(isImportableTenantOption({ category: 'c', key: 'k', value: 5 })).toBeFalse();
+      expect(isImportableTenantOption({ category: '', key: 'k', value: 'v' })).toBeFalse();
+      expect(isImportableTenantOption(null)).toBeFalse();
     });
   });
 });

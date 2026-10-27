@@ -1,5 +1,5 @@
 <div class="modal-header separator">
-  <h3 translate>
+  <h3 translate data-cy="release-notes-modal--title">
     {{ release?.id ? 'Edit Release Note' : 'Create Release Note' }}
   </h3>
 </div>
@@ -9,7 +9,7 @@
     <formly-form [form]="form" [fields]="fields" [model]="release"></formly-form>
 
     <div class="card">
-      <div class="card-header separator d-flex pointer" (click)="preview = !preview">
+      <div class="card-header separator d-flex pointer" (click)="preview = !preview" data-cy="release-notes-modal--preview-toggle">
         <span translate>Preview</span>
 
         <i class="m-l-auto" [c8yIcon]="preview ? 'chevron-up' : 'chevron-down'"></i>
@@ -18,19 +18,21 @@
       <div
         class="card-block markdown-content"
         [collapse]="!preview"
+        data-cy="release-notes-modal--preview"
         [innerHtml]="body | markdownToHtml | async"
       ></div>
     </div>
   </div>
 
   <div class="modal-footer">
-    <button class="btn btn-default" (click)="close()" type="button" translate>Cancel</button>
+    <button class="btn btn-default" (click)="close()" type="button" data-cy="release-notes-modal--cancel" translate>Cancel</button>
 
     <button
       class="btn btn-primary"
       [disabled]="!form.valid || isLoading"
       [class.btn-pending]="isLoading"
       type="submit"
+      data-cy="release-notes-modal--submit"
       translate
     >
       {{ release?.id ? 'Update' : 'Create' }}

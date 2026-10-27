@@ -1,8 +1,8 @@
-import { inject, input, model, AfterViewInit, Component } from '@angular/core';
+import { inject, input, model, type AfterViewInit, Component } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { C8yJSONSchema, CoreModule } from '@c8y/ngx-components';
-import { FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
-import { JSONSchema7 } from 'json-schema';
+import { type FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
+import { type JSONSchema7 } from 'json-schema';
 import { set } from 'lodash';
 import { getDateFromBlock, getDateToBlock } from './formly-query-blocks';
 import { QueryBuilderFormComponent } from './query-builder-form.component';

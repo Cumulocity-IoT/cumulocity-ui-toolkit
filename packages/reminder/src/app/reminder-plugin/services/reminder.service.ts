@@ -1,36 +1,47 @@
-import { inject, signal, ComponentRef, Injectable } from '@angular/core';
-import { EventService, IEvent, IResult, TenantOptionsService } from '@c8y/client';
-import { AlertService, EventRealtimeService, RealtimeMessage } from '@c8y/ngx-components';
+import { inject, signal, untracked, type ComponentRef, Injectable } from '@angular/core';
+import { EventService, type IEvent, type IResult, TenantOptionsService } from '@c8y/client';
+import { AlertService, EventRealtimeService, type RealtimeMessage } from '@c8y/ngx-components';
 import { TranslateService } from '@ngx-translate/core';
-import { filter as _filter, cloneDeep, debounce, has, orderBy, sortBy } from 'lodash';
+import { filter as _filter, cloneDeep, debounce, has, isEqual, orderBy, sortBy } from 'lodash';
 import moment from 'moment';
 import { Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { escapeHtml } from '~helpers/escape-html';
 import { ActiveTabService } from '~services/active-tab.service';
-import { AssetAccessService, AssetFilterConfig } from '~services/asset-access.service';
+import { AssetAccessService, type AssetFilterConfig } from '~services/asset-access.service';
 import { DomService } from '~services/dom.service';
 import { LocalStorageService } from '~services/local-storage.service';
 import { ReminderDrawerComponent } from '../components/reminder-drawer/reminder-drawer.component';
 import {
-  Reminder,
+  type Reminder,
   REMINDER__INITIAL_QUERY_SIZE,
   REMINDER__LOCAL_STORAGE__CONFIG,
   REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG,
+  REMINDER__LOCAL_STORAGE__NOTIFICATIONS_CHOSEN,
   REMINDER__TENANT_OPTION__CATEGORY,
   REMINDER__TENANT_OPTION__CONFIG_KEY,
+  REMINDER__TENANT_OPTION__DEFAULTS_KEY,
   REMINDER__TENANT_OPTION__TYPE_KEY,
   REMINDER__TYPE,
   REMINDER__TYPE_FRAGMENT,
-  ReminderConfig,
-  ReminderGroup,
-  ReminderGroupFilter,
+  type ReminderConfig,
+  type ReminderGroup,
+  type ReminderGroupFilter,
   ReminderGroupStatus,
   ReminderStatus,
-  ReminderTenantConfig,
-  ReminderType,
-  ResponsibilityFilter,
+  type ReminderTenantConfig,
+  type ReminderTenantDefaults,
+  type ReminderType,
+  type ResponsibilityFilter,
 } from '../models/reminder.model';
+
+const NOTIFICATION_KEYS = ['browser', 'toast'] as const;
+
+type NotificationKey = (typeof NOTIFICATION_KEYS)[number];
+
+function isNotificationKey(key: unknown): key is NotificationKey {
+  return (NOTIFICATION_KEYS as readonly unknown[]).includes(key);
+}
 
 @Injectable()
 export class ReminderService {
@@ -44,6 +55,8 @@ export class ReminderService {
    * consuming component. (`filters$` was declared but never read, and is gone.)
    */
   readonly config = signal<ReminderConfig>({});
+  /** Built-in defaults plus the tenant's notification presets; see {@link loadConfig}. */
+  private defaultConfig: ReminderConfig = { ...REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG };
   readonly open = signal(false);
   readonly reminders = signal<Reminder[]>([]);
   readonly reminderCounter = signal(0);
@@ -64,16 +77,6 @@ export class ReminderService {
   private debouncedSetUpdateTimer = debounce(() => this.setUpdateTimer(), 300);
 
   private _types: ReminderType[] = [];
-
-  /**
-   * Replaces the former `reminders` setter: updating the list also refreshes the
-   * due counter and reschedules the update timer.
-   */
-  private setReminders(reminders: Reminder[]): void {
-    this.reminders.set(reminders);
-    this.updateCounter();
-    this.debouncedSetUpdateTimer();
-  }
 
   private alertService = inject(AlertService);
 
@@ -115,11 +118,14 @@ export class ReminderService {
 
     this.loadConfig();
     void this.requestNotificationPermission();
-    const [tenantConfig, types] = await Promise.all([
-      this.fetchTenantConfig(),
+    const [tenantConfig, types, tenantDefaults] = await Promise.all([
+      this.fetchTenantJsonOption<ReminderTenantConfig>(REMINDER__TENANT_OPTION__CONFIG_KEY),
       this.fetchReminderTypes(),
+      this.fetchTenantJsonOption<ReminderTenantDefaults>(REMINDER__TENANT_OPTION__DEFAULTS_KEY),
     ]);
 
+    // Reload with the tenant defaults; settings the user already stored still win.
+    this.loadConfig(tenantDefaults);
     this.contextFilterAvailable.set(tenantConfig.useContext ?? false);
 
     if (!this.contextFilterAvailable() && this.config().useContext) {
@@ -217,10 +223,20 @@ export class ReminderService {
    * @returns {void}
    */
   setConfig<K extends keyof ReminderConfig>(key: K, value: ReminderConfig[K]): void {
-    const config = { ...this.config(), [key]: value };
+    const current = untracked(() => this.config());
+
+    // Grouping writes the filter back on every pass; an unchanged value must not
+    // emit, or effects that group reminders would re-trigger themselves endlessly.
+    if (isEqual(current[key], value)) return;
+
+    const config = { ...current, [key]: value };
 
     this.localStorageService.set(REMINDER__LOCAL_STORAGE__CONFIG, config);
     this.config.set(config);
+
+    if (isNotificationKey(key)) {
+      this.rememberNotificationChoice([key]);
+    }
   }
 
   /**
@@ -246,6 +262,16 @@ export class ReminderService {
     event.isCleared = reminder.status === ReminderStatus.cleared ? {} : null;
 
     return (await this.eventService.update(event)) as IResult<Reminder>;
+  }
+
+  /**
+   * Replaces the former `reminders` setter: updating the list also refreshes the
+   * due counter and reschedules the update timer.
+   */
+  private setReminders(reminders: Reminder[]): void {
+    this.reminders.set(reminders);
+    this.updateCounter();
+    this.debouncedSetUpdateTimer();
   }
 
   private applyContextFilter(groups: ReminderGroup[], context?: string): ReminderGroup[] {
@@ -341,16 +367,24 @@ export class ReminderService {
     });
   }
 
-  private async fetchTenantConfig(): Promise<ReminderTenantConfig> {
+  /** Reads a JSON tenant option of the reminder category; a missing or invalid option yields `{}`. */
+  private async fetchTenantJsonOption<T extends object>(key: string): Promise<T> {
     try {
       const response = await this.tenantOptionService.detail({
         category: REMINDER__TENANT_OPTION__CATEGORY,
-        key: REMINDER__TENANT_OPTION__CONFIG_KEY,
+        key,
       });
 
       if (response.data?.value) {
         try {
-          return this.parseJSON<ReminderTenantConfig>(response.data.value);
+          const parsed: unknown = this.parseJSON<unknown>(response.data.value);
+
+          // `null`, arrays and primitives are valid JSON but no option object
+          if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+            throw new TypeError(`tenant option ${key} is not a JSON object`);
+          }
+
+          return parsed as T;
         } catch {
           this.alertService.add({
             type: 'danger',
@@ -358,12 +392,12 @@ export class ReminderService {
             timeout: 5000,
           });
 
-          return {};
+          return {} as T;
         }
       }
     } catch (error) {
-      // A missing tenant option just means the context filter was never
-      // configured; anything else is a real failure the user should see.
+      // A missing tenant option just means it was never configured; anything
+      // else is a real failure the user should see.
       if (!this.isNotFound(error)) {
         this.alertService.danger(
           this.translateService.instant('reminder.error.invalidConfig') as string,
@@ -372,7 +406,7 @@ export class ReminderService {
       }
     }
 
-    return {};
+    return {} as T;
   }
 
   /** Distinguishes "tenant option not configured" from an actual request failure. */
@@ -596,13 +630,71 @@ export class ReminderService {
     return groups;
   }
 
-  private loadConfig(): void {
+  private loadConfig(tenantDefaults: ReminderTenantDefaults = {}): void {
+    const defaults: ReminderConfig = { ...REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG };
+
+    // Only the notification switches can be preset; `false` is a valid default too.
+    if (typeof tenantDefaults.browser === 'boolean') defaults.browser = tenantDefaults.browser;
+    if (typeof tenantDefaults.toast === 'boolean') defaults.toast = tenantDefaults.toast;
+
+    this.defaultConfig = defaults;
     this.config.set(
-      this.localStorageService.getOrDefault<ReminderConfig>(
-        REMINDER__LOCAL_STORAGE__CONFIG,
-        REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG
+      this.withDefaults(
+        this.localStorageService.getOrDefault<ReminderConfig>(REMINDER__LOCAL_STORAGE__CONFIG, {})
       )
     );
+  }
+
+  /**
+   * The stored config over the defaults — except for notification switches the user never
+   * set: those follow the defaults, which the tenant may preset. (Every config write stores
+   * the whole config, so a stored switch alone does not mean the user chose it.)
+   */
+  private withDefaults(stored: ReminderConfig): ReminderConfig {
+    const config: ReminderConfig = { ...this.defaultConfig, ...stored };
+    const chosen = this.chosenNotificationKeys(stored);
+
+    for (const key of NOTIFICATION_KEYS) {
+      if (!chosen.includes(key)) {
+        config[key] = this.defaultConfig[key];
+      }
+    }
+
+    return config;
+  }
+
+  private chosenNotificationKeys(stored: ReminderConfig): NotificationKey[] {
+    const chosen = this.localStorageService.getOrDefault<unknown>(
+      REMINDER__LOCAL_STORAGE__NOTIFICATIONS_CHOSEN,
+      null
+    );
+
+    if (Array.isArray(chosen)) {
+      return chosen.filter(isNotificationKey);
+    }
+
+    // Stored before choices were recorded: switches were off unless the user turned them
+    // on, so a stored `true` is a choice and a stored `false` most likely the old default.
+    const legacy = NOTIFICATION_KEYS.filter((key) => stored[key] === true);
+
+    if (legacy.length) {
+      this.rememberNotificationChoice(legacy);
+    }
+
+    return legacy;
+  }
+
+  private rememberNotificationChoice(keys: NotificationKey[]): void {
+    const chosen = this.localStorageService.getOrDefault<unknown>(
+      REMINDER__LOCAL_STORAGE__NOTIFICATIONS_CHOSEN,
+      null
+    );
+    const current = Array.isArray(chosen) ? chosen.filter(isNotificationKey) : [];
+    const next = [...new Set([...current, ...keys])];
+
+    if (next.length !== current.length) {
+      this.localStorageService.set(REMINDER__LOCAL_STORAGE__NOTIFICATIONS_CHOSEN, next);
+    }
   }
 
   private async requestNotificationPermission(): Promise<boolean> {
@@ -707,7 +799,7 @@ export class ReminderService {
           }),
           filter((config): config is ReminderConfig => config !== undefined)
         )
-        .subscribe((config) => this.config.set(config))
+        .subscribe((config) => this.config.set(this.withDefaults(config)))
     );
   }
 

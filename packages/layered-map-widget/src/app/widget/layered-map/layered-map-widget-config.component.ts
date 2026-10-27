@@ -1,14 +1,19 @@
-import { AlertService, CoreModule, DynamicComponent, OnBeforeSave } from '@c8y/ngx-components';
+import {
+  AlertService,
+  CoreModule,
+  type DynamicComponent,
+  type OnBeforeSave,
+} from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
-import { IManagedObject } from '@c8y/client';
-import { Component, inject, Input, OnInit } from '@angular/core';
+import { type IManagedObject } from '@c8y/client';
+import { Component, inject, Input, type OnInit } from '@angular/core';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { ApplicationAvailabilityService } from '~services/application-availability.service';
 import { DTM_CONTEXT_PATH } from '~services/dtm.service';
 import { take, lastValueFrom } from 'rxjs';
 import {
   BASE_TILE_LAYERS,
-  CustomBaseTileLayerEntry,
+  type CustomBaseTileLayerEntry,
   DEFAULT_BASE_TILE_LAYER_ID,
 } from './base-tile-layers';
 import { CustomBaseTileLayerService } from './service/custom-base-tile-layer.service';
@@ -16,11 +21,11 @@ import { CustomBaseLayerModalComponent } from './layer-config/custom-base-layer-
 import { EventLineCreatorModalComponent } from './event-line-creator/event-line-creator-modal.component';
 import { DrawLineCreatorModalComponent } from './draw-line-creator/draw-line-creator-modal.component';
 import {
-  BasicLayerConfig,
-  ILayeredMapWidgetConfig,
+  type BasicLayerConfig,
+  type ILayeredMapWidgetConfig,
   isQueryLayerConfig,
-  ITrack,
-  LayerConfig,
+  type ITrack,
+  type LayerConfig,
 } from './layered-map-widget.model';
 import { LayerModalComponent } from './layer-config/layer-modal.component';
 import { PopoverModalComponent } from './popover-config/popover-modal.component';
@@ -229,17 +234,6 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
     }
   }
 
-  private addTrackToConfig(track: ITrack | null): void {
-    if (!track) {
-      return;
-    }
-
-    if (!this.config.tracks) {
-      this.config.tracks = [];
-    }
-    this.config.tracks.push(track);
-  }
-
   deleteTrack(track: ITrack): void {
     this.config.tracks = this.config.tracks?.filter((t) => t.name !== track.name);
 
@@ -256,18 +250,6 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
       this.config.selectedTrack = track.name;
     } else if (track.name === this.config.selectedTrack) {
       this.config.selectedTrack = undefined;
-    }
-  }
-
-  private async loadCustomLayers(): Promise<void> {
-    this.customLayersLoading = true;
-
-    try {
-      this.customTileLayers = await this.customBaseTileLayerService.load();
-    } catch (error) {
-      this.alert.danger(gettext('Could not load the custom base layers.'), error as string);
-    } finally {
-      this.customLayersLoading = false;
     }
   }
 
@@ -326,5 +308,28 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
     config.saved = true;
 
     return Promise.resolve(true);
+  }
+
+  private addTrackToConfig(track: ITrack | null): void {
+    if (!track) {
+      return;
+    }
+
+    if (!this.config.tracks) {
+      this.config.tracks = [];
+    }
+    this.config.tracks.push(track);
+  }
+
+  private async loadCustomLayers(): Promise<void> {
+    this.customLayersLoading = true;
+
+    try {
+      this.customTileLayers = await this.customBaseTileLayerService.load();
+    } catch (error) {
+      this.alert.danger(gettext('Could not load the custom base layers.'), error as string);
+    } finally {
+      this.customLayersLoading = false;
+    }
   }
 }

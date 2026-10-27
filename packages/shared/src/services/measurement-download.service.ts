@@ -1,37 +1,13 @@
 import { inject, Injectable } from '@angular/core';
-import { IMeasurement, MeasurementService } from '@c8y/client';
+import { type IMeasurement, MeasurementService } from '@c8y/client';
 import { saveAs } from 'file-saver';
-import { concatMap, from, map, Observable, switchMap } from 'rxjs';
+import { concatMap, from, map, type Observable, switchMap } from 'rxjs';
 import { get, isNil } from 'lodash';
 import { detectMeasurementPaths } from '../helpers/measurement-paths';
 
 @Injectable()
 export class MeasurementDownloadService {
   private measurementService = inject(MeasurementService);
-
-  private createBaseFilter(source: string) {
-    return {
-      dateFrom: new Date(0).toISOString(),
-      dateTo: new Date().toISOString(),
-      source,
-      pageSize: 2000,
-    };
-  }
-
-  private async getTotalPages(filter: object): Promise<number[]> {
-    const { paging: measurementPaging } = await this.measurementService.list({
-      ...filter,
-      withTotalPages: true,
-      pageSize: 1,
-    });
-
-    const totalMeasurements = measurementPaging?.totalPages ?? 0;
-    const maxPageSize = 2000;
-
-    const requestsNeeded = Math.ceil(totalMeasurements / maxPageSize);
-    const totalPages = Array.from({ length: requestsNeeded }, (_, index) => index + 1);
-    return totalPages;
-  }
 
   getMeasurementsWithProgress(
     source: string
@@ -79,6 +55,36 @@ export class MeasurementDownloadService {
     return csv;
   }
 
+  download(text: string) {
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+
+    saveAs(blob, `measurements-${new Date().toISOString()}.csv`);
+  }
+
+  private createBaseFilter(source: string) {
+    return {
+      dateFrom: new Date(0).toISOString(),
+      dateTo: new Date().toISOString(),
+      source,
+      pageSize: 2000,
+    };
+  }
+
+  private async getTotalPages(filter: object): Promise<number[]> {
+    const { paging: measurementPaging } = await this.measurementService.list({
+      ...filter,
+      withTotalPages: true,
+      pageSize: 1,
+    });
+
+    const totalMeasurements = measurementPaging?.totalPages ?? 0;
+    const maxPageSize = 2000;
+
+    const requestsNeeded = Math.ceil(totalMeasurements / maxPageSize);
+    const totalPages = Array.from({ length: requestsNeeded }, (_, index) => index + 1);
+    return totalPages;
+  }
+
   private jsonToCsv(jsonData: Record<string, unknown>[]): string {
     if (jsonData.length === 0) {
       throw new Error('The input JSON is empty.');
@@ -100,11 +106,5 @@ export class MeasurementDownloadService {
     });
 
     return csvRows.join('\n');
-  }
-
-  download(text: string) {
-    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-
-    saveAs(blob, `measurements-${new Date().toISOString()}.csv`);
   }
 }
