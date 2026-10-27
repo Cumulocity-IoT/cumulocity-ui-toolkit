@@ -47,6 +47,50 @@ describe('Index DB Cache Plugin', () => {
     cy.get(DRAWER).should('not.be.visible');
   });
 
+  it('places the drawer below the page toolbar and right of the navigator, following it', () => {
+    const bottomOfToolbar = (doc: Document) =>
+      Math.max(
+        ...[...doc.querySelectorAll('c8y-action-bar, .c8y-ui-action-bar')]
+          .map((el) => el.getBoundingClientRect())
+          .filter((box) => box.height > 0)
+          .map((box) => box.bottom)
+      );
+    const NAVIGATOR = '.app-main-navigator, c8y-navigator, .navigator';
+    const navigatorRight = (doc: Document) =>
+      Math.max(0, doc.querySelector(NAVIGATOR)!.getBoundingClientRect().right);
+    const drawerFollowsNavigator = (doc: Document) =>
+      cy.get(DRAWER).should(($drawer) => {
+        expect($drawer[0].getBoundingClientRect().left).to.be.closeTo(navigatorRight(doc), 1);
+      });
+
+    cy.viewport(1400, 900);
+    cy.visitApp('', { language: 'en', waitFor: TOGGLE });
+    // the shell may start with the navigator closed; open it so there is an edge to follow
+    cy.document().then((doc) => {
+      if (navigatorRight(doc) < 100) cy.get('[data-cy="header-bar--main-header-button"]').click();
+    });
+    cy.document().should((doc) => expect(navigatorRight(doc)).to.be.greaterThan(100));
+    cy.get(TOGGLE).click();
+
+    cy.document().then((doc) => {
+      cy.get(DRAWER).should(($drawer) => {
+        const box = $drawer[0].getBoundingClientRect();
+        expect(box.top).to.be.closeTo(bottomOfToolbar(doc), 1);
+        expect(box.left).to.be.closeTo(navigatorRight(doc), 1);
+      });
+
+      // a collapsed rail (as with the asset navigator): narrower, no fixed offsets assumed
+      cy.get(NAVIGATOR).first().invoke('css', 'width', '64px');
+      drawerFollowsNavigator(doc);
+      cy.get(NAVIGATOR).first().invoke('css', 'width', '');
+
+      // closed with the shell's own toggle: the drawer moves to the page's left edge
+      cy.get('[data-cy="header-bar--main-header-button"]').click();
+      cy.document().should((d) => expect(navigatorRight(d)).to.equal(0));
+      drawerFollowsNavigator(doc);
+    });
+  });
+
   it('is available on device pages as well', () => {
     cy.request('/inventory/managedObjects?fragmentType=c8y_IsDevice&pageSize=1').then((res) => {
       const id = res.body.managedObjects[0].id as string;
