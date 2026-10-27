@@ -495,6 +495,16 @@ If you find a bug, please create an [issue](./issues). For ideas or feedback, po
 - [How to install a Microfrontend Plugin on a tenant and use it in an app?](https://techcommunity.cumulocity.com/t/how-to-install-a-microfrontend-plugin-on-a-tenant-and-use-it-in-an-app/3034)
 - [The power of micro frontends – How to dynamically extend Cumulocity IoT Frontends](https://techcommunity.cumulocity.com/t/the-power-of-micro-frontends-how-to-dynamically-extend-cumulocity-iot-frontends/2577)
 
+## Shell Compatibility Check
+
+`.github/workflows/shell-compat.yml` finds out whether the plugins still work in a newer cockpit before tenants are upgraded to it. It runs daily at 04:00 UTC (or manually, with an optional `version`):
+
+1. **Detect** — reads the latest CD release of [Cumulocity-IoT/cockpit](https://github.com/Cumulocity-IoT/cockpit/releases) (pre-releases are skipped). It stops if that is the Web SDK version the workspace is pinned to, or if that version already passed at the current `main` commit.
+2. **Test** — runs every plugin's Cypress suite on the tenant mock inside that cockpit (`E2E_SHELL_VERSION=<version> pnpm run e2e:mock <plugin>`). The plugins stay built with the pinned Web SDK, just as a deployed plugin does when its tenant is upgraded.
+3. **Report** — if a plugin fails, it opens an issue `Cockpit <version>: e2e failures` (label `shell-compat`), or comments on the open one for that version. The issue lists the failing plugins, the run, and the requests the mock does not emulate, since a failure can be a gap in the mock rather than a plugin bug. When everything passes, it closes the open issues of that version and older ones.
+
+To reproduce a failure locally: `E2E_SHELL_VERSION=<version> pnpm run e2e:mock <plugin> --browser=chrome` (this rewrites `test/c8y-ui.json` — don't commit that). To let the agentic issue loop attempt a fix, add the `agent:fix` label to the issue.
+
 ---
 
 This toolkit is provided as-is and without warranty or support. It does not constitute part of the Cumulocity product suite. Users are free to use, fork and modify it, subject to the license agreement. While Cumulocity welcomes contributions, we cannot guarantee to include every contribution in the master project.
