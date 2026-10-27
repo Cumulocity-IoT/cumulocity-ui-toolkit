@@ -14,7 +14,13 @@
           </label>
           <div class="input-group">
             <label class="toggle-countdown" placement="bottom" aria-label="Disable auto refresh">
-              <input type="checkbox" data-cy="events-graph--interval-toggle-button" />
+              <input
+                type="checkbox"
+                data-cy="events-graph--interval-toggle-button"
+                #autoRefreshOff
+                [checked]="!autoRefresh"
+                (change)="setAutoRefresh(!autoRefreshOff.checked)"
+              />
 
               <c8y-countdown-interval
                 [countdownInterval]="config.realtimeInterval"

@@ -38,12 +38,6 @@ export abstract class SourceIdPollingService {
     );
   }
 
-  private checkForUpdates(layer: MyLayer): Promise<PollingDelta> {
-    return this.fetchMatchingSourceIds(layer.config).then((sources) =>
-      this.toPollingDelta(sources, layer)
-    );
-  }
-
   /** Diffs the freshly matched source ids against the layer's current members. */
   protected async toPollingDelta(sources: Set<string>, layer: MyLayer): Promise<PollingDelta> {
     const delta = {
@@ -91,5 +85,11 @@ export abstract class SourceIdPollingService {
     }
 
     return mos;
+  }
+
+  private checkForUpdates(layer: MyLayer): Promise<PollingDelta> {
+    return this.fetchMatchingSourceIds(layer.config).then((sources) =>
+      this.toPollingDelta(sources, layer)
+    );
   }
 }

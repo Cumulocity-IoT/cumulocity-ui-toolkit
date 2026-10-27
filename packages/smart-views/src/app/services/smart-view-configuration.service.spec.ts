@@ -5,7 +5,10 @@ import {
   SMART_VIEW_CONFIGURATION_TYPE,
   type SmartViewConfigurationDraft,
 } from '../smart-views.model';
-import { SmartViewConfigurationService } from './smart-view-configuration.service';
+import {
+  assetDefinitionQuery,
+  SmartViewConfigurationService,
+} from './smart-view-configuration.service';
 
 describe('SmartViewConfigurationService', () => {
   let service: SmartViewConfigurationService;
@@ -78,5 +81,22 @@ describe('SmartViewConfigurationService', () => {
 
     expect(inventory.delete).toHaveBeenCalledWith('7');
     expect(changed).toHaveBeenCalled();
+  });
+  it('keeps a stored query on update instead of regenerating it', async () => {
+    inventory.update.and.resolveTo({ data: { id: '7' } } as never);
+
+    await service.update('7', { ...draft, query: "name eq 'hand written'" });
+
+    const body = inventory.update.calls.mostRecent().args[0] as {
+      c8y_SmartViewConfiguration: { query: string };
+    };
+
+    expect(body.c8y_SmartViewConfiguration.query).toBe("name eq 'hand written'");
+  });
+
+  it('escapes quotes of the asset definition name in the generated query', () => {
+    expect(assetDefinitionQuery("Operator's pump")).toBe(
+      "(type eq 'Operator''s pump') and has(c8y_IsAsset)"
+    );
   });
 });

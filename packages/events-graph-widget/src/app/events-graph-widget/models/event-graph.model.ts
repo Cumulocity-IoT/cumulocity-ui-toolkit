@@ -29,11 +29,7 @@ export type EventTypeConfig = {
     id: string;
     name: string;
   };
-  values: {
-    name: string;
-    color: string;
-    label: string;
-  }[];
+  values: EventConfig[];
 };
 
 /** One row of the chart: its label and the state bars drawn in it. */
@@ -49,11 +45,18 @@ export interface LaneState {
   color?: string;
 }
 
-export interface IEventDuration extends IEvent {
-  /**
-   * Duration in seconds
-   */
-  duration: number | null;
+/** The time an event's state lasts on the chart; times in ms. */
+export interface EventSegment {
+  text: IEvent['text'];
+  start: number;
+  end: number;
+}
+
+/** One bar of the chart: `value` is `[lane index, start, end, duration]`, times in ms. */
+export interface EventBar {
+  name: string;
+  value: [number, number, number, number];
+  itemStyle: { color?: string };
 }
 
 export interface EventSeries {

@@ -20,7 +20,7 @@
       {{ 'Cancel' | translate }}
     </button>
     <button title="{{ 'Import' | translate }}" class="btn btn-primary" type="button" (click)="import()" data-cy="file-import--import"
-      [class.btn-pending]="isLoading">
+      [class.btn-pending]="isLoading" [disabled]="isLoading">
       {{ 'Import' | translate }}
     </button>
   </div>

@@ -1,24 +1,23 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { type IFetchResponse } from '@c8y/client';
 import { type ApiCall, type HttpHandler, type HttpInterceptor } from '@c8y/ngx-components/api';
-import { type Observable, firstValueFrom, from } from 'rxjs';
+import { type Observable, firstValueFrom } from 'rxjs';
 import { get, has } from 'lodash';
 import {
   type AggregatedISeries,
   type SeriesDataPoint,
   type SeriesResponse,
 } from './chart-data.service';
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- constructor injection: Angular JIT (aot: false) reads parameter types at runtime
 import { CacheLogService } from './cache-log.service';
 import {
   MIN_HISTORICAL_MS,
   clampCoverageTo,
   orderValues,
   responseColumnKeys,
+  withNetworkFallback,
+  touchesLiveEdge,
 } from './interceptor-helpers';
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- constructor injection: Angular JIT (aot: false) reads parameter types at runtime
 import { CacheStateService } from './cache-state.service';
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- constructor injection: Angular JIT (aot: false) reads parameter types at runtime
 import { type LegacyAggType, OldSeriesCacheService } from './old-series-cache.service';
 
 const VALID_AGG_TYPES = new Set<string>(['DAILY', 'HOURLY', 'MINUTELY']);
@@ -102,18 +101,15 @@ function mergeGaps(gaps: { from: Date; to: Date }[]): { from: Date; to: Date }[]
  */
 @Injectable({ providedIn: 'root' })
 export class OldSeriesInterceptorService implements HttpInterceptor {
+  private readonly cache = inject(OldSeriesCacheService);
+  private readonly cacheState = inject(CacheStateService);
+  private readonly logService = inject(CacheLogService);
   /**
    * In-memory store for series metadata returned by the API, keyed by
    * `source|aggType|type.name` so fully-cached responses can be served with
    * metadata in the correct per-column order.
    */
   private readonly metaCache = new Map<string, SeriesResponse['series'][number]>();
-
-  constructor(
-    private readonly cache: OldSeriesCacheService,
-    private readonly cacheState: CacheStateService,
-    private readonly logService: CacheLogService
-  ) {}
 
   intercept(req: ApiCall, next: HttpHandler): Observable<IFetchResponse> {
     if (!this.cacheState.isActive) return next.handle(req);
@@ -122,7 +118,7 @@ export class OldSeriesInterceptorService implements HttpInterceptor {
 
     if (!params) return next.handle(req);
 
-    return from(this.handleWithCache(params, req, next));
+    return withNetworkFallback(this.handleWithCache(params, req, next), req, next);
   }
 
   // ─── Eligibility parsing ──────────────────────────────────────────────────────
@@ -199,9 +195,13 @@ export class OldSeriesInterceptorService implements HttpInterceptor {
 
     // 2. Fetch each gap from the API
     for (const gap of gaps) {
-      // Skip gaps narrower than one aggregation bucket — the API would return no
-      // data points for them anyway, and fetching would just add latency.
-      if (gap.to.getTime() - gap.from.getTime() < (AGG_TYPE_MS[aggregationType] ?? 0)) {
+      // Skip gaps narrower than one aggregation bucket — their bucket is already stored and
+      // complete. Not at the live edge, though: there the bucket is still filling up, and
+      // only a fetch replaces the stored value (coverage never reaches the last minutes).
+      if (
+        gap.to.getTime() - gap.from.getTime() < (AGG_TYPE_MS[aggregationType] ?? 0) &&
+        !touchesLiveEdge(gap.to)
+      ) {
         this.logService.push({
           cache: 'old-series',
           eventType: 'gap-skipped',

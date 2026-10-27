@@ -50,7 +50,7 @@ export class ReminderNotesAdminListComponent implements OnInit {
       );
     } catch (error) {
       this.alertService.danger(
-        this.translateService.instant('Could not update release note') as string,
+        this.translateService.instant('Could not delete release note') as string,
         error as string
       );
     }
@@ -97,8 +97,7 @@ export class ReminderNotesAdminListComponent implements OnInit {
             }) as string)
       );
     } catch (error) {
-      // Mirrors the handling in `delete()` — the user has to know the publish
-      // state did not change.
+      // The user has to know the publish state did not change.
       this.alertService.danger(
         this.translateService.instant('Could not update release note') as string,
         error as string

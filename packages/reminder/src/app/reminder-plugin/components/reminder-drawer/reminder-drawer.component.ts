@@ -1,4 +1,12 @@
-import { Component, effect, inject, type OnDestroy, signal, untracked } from '@angular/core';
+import {
+  Component,
+  effect,
+  inject,
+  type OnDestroy,
+  type OnInit,
+  signal,
+  untracked,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { AlertService, CoreModule, HeaderService } from '@c8y/ngx-components';
@@ -41,7 +49,7 @@ import { ReminderTypeComponent } from '../reminder-type/reminder-type.component'
     ReminderModalComponent,
   ],
 })
-export class ReminderDrawerComponent implements OnDestroy {
+export class ReminderDrawerComponent implements OnInit, OnDestroy {
   private alertService = inject(AlertService);
   private headerService = inject(HeaderService);
   private modalService = inject(BsModalService);
@@ -91,6 +99,22 @@ export class ReminderDrawerComponent implements OnDestroy {
   private _contextFilterEnabled = REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG.useContext ?? false;
 
   constructor() {
+    // Live updates on reminders and config come from the service signals.
+    // The handlers group reminders, which reads and writes the config signal —
+    // run them untracked so each effect only depends on its own source signal.
+    effect(() => {
+      const reminders = this.reminderService.reminders();
+
+      untracked(() => this.digestReminders(reminders));
+    });
+    effect(() => {
+      const config = this.reminderService.config();
+
+      untracked(() => this.handleConfigChange(config));
+    });
+  }
+
+  ngOnInit(): void {
     this.getReminderTypes();
     this.initSubscriptions();
   }
@@ -159,12 +183,6 @@ export class ReminderDrawerComponent implements OnDestroy {
     }
   }
 
-  /** Sets the drawer state and notifies the service. */
-  private setOpen(open: boolean): void {
-    this.open.set(open);
-    this.openChange.next(open);
-  }
-
   /**
    * Toggles the state of the reminder drawer.
    * @param open - Optional boolean to explicitly set the drawer's open state.
@@ -194,6 +212,12 @@ export class ReminderDrawerComponent implements OnDestroy {
     } catch (error) {
       this.alertService.danger('Failed to update reminder', `${JSON.stringify(error)}`);
     }
+  }
+
+  /** Sets the drawer state and notifies the service. */
+  private setOpen(open: boolean): void {
+    this.open.set(open);
+    this.openChange.next(open);
   }
 
   /**
@@ -305,20 +329,6 @@ export class ReminderDrawerComponent implements OnDestroy {
         }
       })
     );
-
-    // Live updates on reminders and config come from the service signals.
-    // The handlers group reminders, which reads and writes the config signal —
-    // run them untracked so each effect only depends on its own source signal.
-    effect(() => {
-      const reminders = this.reminderService.reminders();
-
-      untracked(() => this.digestReminders(reminders));
-    });
-    effect(() => {
-      const config = this.reminderService.config();
-
-      untracked(() => this.handleConfigChange(config));
-    });
 
     // route change for context
     this.subscriptions.add(

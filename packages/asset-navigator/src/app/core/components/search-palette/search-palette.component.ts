@@ -3,6 +3,7 @@ import {
   Component,
   DestroyRef,
   type ElementRef,
+  type OnInit,
   afterNextRender,
   computed,
   inject,
@@ -21,7 +22,7 @@ import {
   NavigatorService,
 } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
-import { Subject, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs';
+import { Subject, debounceTime, map, switchMap } from 'rxjs';
 import { PlatformSearchBackend } from '../../services/search/platform-search.backend';
 import { SearchShortcutService } from '../../services/search/search-shortcut.service';
 import { FuzzyService } from '../../services/search/fuzzy.service';
@@ -98,7 +99,7 @@ import {
   templateUrl: './search-palette.component.html',
   styleUrl: './search-palette.component.less',
 })
-export class SearchPaletteComponent {
+export class SearchPaletteComponent implements OnInit {
   /**
    * A term to start from, handed over by another plugin — the asset tree's "search the whole
    * tenant" when its own filter (which only sees loaded branches) came up empty. Applied once, on
@@ -543,8 +544,10 @@ export class SearchPaletteComponent {
   constructor() {
     this.queryChanges
       .pipe(
+        // No `distinctUntilChanged`: `emitQuery` has already turned the spinner on, and a
+        // dropped repeat (a trailing space, the same term retyped after Esc cleared the
+        // results) would leave it on with nothing to show.
         debounceTime(SEARCH_DEBOUNCE_MS),
-        distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
         // Switching cancels the previous search so a slow response cannot overwrite the
         // results of a newer query.
         switchMap((query) => this.runSearch(query)),
@@ -558,18 +561,6 @@ export class SearchPaletteComponent {
 
     // Closing the palette should stop whatever it was still waiting for.
     inject(DestroyRef).onDestroy(() => this.inFlight?.abort());
-
-    // A handed-over term is applied as if typed, so the debounce, the abort handling and the
-    // ranking are the one code path — a second "search now" entry point would drift from it.
-    const handedOver = this.initialTerm().trim();
-
-    if (handedOver) this.onTermInput(handedOver);
-
-    void this.recentEntries.load();
-    void this.loadFacets();
-    // Fire and forget: the corpus is only an optimisation, and a failure here just means
-    // the first search loads it instead.
-    void this.backend.prewarm();
   }
 
   protected onTermInput(value: string): void {
@@ -612,21 +603,6 @@ export class SearchPaletteComponent {
     this.term.set(suggestion.remainder);
     this.announcement.set({ action: gettext('Filter added'), chip });
     this.afterChipsChanged();
-  }
-
-  private toggleChip(chip: QueryChip): void {
-    this.chips.update((chips) =>
-      chips.some((existing) => sameChip(existing, chip))
-        ? chips.filter((existing) => !sameChip(existing, chip))
-        : addChip(chips, chip)
-    );
-    this.afterChipsChanged();
-  }
-
-  private afterChipsChanged(): void {
-    this.cursor.set(null);
-    this.emitQuery();
-    this.focusInput();
   }
 
   /**
@@ -746,12 +722,78 @@ export class SearchPaletteComponent {
         event.preventDefault();
         const active = this.entries()[this.activeIndex()];
 
-        if (active) void this.open(active);
+        if (active) this.open(active);
         break;
       }
       default:
         break;
     }
+  }
+
+  /** Clears the query if there is one, otherwise closes. Shared by Escape and the ×. */
+  protected clearOrClose(): void {
+    if (this.hasQuery()) {
+      this.term.set('');
+      this.chips.set([]);
+      this.cursor.set(null);
+      this.emitQuery();
+      this.focusInput();
+
+      return;
+    }
+    this.dismissed.emit();
+  }
+
+  protected setActive(index: number): void {
+    this.cursor.set(this.entries()[index]?.id ?? null);
+    // The list scrolls, so the selection has to be brought along or arrowing past the fold
+    // silently moves an invisible highlight.
+    this.resultList()
+      ?.nativeElement.querySelector(`[data-entry-index="${index}"]`)
+      ?.scrollIntoView({ block: 'nearest' });
+  }
+
+  protected open(entry: PaletteEntry): void {
+    if (entry.suggestion) {
+      this.applySuggestion(entry.suggestion);
+
+      return;
+    }
+    void this.router.navigate(entry.route);
+    this.dismissed.emit();
+    // Recording the visit is a side note: it must neither delay the navigation by a round
+    // trip nor, when the preference write fails, prevent it.
+    this.recentEntries.remember(entry).catch((): void => undefined);
+  }
+
+  ngOnInit(): void {
+    // A handed-over term is applied as if typed, so the debounce, the abort handling and the
+    // ranking are the one code path — a second "search now" entry point would drift from it.
+    // Read here, not in the constructor: inputs are not bound yet while it runs.
+    const handedOver = this.initialTerm().trim();
+
+    if (handedOver) this.onTermInput(handedOver);
+
+    void this.recentEntries.load();
+    void this.loadFacets();
+    // Fire and forget: the corpus is only an optimisation, and a failure here just means
+    // the first search loads it instead.
+    void this.backend.prewarm();
+  }
+
+  private toggleChip(chip: QueryChip): void {
+    this.chips.update((chips) =>
+      chips.some((existing) => sameChip(existing, chip))
+        ? chips.filter((existing) => !sameChip(existing, chip))
+        : addChip(chips, chip)
+    );
+    this.afterChipsChanged();
+  }
+
+  private afterChipsChanged(): void {
+    this.cursor.set(null);
+    this.emitQuery();
+    this.focusInput();
   }
 
   /**
@@ -779,40 +821,6 @@ export class SearchPaletteComponent {
     this.applySuggestion(chosen);
 
     return true;
-  }
-
-  /** Clears the query if there is one, otherwise closes. Shared by Escape and the ×. */
-  protected clearOrClose(): void {
-    if (this.hasQuery()) {
-      this.term.set('');
-      this.chips.set([]);
-      this.cursor.set(null);
-      this.emitQuery();
-      this.focusInput();
-
-      return;
-    }
-    this.dismissed.emit();
-  }
-
-  protected setActive(index: number): void {
-    this.cursor.set(this.entries()[index]?.id ?? null);
-    // The list scrolls, so the selection has to be brought along or arrowing past the fold
-    // silently moves an invisible highlight.
-    this.resultList()
-      ?.nativeElement.querySelector(`[data-entry-index="${index}"]`)
-      ?.scrollIntoView({ block: 'nearest' });
-  }
-
-  protected async open(entry: PaletteEntry): Promise<void> {
-    if (entry.suggestion) {
-      this.applySuggestion(entry.suggestion);
-
-      return;
-    }
-    await this.recentEntries.remember(entry);
-    void this.router.navigate(entry.route);
-    this.dismissed.emit();
   }
 
   private moveActive(delta: number, total: number): void {

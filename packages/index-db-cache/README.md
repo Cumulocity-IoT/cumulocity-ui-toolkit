@@ -140,21 +140,21 @@ A scrollable ring-buffer log (last 200 entries) of every intercepted request. Ea
 
 ## Integration
 
-`IndexDbCacheModule` is self-contained. Import it into your Cumulocity application module or plugin module:
+`IndexDbCachePluginProviders` is self-contained. Add it to the providers of your application or plugin:
 
 ```typescript
-import { IndexDbCacheModule } from './index-db-cache.module';
+import { IndexDbCachePluginProviders } from './index-db-cache.providers';
 
-@NgModule({
-  imports: [IndexDbCacheModule],
-})
-export class AppModule {}
+export const appConfig: ApplicationConfig = {
+  providers: [...IndexDbCachePluginProviders],
+};
 ```
 
-The module constructor registers the three interceptors automatically via `ApiService.addInterceptor()`:
+The plugin exposes it as `indexDbCacheModule` (the name installed applications reference). An environment initializer registers the interceptors via `ApiService.addInterceptor()` when the shell loads the plugin:
 
 | Interceptor key | Interceptor |
 |---|---|
+| `0.indexDbCache.abortOnNavigation` | `NavigationAbortInterceptorService` |
 | `indexDbCache.newSeries` | `NewSeriesInterceptorService` |
 | `indexDbCache.oldSeries` | `OldSeriesInterceptorService` |
 | `indexDbCache.measurement` | `MeasurementInterceptorService` |

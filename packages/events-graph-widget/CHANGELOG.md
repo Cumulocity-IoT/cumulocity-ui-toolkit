@@ -8,6 +8,15 @@
 - **Rows from several devices**: on a group dashboard each event type row can take its events from a device of that group (new "Device" select in the config, default: the group itself), so states of different devices line up on one time axis; such rows are labelled `<type> · <device>`. Devices that are no longer in the group are dropped from the config when it is edited.
 - Rows are shown top-down in the configured order (previously the first configured type was the bottom row)
 
+### Bug Fixes
+
+- Bars start at their event's time; they were chained from the start of the time box, so states showed hours too early.
+- The state before the time box is shown even when nothing changed inside it, however long ago it started.
+- More than 2000 events per row are paged, newest first, so the current state is never cut off.
+- Event texts are escaped in the tooltip (device-supplied text was rendered as HTML).
+- "Disable auto refresh" pauses the countdown; a manual refresh does not restart it.
+- A slow, older load no longer overwrites a newer one; rows load in parallel; the x axis is a time axis ending at "now".
+
 ## 3.0.0
 
 ### Breaking Changes

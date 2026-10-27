@@ -1,5 +1,15 @@
 # UI Toolkit Changelog
 
+## 2026.10.27 — Web SDK 1024 / Angular 21 (release v1.0.0)
+
+**Breaking**: all plugins are built for Cumulocity Web SDK 1024.21.x and Angular 21 and need a 1024 cockpit; release v1.0.0 is the first of that line. Every plugin last released on 1023 gets a new major (0.x: minor) version — see each plugin's changelog.
+
+**Review fixes** (per plugin in the plugin changelogs): bugs found reviewing the branch, each with a unit test that fails without the fix — events-graph bar placement, CSV injection and escaping, smart-view queries lost on edit, reminder tenant defaults, IndexedDB cache fallbacks, asset-navigator high-volume loading and search, layered-map resize on GridStack dashboards, tenant option import.
+
+**Tooling**: class members ordered as the lint rule requires (no warnings left); `ignoreRestSiblings` for `no-unused-vars`; `@angular-eslint` template packages 20 → 21; `@types/jsoneditor` instead of an `any` declaration; `.pnpmfile.cjs` removed (devkit 1024 pins TypeScript 5.9.3 itself); index-db-cache is a provider array instead of an NgModule (exposed name unchanged). The `@angular-devkit/build-angular` override is documented in `AGENTS.md`.
+
+**Test infrastructure**: `test/` uses `@c8y/client` 1024.21.3 like the rest of the workspace; real-tenant e2e runs default to the `cockpit` shell (was `cockpit-test-1023`).
+
 ## 2026.10.27 — ui-sdk 1.3.1
 
 **Test infrastructure**: `@cumulocity-iot/ui-sdk` 1.2.0 → 1.3.1 in `test/`. The release brings `c8y-ui dev --apps <dir>,…` (several plugins with hot reload behind one router on the tenant mock) and its Vite plugin now shares every sub-entry the dev shell provides (`@c8y/ngx-components/device-grid`, `ngx-bootstrap/modal`, …), which fixes `NG0201` provider errors of such components in Vite dev.
@@ -23,7 +33,7 @@
 
 **New plugin**: `packages/smart-views` (from #70) — query-driven asset views with a configuration page under Settings and CSV export, now on Web SDK 1024.21.x / Angular 21. Registered in `angular.json` with build/serve/test targets and covered by unit tests and an e2e suite on the tenant mock. See `packages/smart-views/CHANGELOG.md`.
 
-**Shared library** (additive, no change for existing plugins): `CsvExportService` (CSV conversion + browser download), DTM models and `DtmService.getAssetDefinition()` / `getPropertyDefinitions()`, and an internal `ReverseQueriesUtil` helper (query string → QueriesUtil JSON; not exported).
+**Shared library** (additive, no change for existing plugins): `CsvExportService` (CSV conversion + browser download), DTM models and `DtmService.getAssetDefinition()` / `getPropertyDefinitions()`.
 
 **New plugin**: `packages/events-graph-widget` — device events as colored state bars on a zoomable timeline, moved into the monorepo from PR #34 and ported to Web SDK 1024 / Angular 21. See `packages/events-graph-widget/CHANGELOG.md`.
 

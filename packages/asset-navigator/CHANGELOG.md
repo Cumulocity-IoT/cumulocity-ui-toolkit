@@ -18,6 +18,15 @@
 - The tree root marker is now the external id `c8y_Asset` / `asset-navigator-root` (was `wind-fleet`); without it the first root group is used as before. Without any root group the tree now covers every asset of the tenant instead of a fixed list of wind-farm types
 - Availability no longer reads `wnd_Status`, and there is no *derated* state any more
 
+### Bug Fixes
+
+- Large tenants (high-volume mode): branches loading at the same time all appear (only the last one did); every way of opening a branch loads its children; "load more" pages survive a refresh; pins in unloaded branches are no longer shown as deleted.
+- "Search the whole tenant" from the tree hands its term to the search; repeating a search no longer leaves the spinner on; opening a result does not wait for, or depend on, saving it as recent.
+- Search results follow the tree's poll (names, status, alarm chips); a failed size probe or first sweep no longer degrades search for the session.
+- The detail panel's latest values are refreshed after 30 s instead of once per session.
+- Options menu changes are saved in order, create one settings object, and are not overwritten by the initial read.
+- ⌘K leaves the keys to the drawer when the drawer is bound to them, is ignored while a shortcut is recorded, and is not swallowed on pages without the search.
+
 ## 1.1.0
 
 ### Features

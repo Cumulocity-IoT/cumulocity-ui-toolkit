@@ -2,6 +2,7 @@ import type {
   AssetHierarchy,
   AssetNode,
   AssetRollup,
+  BranchStatus,
 } from '../../services/asset-store/asset-store.model';
 import { EMPTY_ROLLUP } from '../../services/asset-store/asset-store.model';
 import {
@@ -459,4 +460,20 @@ export function markSegments(
   if (cursor < name.length) segments.push({ text: name.slice(cursor), marked: false });
 
   return segments;
+}
+
+/**
+ * The open branches (high-volume mode) whose children were never requested. A branch can be
+ * opened in many ways — the twisty, the row body, the arrow keys, revealing "you are here" or
+ * a pin — and only fetching them all here keeps an open branch from showing no children.
+ * Branches already loading, loaded or failed are left alone: no duplicate requests, no
+ * retry loop on errors.
+ */
+export function branchesToLoad(
+  rows: readonly Pick<AssetTreeRow, 'node' | 'hasChildren' | 'expanded'>[],
+  branchStatus: ReadonlyMap<string, BranchStatus>
+): string[] {
+  return rows
+    .filter((row) => row.expanded && row.hasChildren && !branchStatus.has(row.node.id))
+    .map((row) => row.node.id);
 }

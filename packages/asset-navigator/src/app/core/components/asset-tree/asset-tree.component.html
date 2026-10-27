@@ -100,7 +100,7 @@
       @if (filtering() && highVolume()) {
         <p>{{ 'Nothing in the loaded branches matches that.' | translate }}</p>
         @if (canHandOverToGlobalSearch()) {
-          <button type="button" class="btn btn-default btn-sm" (click)="handOverToGlobalSearch()">
+          <button type="button" class="btn btn-default btn-sm" (click)="handOverToGlobalSearch()" data-cy="asset-navigator--global-search">
             <i c8yIcon="search"></i>
             {{ 'Search the whole tenant' | translate }}
           </button>

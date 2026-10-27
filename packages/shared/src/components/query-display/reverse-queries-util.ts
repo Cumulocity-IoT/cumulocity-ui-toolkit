@@ -17,6 +17,29 @@ import { unwrapQuery } from './unwrap-query';
  * // → { __and: [{ __has: 'c8y_IsDevice' }, { type: 'Pump' }] }
  */
 export class ReverseQueriesUtil {
+  /**
+   * Converts a query string into a `QueryJson` object, stripping any
+   * `$filter=(…)` wrapper first.
+   *
+   * Returns `null` when the query is empty or cannot be parsed.
+   */
+  buildQueryJSON(query?: string): QueryJson | null {
+    if (!query || query.length === 0) {
+      return null;
+    }
+
+    try {
+      const processed = unwrapQuery(query);
+
+      const parser = new QueryParser(new Tokenizer(processed));
+      return this.convert(parser.parse());
+    } catch {
+      // Failure is already signalled by the `null` return, and this runs on
+      // every keystroke via `isParseable()`.
+      return null;
+    }
+  }
+
   private convert(ast: AstNode): QueryJson {
     switch (ast.type) {
       case 'and':
@@ -53,29 +76,6 @@ export class ReverseQueriesUtil {
 
       default:
         throw new Error(`Unknown AST node type: ${(ast as AstNode)['type']}`);
-    }
-  }
-
-  /**
-   * Converts a query string into a `QueryJson` object, stripping any
-   * `$filter=(…)` wrapper first.
-   *
-   * Returns `null` when the query is empty or cannot be parsed.
-   */
-  buildQueryJSON(query?: string): QueryJson | null {
-    if (!query || query.length === 0) {
-      return null;
-    }
-
-    try {
-      const processed = unwrapQuery(query);
-
-      const parser = new QueryParser(new Tokenizer(processed));
-      return this.convert(parser.parse());
-    } catch {
-      // Failure is already signalled by the `null` return, and this runs on
-      // every keystroke via `isParseable()`.
-      return null;
     }
   }
 }

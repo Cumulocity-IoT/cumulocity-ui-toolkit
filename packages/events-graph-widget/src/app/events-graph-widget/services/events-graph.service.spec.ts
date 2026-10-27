@@ -24,35 +24,53 @@ describe('EventStatusTrackerService', () => {
     eventService = TestBed.inject(EventService) as jasmine.SpyObj<EventService>;
   });
 
-  describe('convert', () => {
-    it('derives each duration from the next event and the last one from the time box end', () => {
-      const result = service.convert(T0, T0 + 60 * 60_000, [ev(0, 'A'), ev(10, 'B'), ev(30, 'A')]);
+  describe('toSegments', () => {
+    it('places each bar at its event time and ends it at the next event or the time box end', () => {
+      const segments = service.toSegments(T0, T0 + 60 * 60_000, [
+        ev(20, 'A'),
+        ev(30, 'B'),
+        ev(45, 'A'),
+      ]);
 
-      expect(result.map((e) => e.duration)).toEqual([600, 1200, 1800]);
+      expect(segments).toEqual([
+        { text: 'A', start: T0 + 20 * 60_000, end: T0 + 30 * 60_000 },
+        { text: 'B', start: T0 + 30 * 60_000, end: T0 + 45 * 60_000 },
+        { text: 'A', start: T0 + 45 * 60_000, end: T0 + 60 * 60_000 },
+      ]);
     });
 
-    it('clamps events that started before the time box to its start', () => {
-      const result = service.convert(T0, T0 + 20 * 60_000, [ev(-30, 'A'), ev(5, 'B')]);
+    it('clamps an event that started before the time box to its start', () => {
+      const segments = service.toSegments(T0, T0 + 20 * 60_000, [ev(-300, 'A'), ev(5, 'B')]);
 
-      expect(result[0].duration).toBe(300);
-      expect(result[1].duration).toBe(900);
+      expect(segments[0]).toEqual({ text: 'A', start: T0, end: T0 + 5 * 60_000 });
+      expect(segments[1]).toEqual({ text: 'B', start: T0 + 5 * 60_000, end: T0 + 20 * 60_000 });
     });
 
-    it('sets a null duration when the next event is not later', () => {
-      const result = service.convert(T0, T0 + 60_000, [ev(5, 'A'), ev(5, 'B')]);
+    it('keeps millisecond precision', () => {
+      const late = { ...ev(0, 'A'), time: new Date(T0 + 1_500).toISOString() };
+      const [segment] = service.toSegments(T0, T0 + 4_250, [late]);
 
-      expect(result[0].duration).toBeNull();
+      expect(segment.end - segment.start).toBe(2_750);
+    });
+
+    it('drops bars without length — simultaneous events and events after the time box', () => {
+      const segments = service.toSegments(T0, T0 + 10 * 60_000, [
+        ev(5, 'A'),
+        ev(5, 'B'),
+        ev(15, 'C'),
+      ]);
+
+      expect(segments.map((s) => s.text)).toEqual(['B']);
     });
   });
 
   describe('toCustomFormat', () => {
-    it('chains bars and applies configured labels and colors', () => {
+    it('applies configured labels and colors and keeps the segment times', () => {
       const data = service.toCustomFormat(
         2,
-        T0,
         [
-          { ...ev(0, 'A'), duration: 60 },
-          { ...ev(1, 'B'), duration: 120 },
+          { text: 'A', start: T0, end: T0 + 60_000 },
+          { text: 'B', start: T0 + 90_000, end: T0 + 210_000 },
         ],
         [{ name: 'A', label: 'Alpha', color: '#ff0000' }]
       );
@@ -63,7 +81,7 @@ describe('EventStatusTrackerService', () => {
         itemStyle: { color: '#ff0000' },
       });
       expect(data[1].name).toBe('B');
-      expect(data[1].value).toEqual([2, T0 + 60_000, T0 + 180_000, 120_000]);
+      expect(data[1].value).toEqual([2, T0 + 90_000, T0 + 210_000, 120_000]);
     });
   });
 
@@ -138,13 +156,11 @@ describe('EventStatusTrackerService', () => {
   });
 
   describe('fetchEvents', () => {
-    it('prepends the last event before the time box so the first state is known', async () => {
-      const inBox = [ev(10, 'B')];
-      const before = [ev(-90, 'A')];
+    const page = (events: IEvent[]) => Promise.resolve({ data: events } as never);
 
-      eventService.list.and.returnValues(
-        Promise.resolve({ data: inBox } as never),
-        Promise.resolve({ data: before } as never)
+    it('prepends the last event before the time box so the first state is known', async () => {
+      eventService.list.and.callFake((filter: object) =>
+        'dateFrom' in filter ? page([ev(30, 'C'), ev(10, 'B')]) : page([ev(-90, 'A')])
       );
 
       const events = await service.fetchEvents(
@@ -154,22 +170,42 @@ describe('EventStatusTrackerService', () => {
         'state'
       );
 
-      expect(events.map((e) => e.text)).toEqual(['A', 'B']);
-      expect(eventService.list.calls.first().args[0]).toEqual(
-        jasmine.objectContaining({ source: '1', type: 'state', revert: true, pageSize: 2000 })
+      expect(events.map((e) => e.text)).toEqual(['A', 'B', 'C']);
+      expect(eventService.list).toHaveBeenCalledWith(
+        jasmine.objectContaining({ source: '1', type: 'state', pageSize: 2000, currentPage: 1 })
       );
-      expect(eventService.list.calls.mostRecent().args[0]).toEqual(
-        jasmine.objectContaining({ pageSize: 1, dateTo: ev(10, 'B').time })
-      );
+      expect(eventService.list).toHaveBeenCalledWith({
+        dateTo: new Date(T0).toISOString(),
+        pageSize: 1,
+        source: '1',
+        type: 'state',
+      });
     });
 
-    it('does not query earlier events when the time box is empty', async () => {
-      eventService.list.and.returnValue(Promise.resolve({ data: [] } as never));
+    it('still reports the earlier state when the time box has no events', async () => {
+      eventService.list.and.callFake((filter: object) =>
+        'dateFrom' in filter ? page([]) : page([ev(-300, 'Running')])
+      );
 
       const events = await service.fetchEvents(new Date(T0), new Date(T0 + 1), '1', 'state');
 
-      expect(events).toEqual([]);
-      expect(eventService.list).toHaveBeenCalledTimes(1);
+      expect(events.map((e) => e.text)).toEqual(['Running']);
+    });
+
+    it('pages through the time box newest first until a page is not full', async () => {
+      const full = Array.from({ length: 2000 }, (_, i) => ev(-i, `n${i}`));
+
+      eventService.list.and.callFake((filter: { dateFrom?: string; currentPage?: number }) => {
+        if (!filter.dateFrom) return page([]);
+
+        return page(filter.currentPage === 1 ? full : [ev(-5000, 'oldest')]);
+      });
+
+      const events = await service.fetchEvents(new Date(T0), new Date(T0 + 1), '1', 'state');
+
+      expect(events.length).toBe(2001);
+      expect(events[0].text).toBe('oldest');
+      expect(events[events.length - 1].text).toBe('n0');
     });
   });
 });

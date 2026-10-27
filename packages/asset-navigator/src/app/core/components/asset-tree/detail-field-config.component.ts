@@ -123,6 +123,34 @@ export class DetailFieldConfigComponent {
 
   protected readonly fieldId = detailFieldId;
 
+  /** Drives the "Add asset properties" button's disabled state — see {@link samples}. */
+  protected readonly hasSamples = computed(() => this.samples().length > 0);
+
+  /**
+   * Up to {@link PICKER_SAMPLE_SIZE} assets of this type (or of any type, for the default
+   * list), for the picker to read the available fragments off. Memoised: the template asks for
+   * it on every change-detection pass, through {@link hasSamples}.
+   */
+  private readonly samples = computed<Readonly<Record<string, unknown>>[]>(() => {
+    const type = this.assetType();
+    const samples: Readonly<Record<string, unknown>>[] = [];
+    // The hovered asset first: it is the one the user is looking at, so a fragment only
+    // it carries has to be offered rather than sampled away.
+    const hovered = this.node();
+
+    if (hovered) samples.push(hovered.properties);
+
+    for (const node of this.assets.hierarchy()?.byId.values() ?? []) {
+      if (samples.length >= PICKER_SAMPLE_SIZE) break;
+
+      if ((type === null || node.type === type) && node.id !== hovered?.id) {
+        samples.push(node.properties);
+      }
+    }
+
+    return samples;
+  });
+
   /** A picked inventory property rather than a built-in field — shows the path it reads. */
   protected pathOf(field: DetailField): string | null {
     return field.source.kind === 'property' &&
@@ -181,9 +209,6 @@ export class DetailFieldConfigComponent {
     }
   }
 
-  /** Drives the "Add asset properties" button's disabled state — see {@link samples}. */
-  protected readonly hasSamples = computed(() => this.samples().length > 0);
-
   /** Back to the default: this type falls back again, or `default` gets the built-in list. */
   protected async reset(): Promise<void> {
     await this.settings.resetDetailFields(this.assetType());
@@ -192,29 +217,4 @@ export class DetailFieldConfigComponent {
   private async write(fields: readonly DetailField[]): Promise<void> {
     await this.settings.setDetailFields(this.assetType(), fields);
   }
-
-  /**
-   * Up to {@link PICKER_SAMPLE_SIZE} assets of this type (or of any type, for the default
-   * list), for the picker to read the available fragments off. Memoised: the template asks for
-   * it on every change-detection pass, through {@link hasSamples}.
-   */
-  private readonly samples = computed<Readonly<Record<string, unknown>>[]>(() => {
-    const type = this.assetType();
-    const samples: Readonly<Record<string, unknown>>[] = [];
-    // The hovered asset first: it is the one the user is looking at, so a fragment only
-    // it carries has to be offered rather than sampled away.
-    const hovered = this.node();
-
-    if (hovered) samples.push(hovered.properties);
-
-    for (const node of this.assets.hierarchy()?.byId.values() ?? []) {
-      if (samples.length >= PICKER_SAMPLE_SIZE) break;
-
-      if ((type === null || node.type === type) && node.id !== hovered?.id) {
-        samples.push(node.properties);
-      }
-    }
-
-    return samples;
-  });
 }

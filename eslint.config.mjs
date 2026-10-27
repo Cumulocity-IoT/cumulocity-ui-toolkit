@@ -95,7 +95,8 @@ export default [
         {
           vars: 'all',
           args: 'none',
-          ignoreRestSiblings: false,
+          // `const { dropped: _dropped, ...rest } = obj` is how a key is removed immutably
+          ignoreRestSiblings: true,
         },
       ],
 

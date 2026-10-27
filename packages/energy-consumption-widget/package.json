@@ -1,6 +1,6 @@
 {
   "name": "cumulocity-energy-consumption-widget-plugin",
-  "version": "0.0.5",
+  "version": "0.1.0",
   "description": "Displays cumulative energy consumption over configurable time ranges as a bar chart, sourced from Cumulocity measurements.",
   "author": "@dirk-peter-c8y",
   "homepage": "https://github.com/Cumulocity-IoT/cumulocity-ui-toolkit/tree/main/packages/energy-consumption-widget",

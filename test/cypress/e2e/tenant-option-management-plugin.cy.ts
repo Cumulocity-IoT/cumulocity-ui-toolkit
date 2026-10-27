@@ -442,6 +442,49 @@ describe('Tenant Option Management', () => {
     rowByKey(existingKey).find(CONTENT_CELL).should('contain', 'overwritten');
   });
 
+  it('imports the other options when one fails and reports the failed one', () => {
+    const failingKey = uniqueKey('forbidden');
+    const okKey = uniqueKey('ok');
+    cy.intercept('POST', '**/tenant/options', (req) => {
+      if (req.body?.key === failingKey) {
+        req.reply({ statusCode: 403, body: { error: 'security/Forbidden', message: 'Access is denied' } });
+      } else {
+        req.continue();
+      }
+    }).as('createOption');
+    visitPlugin();
+
+    cy.get('[data-cy="tenant-option-management--import"]').click();
+    cy.get('[data-cy="file-import--file"]').selectFile(
+      {
+        contents: Cypress.Buffer.from(
+          JSON.stringify([
+            { category: CATEGORY, key: failingKey, value: 'a' },
+            { category: CATEGORY, key: okKey, value: 'b' },
+          ])
+        ),
+        fileName: 'options.json',
+        mimeType: 'application/json',
+      },
+      { force: true }
+    );
+    cy.contains(`${MODAL} ${ROW}`, failingKey).should('contain', 'NEW');
+    cy.contains(`${MODAL} ${ROW}`, okKey).should('contain', 'NEW');
+    cy.contains(`${MODAL} ${ROW}`, failingKey).find(CHECKBOX).click({ force: true });
+    cy.contains(`${MODAL} ${ROW}`, okKey).find(CHECKBOX).click({ force: true });
+
+    cy.get('[data-cy="file-import--import"]').click();
+    cy.wait(['@createOption', '@createOption']);
+
+    cy.get(ALERT_DANGER).should('contain', '1 of 2 tenant options could not be imported.');
+    // the dialog stays open and shows which option failed; the import can be repeated
+    cy.contains(`${MODAL} ${ROW}`, failingKey).should('contain', 'FAILED');
+    cy.contains(`${MODAL} ${ROW}`, okKey).should('contain', 'ADDED');
+    cy.get('[data-cy="file-import--import"]').should('be.enabled').and('not.have.class', 'btn-pending');
+    cy.get('[data-cy="file-import--cancel"]').click();
+    rowByKey(okKey).find(CONTENT_CELL).should('contain', 'b');
+  });
+
   it('rejects invalid import files and empty selections', () => {
     visitPlugin();
     cy.get('[data-cy="tenant-option-management--import"]').click();

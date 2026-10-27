@@ -234,17 +234,6 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
     }
   }
 
-  private addTrackToConfig(track: ITrack | null): void {
-    if (!track) {
-      return;
-    }
-
-    if (!this.config.tracks) {
-      this.config.tracks = [];
-    }
-    this.config.tracks.push(track);
-  }
-
   deleteTrack(track: ITrack): void {
     this.config.tracks = this.config.tracks?.filter((t) => t.name !== track.name);
 
@@ -261,18 +250,6 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
       this.config.selectedTrack = track.name;
     } else if (track.name === this.config.selectedTrack) {
       this.config.selectedTrack = undefined;
-    }
-  }
-
-  private async loadCustomLayers(): Promise<void> {
-    this.customLayersLoading = true;
-
-    try {
-      this.customTileLayers = await this.customBaseTileLayerService.load();
-    } catch (error) {
-      this.alert.danger(gettext('Could not load the custom base layers.'), error as string);
-    } finally {
-      this.customLayersLoading = false;
     }
   }
 
@@ -331,5 +308,28 @@ export class LayeredMapWidgetConfig implements OnInit, DynamicComponent, OnBefor
     config.saved = true;
 
     return Promise.resolve(true);
+  }
+
+  private addTrackToConfig(track: ITrack | null): void {
+    if (!track) {
+      return;
+    }
+
+    if (!this.config.tracks) {
+      this.config.tracks = [];
+    }
+    this.config.tracks.push(track);
+  }
+
+  private async loadCustomLayers(): Promise<void> {
+    this.customLayersLoading = true;
+
+    try {
+      this.customTileLayers = await this.customBaseTileLayerService.load();
+    } catch (error) {
+      this.alert.danger(gettext('Could not load the custom base layers.'), error as string);
+    } finally {
+      this.customLayersLoading = false;
+    }
   }
 }

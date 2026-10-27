@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-misused-promises */
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import {
   effect,
   inject,
@@ -51,6 +51,15 @@ export class HeatmapComponent implements OnInit, OnDestroy {
     this.l = await this.mapService.getLeaflet();
     this.initMap();
     this.renderData();
+  }
+
+  ngOnDestroy(): void {
+    if (this.map) {
+      this.map.off();
+      this.map.remove();
+    }
+    this.map?.clearAllEventListeners();
+    this.destroy$.next();
   }
 
   private renderData(): void {
@@ -185,14 +194,5 @@ export class HeatmapComponent implements OnInit, OnDestroy {
     const g = Math.round(from[1] + (to[1] - from[1]) * t);
     const b = Math.round(from[2] + (to[2] - from[2]) * t);
     return [r, g, b];
-  }
-
-  ngOnDestroy(): void {
-    if (this.map) {
-      this.map.off();
-      this.map.remove();
-    }
-    this.map?.clearAllEventListeners();
-    this.destroy$.next();
   }
 }

@@ -29,6 +29,24 @@ export interface QuickAccessItem {
   unavailable: boolean;
 }
 
+/**
+ * An entry the store does not hold. With the whole fleet held (`full` mode) that means
+ * deleted, or the user lost access — shown as unavailable rather than dropped: silently
+ * vanishing pins look like the pin never saved. In `high-volume` mode the store holds only
+ * the branches someone opened, so it usually just means *not loaded*: neutral, and still
+ * clickable (opening it loads it).
+ */
+export function missingEntryItem(entry: QuickAccessEntry, highVolume: boolean): QuickAccessItem {
+  return {
+    assetId: entry.assetId,
+    label: entry.label,
+    icon: entry.icon ?? 'help',
+    path: '',
+    severity: highVolume ? 'ok' : 'gone',
+    unavailable: !highVolume,
+  };
+}
+
 /** One rendered section of the panel: Pinned or Recent. */
 export interface QuickAccessGroup {
   key: string;
@@ -158,21 +176,6 @@ export class QuickAccessRowComponent {
    */
   readonly panelCursor = computed(() => (this.hasFocus() ? this.focusedAssetId() : null));
 
-  private entryDomId(assetId: string): string {
-    return `ps-qa-entry-${assetId}`;
-  }
-
-  /**
-   * Takes DOM focus, landing on the header row — the tree calls this when the user arrows
-   * *up* off its first row. Focus lives on the region, not on a row: the header and the
-   * entries are announced through `aria-activedescendant`, the same pattern the hierarchy
-   * viewport uses, so the two sections behave identically to a keyboard.
-   */
-  focusRegion(): void {
-    this.rawIndex.set(-1);
-    this.region()?.nativeElement.focus({ preventScroll: true });
-  }
-
   /**
    * `focusout` bubbles from the buttons inside too, and fires *before* the matching
    * `focusin` — so moving from the header to an entry would blank the ring for a frame.
@@ -251,21 +254,27 @@ export class QuickAccessRowComponent {
     event.preventDefault();
   }
 
+  /**
+   * Takes DOM focus, landing on the header row — the tree calls this when the user arrows
+   * *up* off its first row. Focus lives on the region, not on a row: the header and the
+   * entries are announced through `aria-activedescendant`, the same pattern the hierarchy
+   * viewport uses, so the two sections behave identically to a keyboard.
+   */
+  focusRegion(): void {
+    this.rawIndex.set(-1);
+    this.region()?.nativeElement.focus({ preventScroll: true });
+  }
+
+  private entryDomId(assetId: string): string {
+    return `ps-qa-entry-${assetId}`;
+  }
+
   private resolve(entries: readonly QuickAccessEntry[]): QuickAccessItem[] {
     return entries.map((entry) => {
       const node = this.assets.node(entry.assetId);
 
       if (!node) {
-        // Deleted, or the user lost access. Shown as unavailable rather than dropped:
-        // silently vanishing pins look like the pin never saved.
-        return {
-          assetId: entry.assetId,
-          label: entry.label,
-          icon: entry.icon ?? 'help',
-          path: '',
-          severity: 'gone' as const,
-          unavailable: true,
-        };
+        return missingEntryItem(entry, this.assets.highVolume());
       }
       const rollup = this.assets.rollupOf(entry.assetId);
       return {

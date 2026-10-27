@@ -1,16 +1,21 @@
 import { inject, Injectable } from '@angular/core';
 import { EventService, type IEvent } from '@c8y/client';
-import { subHours } from 'date-fns';
 import type { CustomSeriesRenderItem } from 'echarts';
-import { groupBy, isEmpty } from 'lodash';
+import { groupBy } from 'lodash';
 import {
+  type EventBar,
   type EventConfig,
   type EventLane,
+  type EventSegment,
   type EventSeries,
   type EventTypeConfig,
-  type IEventDuration,
   type LaneState,
 } from '../models/event-graph.model';
+
+/** Events per request; the platform's maximum. */
+const PAGE_SIZE = 2000;
+/** Upper bound of requests per lane and refresh — beyond it the oldest events are dropped. */
+const MAX_PAGES = 10;
 
 @Injectable()
 export class EventStatusTrackerService {
@@ -24,105 +29,82 @@ export class EventStatusTrackerService {
     index: number,
     timeBoxStart: number,
     timeBoxEnd: number
-  ) {
+  ): Promise<EventBar[]> {
     const events = await this.fetchEvents(start, now, deviceId, type.type);
-    const withDuration = this.convert(timeBoxStart, timeBoxEnd, events);
 
-    return this.toCustomFormat(index, timeBoxStart, withDuration, type.values);
+    return this.toCustomFormat(
+      index,
+      this.toSegments(timeBoxStart, timeBoxEnd, events),
+      // configs saved by older versions may lack `values`
+      type.values ?? []
+    );
   }
 
+  /**
+   * The events of the time box, oldest first, preceded by the last event before it — the
+   * state the device was in when the time box starts, however long ago it changed.
+   */
   async fetchEvents(
     startDate: Date,
     endDate: Date,
     deviceId: string,
     type: string
   ): Promise<IEvent[]> {
-    const filter = {
-      dateFrom: startDate.toISOString(),
-      dateTo: endDate.toISOString(),
-      pageSize: 2000,
-      revert: true,
-      source: deviceId,
-      type,
-    };
-    const result = await this.eventService.list(filter);
-    const events = result.data;
-
-    if (!isEmpty(result.data)) {
-      const dateTo = result.data[0].time;
-      const dateFrom = subHours(startDate, 24).toISOString();
-      const dateBefore = {
-        dateFrom,
-        dateTo,
+    const [before, inBox] = await Promise.all([
+      this.eventService.list({
+        dateTo: startDate.toISOString(),
         pageSize: 1,
         source: deviceId,
         type,
-      };
-      const { data } = await this.eventService.list(dateBefore);
+      }),
+      this.fetchInBox(startDate, endDate, deviceId, type),
+    ]);
+    const previous = before.data[0];
 
-      if (!isEmpty(data)) {
-        events.unshift(data[0]);
-      }
-    }
-
-    return events;
+    return previous ? [previous, ...inBox] : inBox;
   }
 
-  convert(timeboxStart: number, timeboxEnd: number, events: IEvent[]): IEventDuration[] {
-    const lastIndex = events.length - 1;
-    const update = events.map((e, index) => {
-      if (index < lastIndex) {
-        const current = this.getTimestampFromString(timeboxStart, e.time);
-        const next = this.getTimestampFromString(timeboxStart, events[index + 1].time);
+  /**
+   * One bar per event, from its time (clamped to the time box) to the next event's time, the
+   * last one to the end of the time box. Events whose bar would be empty — the same time as
+   * the next one, or entirely outside the time box — produce none.
+   */
+  toSegments(timeBoxStart: number, timeBoxEnd: number, events: IEvent[]): EventSegment[] {
+    const segments: EventSegment[] = [];
 
-        if (next > current) {
-          const durationInSeconds = this.asSeconds(next - current);
-          return { ...e, duration: durationInSeconds };
-        } else {
-          return { ...e, duration: null };
-        }
-      } else {
-        // last spool that hasn't ended yet
-        const current = this.getTimestampFromString(timeboxStart, e.time);
-        const durationInSeconds = this.asSeconds(timeboxEnd - current);
+    events.forEach((event, index) => {
+      const next = events[index + 1];
+      const start = Math.max(Date.parse(event.time), timeBoxStart);
+      const end = Math.min(next ? Date.parse(next.time) : timeBoxEnd, timeBoxEnd);
 
-        return { ...e, duration: durationInSeconds };
+      if (end > start) {
+        segments.push({ text: event.text, start, end });
       }
     });
-    return update;
+
+    return segments;
   }
 
   toCustomFormat(
     categoryIndex: number,
-    timeBoxStart: number,
-    events: IEventDuration[],
+    segments: EventSegment[],
     types: EventConfig[]
-  ) {
-    let baseTime = timeBoxStart;
-    const seriesData = events.map((event) => {
-      const eventConfig = types.find((type) => type.name === event.text);
-      const duration = (event.duration ?? 0) * 1000;
+  ): EventBar[] {
+    return segments.map(({ text, start, end }) => {
+      const eventConfig = types.find((type) => type.name === text);
 
       return {
-        name: eventConfig?.label ? eventConfig.label : event.text,
-        value: [categoryIndex, baseTime, (baseTime += duration), duration],
+        name: eventConfig?.label ? eventConfig.label : text,
+        value: [categoryIndex, start, end, end - start],
         itemStyle: {
           color: eventConfig?.color,
         },
       };
     });
-
-    return seriesData;
   }
 
   toSeries(
-    data: {
-      name: string;
-      value: number[];
-      itemStyle: {
-        color?: string;
-      };
-    }[],
+    data: EventBar[],
     renderItem: CustomSeriesRenderItem,
     types: EventConfig[]
   ): EventSeries[] {
@@ -146,7 +128,7 @@ export class EventStatusTrackerService {
   }
 
   /** The bars of one lane, from the output of {@link toCustomFormat}. */
-  toLane(label: string, data: ReturnType<EventStatusTrackerService['toCustomFormat']>): EventLane {
+  toLane(label: string, data: EventBar[]): EventLane {
     return {
       label,
       segments: data.map(({ name, value: [, start, end], itemStyle }) => ({
@@ -167,17 +149,35 @@ export class EventStatusTrackerService {
     });
   }
 
-  private getTimestampFromString(timeboxStart: number, dateString: string): number {
-    let timestap = Date.parse(dateString);
+  /**
+   * Newest first and page by page, so that a device with more events than {@link MAX_PAGES}
+   * pages loses its oldest ones rather than its current state; returned oldest first.
+   */
+  private async fetchInBox(
+    startDate: Date,
+    endDate: Date,
+    deviceId: string,
+    type: string
+  ): Promise<IEvent[]> {
+    const events: IEvent[] = [];
 
-    if (timestap < timeboxStart) {
-      timestap = timeboxStart;
+    for (let currentPage = 1; currentPage <= MAX_PAGES; currentPage++) {
+      const { data } = await this.eventService.list({
+        dateFrom: startDate.toISOString(),
+        dateTo: endDate.toISOString(),
+        pageSize: PAGE_SIZE,
+        currentPage,
+        source: deviceId,
+        type,
+      });
+
+      events.push(...data);
+
+      if (data.length < PAGE_SIZE) {
+        break;
+      }
     }
 
-    return timestap;
-  }
-
-  private asSeconds(timestamp: number): number {
-    return Math.floor(timestamp / 1000);
+    return events.reverse();
   }
 }

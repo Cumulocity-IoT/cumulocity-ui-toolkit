@@ -202,21 +202,6 @@ export class GeoMapPopupComponent {
     return out;
   });
 
-  private prefersHalf(section: GeoMapPopupSection): boolean {
-    if (section.layout) return section.layout === 'half';
-
-    switch (section.type) {
-      case 'chart':
-        return true;
-      case 'properties':
-        return section.rows.length <= 4;
-      case 'kpi-bars':
-        return section.bars.length <= 2;
-      default:
-        return false;
-    }
-  }
-
   text(binding: GeoMapBinding, format?: GeoMapFormat): string {
     return formatValue(resolveBinding(this.item(), binding), format);
   }
@@ -261,5 +246,20 @@ export class GeoMapPopupComponent {
 
   pageCount(pageSize: number): number {
     return Math.max(1, Math.ceil(this.children().length / pageSize));
+  }
+
+  private prefersHalf(section: GeoMapPopupSection): boolean {
+    if (section.layout) return section.layout === 'half';
+
+    switch (section.type) {
+      case 'chart':
+        return true;
+      case 'properties':
+        return section.rows.length <= 4;
+      case 'kpi-bars':
+        return section.bars.length <= 2;
+      default:
+        return false;
+    }
   }
 }
