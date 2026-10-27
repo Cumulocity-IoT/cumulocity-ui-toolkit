@@ -401,6 +401,7 @@ There is intentionally no "run every spec" script: the bare `e2e:run` / `e2e:ope
 |---|---|---|
 | `.github/workflows/pull-request.yml` | Pull request | Detects changed packages via `git diff` against `main` and runs lint → unit tests → build per changed package in a matrix. If root config files changed, an additional `verify-root-config` job runs `lint`, `pnpm test`, `pnpm run build` for the **whole** workspace and checks that the generated `package.json` scripts are up to date. |
 | `.github/workflows/e2e-test.yml` | Pull request | Same change detection, then per changed package: `serve:<name>` on port 9001, `wait-on`, `e2e:run:<name>`. Screenshots are uploaded on failure. Requires the `e2e` GitHub environment for tenant credentials. |
+| `.github/workflows/shell-compat.yml` | Daily, manual dispatch | When a newer cockpit CD release is out (GitHub `releases/latest`, newer than the pinned Web SDK version), runs every plugin's e2e suite on the tenant mock inside that cockpit (`E2E_SHELL_VERSION`). A failure opens an issue labelled `shell-compat` (or comments on the open one for that version); a pass closes the issues of that version and older ones. Each version is tested once per commit on `main`. Requires the `e2e` GitHub environment for the windy-dev world. |
 | `.github/workflows/relase-after-tag.yml` | Tag push | Reads all projects from `angular.json`, builds each, and attaches versioned ZIPs to the release. |
 | `.github/workflows/clank8y.yml` | Manual dispatch | Runs an AI review pass. |
 
@@ -491,6 +492,16 @@ If you find a bug, please create an [issue](./issues). For ideas or feedback, po
 - [Cumulocity IoT Web Development Tutorial – Part 1: Start your journey](https://techcommunity.cumulocity.com/t/cumulocity-iot-web-development-tutorial-part-1-start-your-journey/4124)
 - [How to install a Microfrontend Plugin on a tenant and use it in an app?](https://techcommunity.cumulocity.com/t/how-to-install-a-microfrontend-plugin-on-a-tenant-and-use-it-in-an-app/3034)
 - [The power of micro frontends – How to dynamically extend Cumulocity IoT Frontends](https://techcommunity.cumulocity.com/t/the-power-of-micro-frontends-how-to-dynamically-extend-cumulocity-iot-frontends/2577)
+
+## Shell Compatibility Check
+
+`.github/workflows/shell-compat.yml` finds out whether the plugins still work in a newer cockpit before tenants are upgraded to it. It runs daily at 04:00 UTC (or manually, with an optional `version`):
+
+1. **Detect** — reads the latest CD release of [Cumulocity-IoT/cockpit](https://github.com/Cumulocity-IoT/cockpit/releases) (pre-releases are skipped). It stops if that is the Web SDK version the workspace is pinned to, or if that version already passed at the current `main` commit.
+2. **Test** — runs every plugin's Cypress suite on the tenant mock inside that cockpit (`E2E_SHELL_VERSION=<version> pnpm run e2e:mock <plugin>`). The plugins stay built with the pinned Web SDK, just as a deployed plugin does when its tenant is upgraded.
+3. **Report** — if a plugin fails, it opens an issue `Cockpit <version>: e2e failures` (label `shell-compat`), or comments on the open one for that version. The issue lists the failing plugins, the run, and the requests the mock does not emulate, since a failure can be a gap in the mock rather than a plugin bug. When everything passes, it closes the open issues of that version and older ones.
+
+To reproduce a failure locally: `E2E_SHELL_VERSION=<version> pnpm run e2e:mock <plugin> --browser=chrome` (this rewrites `test/c8y-ui.json` — don't commit that). To let the agentic issue loop attempt a fix, add the `agent:fix` label to the issue.
 
 ---
 

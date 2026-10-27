@@ -5,8 +5,10 @@
 // @c8y/ngx-components), the plugin's dev server proxies to it.
 //   node scripts/e2e-mock.mts <plugin> [--open] [--browser=chrome] [--spec=<file>]
 // E2E_MOCK_PORT / E2E_DEV_PORT override the ports from c8y-ui.json (parallel runs).
+// E2E_SHELL_VERSION runs the plugin in another cockpit release (shell-compat.yml: the latest CD release),
+// E2E_MOCK_GAPS=<file> lists the requests the mock does not emulate (endpoints or parameters it lacks).
 import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { readConfig, startProjectMock, writeConfig } from '@cumulocity-iot/ui-sdk';
 
@@ -23,7 +25,7 @@ if (!plugin) {
 
 // Follow the workspace's Web SDK version; the shell checksum for a new version is recorded on first download.
 const rootPkg = JSON.parse(readFileSync(resolve(rootDir, 'package.json'), 'utf8'));
-const version: string = rootPkg.dependencies['@c8y/ngx-components'];
+const version: string = process.env.E2E_SHELL_VERSION || rootPkg.dependencies['@c8y/ngx-components'];
 const config = readConfig(testDir);
 if (config.version !== version) {
   config.version = version;
@@ -50,7 +52,15 @@ if (!existsSync(resolve(testDir, config.world))) {
   if (pull.status !== 0) process.exit(pull.status ?? 1);
 }
 
-const project = await startProjectMock(testDir, { watch: false, port: mockPort });
+const gaps = new Set<string>();
+const project = await startProjectMock(testDir, {
+  watch: false,
+  port: mockPort,
+  // gap: a documented endpoint (or parameter) the mock does not implement; plain 404/405s are what a tenant answers too
+  onGap: (r) => {
+    if (r.gap) gaps.add(`${r.status} ${r.method} ${r.path}${r.unhandled?.length ? ` (unhandled: ${r.unhandled.join(', ')})` : ''}`);
+  },
+});
 const { mock } = project;
 const world = mock.world();
 const devUrl = `http://localhost:${devPort}`;
@@ -83,5 +93,6 @@ try {
 } finally {
   serve.kill();
   await project.close();
+  if (process.env.E2E_MOCK_GAPS) writeFileSync(process.env.E2E_MOCK_GAPS, [...gaps].map((g) => `${g}\n`).join(''));
 }
 process.exit(code);
