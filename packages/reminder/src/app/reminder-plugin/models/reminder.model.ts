@@ -13,6 +13,7 @@ export const REMINDER__HIGHLIGHT_DURATION_SECONDS = 5;
 export const REMINDER__TENANT_OPTION__CATEGORY: ITenantOption['category'] = 'c8y.reminder';
 export const REMINDER__TENANT_OPTION__TYPE_KEY: ITenantOption['key'] = 'types';
 export const REMINDER__TENANT_OPTION__CONFIG_KEY: ITenantOption['key'] = 'config';
+export const REMINDER__TENANT_OPTION__DEFAULTS_KEY: ITenantOption['key'] = 'defaults';
 export const REMINDER__TENANT_OPTION__ASSET_ACCESS_KEY: ITenantOption['key'] = 'assetFilter';
 export const REMINDER__LOCAL_STORAGE__FILTER = 'c8y_rpFilter';
 export const REMINDER__LOCAL_STORAGE__CONFIG = 'c8y_rpConfig';
@@ -47,6 +48,9 @@ export interface ReminderTenantConfig {
   useContext?: boolean;
   responsibilityFilter?: ResponsibilityFilter;
 }
+
+/** Tenant-wide notification defaults, used until a user stores their own settings. */
+export type ReminderTenantDefaults = Pick<ReminderConfig, 'browser' | 'toast'>;
 
 export interface ReminderGroup {
   status: ReminderGroupStatus;

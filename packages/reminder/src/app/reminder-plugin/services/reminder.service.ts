@@ -19,6 +19,7 @@ import {
   REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG,
   REMINDER__TENANT_OPTION__CATEGORY,
   REMINDER__TENANT_OPTION__CONFIG_KEY,
+  REMINDER__TENANT_OPTION__DEFAULTS_KEY,
   REMINDER__TENANT_OPTION__TYPE_KEY,
   REMINDER__TYPE,
   REMINDER__TYPE_FRAGMENT,
@@ -28,6 +29,7 @@ import {
   ReminderGroupStatus,
   ReminderStatus,
   type ReminderTenantConfig,
+  type ReminderTenantDefaults,
   type ReminderType,
   type ResponsibilityFilter,
 } from '../models/reminder.model';
@@ -115,11 +117,14 @@ export class ReminderService {
 
     this.loadConfig();
     void this.requestNotificationPermission();
-    const [tenantConfig, types] = await Promise.all([
-      this.fetchTenantConfig(),
+    const [tenantConfig, types, tenantDefaults] = await Promise.all([
+      this.fetchTenantJsonOption<ReminderTenantConfig>(REMINDER__TENANT_OPTION__CONFIG_KEY),
       this.fetchReminderTypes(),
+      this.fetchTenantJsonOption<ReminderTenantDefaults>(REMINDER__TENANT_OPTION__DEFAULTS_KEY),
     ]);
 
+    // Reload with the tenant defaults; settings the user already stored still win.
+    this.loadConfig(tenantDefaults);
     this.contextFilterAvailable.set(tenantConfig.useContext ?? false);
 
     if (!this.contextFilterAvailable() && this.config().useContext) {
@@ -347,16 +352,17 @@ export class ReminderService {
     });
   }
 
-  private async fetchTenantConfig(): Promise<ReminderTenantConfig> {
+  /** Reads a JSON tenant option of the reminder category; a missing or invalid option yields `{}`. */
+  private async fetchTenantJsonOption<T extends object>(key: string): Promise<T> {
     try {
       const response = await this.tenantOptionService.detail({
         category: REMINDER__TENANT_OPTION__CATEGORY,
-        key: REMINDER__TENANT_OPTION__CONFIG_KEY,
+        key,
       });
 
       if (response.data?.value) {
         try {
-          return this.parseJSON<ReminderTenantConfig>(response.data.value);
+          return this.parseJSON<T>(response.data.value);
         } catch {
           this.alertService.add({
             type: 'danger',
@@ -364,12 +370,12 @@ export class ReminderService {
             timeout: 5000,
           });
 
-          return {};
+          return {} as T;
         }
       }
     } catch (error) {
-      // A missing tenant option just means the context filter was never
-      // configured; anything else is a real failure the user should see.
+      // A missing tenant option just means it was never configured; anything
+      // else is a real failure the user should see.
       if (!this.isNotFound(error)) {
         this.alertService.danger(
           this.translateService.instant('reminder.error.invalidConfig') as string,
@@ -378,7 +384,7 @@ export class ReminderService {
       }
     }
 
-    return {};
+    return {} as T;
   }
 
   /** Distinguishes "tenant option not configured" from an actual request failure. */
@@ -602,11 +608,17 @@ export class ReminderService {
     return groups;
   }
 
-  private loadConfig(): void {
+  private loadConfig(tenantDefaults: ReminderTenantDefaults = {}): void {
+    const defaults: ReminderConfig = { ...REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG };
+
+    // Only the notification switches can be preset; `false` is a valid default too.
+    if (typeof tenantDefaults.browser === 'boolean') defaults.browser = tenantDefaults.browser;
+    if (typeof tenantDefaults.toast === 'boolean') defaults.toast = tenantDefaults.toast;
+
     this.config.set(
       this.localStorageService.getOrDefault<ReminderConfig>(
         REMINDER__LOCAL_STORAGE__CONFIG,
-        REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG
+        defaults
       )
     );
   }

@@ -1,5 +1,15 @@
 # Reminder Plugin Changelog
 
+## 1.5.0
+
+### Features
+
+- **Tenant notification defaults**: the new tenant option `c8y.reminder` / `defaults` (e.g. `{"browser": true, "toast": true}`) presets the toast and browser notification switches for users who have not stored their own settings yet. Stored user settings still win; a missing option keeps both off. Idea taken from #97.
+
+### Bug Fixes
+
+- **Drawer layout**: the group headers (DUE / UPCOMING / CLEARED) use the drawer's 16px inset like the rest of the drawer; the counts and chevrons no longer touch the drawer edges and the focus outline is no longer clipped.
+
 ## 1.4.5
 
 ### Features
