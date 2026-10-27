@@ -1,6 +1,13 @@
 /// <reference types="cypress" />
 import { IManagedObject } from '@c8y/client';
-import { AddWidgetDialog, Dashboard, DashboardSelectors, WidgetConfigSelectors } from '@cumulocity-iot/ui-sdk/cypress';
+import {
+  AddWidgetDialog,
+  Dashboard,
+  DashboardSelectors,
+  openWidgetForEditing,
+  saveWidgetAndDashboard,
+  WidgetConfigSelectors,
+} from '@cumulocity-iot/ui-sdk/cypress';
 
 const WIDGET_ID = 'events-graph.widget';
 const WIDGET = 'c8y-events-graph';
@@ -26,7 +33,8 @@ const BASE_CONFIG = {
 
 function createDashboard(
   device: IManagedObject,
-  config: Record<string, unknown> | null
+  config: Record<string, unknown> | null,
+  context: 'device' | 'group' = 'device'
 ): Cypress.Chainable<IManagedObject> {
   const children: Record<string, unknown> = {};
   if (config) {
@@ -47,7 +55,7 @@ function createDashboard(
       c.inventory.create({
         name: 'Events Graph Dashboard',
         c8y_Dashboard: { name: 'Events Graph Dashboard', icon: 'th', priority: 10000, children },
-        [`c8y_Dashboard!device!${device.id}`]: {},
+        [`c8y_Dashboard!${context}!${device.id}`]: {},
       })
     )
     .then((res) => res.body as IManagedObject);
@@ -225,5 +233,145 @@ describe('Events Graph Widget', () => {
     cy.wait('@eventsFail');
     cy.get(`${WIDGET} ${cy_('--error')}`).should('contain.text', 'Could not load events');
     cy.get(`${WIDGET} ${cy_('--chart')}`).should('not.exist');
+  });
+
+  describe('correlating lanes', () => {
+    const GRID_TYPE = 'e2e_GridState';
+    const GRID_CONFIG = {
+      type: GRID_TYPE,
+      values: [{ name: 'CURTAILED', label: 'Curtailed', color: '#0000aa' }],
+    };
+    let group: IManagedObject;
+    let pump: IManagedObject;
+
+    before(() => {
+      cy.getAuth().login();
+      // a second lane type on the machine, active from 3 h ago on (the cursor hovers ~2 h ago)
+      cy.c8yclient((c) =>
+        c.event.create({
+          source: { id: device.id },
+          type: GRID_TYPE,
+          text: 'CURTAILED',
+          time: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
+        })
+      );
+      // a group with the machine and a second device, which has its own state events
+      cy.createDevice({ name: `Pump ${Date.now()}` }).then((p) => {
+        pump = p;
+        cy.c8yclient((c) =>
+          c.event.create({
+            source: { id: p.id },
+            type: TYPE,
+            text: 'RUNNING',
+            time: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
+          })
+        );
+      });
+      cy.c8yclient((c) =>
+        c.inventory.create({ name: `Line ${Date.now()}`, type: 'c8y_DeviceGroup', c8y_IsDeviceGroup: {} })
+      ).then((res) => {
+        group = res.body as IManagedObject;
+        cy.c8yclient((c) => c.inventory.childAssetsAdd(device.id, group.id));
+        cy.c8yclient((c) => c.inventory.childAssetsAdd(pump.id, group.id));
+      });
+    });
+
+    function visitGroupDashboard(config: Record<string, unknown>, selector = WIDGET) {
+      createDashboard(
+        group,
+        { ...BASE_CONFIG, device: { id: group.id, name: group.name }, ...config },
+        'group'
+      ).then((dashboard) =>
+        cy.visitApp(`group/${group.id}/dashboard/${dashboard.id}`, {
+          language: 'en',
+          waitFor: selector,
+        })
+      );
+    }
+
+    it('shows the state of every lane at the time cursor', () => {
+      visitWithConfig({ types: [...BASE_CONFIG.types, GRID_CONFIG] });
+
+      cy.get(`${WIDGET} ${cy_('--cursor')}`).should('contain.text', 'Hover the chart');
+      cy.get(`${WIDGET} ${cy_('--chart')} canvas`).should('be.visible').trigger('mousemove', 'center');
+
+      cy.get(`${WIDGET} ${cy_('--cursor-time')}`).invoke('text').should('match', /^\d{2}:\d{2}:\d{2}$/);
+      cy.get(`${WIDGET} ${cy_('--cursor-lane')}`).should('have.length', 2);
+      cy.get(`${WIDGET} ${cy_('--cursor-lane')}`).first().should('contain.text', TYPE);
+      cy.get(`${WIDGET} ${cy_('--cursor-state')}`)
+        .first()
+        .invoke('text')
+        .should('match', /^(Running|Stopped)$/);
+      cy.get(`${WIDGET} ${cy_('--cursor-lane')}`).last().should('contain.text', 'Curtailed');
+
+      cy.get(`${WIDGET} ${cy_('--chart')} canvas`).trigger('mouseout');
+      cy.get(`${WIDGET} ${cy_('--cursor')}`).should('contain.text', 'Hover the chart');
+    });
+
+    it('offers no device per lane on a device dashboard', () => {
+      createDashboard(device, { ...BASE_CONFIG, device: { id: device.id, name: device.name } }).then(
+        (dashboard) => visitDashboard(dashboard, WIDGET)
+      );
+      openWidgetForEditing();
+
+      cy.get(CONFIG).within(() => {
+        cy.get(cy_('-config--type')).should('have.length', 1);
+        cy.get(cy_('-config--type-device')).should('not.exist');
+      });
+    });
+
+    it('lets a lane of a group dashboard take its events from a device of the group', () => {
+      visitGroupDashboard({});
+      cy.intercept('PUT', '**/inventory/managedObjects/*').as('saveDashboard');
+      openWidgetForEditing();
+
+      cy.get(CONFIG).within(() => {
+        cy.get(cy_('-config--type-device'))
+          .find('option:selected')
+          .should('have.text', 'The group itself');
+        cy.get(cy_('-config--type-device'))
+          .find('option')
+          .should('have.length', 3)
+          .then((options) => {
+            const labels = [...options].map((o) => o.textContent?.trim());
+            expect(labels).to.include.members(['The group itself', device.name, pump.name]);
+          });
+        cy.get(cy_('-config--type-device')).select(pump.name);
+      });
+      saveWidgetAndDashboard();
+
+      cy.wait('@saveDashboard')
+        .its('request.body.c8y_Dashboard.children')
+        .then((children: Record<string, { config: { types: { device?: unknown }[] } }>) => {
+          expect(Object.values(children)[0].config.types[0].device).to.deep.equal({
+            id: pump.id,
+            name: pump.name,
+          });
+        });
+    });
+
+    it('queries each lane from its own device and labels the lanes with it', () => {
+      cy.intercept('GET', '**/event/events?*').as('events');
+      visitGroupDashboard({
+        types: [
+          { ...BASE_CONFIG.types[0], device: { id: device.id, name: device.name } },
+          { ...BASE_CONFIG.types[0], device: { id: pump.id, name: pump.name } },
+        ],
+      });
+
+      cy.get(`${WIDGET} ${cy_('--chart')} canvas`).should('be.visible');
+      cy.get('@events.all').then((calls) => {
+        const sources = (calls as unknown as { request: { query: { source: string } } }[]).map(
+          (c) => c.request.query.source
+        );
+        expect(sources).to.include.members([device.id, pump.id]);
+        expect(sources).not.to.include(group.id);
+      });
+
+      cy.get(`${WIDGET} ${cy_('--chart')} canvas`).trigger('mousemove', 'center');
+      cy.get(`${WIDGET} ${cy_('--cursor-lane')}`).should('have.length', 2);
+      cy.get(`${WIDGET} ${cy_('--cursor-lane')}`).first().should('contain.text', device.name);
+      cy.get(`${WIDGET} ${cy_('--cursor-lane')}`).last().should('contain.text', pump.name);
+    });
   });
 });

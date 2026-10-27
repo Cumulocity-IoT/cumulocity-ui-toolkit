@@ -88,6 +88,55 @@ describe('EventStatusTrackerService', () => {
     });
   });
 
+  describe('toLane', () => {
+    it('keeps each bar with its start, end and color', () => {
+      const lane = service.toLane('State · Pump 1', [
+        { name: 'Running', value: [0, 10, 20, 10], itemStyle: { color: '#0a0' } },
+        { name: 'B', value: [0, 20, 30, 10], itemStyle: { color: undefined } },
+      ]);
+
+      expect(lane).toEqual({
+        label: 'State · Pump 1',
+        segments: [
+          { name: 'Running', start: 10, end: 20, color: '#0a0' },
+          { name: 'B', start: 20, end: 30, color: undefined },
+        ],
+      });
+    });
+  });
+
+  describe('statesAt', () => {
+    const lanes = [
+      {
+        label: 'Machine',
+        segments: [
+          { name: 'Running', start: 0, end: 100, color: '#0a0' },
+          { name: 'Stopped', start: 100, end: 200, color: '#a00' },
+        ],
+      },
+      { label: 'Grid', segments: [{ name: 'Curtailed', start: 50, end: 150 }] },
+    ];
+
+    it('reports what every lane shows at the cursor time', () => {
+      expect(service.statesAt(lanes, 120)).toEqual([
+        { lane: 'Machine', state: 'Stopped', color: '#a00' },
+        { lane: 'Grid', state: 'Curtailed', color: undefined },
+      ]);
+    });
+
+    it('treats a bar as starting inclusive and ending exclusive', () => {
+      expect(service.statesAt(lanes, 100)[0].state).toBe('Stopped');
+    });
+
+    it('reports null for a lane without a bar at that time', () => {
+      expect(service.statesAt(lanes, 20)[1]).toEqual({
+        lane: 'Grid',
+        state: null,
+        color: undefined,
+      });
+    });
+  });
+
   describe('fetchEvents', () => {
     it('prepends the last event before the time box so the first state is known', async () => {
       const inBox = [ev(10, 'B')];

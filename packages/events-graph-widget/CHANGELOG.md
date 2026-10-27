@@ -1,5 +1,13 @@
 # Events Graph Widget Changelog
 
+## 3.1.0
+
+### Features
+
+- **Shared time cursor**: hovering the chart draws a vertical line across all event types, and a readout above the chart lists the state of every row at that moment, to correlate the event types
+- **Rows from several devices**: on a group dashboard each event type row can take its events from a device of that group (new "Device" select in the config, default: the group itself), so states of different devices line up on one time axis; such rows are labelled `<type> · <device>`. Devices that are no longer in the group are dropped from the config when it is edited.
+- Rows are shown top-down in the configured order (previously the first configured type was the bottom row)
+
 ## 3.0.0
 
 ### Breaking Changes

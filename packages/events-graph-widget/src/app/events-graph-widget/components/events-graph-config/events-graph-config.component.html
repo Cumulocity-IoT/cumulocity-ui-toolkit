@@ -65,6 +65,24 @@
               required
               placeholder="e.g. Path-PathExecution"
             />
+            @if (groupDevices(); as devices) {
+              <label class="m-t-8" for="type-device-{{ i }}" translate>Device</label>
+              <div class="c8y-select-wrapper">
+                <select
+                  class="form-control"
+                  id="type-device-{{ i }}"
+                  [(ngModel)]="eventType.device"
+                  [compareWith]="compareDevices"
+                  name="type-device-{{ i }}"
+                  data-cy="events-graph-config--type-device"
+                >
+                  <option [ngValue]="undefined" translate>The group itself</option>
+                  @for (device of devices; track device.id) {
+                    <option [ngValue]="device">{{ device.name }}</option>
+                  }
+                </select>
+              </div>
+            }
           </div>
           <div class="col-md-2">
             @if (config.types.length > 1) {

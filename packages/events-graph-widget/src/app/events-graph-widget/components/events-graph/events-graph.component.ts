@@ -4,6 +4,7 @@ import {
   inject,
   Input,
   type OnInit,
+  signal,
   ViewChild,
 } from '@angular/core';
 import { CoreModule, CountdownIntervalComponent, DatePipe } from '@c8y/ngx-components';
@@ -14,6 +15,7 @@ import type {
   CustomSeriesRenderItemAPI,
   CustomSeriesRenderItemParams,
   CustomSeriesRenderItemReturn,
+  ECharts,
   EChartsOption,
   TooltipComponentFormatterCallbackParams,
 } from 'echarts';
@@ -29,8 +31,11 @@ import { CanvasRenderer } from 'echarts/renderers';
 import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
 import {
   DEFAULT_GRAPH_ITEM_SCALE,
+  type EventLane,
   type EventSeries,
   type EventStatusTrackerConfig,
+  type EventTypeConfig,
+  type LaneState,
 } from '../../models/event-graph.model';
 import { EventStatusTrackerService } from '../../services/events-graph.service';
 
@@ -64,6 +69,10 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
   chartOptions: EChartsOption;
   series: EventSeries[] = [];
   state: EventGraphState = 'loading';
+  /** Time and per-lane states under the cursor; set from chart events, hence a signal. */
+  readonly cursor = signal<{ time: string; states: LaneState[] } | null>(null);
+
+  private lanes: EventLane[] = [];
 
   ngOnInit(): void {
     void this.loadChartData();
@@ -137,9 +146,19 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
           axisLabel: {
             formatter: this.formatAxisLabel,
           },
+          // shared time cursor across all lanes; its readout is rendered above the chart
+          axisPointer: {
+            show: true,
+            type: 'line',
+            snap: false,
+            triggerTooltip: false,
+            label: { formatter: ({ value }) => this.formatCursorTime(value as number) },
+          },
         },
         yAxis: {
-          data: types.map((type) => type.type),
+          data: types.map((type) => this.laneLabel(type)),
+          // first configured lane on top, in the same order as the cursor readout
+          inverse: true,
         },
         series: this.series,
       };
@@ -157,12 +176,13 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
     timeBoxEnd: number
   ): Promise<EventSeries[]> {
     const series: EventSeries[] = [];
+    const lanes: EventLane[] = [];
 
     for (const [index, type] of types.entries()) {
       const custom = await this.eventStatusService.fetchAndPrepareEvents(
         start,
         now,
-        this.config.device.id,
+        type.device?.id ?? this.config.device.id,
         type,
         index,
         timeBoxStart,
@@ -170,9 +190,34 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
       );
 
       series.push(...this.eventStatusService.toSeries(custom, this.renderItem, type.values ?? []));
+      lanes.push(this.eventStatusService.toLane(this.laneLabel(type), custom));
     }
 
+    this.lanes = lanes;
+    this.cursor.set(null);
+
     return series;
+  }
+
+  onChartInit(chart: ECharts): void {
+    chart.on('updateAxisPointer', (event) => {
+      const time = (event as { axesInfo?: { value: number }[] }).axesInfo?.[0]?.value;
+
+      this.cursor.set(
+        time === undefined
+          ? null
+          : {
+              time: this.formatCursorTime(time),
+              states: this.eventStatusService.statesAt(this.lanes, time),
+            }
+      );
+    });
+    chart.getZr().on('globalout', () => this.cursor.set(null));
+  }
+
+  /** The event type, plus the device when the lane has its own (group dashboards). */
+  private laneLabel(type: EventTypeConfig): string {
+    return type.device ? `${type.type} · ${type.device.name}` : type.type;
   }
 
   renderItem = (
@@ -229,6 +274,10 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
       })}`
     );
   };
+
+  private formatCursorTime(time: number): string {
+    return (this.date.transform(time, 'HH:mm:ss') as string) ?? '';
+  }
 
   private formatAxisLabel = (val: number): string => {
     const transformed = this.date.transform(val, 'HH:mm') as string;
