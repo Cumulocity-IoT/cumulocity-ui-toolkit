@@ -227,6 +227,17 @@ describe('Release notes', () => {
       adminItem('6.0.0').should('not.exist');
     });
 
+    it('says that deleting failed when the delete is rejected, and keeps the note', () => {
+      seedNote({ version: '6.1.0', published: false });
+      visitAdmin();
+      cy.intercept('DELETE', '/event/events/*', { statusCode: 403, body: {} }).as('deleteNote');
+
+      clickItemAction('6.1.0', 'delete');
+      cy.wait('@deleteNote');
+      cy.get('c8y-alert-outlet .alert-danger').should('contain.text', 'Could not delete release note');
+      adminItem('6.1.0').should('exist');
+    });
+
     it('shows an error alert when loading release notes fails', () => {
       cy.intercept('GET', '/event/events?*type=c8y_ReleaseNotes*', { statusCode: 500, body: {} });
       visitAdmin();

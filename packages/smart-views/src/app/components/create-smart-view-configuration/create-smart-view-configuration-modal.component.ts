@@ -113,6 +113,8 @@ export class CreateSmartViewConfigurationModalComponent implements OnInit {
     return (
       !!this.name.trim() &&
       !!this.assetDefinitionId &&
+      // the query is built from the definition's name: it has to be known
+      !!this.assetDefinitionName() &&
       this.columns.some((column) => column.name.trim() && column.path.trim())
     );
   }
@@ -166,15 +168,16 @@ export class CreateSmartViewConfigurationModalComponent implements OnInit {
       return;
     }
 
-    const assetDefinition = this.assetDefinitions().find(
-      (definition) => definition.id === this.assetDefinitionId
-    );
+    const stored = this.configuration?.c8y_SmartViewConfiguration;
+    const definitionUnchanged = !!stored && stored.assetDefinitionId === this.assetDefinitionId;
 
     const draft = {
       name: this.name.trim(),
       icon: this.icon?.trim() || 'telescope',
       assetDefinitionId: this.assetDefinitionId,
-      assetDefinitionName: assetDefinition?.name ?? '',
+      assetDefinitionName: this.assetDefinitionName(),
+      // keep a stored (possibly hand-written) query unless the definition changed
+      query: definitionUnchanged && stored.query ? stored.query : undefined,
       priority: this.priority ?? CreateSmartViewConfigurationModalComponent.DEFAULT_PRIORITY,
       columns: this.columns
         .filter((column) => column.name.trim() && column.path.trim())
@@ -217,25 +220,35 @@ export class CreateSmartViewConfigurationModalComponent implements OnInit {
    */
   private async loadColumnsFromDefinition(assetDefinition: AssetDefinition): Promise<void> {
     this.loadingProperties.set(true);
+    // the user may pick another definition while this one loads: only the latest applies
+    const isCurrent = () => this.assetDefinitionId === assetDefinition.id;
 
     try {
       const dtmDefinition = await this.dtmService.getAssetDefinition(assetDefinition.name);
       const allowedProperties = dtmDefinition.composition?.allowedProperties ?? [];
 
-      if (!allowedProperties.length) {
+      if (!allowedProperties.length || !isCurrent()) {
         return;
       }
 
       const identifiers = allowedProperties.map((p) => p.identifier);
       const propertyDefinitions = await this.dtmService.getPropertyDefinitions(identifiers);
 
+      if (!isCurrent()) {
+        return;
+      }
+
       this.columns = this.buildColumnsFromProperties(identifiers, propertyDefinitions);
       this.columnsFromDefinition.set(true);
     } catch {
       // DTM unavailable or definition not found — keep the current columns.
-      this.columnsFromDefinition.set(false);
+      if (isCurrent()) {
+        this.columnsFromDefinition.set(false);
+      }
     } finally {
-      this.loadingProperties.set(false);
+      if (isCurrent()) {
+        this.loadingProperties.set(false);
+      }
     }
   }
 
@@ -265,6 +278,25 @@ export class CreateSmartViewConfigurationModalComponent implements OnInit {
     ).map((c) => ({ ...c }));
 
     return [...defaults, ...dtmColumns];
+  }
+
+  /**
+   * The selected definition's name: from the loaded definitions, else — in edit mode, while
+   * they load, after a failed load or for a deleted definition — the stored one.
+   */
+  private assetDefinitionName(): string {
+    const loaded = this.assetDefinitions().find(
+      (definition) => definition.id === this.assetDefinitionId
+    );
+    const stored = this.configuration?.c8y_SmartViewConfiguration;
+
+    if (loaded) {
+      return loaded.name;
+    }
+
+    return stored?.assetDefinitionId === this.assetDefinitionId
+      ? (stored.assetDefinitionName ?? '')
+      : '';
   }
 
   /** Pre-fills the form fields from an existing configuration (edit mode). */

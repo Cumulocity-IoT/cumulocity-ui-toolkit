@@ -1,3 +1,6 @@
+import type { IFetchResponse } from '@c8y/client';
+import type { ApiCall, HttpHandler } from '@c8y/ngx-components/api';
+import { catchError, from, type Observable, throwError } from 'rxjs';
 import { type SeriesResponse } from './chart-data.service';
 
 /**
@@ -25,6 +28,11 @@ export const COVERAGE_TTL_MS = 24 * 3_600_000;
 export function clampCoverageTo(from: Date, to: Date): Date {
   const limit = Date.now() - MIN_HISTORICAL_MS;
   return new Date(Math.max(from.getTime(), Math.min(to.getTime(), limit)));
+}
+
+/** True when `to` reaches into the window {@link clampCoverageTo} never records as covered. */
+export function touchesLiveEdge(to: Date): boolean {
+  return to.getTime() > Date.now() - MIN_HISTORICAL_MS;
 }
 
 /**
@@ -66,4 +74,27 @@ export function asError(reason: unknown, fallback: string): Error {
   if (reason instanceof DOMException) return new Error(`${reason.name}: ${reason.message}`);
 
   return new Error(fallback);
+}
+
+/**
+ * The cache is an optimisation: when serving from it fails — IndexedDB unavailable or full,
+ * a blocked upgrade, an unexpected error — the request goes to the network as if the cache
+ * were off. A navigation abort is passed on instead: the caller no longer wants the data.
+ */
+export function withNetworkFallback(
+  cached: Promise<IFetchResponse>,
+  req: ApiCall,
+  next: HttpHandler
+): Observable<IFetchResponse> {
+  return from(cached).pipe(
+    catchError((error: unknown) =>
+      isAbortError(error) || req.options?.signal?.aborted
+        ? throwError(() => error)
+        : next.handle(req)
+    )
+  );
+}
+
+function isAbortError(error: unknown): boolean {
+  return (error as { name?: unknown } | null)?.name === 'AbortError';
 }

@@ -12,11 +12,12 @@ import {
   input,
   output,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
-import { CoreModule } from '@c8y/ngx-components';
+import { AlertService, CoreModule } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { filter as filterEvents, map } from 'rxjs/operators';
 import { cappedList } from '../../helpers/ai-context.helper';
@@ -47,6 +48,7 @@ import {
   type AssetActivation,
   type AssetTreeConfig,
   type AssetTreeRow,
+  branchesToLoad,
 } from './asset-tree.model';
 import { AssetTreeService } from './asset-tree.service';
 import { CascadeController } from './cascade-controller';
@@ -154,6 +156,7 @@ export class AssetTreeComponent {
 
   private readonly assets = connectAssetStore();
   private readonly tree = inject(AssetTreeService);
+  private readonly alerts = inject(AlertService);
   private readonly navigatorSettings = inject(NavigatorSettingsService);
   private readonly definitions = inject(AssetDefinitionService);
   private readonly router = inject(Router);
@@ -314,23 +317,6 @@ export class AssetTreeComponent {
   /** Assets held right now, which is the only fleet number this mode can state. */
   protected readonly loadedCount = this.assets.size;
 
-  /**
-   * Whether the "search the whole tenant" way out can be offered — i.e. whether the global-search
-   * plugin is installed on this tenant. Hidden rather than broken when it is not.
-   */
-  protected canHandOverToGlobalSearch(): boolean {
-    return globalSearchAvailable();
-  }
-
-  /**
-   * Hands the term the drawer could not match to the global search, which queries the platform
-   * rather than the loaded set. Carrying the term over is the point: retyping it is exactly the
-   * friction that makes people give up on the feature.
-   */
-  protected handOverToGlobalSearch(): void {
-    openGlobalSearch({ term: this.tree.searchText() });
-  }
-
   protected readonly cascadeTarget = this.cascade.target;
   protected readonly configPanelOpen = this.cascade.configPanelOpen;
   /** The open target when it is a detail panel, narrowed for the template. */
@@ -364,7 +350,53 @@ export class AssetTreeComponent {
   private readonly aiContextService = inject(AiContextService);
   private reportedContextId: string | null = null;
 
+  /**
+   * Every branch in the **whole hierarchy**, not just the rows on screen: "expand all" has to
+   * open branches that are currently hidden inside a collapsed ancestor, or one click would
+   * leave the tree half open and the button still enabled.
+   */
+  private readonly branchIds = computed(() => {
+    const hierarchy = this.assets.hierarchy();
+
+    if (!hierarchy) return [] as string[];
+    const ids: string[] = [];
+
+    for (const node of hierarchy.byId.values()) {
+      if (node.childIds.length) ids.push(node.id);
+    }
+
+    return ids;
+  });
+
+  /**
+   * Enabled only when there is something to do, judged on the **visible** rows: a button that
+   * stays enabled after its own click, because of a branch nobody can see, reads as broken.
+   *
+   * Both are off while a filter is active. Filtering derives expansion of its own
+   * (`autoExpanded` forces every match's ancestors open, §3.5), so collapse-all could not take
+   * effect and would sit there enabled and inert — and expand-all would fight the filter for
+   * ownership of the same shape.
+   */
+  protected readonly canExpandAll = computed(
+    () =>
+      !this.filtering() &&
+      !this.assets.highVolume() &&
+      this.rows().some((row) => row.hasChildren && !row.expanded)
+  );
+
+  protected readonly canCollapseAll = computed(
+    () => !this.filtering() && this.rows().some((row) => row.hasChildren && row.expanded)
+  );
+
   constructor() {
+    // High-volume mode: whatever opened a branch, an open branch has to have its children.
+    effect(() => {
+      if (!this.assets.highVolume()) return;
+      const pending = branchesToLoad(this.rows(), this.assets.branchStatus());
+
+      untracked(() => pending.forEach((id) => void this.assets.loadChildren(id)));
+    });
+
     // Publish "you are here" to the shared state: the search ranks assets near where the
     // app already is above equally-scored strangers, and the service cannot read the route
     // itself.
@@ -478,6 +510,23 @@ export class AssetTreeComponent {
     });
   }
 
+  /**
+   * Whether the "search the whole tenant" way out can be offered — i.e. whether the global-search
+   * plugin is installed on this tenant. Hidden rather than broken when it is not.
+   */
+  protected canHandOverToGlobalSearch(): boolean {
+    return globalSearchAvailable();
+  }
+
+  /**
+   * Hands the term the drawer could not match to the global search, which queries the platform
+   * rather than the loaded set. Carrying the term over is the point: retyping it is exactly the
+   * friction that makes people give up on the feature.
+   */
+  protected handOverToGlobalSearch(): void {
+    openGlobalSearch({ term: this.tree.searchText() });
+  }
+
   // ── row interaction ──────────────────────────────────────────────────────────
 
   protected onPick(row: AssetTreeRow): void {
@@ -537,44 +586,6 @@ export class AssetTreeComponent {
   }
 
   // ── expand / collapse all ────────────────────────────────────────────────────
-
-  /**
-   * Every branch in the **whole hierarchy**, not just the rows on screen: "expand all" has to
-   * open branches that are currently hidden inside a collapsed ancestor, or one click would
-   * leave the tree half open and the button still enabled.
-   */
-  private readonly branchIds = computed(() => {
-    const hierarchy = this.assets.hierarchy();
-
-    if (!hierarchy) return [] as string[];
-    const ids: string[] = [];
-
-    for (const node of hierarchy.byId.values()) {
-      if (node.childIds.length) ids.push(node.id);
-    }
-
-    return ids;
-  });
-
-  /**
-   * Enabled only when there is something to do, judged on the **visible** rows: a button that
-   * stays enabled after its own click, because of a branch nobody can see, reads as broken.
-   *
-   * Both are off while a filter is active. Filtering derives expansion of its own
-   * (`autoExpanded` forces every match's ancestors open, §3.5), so collapse-all could not take
-   * effect and would sit there enabled and inert — and expand-all would fight the filter for
-   * ownership of the same shape.
-   */
-  protected readonly canExpandAll = computed(
-    () =>
-      !this.filtering() &&
-      !this.assets.highVolume() &&
-      this.rows().some((row) => row.hasChildren && !row.expanded)
-  );
-
-  protected readonly canCollapseAll = computed(
-    () => !this.filtering() && this.rows().some((row) => row.hasChildren && row.expanded)
-  );
 
   protected expandAllBranches(): void {
     this.tree.setAllOpen(this.branchIds(), true);
@@ -665,10 +676,6 @@ export class AssetTreeComponent {
     if (!this.cascade.closeInnermost()) this.requestClose.emit();
   }
 
-  private quickAccessAnchorTop(): number {
-    return this.quickSection()?.nativeElement.getBoundingClientRect().top ?? 0;
-  }
-
   /**
    * Arrow-down off the last Pinned/Recent entry: the hierarchy takes over. Focus goes to
    * the viewport (which owns `aria-activedescendant`) and lands on the first row, so the
@@ -732,7 +739,14 @@ export class AssetTreeComponent {
     const node = this.assets.node(assetId);
 
     if (!node) return;
-    await this.tree.togglePin({ assetId, label: node.name });
+
+    try {
+      await this.tree.togglePin({ assetId, label: node.name });
+    } catch {
+      // The pin is a platform bookmark: the user preferences write can fail (permissions,
+      // network), and the star would otherwise just not move.
+      this.alerts.danger(gettext('Could not update the pinned assets.'));
+    }
   }
 
   /**
@@ -856,6 +870,25 @@ export class AssetTreeComponent {
     event.preventDefault();
   }
 
+  protected rowId(row: AssetTreeRow): string {
+    return `ps-tree-row-${row.node.id}`;
+  }
+
+  /** Per-level stagger, capped so a deep hierarchy does not keep the user waiting. */
+  protected revealDelay(depth: number): number {
+    return Math.min(depth, REVEAL_MAX_LEVELS) * REVEAL_STEP_MS;
+  }
+
+  protected trackRow(_index: number, row: AssetTreeRow): string {
+    return row.node.id;
+  }
+
+  // ── private helpers (quick access, keyboard focus, AI context) ───────────────
+
+  private quickAccessAnchorTop(): number {
+    return this.quickSection()?.nativeElement.getBoundingClientRect().top ?? 0;
+  }
+
   private moveFocus(rows: readonly AssetTreeRow[], index: number): void {
     if (!rows.length) return;
     const clamped = Math.max(0, Math.min(index, rows.length - 1));
@@ -923,19 +956,6 @@ export class AssetTreeComponent {
   private emitActivate(node: AssetNode, newTab: boolean, view?: AssetActivation['view']): void {
     void this.tree.touchRecent({ assetId: node.id, label: node.name });
     this.activate.emit({ node, newTab, view });
-  }
-
-  protected rowId(row: AssetTreeRow): string {
-    return `ps-tree-row-${row.node.id}`;
-  }
-
-  /** Per-level stagger, capped so a deep hierarchy does not keep the user waiting. */
-  protected revealDelay(depth: number): number {
-    return Math.min(depth, REVEAL_MAX_LEVELS) * REVEAL_STEP_MS;
-  }
-
-  protected trackRow(_index: number, row: AssetTreeRow): string {
-    return row.node.id;
   }
 
   /**

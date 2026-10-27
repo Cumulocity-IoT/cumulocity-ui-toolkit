@@ -1,6 +1,6 @@
 {
   "name": "cumulocity-operations-widget-plugin",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "description": "Configurable action buttons with labels, icons, and input fields to send parameterized operation to device.",
   "author": "@dirk-peter-c8y",
   "homepage": "https://github.com/Cumulocity-IoT/cumulocity-ui-toolkit/tree/main/packages/operations-widget",

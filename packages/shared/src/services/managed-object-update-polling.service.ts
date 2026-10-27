@@ -42,15 +42,6 @@ export class ManagedObjectUpdatePollingService {
     return this.update$;
   }
 
-  private iterateAfter() {
-    setTimeout(() => {
-      // `stopListening()` may have run while this timer was pending.
-      if (this.running && this.loop) {
-        this.loop.next();
-      }
-    }, this.interval);
-  }
-
   stopListening(): void {
     if (this.loop) {
       this.loop.complete();
@@ -62,6 +53,15 @@ export class ManagedObjectUpdatePollingService {
       this.counter = null;
     }
     this.running = false;
+  }
+
+  private iterateAfter() {
+    setTimeout(() => {
+      // `stopListening()` may have run while this timer was pending.
+      if (this.running && this.loop) {
+        this.loop.next();
+      }
+    }, this.interval);
   }
 
   private checkForUpdates(queryExtension: string) {

@@ -17,6 +17,11 @@ export const REMINDER__TENANT_OPTION__DEFAULTS_KEY: ITenantOption['key'] = 'defa
 export const REMINDER__TENANT_OPTION__ASSET_ACCESS_KEY: ITenantOption['key'] = 'assetFilter';
 export const REMINDER__LOCAL_STORAGE__FILTER = 'c8y_rpFilter';
 export const REMINDER__LOCAL_STORAGE__CONFIG = 'c8y_rpConfig';
+/**
+ * The notification switches (`browser`, `toast`) the user set themselves. Only these keep
+ * their stored value; the others follow the tenant defaults (`c8y.reminder` / `defaults`).
+ */
+export const REMINDER__LOCAL_STORAGE__NOTIFICATIONS_CHOSEN = 'c8y_rpNotificationsChosen';
 export const REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG: ReminderConfig = {
   toast: false,
   browser: false,

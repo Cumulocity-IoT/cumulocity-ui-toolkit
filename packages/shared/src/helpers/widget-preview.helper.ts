@@ -31,6 +31,6 @@ export function setWidgetPreview(
   // ESLint type-checks against the root tsconfig, where `strictNullChecks` is
   // still off, so it sees this assertion as redundant — under this package's
   // strict config it is required.
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
   service.setPreview(null as unknown as true);
 }

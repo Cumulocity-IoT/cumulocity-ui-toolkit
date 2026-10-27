@@ -1,6 +1,11 @@
 import { Injectable } from '@angular/core';
 
 type Primitive = string | number | boolean | null | undefined;
+
+const UTF8_BOM = '\uFEFF';
+/** First characters that make spreadsheet applications evaluate a cell (CSV injection). */
+const FORMULA_TRIGGER = /^[=+\-@\t\r]/;
+
 type FlatRow = Record<string, Primitive>;
 
 /**
@@ -24,7 +29,8 @@ export class CsvExportService {
     }
 
     const csvContent = this.convertToCsv(data);
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    // The byte order mark makes Excel read the file as UTF-8 (umlauts, units like °C).
+    const blob = new Blob([UTF8_BOM, csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement('a');
@@ -35,7 +41,9 @@ export class CsvExportService {
     a.click();
     document.body.removeChild(a);
 
-    URL.revokeObjectURL(url);
+    // Revoked on the next task: some browsers start the download only after the click
+    // handler, and a URL revoked synchronously cancels it.
+    setTimeout(() => URL.revokeObjectURL(url));
   }
 
   /**
@@ -60,7 +68,7 @@ export class CsvExportService {
     );
 
     return [
-      headers.join(','),
+      headers.map((header) => this.escapeCsv(header)).join(','),
       ...flattenedData.map((row) => headers.map((field) => this.escapeCsv(row[field])).join(',')),
     ].join('\n');
   }
@@ -74,7 +82,9 @@ export class CsvExportService {
       const newKey = parentKey ? `${parentKey}.${key}` : key;
       const value = (obj as Record<string, unknown>)[key];
 
-      if (Array.isArray(value)) {
+      if (value instanceof Date) {
+        result[newKey] = value.toISOString();
+      } else if (Array.isArray(value)) {
         result[newKey] = JSON.stringify(value);
       } else if (value !== null && typeof value === 'object') {
         this.flattenObject(value, newKey, result);
@@ -88,14 +98,20 @@ export class CsvExportService {
 
   /**
    * Escapes a CSV cell value by wrapping it in double-quotes when it contains
-   * commas, double-quotes, or newline characters. Internal double-quotes are
-   * doubled per RFC 4180.
+   * commas, double-quotes, or line breaks. Internal double-quotes are doubled per RFC 4180.
+   *
+   * Text that a spreadsheet would evaluate as a formula (`=`, `+`, `-`, `@`, tab, carriage
+   * return first) is prefixed with `'` — names and texts come from devices and users.
+   * Numbers are left as they are, so negative values stay numeric.
    */
   private escapeCsv(value: Primitive): string {
     if (value == null) return '';
-    const str = String(value);
-    return str.includes(',') || str.includes('"') || str.includes('\n')
-      ? `"${str.replace(/"/g, '""')}"`
-      : str;
+    let str = String(value);
+
+    if (typeof value === 'string' && FORMULA_TRIGGER.test(str)) {
+      str = `'${str}`;
+    }
+
+    return /[",\r\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
   }
 }

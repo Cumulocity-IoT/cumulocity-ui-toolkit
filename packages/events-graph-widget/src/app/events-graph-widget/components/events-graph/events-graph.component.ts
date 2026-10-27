@@ -62,17 +62,22 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
   private readonly date = inject(DatePipe);
   private readonly translate = inject(TranslateService);
 
-  @ViewChild(CountdownIntervalComponent) countdownIntervalComponent: CountdownIntervalComponent;
+  @ViewChild(CountdownIntervalComponent) countdownIntervalComponent?: CountdownIntervalComponent;
 
-  @Input() config: EventStatusTrackerConfig;
+  @Input() config!: EventStatusTrackerConfig;
 
-  chartOptions: EChartsOption;
+  chartOptions: EChartsOption = {};
   series: EventSeries[] = [];
   state: EventGraphState = 'loading';
   /** Time and per-lane states under the cursor; set from chart events, hence a signal. */
   readonly cursor = signal<{ time: string; states: LaneState[] } | null>(null);
 
+  /** False while the user has paused auto refresh with the countdown toggle. */
+  autoRefresh = true;
+
   private lanes: EventLane[] = [];
+  /** Bumped per load: a slower, older load must not overwrite the result of a newer one. */
+  private loadGeneration = 0;
 
   ngOnInit(): void {
     void this.loadChartData();
@@ -86,7 +91,20 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
 
   refresh(): void {
     void this.loadChartData();
-    this.countdownIntervalComponent?.reset();
+
+    if (this.autoRefresh) {
+      this.countdownIntervalComponent?.reset();
+    }
+  }
+
+  setAutoRefresh(enabled: boolean): void {
+    this.autoRefresh = enabled;
+
+    if (enabled) {
+      this.countdownIntervalComponent?.start();
+    } else {
+      this.countdownIntervalComponent?.stop();
+    }
   }
 
   onCountdownEnded(): void {
@@ -112,9 +130,23 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
     const start = subHours(now, this.config.hours || 4);
     const timeBoxStart = start.getTime();
     const timeBoxEnd = now.getTime();
+    const generation = ++this.loadGeneration;
 
     try {
-      this.series = await this.prepareChartData(types, now, start, timeBoxStart, timeBoxEnd);
+      const { series, lanes } = await this.prepareChartData(
+        types,
+        now,
+        start,
+        timeBoxStart,
+        timeBoxEnd
+      );
+
+      if (generation !== this.loadGeneration) {
+        return;
+      }
+      this.series = series;
+      this.lanes = lanes;
+      this.cursor.set(null);
 
       this.chartOptions = {
         tooltip: {
@@ -141,8 +173,9 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
           containLabel: true,
         },
         xAxis: {
+          type: 'time',
           min: timeBoxStart,
-          scale: true,
+          max: timeBoxEnd,
           axisLabel: {
             formatter: this.formatAxisLabel,
           },
@@ -164,7 +197,9 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
       };
       this.state = 'ready';
     } catch {
-      this.state = 'error';
+      if (generation === this.loadGeneration) {
+        this.state = 'error';
+      }
     }
   }
 
@@ -174,29 +209,29 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
     start: Date,
     timeBoxStart: number,
     timeBoxEnd: number
-  ): Promise<EventSeries[]> {
-    const series: EventSeries[] = [];
-    const lanes: EventLane[] = [];
+  ): Promise<{ series: EventSeries[]; lanes: EventLane[] }> {
+    const bars = await Promise.all(
+      types.map((type, index) =>
+        this.eventStatusService.fetchAndPrepareEvents(
+          start,
+          now,
+          type.device?.id ?? this.config.device.id,
+          type,
+          index,
+          timeBoxStart,
+          timeBoxEnd
+        )
+      )
+    );
 
-    for (const [index, type] of types.entries()) {
-      const custom = await this.eventStatusService.fetchAndPrepareEvents(
-        start,
-        now,
-        type.device?.id ?? this.config.device.id,
-        type,
-        index,
-        timeBoxStart,
-        timeBoxEnd
-      );
-
-      series.push(...this.eventStatusService.toSeries(custom, this.renderItem, type.values ?? []));
-      lanes.push(this.eventStatusService.toLane(this.laneLabel(type), custom));
-    }
-
-    this.lanes = lanes;
-    this.cursor.set(null);
-
-    return series;
+    return {
+      series: types.flatMap((type, index) =>
+        this.eventStatusService.toSeries(bars[index], this.renderItem, type.values ?? [])
+      ),
+      lanes: types.map((type, index) =>
+        this.eventStatusService.toLane(this.laneLabel(type), bars[index])
+      ),
+    };
   }
 
   onChartInit(chart: ECharts): void {
@@ -213,11 +248,6 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
       );
     });
     chart.getZr().on('globalout', () => this.cursor.set(null));
-  }
-
-  /** The event type, plus the device when the lane has its own (group dashboards). */
-  private laneLabel(type: EventTypeConfig): string {
-    return type.device ? `${type.type} · ${type.device.name}` : type.type;
   }
 
   renderItem = (
@@ -255,6 +285,11 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
       : null;
   };
 
+  /** The event type, plus the device when the lane has its own (group dashboards). */
+  private laneLabel(type: EventTypeConfig): string {
+    return type.device ? `${type.type} · ${type.device.name}` : type.type;
+  }
+
   private formatTooltip = (params: TooltipComponentFormatterCallbackParams): string => {
     const item = params as TooltipComponentFormatterCallbackParams & {
       seriesIndex: number;
@@ -265,8 +300,9 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
     const [, startDate, endDate, duration] = item.value;
     const t = (key: string) => this.translate.instant(key) as string;
 
+    // ECharts renders the formatter's result as HTML; the name is device-supplied event text
     return (
-      `<b>${t(gettext('Text'))}:</b> ${event?.name || 'N/A'}<br/>` +
+      `<b>${t(gettext('Text'))}:</b> ${escapeHtml(event?.name || 'N/A')}<br/>` +
       `<b>${t(gettext('Start date'))}:</b> ${this.date.transform(startDate)}<br/>` +
       `<b>${t(gettext('End date'))}:</b> ${this.date.transform(endDate)}<br/>` +
       `<b>${t(gettext('Duration'))}:</b> ca. ${formatDistance(0, duration, {
@@ -283,4 +319,16 @@ export class EventGraphComponent implements OnInit, AfterViewInit {
     const transformed = this.date.transform(val, 'HH:mm') as string;
     return transformed ? transformed : '';
   };
+}
+
+const HTML_ESCAPES: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+};
+
+function escapeHtml(text: string): string {
+  return text.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
 }

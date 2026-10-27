@@ -120,17 +120,22 @@ export class SmartViewExportModalComponent implements OnInit {
    * Maps each managed object to a flat record keyed by the column header labels
    * defined in the Smart View configuration. Values are resolved via dot-notation
    * paths (e.g. `"owner"`, `"c8y_Hardware.serialNumber"`).
+   *
+   * Headers are the record keys, so repeated ones are numbered ("Type", "Type (2)") —
+   * otherwise the later column would overwrite the earlier one.
    */
   private buildRows(
     items: IManagedObject[],
     columns: SmartViewColumn[]
   ): Record<string, unknown>[] {
+    const keys = uniqueLabels(columns.map((col) => col.header || col.name));
+
     return items.map((item) => {
       const row: Record<string, unknown> = {};
 
-      for (const col of columns) {
-        row[col.header] = this.resolvePath(item, col.path);
-      }
+      columns.forEach((col, index) => {
+        row[keys[index]] = this.resolvePath(item, col.path);
+      });
 
       return row;
     });
@@ -149,4 +154,20 @@ export class SmartViewExportModalComponent implements OnInit {
       return undefined;
     }, obj);
   }
+}
+
+/** The labels, with " (2)", " (3)", … appended to repeats so each is unique. */
+export function uniqueLabels(labels: string[]): string[] {
+  const used = new Set<string>();
+
+  return labels.map((label) => {
+    let unique = label;
+
+    for (let n = 2; used.has(unique); n++) {
+      unique = `${label} (${n})`;
+    }
+    used.add(unique);
+
+    return unique;
+  });
 }

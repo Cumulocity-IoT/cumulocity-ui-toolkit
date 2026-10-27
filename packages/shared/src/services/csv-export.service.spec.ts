@@ -47,13 +47,11 @@ describe('CsvExportService', () => {
     });
 
     it('does nothing when data is null', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       service.downloadFile(null as any);
       expect(createObjectURLSpy).not.toHaveBeenCalled();
     });
 
     it('does nothing when data is undefined', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       service.downloadFile(undefined as any);
       expect(createObjectURLSpy).not.toHaveBeenCalled();
     });
@@ -93,9 +91,26 @@ describe('CsvExportService', () => {
       expect(removeChildSpy).toHaveBeenCalledWith(mockAnchor);
     });
 
-    it('revokes the object URL after clicking', () => {
+    it('revokes the object URL after the click has been handled', () => {
+      jasmine.clock().install();
+
+      try {
+        service.downloadFile([{ id: 1 }]);
+        expect(revokeObjectURLSpy).not.toHaveBeenCalled();
+
+        jasmine.clock().tick(0);
+        expect(revokeObjectURLSpy).toHaveBeenCalledWith('blob:mock-url');
+      } finally {
+        jasmine.clock().uninstall();
+      }
+    });
+
+    it('starts the file with a UTF-8 byte order mark for Excel', async () => {
       service.downloadFile([{ id: 1 }]);
-      expect(revokeObjectURLSpy).toHaveBeenCalledWith('blob:mock-url');
+      const blob = createObjectURLSpy.calls.mostRecent().args[0] as Blob;
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+
+      expect(Array.from(bytes.slice(0, 3))).toEqual([0xef, 0xbb, 0xbf]);
     });
 
     it('creates the blob with the correct MIME type', () => {
@@ -220,6 +235,46 @@ describe('CsvExportService', () => {
       const csv = await lastBlobContent(createObjectURLSpy);
 
       expect(csv).toBe('label\nplain');
+    });
+  });
+  describe('escaping', () => {
+    it('escapes header cells like data cells', async () => {
+      service.downloadFile([{ 'Temperature, °C': 21, 'Size "XL"': true }]);
+
+      const [header] = (await lastBlobContent(createObjectURLSpy)).split('\n');
+
+      expect(header).toBe('"Temperature, °C","Size ""XL"""');
+    });
+
+    it('quotes values with a carriage return', async () => {
+      service.downloadFile([{ note: 'a\rb' }]);
+
+      expect(await lastBlobContent(createObjectURLSpy)).toBe('note\n"a\rb"');
+    });
+
+    it('neutralises text that a spreadsheet would run as a formula', async () => {
+      service.downloadFile([
+        { name: '=HYPERLINK("http://evil","x")' },
+        { name: '+1' },
+        { name: '@SUM(A1)' },
+        { name: '-2' },
+      ]);
+
+      const rows = (await lastBlobContent(createObjectURLSpy)).split('\n').slice(1);
+
+      expect(rows).toEqual([`"'=HYPERLINK(""http://evil"",""x"")"`, "'+1", "'@SUM(A1)", "'-2"]);
+    });
+
+    it('keeps negative numbers numeric', async () => {
+      service.downloadFile([{ value: -5 }]);
+
+      expect(await lastBlobContent(createObjectURLSpy)).toBe('value\n-5');
+    });
+
+    it('writes dates as ISO timestamps', async () => {
+      service.downloadFile([{ at: new Date('2026-01-02T03:04:05.000Z') }]);
+
+      expect(await lastBlobContent(createObjectURLSpy)).toBe('at\n2026-01-02T03:04:05.000Z');
     });
   });
 });

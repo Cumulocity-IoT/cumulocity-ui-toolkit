@@ -38,15 +38,15 @@ export class NavigatorSettingsMenuComponent {
   protected readonly recording = signal(false);
   private readonly modals = inject(BsModalService);
 
+  protected readonly shortcutLabel = computed(
+    () => parseChord(this.settings().shortcut)?.label ?? ''
+  );
+
   constructor() {
     // Closing the drawer removes the field without a blur: never leave the drawer's own
     // shortcut muted by a recording that can no longer finish.
     inject(DestroyRef).onDestroy(() => this.stopRecording());
   }
-
-  protected readonly shortcutLabel = computed(
-    () => parseChord(this.settings().shortcut)?.label ?? ''
-  );
 
   protected set<K extends keyof NavigatorSettings>(key: K, value: NavigatorSettings[K]): void {
     void this.service.update({ [key]: value });

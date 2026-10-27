@@ -3,6 +3,7 @@ import type { AssetHierarchy } from '../../services/asset-store/asset-store.mode
 import { withLookupBudget } from '../../testing/lookup-budget';
 import { buildAssetIndex } from '../../services/asset-store/asset-search';
 import {
+  branchesToLoad,
   EMPTY_TREE_FILTER,
   autoExpansionFor,
   filterHierarchy,
@@ -480,5 +481,32 @@ describe('flatten in high-volume mode', () => {
         defaultOpen: true,
       })
     ).not.toThrow();
+  });
+});
+
+describe('branchesToLoad', () => {
+  const row = (id: string, expanded: boolean, hasChildren = true) =>
+    ({ node: { id }, expanded, hasChildren }) as Parameters<typeof branchesToLoad>[0][number];
+
+  it('returns open branches that were never requested — however they were opened', () => {
+    expect(branchesToLoad([row('a', true), row('b', false), row('c', true)], new Map())).toEqual([
+      'a',
+      'c',
+    ]);
+  });
+
+  it('skips leaves and branches that are loading, loaded or failed', () => {
+    const status = new Map([
+      ['a', 'loading'],
+      ['b', 'loaded'],
+      ['c', 'error'],
+    ] as const);
+
+    expect(
+      branchesToLoad(
+        [row('a', true), row('b', true), row('c', true), row('d', true, false)],
+        status
+      )
+    ).toEqual([]);
   });
 });

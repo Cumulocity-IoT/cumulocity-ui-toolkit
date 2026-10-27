@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { NavigatorNode, type NavigatorNodeFactory } from '@c8y/ngx-components';
-import { from, type Observable, startWith, switchMap } from 'rxjs';
+import { catchError, EMPTY, from, type Observable, startWith, switchMap } from 'rxjs';
 import { SmartViewConfigurationService } from '../../services/smart-view-configuration.service';
 
 /** Default navigator priority for a smart view without an explicit priority. */
@@ -18,7 +18,8 @@ export class SmartViewFactory implements NavigatorNodeFactory {
   get(): Observable<NavigatorNode[]> {
     return this.configurationService.configurationsChanged$.pipe(
       startWith(undefined),
-      switchMap(() => from(this.loadNodes()))
+      // a failed load keeps the current entries instead of ending the stream for the session
+      switchMap(() => from(this.loadNodes()).pipe(catchError(() => EMPTY)))
     );
   }
 

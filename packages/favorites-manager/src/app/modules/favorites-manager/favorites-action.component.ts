@@ -57,8 +57,11 @@ export class FavoritesActionComponent implements OnInit {
   }
 
   private async initFavoriteStatus(): Promise<void> {
+    // No device or group in the route (the action bar also renders elsewhere): there is
+    // nothing to favorite, so the action stays hidden. Throwing here was an unhandled
+    // rejection, since the caller does not await.
     if (!this.contextId) {
-      throw new Error('Failed to initialize context');
+      return;
     }
 
     try {

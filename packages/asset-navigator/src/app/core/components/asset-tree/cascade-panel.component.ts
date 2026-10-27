@@ -74,14 +74,6 @@ export class CascadePanelComponent {
    */
   private readonly hostBox = signal(0);
 
-  constructor() {
-    if (typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(() => this.hostBox.update((version) => version + 1));
-
-    observer.observe(this.host.nativeElement as HTMLElement);
-    inject(DestroyRef).onDestroy(() => observer.disconnect());
-  }
-
   /**
    * The clamp (rule 4). Measured against the host's own box rather than the viewport:
    * the panel lives inside the container, so the container's edges are the ones it must
@@ -110,4 +102,12 @@ export class CascadePanelComponent {
     const available = (box.height || this.height()) - 2 * CascadePanelComponent.MARGIN;
     return Math.max(120, Math.min(this.height(), available));
   });
+
+  constructor() {
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => this.hostBox.update((version) => version + 1));
+
+    observer.observe(this.host.nativeElement as HTMLElement);
+    inject(DestroyRef).onDestroy(() => observer.disconnect());
+  }
 }

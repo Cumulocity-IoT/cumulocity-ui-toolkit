@@ -49,6 +49,8 @@ export class ReminderNotesAdminModalComponent implements OnInit {
 
   isLoading = false;
 
+  private _release!: ReleaseNote;
+
   ngOnInit(): void {
     this.fields = [
       {
@@ -89,8 +91,6 @@ export class ReminderNotesAdminModalComponent implements OnInit {
   get body(): string {
     return this.formValue.body || '';
   }
-
-  private _release!: ReleaseNote;
 
   close(): void {
     this.bsModalRef.hide();

@@ -36,6 +36,9 @@ export class SmartViewComponent implements OnInit {
 
   readonly pagination: Pagination = { pageSize: 30, currentPage: 1 };
 
+  /** The route component is reused across smart views: only the latest load may apply. */
+  private loadGeneration = 0;
+
   readonly labels = {
     loading: gettext('Loading smart view…'),
     id: gettext('ID'),
@@ -52,6 +55,8 @@ export class SmartViewComponent implements OnInit {
   }
 
   private async loadDevice(deviceId: string | null): Promise<void> {
+    const generation = ++this.loadGeneration;
+
     this.loading.set(true);
     this.errorMessage.set(null);
     this.managedObject.set(null);
@@ -67,6 +72,9 @@ export class SmartViewComponent implements OnInit {
     try {
       const { data } = await this.inventoryService.detail(deviceId);
 
+      if (generation !== this.loadGeneration) {
+        return;
+      }
       this.title.set((data.name as string | undefined) ?? deviceId);
 
       if (isSmartViewConfiguration(data)) {
@@ -79,13 +87,17 @@ export class SmartViewComponent implements OnInit {
         this.errorMessage.set(this.translate(this.labels.noConfig));
       }
     } catch {
-      this.errorMessage.set(
-        this.translate(gettext('Could not load smart view with ID "{{ id }}".'), {
-          id: deviceId,
-        })
-      );
+      if (generation === this.loadGeneration) {
+        this.errorMessage.set(
+          this.translate(gettext('Could not load smart view with ID "{{ id }}".'), {
+            id: deviceId,
+          })
+        );
+      }
     } finally {
-      this.loading.set(false);
+      if (generation === this.loadGeneration) {
+        this.loading.set(false);
+      }
     }
   }
 

@@ -366,4 +366,62 @@ describe('Asset Navigator — tree drawer', () => {
     cy.get('[data-cy="asset-navigator--detail-alarms"]').click();
     cy.location('hash').should('contain', `/group/${world.leaf.id}/alarms`);
   });
+
+  describe('large tenants (high-volume mode)', () => {
+    beforeEach(() => {
+      // The size probe decides the mode: report a tenant far beyond what the tree holds at
+      // once, so roots load up front and every branch on demand.
+      cy.intercept(
+        {
+          method: 'GET',
+          pathname: '/inventory/managedObjects',
+          query: { pageSize: '1', withTotalPages: 'true', withChildren: 'false' },
+        },
+        (req) =>
+          req.continue((res) => {
+            res.body.statistics = { ...(res.body.statistics ?? {}), totalPages: 1_000_000 };
+          })
+      ).as('sizeProbe');
+      cy.intercept('GET', '**/inventory/managedObjects/*/childAssets*').as('children');
+    });
+
+    /** Opens a branch row by clicking its body (not the twisty), unless it is open already. */
+    function openByRowClick(name: string) {
+      rowNamed(name).then(($row) => {
+        if ($row.attr('aria-expanded') !== 'true') {
+          cy.wrap($row).find('[data-cy="asset-navigator--row-name"]').click();
+        }
+      });
+    }
+
+    it('loads the children of a branch opened by clicking its row, below the prefetched levels', () => {
+      const nested = `E2E nested ${Date.now()}`;
+
+      // a child asset under a leaf: three levels deep, below the two the startup prefetch loads
+      cy.c8yclient((c) => c.inventory.create({ name: nested, type: 'e2e_Nested', c8y_IsAsset: {} })).then(
+        (res) => cy.c8yclient((c) => c.inventory.childAssetsAdd(res.body.id, world.leaf.id))
+      );
+      openDrawer();
+      cy.wait('@sizeProbe');
+
+      openByRowClick(world.site.name);
+      openByRowClick(world.subsystem.name);
+      openByRowClick(world.leaf.name);
+
+      rowNamed(nested).should('exist');
+    });
+
+    it('hands a term without match in the loaded branches over to the global search', () => {
+      cy.visitApp(`group/${world.site.id}`, { language: 'en', waitFor: NAV_NODE });
+      cy.get(NAV_NODE).click();
+      cy.get(DRAWER).should('be.visible');
+      cy.get(ROW, { timeout: 30000 }).should('have.length.greaterThan', 0);
+
+      cy.get(FILTER).type('zzqqxxyy');
+      cy.get('[data-cy="asset-navigator--empty"]').should('contain', 'Nothing in the loaded branches matches that.');
+      cy.get('[data-cy="asset-navigator--global-search"]').click();
+
+      cy.get('[data-cy="asset-search--input"]').should('be.visible').and('have.value', 'zzqqxxyy');
+    });
+  });
 });

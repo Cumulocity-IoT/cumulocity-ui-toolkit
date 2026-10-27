@@ -15,3 +15,6 @@
 ### Fixes
 
 - N/A
+- `CsvExportService`: escapes header cells, neutralises cells a spreadsheet would run as formulas (`=`, `+`, `-`, `@`), writes dates as ISO timestamps, adds a UTF-8 byte order mark for Excel, and revokes the download URL only after the click.
+- `ImageUploadComponent` resets its drop area without `@ts-ignore`.
+- Removed an unused copy of the reverse query helper (`helpers/reverse-queries-util`); the exported one lives in `components/query-display`.

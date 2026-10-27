@@ -10,6 +10,14 @@ import {
   type SmartViewConfigurationDraft,
 } from '../smart-views.model';
 
+/**
+ * Best-effort inventory query selecting the assets of an asset definition. Quotes in the
+ * name are doubled, the query language's escape (as `QueriesUtil` does).
+ */
+export function assetDefinitionQuery(assetDefinitionName: string): string {
+  return `(type eq '${assetDefinitionName.replace(/'/g, "''")}') and has(c8y_IsAsset)`;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SmartViewConfigurationService {
   private readonly inventoryService = inject(InventoryService);
@@ -81,8 +89,7 @@ export class SmartViewConfigurationService {
   private buildConfigurationData(draft: SmartViewConfigurationDraft): SmartViewConfigurationData {
     return {
       icon: draft.icon,
-      // Best-effort inventory query selecting assets of the chosen definition.
-      query: `(type eq '${draft.assetDefinitionName}') and has(c8y_IsAsset)`,
+      query: draft.query ?? assetDefinitionQuery(draft.assetDefinitionName),
       columns: draft.columns,
       assetDefinitionId: draft.assetDefinitionId,
       assetDefinitionName: draft.assetDefinitionName,

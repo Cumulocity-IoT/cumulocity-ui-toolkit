@@ -65,11 +65,11 @@ export class ImageUploadComponent {
 
   private resetFileUpload() {
     this.selectedFile = undefined;
-    // @ts-ignore
-    delete this.fileUpload.files;
+    // What the drop area's own `onDelete()` does, without re-emitting `dropped(null)` into
+    // `onFileDropped`: `files` is typed non-optional, so it is removed reflectively.
+    Reflect.deleteProperty(this.fileUpload, 'files');
     this.fileUpload.filesNameString = '';
-    // @ts-ignore
-    delete this.fileUpload.errorMessage;
+    this.fileUpload.errorMessage = '';
     this.fileUpload.errors = false;
   }
 }

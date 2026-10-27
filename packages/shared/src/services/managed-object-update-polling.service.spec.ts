@@ -13,7 +13,6 @@ describe('ManagedObjectUpdatePollingService', () => {
 
   it('emits updates when managed objects are returned', async () => {
     const inventory = {
-      // eslint-disable-next-line @typescript-eslint/require-await
       list: jasmine.createSpy('list').and.callFake(() =>
         Promise.resolve({
           data: [{ id: 'mo-1', lastUpdated: '2026-01-01T00:00:01.000Z' }],
@@ -81,7 +80,6 @@ describe('ManagedObjectUpdatePollingService', () => {
   });
 
   it('returns existing stream when already listening', () => {
-    // eslint-disable-next-line @typescript-eslint/require-await
     const inventory = {
       list: jasmine.createSpy('list').and.callFake(() => Promise.resolve({ data: [] })),
     } as unknown as InventoryService;

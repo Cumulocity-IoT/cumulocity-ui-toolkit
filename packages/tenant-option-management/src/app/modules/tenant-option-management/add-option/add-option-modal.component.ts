@@ -68,7 +68,7 @@ export class AddOptionModalComponent {
       }
 
       this.jsonEditorData = JSON.parse(value) as object;
-    } catch (e) {
+    } catch {
       tabId = 'text';
     }
 

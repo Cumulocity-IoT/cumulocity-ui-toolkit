@@ -20,7 +20,6 @@ cumulocity-ui-toolkit/
 ├── package.json              # Root scripts and shared dependencies
 ├── pnpm-workspace.yaml       # Workspace: packages/* + test/
 ├── .npmrc                    # shamefully-hoist=true
-├── .pnpmfile.cjs             # Forces @c8y/devkit to use TypeScript 5.9.x
 ├── karma.conf.js             # Shared Karma config (Jasmine, Chrome, ChromeHeadlessCI)
 ├── eslint.config.mjs         # Shared flat ESLint config
 ├── tsconfig.json             # Root TypeScript config with path aliases for shared/
@@ -127,7 +126,7 @@ All commands run from the **repository root** unless noted.
 - Generic helpers come from `@cumulocity-iot/ui-sdk`: `cy.visitApp` and the dashboard page objects (`@cumulocity-iot/ui-sdk/cypress`), data factories (`@cumulocity-iot/ui-sdk/factories`). `test/cypress/support/` keeps only repo-specific bits (`cy.createDevice`, an asset-navigator intercept). `cypress-terminal-report` is installed — failed runs print the full request trace.
 - `test/tsconfig.json` has `resolveJsonModule: true` and `skipLibCheck: true`.
 - **Default: the tenant mock.** `pnpm run e2e:mock <plugin>` runs the suite against the `@cumulocity-iot/ui-sdk` mock — windy-dev world (pulled at runtime into the git-ignored `test/mock/windy-dev.json` via go-c8y-cli) plus the cockpit release of the workspace's current Web SDK version, picked up from the root `package.json` automatically. CI (`e2e-test.yml`) runs this. Details in `test/AGENTS.md` → Running Tests.
-- Against a real tenant: requires a live Cumulocity tenant plus the plugin served locally (`pnpm run serve:<plugin>`). Environment comes from a **`.env` file at the repository root**, loaded by `base.config.ts` via `dotenv`. Keys (the config file is the authority on the mapping): required `C8Y_USERNAME`, `C8Y_PASSWORD`, `C8Y_TENANT`; optional `C8Y_CYPRESS_URL` (dev-server URL, default `http://localhost:9001/`, exposed to specs as `C8Y_BASEURL`) and `C8Y_SHELL_TARGET` (default `cockpit-test-1023`). `C8Y_TOKEN` is populated automatically via `oauthLogin` at startup.
+- Against a real tenant: requires a live Cumulocity tenant plus the plugin served locally (`pnpm run serve:<plugin>`). Environment comes from a **`.env` file at the repository root**, loaded by `base.config.ts` via `dotenv`. Keys (the config file is the authority on the mapping): required `C8Y_USERNAME`, `C8Y_PASSWORD`, `C8Y_TENANT`; optional `C8Y_CYPRESS_URL` (dev-server URL, default `http://localhost:9001/`, exposed to specs as `C8Y_BASEURL`) and `C8Y_SHELL_TARGET` (default `cockpit`). `C8Y_TOKEN` is populated automatically via `oauthLogin` at startup.
 
 ---
 
@@ -182,6 +181,7 @@ Changelogs are **mandatory**: every change that a user, deployer or contributor 
 - **Per plugin:** `packages/<plugin>/CHANGELOG.md` (`# <Plugin name> Changelog`). Create it if the plugin has none yet.
   - One `## <version>` heading per release; the version matches the plugin's `package.json` `version`. Bumping the version and adding its changelog section go together.
   - Group entries under `### Features`, `### Bug Fixes`, `### Breaking Changes`, `### Dependencies` (only the groups that apply), one bullet per change, written for the reader of the release — what changed and why it matters, not which files moved.
+  - **Keep entries brief**: one or two sentences per bullet, the user-visible effect first. Details belong in the PR, the code or the README, not in the changelog.
 - **Repository-wide:** the root `CHANGELOG.md` (`## YYYY.MM.DD` headings) for changes that are not tied to one plugin: shared library, build tooling, CI workflows, test infrastructure, Web SDK / Angular upgrades.
 - A change that touches several plugins (e.g. a Web SDK bump) gets a root entry **and** an entry in each affected plugin's changelog.
 - Pure refactors without behavioral effect, test-only changes inside one plugin, and docs typo fixes need no entry.
@@ -203,6 +203,12 @@ CI runs `pnpm audit --audit-level high` before every build and test job; any uni
 | GHSA-jmr9-qjv8-65gv | `extract-zip@2.0.1` | No fix (symlink path traversal). Cypress only, unpacks its own binary; dev/test, not shipped. |
 | GHSA-7pqw-9j4j-h8q3 | `extract-zip@2.0.1` | No fix (arbitrary file write via symlinks). Same source as above. |
 | GHSA-ch52-4w7c-c8xp | `http-cache-semantics@4.2.0` | No fix (cross-user cache disclosure). Via `make-fetch-happen` in the npm/Angular CLI tooling; build only, not bundled. |
+
+Overrides that are not security fixes (same reason: `package.json` cannot hold comments):
+
+| Override | Why |
+|---|---|
+| `"@angular-devkit/build-angular@21": "21.2.27"` | 21.2.28 pulls webpack 5.112, which breaks `license-webpack-plugin` in every plugin build (`@c8y/devkit:build`). Drop it once a build-angular or webpack release fixes that; the Karma test builder (`@angular/build`) is unaffected and stays on the latest 21.2. |
 
 ---
 

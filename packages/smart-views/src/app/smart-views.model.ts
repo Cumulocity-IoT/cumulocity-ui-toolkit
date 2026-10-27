@@ -66,6 +66,11 @@ export interface SmartViewConfigurationDraft {
   assetDefinitionName: string;
   columns: SmartViewColumn[];
   priority: number;
+  /**
+   * The stored query to keep (edit mode, asset definition unchanged) — it may have been
+   * written by hand. When unset, the query is generated from `assetDefinitionName`.
+   */
+  query?: string;
 }
 
 /** Type guard: true when the managed object carries a smart view configuration fragment. */

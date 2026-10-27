@@ -141,15 +141,6 @@ export class PopoverModalComponent {
     });
   }
 
-  private async loadAssetProperties(assetType: string): Promise<void> {
-    try {
-      this.availableAssetProperties = await this.dtm.getAssetTypeProperties(assetType);
-    } catch (e) {
-      this.availableAssetProperties = [];
-      this.alert.danger(gettext('Could not load the asset type properties.'), e as string);
-    }
-  }
-
   addProperty(name: string): void {
     const key = name?.trim();
 
@@ -215,5 +206,14 @@ export class PopoverModalComponent {
   // called if save is pressed
   onClose(): void {
     this.closeSubject.next(this.config);
+  }
+
+  private async loadAssetProperties(assetType: string): Promise<void> {
+    try {
+      this.availableAssetProperties = await this.dtm.getAssetTypeProperties(assetType);
+    } catch (e) {
+      this.availableAssetProperties = [];
+      this.alert.danger(gettext('Could not load the asset type properties.'), e as string);
+    }
   }
 }

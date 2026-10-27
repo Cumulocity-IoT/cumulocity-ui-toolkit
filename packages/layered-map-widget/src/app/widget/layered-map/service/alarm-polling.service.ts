@@ -17,14 +17,6 @@ const PAGE_SIZE = 100;
 export class AlarmPollingService extends SourceIdPollingService {
   private alarm = inject(AlarmService);
 
-  createPolling$(layer: MyLayer, interval = FETCH_INTERVAL): Observable<PollingDelta> {
-    if (!isQueryLayerConfig(layer.config) || layer.config.type !== 'Alarm') {
-      throw new Error('Layer is not alarm layer!');
-    }
-
-    return this.createPollingFor(layer, interval);
-  }
-
   /** The source ids of all alarms matching the layer query. */
   protected async fetchMatchingSourceIds(config: QueryLayerConfig): Promise<Set<string>> {
     const result = new Set<string>();
@@ -47,5 +39,13 @@ export class AlarmPollingService extends SourceIdPollingService {
     }
 
     return result;
+  }
+
+  createPolling$(layer: MyLayer, interval = FETCH_INTERVAL): Observable<PollingDelta> {
+    if (!isQueryLayerConfig(layer.config) || layer.config.type !== 'Alarm') {
+      throw new Error('Layer is not alarm layer!');
+    }
+
+    return this.createPollingFor(layer, interval);
   }
 }

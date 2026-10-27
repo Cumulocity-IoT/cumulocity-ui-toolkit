@@ -88,7 +88,7 @@ export class TenantOptionManagementComponent implements OnInit {
       for (const r of this.rows) {
         r.value = options.find((o) => o.id === r.id)?.value;
       }
-    } catch (e) {
+    } catch {
       this.rows = [];
     } finally {
       this.isLoading = false;

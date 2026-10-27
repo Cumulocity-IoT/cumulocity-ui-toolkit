@@ -22,6 +22,25 @@ export class InventoryDeltaPollingService {
     });
   }
 
+  toDelta(matches: Array<IManagedObject>, old: Array<string>) {
+    const delta = {
+      add: new Array<IManagedObject>(),
+      remove: new Array<string>(),
+    };
+
+    for (const mo of matches) {
+      if (!old.includes(mo.id)) {
+        delta.add.push(mo);
+      }
+    }
+
+    const toRemoveIds = old.filter((id) => matches.find((m) => m.id === id) === undefined);
+
+    toRemoveIds.forEach((id) => delta.remove.push(id));
+
+    return delta;
+  }
+
   private iterateAfter(
     observer: Subscriber<InventoryDelta>,
     filter: object,
@@ -48,25 +67,6 @@ export class InventoryDeltaPollingService {
 
   private checkForUpdates(filter: object, mos: string[]) {
     return this.fetchMatchingManagedObjects(filter).then((sources) => this.toDelta(sources, mos));
-  }
-
-  toDelta(matches: Array<IManagedObject>, old: Array<string>) {
-    const delta = {
-      add: new Array<IManagedObject>(),
-      remove: new Array<string>(),
-    };
-
-    for (const mo of matches) {
-      if (!old.includes(mo.id)) {
-        delta.add.push(mo);
-      }
-    }
-
-    const toRemoveIds = old.filter((id) => matches.find((m) => m.id === id) === undefined);
-
-    toRemoveIds.forEach((id) => delta.remove.push(id));
-
-    return delta;
   }
 
   private async fetchMatchingManagedObjects(filter: object) {

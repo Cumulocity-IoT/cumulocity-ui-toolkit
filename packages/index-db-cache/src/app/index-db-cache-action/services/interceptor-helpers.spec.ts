@@ -1,8 +1,13 @@
+import type { IFetchResponse } from '@c8y/client';
+import type { ApiCall, HttpHandler } from '@c8y/ngx-components/api';
+import { firstValueFrom, of } from 'rxjs';
 import {
   MIN_HISTORICAL_MS,
   clampCoverageTo,
   orderValues,
   responseColumnKeys,
+  touchesLiveEdge,
+  withNetworkFallback,
 } from './interceptor-helpers';
 import { type SeriesResponse } from './chart-data.service';
 
@@ -63,5 +68,52 @@ describe('responseColumnKeys', () => {
     const body: SeriesResponse = { values: {}, series: [], truncated: false };
 
     expect(responseColumnKeys(body, requested)).toEqual(requested);
+  });
+});
+
+describe('touchesLiveEdge', () => {
+  it('is true for gaps reaching into the last minutes before now', () => {
+    expect(touchesLiveEdge(new Date())).toBeTrue();
+    expect(touchesLiveEdge(new Date(Date.now() - MIN_HISTORICAL_MS + 1_000))).toBeTrue();
+  });
+
+  it('is false for gaps that end well in the past', () => {
+    expect(touchesLiveEdge(new Date(Date.now() - MIN_HISTORICAL_MS - 1_000))).toBeFalse();
+  });
+});
+
+describe('withNetworkFallback', () => {
+  const req = { url: '/measurement/measurements', options: {} } as ApiCall;
+  const networkResponse = { ok: true } as IFetchResponse;
+  let next: jasmine.SpyObj<HttpHandler>;
+
+  beforeEach(() => {
+    next = jasmine.createSpyObj<HttpHandler>('HttpHandler', ['handle']);
+    next.handle.and.returnValue(of(networkResponse));
+  });
+
+  it('answers from the cache when it works', async () => {
+    const cached = { ok: true, status: 200 } as IFetchResponse;
+
+    await expectAsync(
+      firstValueFrom(withNetworkFallback(Promise.resolve(cached), req, next))
+    ).toBeResolvedTo(cached);
+    expect(next.handle).not.toHaveBeenCalled();
+  });
+
+  it('sends the request to the network when the cache fails (IndexedDB blocked, full, …)', async () => {
+    const failing = Promise.reject(new DOMException('quota', 'QuotaExceededError'));
+
+    await expectAsync(firstValueFrom(withNetworkFallback(failing, req, next))).toBeResolvedTo(
+      networkResponse
+    );
+    expect(next.handle).toHaveBeenCalledWith(req);
+  });
+
+  it('passes a navigation abort on instead of refetching', async () => {
+    const aborted = Promise.reject(new DOMException('aborted', 'AbortError'));
+
+    await expectAsync(firstValueFrom(withNetworkFallback(aborted, req, next))).toBeRejected();
+    expect(next.handle).not.toHaveBeenCalled();
   });
 });

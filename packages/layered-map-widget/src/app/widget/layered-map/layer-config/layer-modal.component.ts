@@ -74,25 +74,6 @@ export class LayerModalComponent {
     );
   }
 
-  private async loadAssetTypes(): Promise<void> {
-    if (this.assetTypes.length || this.loadingAssetTypes) {
-      return;
-    }
-
-    this.loadingAssetTypes = true;
-
-    try {
-      this.assetTypes = await this.dtm.getAssetTypes();
-    } catch (e) {
-      this.assetTypes = [];
-      // Without this the asset-type picker just renders empty, which reads as
-      // "no asset types exist" rather than "we could not load them".
-      this.alert.danger(gettext('Could not load the asset types.'), e as string);
-    } finally {
-      this.loadingAssetTypes = false;
-    }
-  }
-
   onAssetTypeSelect(identifier: string): void {
     this.selectedAssetType = identifier;
     const assetType = this.assetTypes.find((t) => t.identifier === identifier);
@@ -211,5 +192,24 @@ export class LayerModalComponent {
   // called if save is pressed
   onClose(): void {
     this.closeSubject.next(this.layer as QueryLayerConfig);
+  }
+
+  private async loadAssetTypes(): Promise<void> {
+    if (this.assetTypes.length || this.loadingAssetTypes) {
+      return;
+    }
+
+    this.loadingAssetTypes = true;
+
+    try {
+      this.assetTypes = await this.dtm.getAssetTypes();
+    } catch (e) {
+      this.assetTypes = [];
+      // Without this the asset-type picker just renders empty, which reads as
+      // "no asset types exist" rather than "we could not load them".
+      this.alert.danger(gettext('Could not load the asset types.'), e as string);
+    } finally {
+      this.loadingAssetTypes = false;
+    }
   }
 }

@@ -114,9 +114,9 @@ interface AssetStoreCore {
   branchInFlight: Map<string, Promise<void>>;
   branchStatus: WritableSignal<ReadonlyMap<string, BranchStatus>>;
   /**
-   * Monotonic token for branch responses. `@c8y/client` takes no `AbortSignal`, so a
-   * superseded response cannot be cancelled — it is *discarded* by comparing this
-   * (`AssetDetailService.loadLatest` does the same).
+   * Scope generation: bumped when the high-volume state is reset (new scope, new mode), so
+   * branch responses of the old scope are discarded. `@c8y/client` takes no `AbortSignal`,
+   * so a superseded response cannot be cancelled — only *discarded*.
    */
   loadToken: number;
   /** Resolved once per config, then reused across polls. */
@@ -202,6 +202,12 @@ export class AssetStoreService {
   private readonly identity = inject(IdentityService);
   private readonly definitions = inject(AssetDefinitionService);
   private readonly navigatorSettings = inject(NavigatorSettingsService);
+  /**
+   * Per branch, the latest fetch's token: a newer fetch of the *same* branch supersedes an
+   * older one, while fetches of different branches (the startup prefetch, two quick expands)
+   * run side by side.
+   */
+  private readonly branchTokens = new Map<string, number>();
 
   /** The cached fleet, or `null` before the first sweep completes. */
   readonly hierarchy: Signal<AssetHierarchy | null> = this.core.hierarchy.asReadonly();
@@ -255,6 +261,14 @@ export class AssetStoreService {
   readonly rootIds = computed<readonly string[]>(() => this.hierarchy()?.rootIds ?? []);
   /** Total assets cached, for the footer count. */
   readonly size = computed(() => this.hierarchy()?.byId.size ?? 0);
+
+  /**
+   * The cadence the poll should currently run at: fast while a tree is on screen, the
+   * background rate otherwise.
+   */
+  readonly intervalMs = computed(() =>
+    this.core.consumers() > 0 ? this.config().activeIntervalMs : this.config().idleIntervalMs
+  );
 
   /**
    * Narrows or retunes the sweep. Applying a different scope drops the cache — the
@@ -367,12 +381,117 @@ export class AssetStoreService {
   }
 
   /**
-   * The cadence the poll should currently run at: fast while a tree is on screen, the
-   * background rate otherwise.
+   * Fetches one branch's children, or reuses what is cached.
+   *
+   * Concurrent callers share one request (two components reacting to the same expand is the normal
+   * case, not the exception). A cached branch is returned as-is until it ages past the current poll
+   * cadence, then refetched in the background while the cached rows stay on screen — the tree must
+   * never blank out a branch the user is looking at.
+   *
+   * A no-op in `full` mode: there the sweep already holds every child.
    */
-  readonly intervalMs = computed(() =>
-    this.core.consumers() > 0 ? this.config().activeIntervalMs : this.config().idleIntervalMs
-  );
+  async loadChildren(parentId: string): Promise<void> {
+    if (this.core.mode() !== 'high-volume') return;
+
+    const inFlight = this.core.branchInFlight.get(parentId);
+
+    if (inFlight) return inFlight;
+
+    const cached = this.core.branches.get(parentId);
+
+    if (cached && !isBranchStale(cached, new Date().toISOString(), this.intervalMs())) return;
+
+    // A stale branch is reloaded as deep as it was: "load more" pages must not vanish.
+    const request = this.fetchBranch(parentId, 1, undefined, cached?.pagesLoaded).finally(() => {
+      this.core.branchInFlight.delete(parentId);
+    });
+
+    this.core.branchInFlight.set(parentId, request);
+
+    return request;
+  }
+
+  /**
+   * Pulls the next page of a branch that hit {@link BRANCH_PAGE_LIMIT} — the explicit
+   * "load more" the tree otherwise refuses to have.
+   */
+  async loadMoreChildren(parentId: string): Promise<void> {
+    if (this.core.mode() !== 'high-volume') return;
+    const cached = this.core.branches.get(parentId);
+
+    if (!cached || missingChildCount(cached) === 0) return;
+
+    const inFlight = this.core.branchInFlight.get(parentId);
+
+    if (inFlight) return inFlight;
+
+    const request = this.fetchBranch(parentId, cached.pagesLoaded + 1, cached).finally(() => {
+      this.core.branchInFlight.delete(parentId);
+    });
+
+    this.core.branchInFlight.set(parentId, request);
+
+    return request;
+  }
+
+  /**
+   * Makes `id` present in the hierarchy, loading whatever chain of branches it takes.
+   *
+   * This is what lets a pinned asset, a deep link or a hit handed over from the global search
+   * still be revealed in a tree that holds almost nothing: ask the platform for the asset's
+   * ancestors, find the nearest one we already hold, then load down from there.
+   *
+   * `withParents` is safe and correct here — it is documented to ignore inventory roles, which is
+   * a *problem* when inferring hierarchy shape (hence `buildHierarchy` uses `childAssets`) but
+   * exactly what is wanted when merely locating a branch to fetch.
+   */
+  async ensureLoaded(id: string): Promise<AssetNode | undefined> {
+    const existing = this.node(id);
+
+    if (existing || this.core.mode() !== 'high-volume') return existing;
+
+    try {
+      const response = await this.inventory.detail(id, { withParents: true, withChildren: false });
+      const asset = (response.data ?? {}) as unknown as RawManagedObject & {
+        assetParents?: { references?: { managedObject?: { id?: string | number } }[] };
+      };
+
+      // The platform returns ancestors innermost-first; `parentOf` needs each id's own parent.
+      const ancestors = (asset.assetParents?.references ?? [])
+        .map((reference) => reference.managedObject?.id)
+        .filter((value): value is string | number => value !== undefined && value !== null)
+        .map(String);
+
+      const parentOf = new Map<string, string | null>();
+      let child = id;
+
+      for (const ancestor of ancestors) {
+        parentOf.set(child, ancestor);
+        child = ancestor;
+      }
+      parentOf.set(child, null);
+
+      const chain = ancestorChainToLoaded(
+        id,
+        parentOf,
+        new Set(this.core.hierarchy()?.byId.keys())
+      );
+
+      if (!chain) return undefined;
+
+      // Outermost first, sequentially: each load is what makes the next parent renderable.
+      for (const branchId of chain) await this.loadChildren(branchId);
+
+      return this.node(id);
+    } catch {
+      return undefined;
+    }
+  }
+
+  /** How many known children of `parentId` are not loaded — the "load more" count. */
+  missingChildren(parentId: string): number {
+    return missingChildCount(this.core.branches.get(parentId));
+  }
 
   /**
    * Arms the timer at the cadence {@link intervalMs} asks for. A no-op when it is already
@@ -626,59 +745,6 @@ export class AssetStoreService {
   }
 
   /**
-   * Fetches one branch's children, or reuses what is cached.
-   *
-   * Concurrent callers share one request (two components reacting to the same expand is the normal
-   * case, not the exception). A cached branch is returned as-is until it ages past the current poll
-   * cadence, then refetched in the background while the cached rows stay on screen — the tree must
-   * never blank out a branch the user is looking at.
-   *
-   * A no-op in `full` mode: there the sweep already holds every child.
-   */
-  async loadChildren(parentId: string): Promise<void> {
-    if (this.core.mode() !== 'high-volume') return;
-
-    const inFlight = this.core.branchInFlight.get(parentId);
-
-    if (inFlight) return inFlight;
-
-    const cached = this.core.branches.get(parentId);
-
-    if (cached && !isBranchStale(cached, new Date().toISOString(), this.intervalMs())) return;
-
-    const request = this.fetchBranch(parentId, 1).finally(() => {
-      this.core.branchInFlight.delete(parentId);
-    });
-
-    this.core.branchInFlight.set(parentId, request);
-
-    return request;
-  }
-
-  /**
-   * Pulls the next page of a branch that hit {@link BRANCH_PAGE_LIMIT} — the explicit
-   * "load more" the tree otherwise refuses to have.
-   */
-  async loadMoreChildren(parentId: string): Promise<void> {
-    if (this.core.mode() !== 'high-volume') return;
-    const cached = this.core.branches.get(parentId);
-
-    if (!cached || missingChildCount(cached) === 0) return;
-
-    const inFlight = this.core.branchInFlight.get(parentId);
-
-    if (inFlight) return inFlight;
-
-    const request = this.fetchBranch(parentId, cached.pagesLoaded + 1, cached).finally(() => {
-      this.core.branchInFlight.delete(parentId);
-    });
-
-    this.core.branchInFlight.set(parentId, request);
-
-    return request;
-  }
-
-  /**
    * One or more pages of `GET /inventory/managedObjects/{id}/childAssets`.
    *
    * Three parameters carry the design:
@@ -697,9 +763,17 @@ export class AssetStoreService {
   private async fetchBranch(
     parentId: string,
     fromPage: number,
-    existing?: BranchCacheEntry
+    existing?: BranchCacheEntry,
+    minPages = 0
   ): Promise<void> {
-    const token = ++this.core.loadToken;
+    const scope = this.core.loadToken;
+    const token = (this.branchTokens.get(parentId) ?? 0) + 1;
+    const superseded = () =>
+      scope !== this.core.loadToken ||
+      this.branchTokens.get(parentId) !== token ||
+      this.core.mode() !== 'high-volume';
+
+    this.branchTokens.set(parentId, token);
 
     this.setBranchStatus(parentId, 'loading');
 
@@ -708,7 +782,7 @@ export class AssetStoreService {
       let pagesLoaded = existing?.pagesLoaded ?? 0;
       let total = existing?.total ?? 0;
 
-      const lastPage = existing ? fromPage : BRANCH_PAGE_LIMIT;
+      const lastPage = existing ? fromPage : Math.max(BRANCH_PAGE_LIMIT, minPages);
 
       for (let page = fromPage; page <= lastPage; page++) {
         const response = await this.inventory.childAssetsList(parentId, {
@@ -736,7 +810,7 @@ export class AssetStoreService {
 
       // A superseded load (the scope changed, or a newer fetch for the same branch won) must not
       // write: `@c8y/client` cannot cancel, so discarding is the only mechanism available.
-      if (token !== this.core.loadToken || this.core.mode() !== 'high-volume') return;
+      if (superseded()) return;
 
       const entry: BranchCacheEntry = {
         assets,
@@ -751,61 +825,9 @@ export class AssetStoreService {
     } catch {
       // One branch failing is not a broken tree: the row shows the error state and stays
       // expandable, and nothing already on screen is disturbed.
-      this.setBranchStatus(parentId, 'error');
-    }
-  }
-
-  /**
-   * Makes `id` present in the hierarchy, loading whatever chain of branches it takes.
-   *
-   * This is what lets a pinned asset, a deep link or a hit handed over from the global search
-   * still be revealed in a tree that holds almost nothing: ask the platform for the asset's
-   * ancestors, find the nearest one we already hold, then load down from there.
-   *
-   * `withParents` is safe and correct here — it is documented to ignore inventory roles, which is
-   * a *problem* when inferring hierarchy shape (hence `buildHierarchy` uses `childAssets`) but
-   * exactly what is wanted when merely locating a branch to fetch.
-   */
-  async ensureLoaded(id: string): Promise<AssetNode | undefined> {
-    const existing = this.node(id);
-
-    if (existing || this.core.mode() !== 'high-volume') return existing;
-
-    try {
-      const response = await this.inventory.detail(id, { withParents: true, withChildren: false });
-      const asset = (response.data ?? {}) as unknown as RawManagedObject & {
-        assetParents?: { references?: { managedObject?: { id?: string | number } }[] };
-      };
-
-      // The platform returns ancestors innermost-first; `parentOf` needs each id's own parent.
-      const ancestors = (asset.assetParents?.references ?? [])
-        .map((reference) => reference.managedObject?.id)
-        .filter((value): value is string | number => value !== undefined && value !== null)
-        .map(String);
-
-      const parentOf = new Map<string, string | null>();
-      let child = id;
-
-      for (const ancestor of ancestors) {
-        parentOf.set(child, ancestor);
-        child = ancestor;
+      if (!superseded()) {
+        this.setBranchStatus(parentId, 'error');
       }
-      parentOf.set(child, null);
-
-      const chain = ancestorChainToLoaded(
-        id,
-        parentOf,
-        new Set(this.core.hierarchy()?.byId.keys())
-      );
-
-      if (!chain) return undefined;
-
-      // Outermost first, sequentially: each load is what makes the next parent renderable.
-      for (const branchId of chain) await this.loadChildren(branchId);
-
-      return this.node(id);
-    } catch {
-      return undefined;
     }
   }
 
@@ -833,11 +855,6 @@ export class AssetStoreService {
     this.core.branches = new Map();
     this.core.branchInFlight = new Map();
     this.core.branchStatus.set(new Map());
-  }
-
-  /** How many known children of `parentId` are not loaded — the "load more" count. */
-  missingChildren(parentId: string): number {
-    return missingChildCount(this.core.branches.get(parentId));
   }
 
   /**

@@ -17,14 +17,6 @@ const PAGE_SIZE = 100;
 export class EventPollingService extends SourceIdPollingService {
   private event = inject(EventService);
 
-  createPolling$(layer: MyLayer, interval = FETCH_INTERVAL): Observable<PollingDelta> {
-    if (!isQueryLayerConfig(layer.config) || layer.config.type !== 'Event') {
-      throw new Error('Layer is not event layer!');
-    }
-
-    return this.createPollingFor(layer, interval);
-  }
-
   /** The source ids of all events matching the layer query. */
   protected async fetchMatchingSourceIds(config: QueryLayerConfig): Promise<Set<string>> {
     const result = new Set<string>();
@@ -47,5 +39,13 @@ export class EventPollingService extends SourceIdPollingService {
     }
 
     return result;
+  }
+
+  createPolling$(layer: MyLayer, interval = FETCH_INTERVAL): Observable<PollingDelta> {
+    if (!isQueryLayerConfig(layer.config) || layer.config.type !== 'Event') {
+      throw new Error('Layer is not event layer!');
+    }
+
+    return this.createPollingFor(layer, interval);
   }
 }
