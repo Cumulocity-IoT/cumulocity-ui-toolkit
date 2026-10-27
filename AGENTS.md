@@ -69,6 +69,7 @@ All commands run from the **repository root** unless noted.
 | Build all plugins | `pnpm run build` |
 | Build a single plugin | `pnpm run build:<name>` (e.g. `build:kpi-widget`) |
 | Serve a plugin locally | `pnpm run serve:<name>` (requires `C8Y_BASEURL` + `C8Y_SHELL_TARGET` env vars) |
+| Develop on the tenant mock with hot reload | `pnpm run dev` (all plugins) or `pnpm run dev <folder> …`; open the printed URL (router on `DEV_PORT`, default 4200; mock on `DEV_MOCK_PORT`, default 8111). `tools/dev.mts` runs `c8y-ui dev --apps` of the ui-sdk; each plugin's `vite.config.ts` is `c8yVite({ config })` — no local Vite configuration beyond that. Dev only: builds and e2e stay on the devkit. |
 | Run all unit tests | `pnpm test` |
 | Run unit tests for one plugin (CI) | `pnpm run test:<name>` (e.g. `test:favorites-manager`) |
 | Run unit tests for one plugin (watch) | `pnpm run test:watch:<name>` |
