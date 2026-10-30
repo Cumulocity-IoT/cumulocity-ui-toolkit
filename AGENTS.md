@@ -190,7 +190,7 @@ Changelogs are **mandatory**: every change that a user, deployer or contributor 
 
 ## Dependency Audit
 
-CI runs `pnpm audit --audit-level high` before every build and test job; any unignored high or critical advisory fails the PR.
+CI runs `pnpm audit --audit-level high` before every build and test job, ahead of `pnpm install`: the audit reads only the lockfile, so a vulnerable package is never downloaded or run. Any unignored high or critical advisory fails the PR.
 
 - **A patched release exists** → force it with an entry in `pnpm.overrides` (`package.json`), scoped to the major (e.g. `"undici@7": "^7.30.1"`). Never ignore a fixable advisory.
 - **No patched release** → add the GHSA id to `pnpm.auditConfig.ignoreGhsas` (`package.json`) **and** a row to the table below. pnpm 10.6 reads `auditConfig` only from `package.json`, which cannot hold comments, so this table is the justification.
