@@ -1,5 +1,9 @@
 # UI Toolkit Changelog
 
+## 2026.10.30 — navigation-and-search
+
+**Renamed plugin**: `packages/asset-navigator` is now `packages/navigation-and-search` (Angular project `plugin.navigation-and-search`, scripts `build:` / `test:` / `serve:navigation-and-search`, `e2e:mock navigation-and-search`, specs `navigation-and-search-*.cy.ts`). Context path and plugin key stay `ps-iot-pkg-asset-navigator-plugin`. Its settings moved into a bottom drawer — see `packages/navigation-and-search/CHANGELOG.md` (1.3.0).
+
 ## 2026.10.27 — shell compatibility check
 
 **CI**: `shell-compat.yml` checks daily whether a newer cockpit CD release than the pinned Web SDK version is out and, if so, runs every plugin's e2e suite on the tenant mock inside it. A failure opens a `shell-compat` issue (or comments on the open one for that version); a pass closes it. `e2e-test.yml` names its screenshot artifacts per plugin, so PRs that change several plugins no longer fail on duplicate artifact names.

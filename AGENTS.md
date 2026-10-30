@@ -30,13 +30,13 @@ cumulocity-ui-toolkit/
 │   │   ├── tsconfig.json
 │   │   ├── tsconfig.spec.json
 │   │   └── src/index.ts      # Barrel export – the public API of shared/
-│   ├── asset-navigator/      # asset tree explorer drawer + global asset search (⌘K)
 │   ├── energy-consumption-widget/
 │   ├── events-graph-widget/  # device events as colored state bars on a timeline (echarts)
 │   ├── favorites-manager/
 │   ├── index-db-cache/
 │   ├── kpi-widget/
 │   ├── layered-map-widget/
+│   ├── navigation-and-search/ # asset tree explorer drawer + global asset search (⌘K)
 │   ├── operations-widget/
 │   ├── release-notes/
 │   ├── reminder/
