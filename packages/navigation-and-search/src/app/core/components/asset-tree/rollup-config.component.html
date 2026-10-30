@@ -1,0 +1,247 @@
+<div class="ps-rollupcfg" data-cy="navigation-and-search--rollupcfg">
+  @if (!hasOwnEntry()) {
+    <p class="text-muted ps-rollupcfg__note" data-cy="navigation-and-search--rollupcfg-inherited">
+      {{ 'Uses the default rollups until you change them.' | translate }}
+    </p>
+  }
+
+  <ul class="ps-rollupcfg__list" cdkDropList (cdkDropListDropped)="drop($event)">
+    @for (field of set().fields; track fieldId(field)) {
+      <li
+        class="ps-rollupcfg__item d-flex a-i-center"
+        cdkDrag
+        data-cy="navigation-and-search--rollupcfg-field"
+        [attr.data-rollup-id]="fieldId(field)"
+      >
+        <i class="ps-rollupcfg__grip text-muted" cdkDragHandle c8yIcon="drag" aria-hidden="true"></i>
+        <span class="ps-rollupcfg__label text-truncate">{{ rollups.labelOf(field) | translate }}</span>
+        @if (fieldId(field) === set().badge) {
+          <span class="label label-info" [attr.title]="'Shown on the tree row' | translate">{{ 'Badge' | translate }}</span>
+        }
+        <span class="ps-rollupcfg__value text-muted text-truncate">{{ valueOf(field) }}</span>
+        <button
+          class="btn-clean text-muted"
+          type="button"
+          data-cy="navigation-and-search--rollupcfg-remove"
+          [attr.aria-label]="'Remove' | translate"
+          [attr.title]="'Remove' | translate"
+          (click)="remove(field)"
+        >
+          <i c8yIcon="times"></i>
+        </button>
+      </li>
+    } @empty {
+      <li class="ps-rollupcfg__item text-muted">{{ 'No rollups.' | translate }}</li>
+    }
+  </ul>
+
+  <div class="form-group ps-rollupcfg__badge">
+    <label for="psRollupBadge-{{ assetType() ?? 'default' }}">{{ 'Badge on the tree row' | translate }}</label>
+    <div class="c8y-select-wrapper">
+      <select
+        class="form-control"
+        id="psRollupBadge-{{ assetType() ?? 'default' }}"
+        data-cy="navigation-and-search--rollupcfg-badge"
+        [value]="set().badge ?? ''"
+        (change)="setBadge($any($event.target).value)"
+      >
+        <option value="">{{ 'None' | translate }}</option>
+        @for (field of set().fields; track fieldId(field)) {
+          <option [value]="fieldId(field)" [selected]="fieldId(field) === set().badge">
+            {{ rollups.labelOf(field) | translate }}
+          </option>
+        }
+      </select>
+    </div>
+  </div>
+
+  @if (adding()) {
+    <fieldset class="ps-rollupcfg__form" data-cy="navigation-and-search--rollupcfg-form">
+      <div class="legend form-block">{{ 'Add rollup' | translate }}</div>
+
+      <div class="ps-rollupcfg__grid">
+        <div class="form-group">
+          <label for="psRollupWhat">{{ 'Roll up' | translate }}</label>
+          <div class="c8y-select-wrapper">
+            <select
+              class="form-control"
+              id="psRollupWhat"
+              data-cy="navigation-and-search--rollupcfg-what"
+              [value]="choice()"
+              (change)="choice.set($any($event.target).value)"
+            >
+              @for (option of choices; track option.value) {
+                <option [value]="option.value">{{ option.label | translate }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        @switch (choice()) {
+          @case ('count-assets') {
+            <div class="form-group">
+              <label for="psRollupType">{{ 'Of type' | translate }}</label>
+              <div class="c8y-select-wrapper">
+                <select class="form-control" id="psRollupType" data-cy="navigation-and-search--rollupcfg-type" [value]="ofType()" (change)="ofType.set($any($event.target).value)">
+                  <option value="">{{ 'Any' | translate }}</option>
+                  @for (type of assetTypes(); track type) {
+                    <option [value]="type">{{ typeLabel(type) }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+          }
+          @case ('count-devices') {
+            <div class="form-group">
+              <label for="psRollupDeviceType">{{ 'Of type' | translate }}</label>
+              <div class="c8y-select-wrapper">
+                <select class="form-control" id="psRollupDeviceType" data-cy="navigation-and-search--rollupcfg-device-type" [value]="ofType()" (change)="ofType.set($any($event.target).value)">
+                  <option value="">{{ 'Any' | translate }}</option>
+                  @for (type of deviceTypes(); track type) {
+                    <option [value]="type">{{ type }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+          }
+          @case ('property') {
+            <div class="form-group">
+              <label for="psRollupPropType">{{ 'Of asset type' | translate }}</label>
+              <div class="c8y-select-wrapper">
+                <select class="form-control" id="psRollupPropType" data-cy="navigation-and-search--rollupcfg-prop-type" [value]="ofType()" (change)="ofType.set($any($event.target).value); path.set('')">
+                  <option value="">{{ 'Any' | translate }}</option>
+                  @for (type of assetTypes(); track type) {
+                    <option [value]="type">{{ typeLabel(type) }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="psRollupPath">{{ 'Property' | translate }}</label>
+              <div class="c8y-select-wrapper">
+                <select
+                  class="form-control"
+                  id="psRollupPath"
+                  data-cy="navigation-and-search--rollupcfg-path"
+                  [value]="path()"
+                  (change)="path.set($any($event.target).value)"
+                >
+                  <option value="">{{ 'Select a number property' | translate }}</option>
+                  @for (option of numericPaths(); track option.path) {
+                    <option [value]="option.path">{{ option.path }} ({{ option.values.slice(0, 3).join(', ') }})</option>
+                  }
+                </select>
+              </div>
+            </div>
+          }
+          @case ('measurement') {
+            <div class="form-group">
+              <label for="psRollupSeries">{{ 'Series' | translate }}</label>
+              <input
+                class="form-control"
+                id="psRollupSeries"
+                list="psRollupSeriesList"
+                placeholder="c8y_Temperature.T"
+                data-cy="navigation-and-search--rollupcfg-series"
+                [value]="series()"
+                (input)="series.set($any($event.target).value.trim())"
+              />
+              <datalist id="psRollupSeriesList">
+                @for (option of seriesOptions(); track option) {
+                  <option [value]="option"></option>
+                }
+              </datalist>
+              @if (!seriesOptions().length) {
+                <p class="help-block">{{ 'Latest values load with the tree once a measurement rollup exists.' | translate }}</p>
+              }
+            </div>
+          }
+        }
+
+        @if (choice() === 'property' || choice() === 'measurement') {
+          <div class="form-group">
+            <label for="psRollupFn">{{ 'Aggregate' | translate }}</label>
+            <div class="c8y-select-wrapper">
+              <select class="form-control" id="psRollupFn" data-cy="navigation-and-search--rollupcfg-fn" [value]="fn()" (change)="fn.set($any($event.target).value)">
+                @for (option of fns; track option) {
+                  <option [value]="option">{{ fnLabels[option] | translate }}</option>
+                }
+              </select>
+            </div>
+          </div>
+        }
+
+        @if (choice() === 'alarms' || choice() === 'alarmed-assets' || choice() === 'alarmed-devices') {
+          <div class="form-group">
+            <span class="control-label">{{ 'Severities' | translate }}</span>
+            <div class="d-flex flex-wrap gap-8">
+              @for (severity of severities; track severity) {
+                <label class="c8y-checkbox">
+                  <input
+                    type="checkbox"
+                    [attr.data-cy]="'navigation-and-search--rollupcfg-severity-' + severity"
+                    [checked]="picked().includes(severity)"
+                    (change)="toggleSeverity(severity, $any($event.target).checked)"
+                  />
+                  <span></span>
+                  <span>{{ severity | translate }}</span>
+                </label>
+              }
+            </div>
+          </div>
+        }
+
+        <div class="form-group">
+          <label for="psRollupLabel">{{ 'Label' | translate }}</label>
+          <input
+            class="form-control"
+            id="psRollupLabel"
+            data-cy="navigation-and-search--rollupcfg-label"
+            [placeholder]="draftLabel() | translate"
+            [value]="label()"
+            (input)="label.set($any($event.target).value)"
+          />
+        </div>
+        @if (choice() === 'property' || choice() === 'measurement') {
+          <div class="form-group">
+            <label for="psRollupUnit">{{ 'Unit' | translate }}</label>
+            <input class="form-control" id="psRollupUnit" data-cy="navigation-and-search--rollupcfg-unit" placeholder="kW" [value]="unit()" (input)="unit.set($any($event.target).value)" />
+          </div>
+        }
+      </div>
+
+      @if (duplicate()) {
+        <p class="text-warning" data-cy="navigation-and-search--rollupcfg-duplicate">{{ 'This rollup is already in the list.' | translate }}</p>
+      }
+      <div class="d-flex gap-8">
+        <button class="btn btn-default btn-sm" type="button" data-cy="navigation-and-search--rollupcfg-cancel" (click)="adding.set(false)">{{ 'Cancel' | translate }}</button>
+        <button
+          class="btn btn-primary btn-sm"
+          type="button"
+          data-cy="navigation-and-search--rollupcfg-add"
+          [disabled]="!draft() || duplicate()"
+          (click)="add()"
+        >
+          {{ 'Add' | translate }}
+        </button>
+      </div>
+    </fieldset>
+  }
+
+  <footer class="ps-rollupcfg__footer">
+    @if (!adding()) {
+      <button class="btn btn-default btn-sm" type="button" data-cy="navigation-and-search--rollupcfg-new" (click)="startAdding()">
+        <i c8yIcon="plus-circle-o"></i> {{ 'Add rollup' | translate }}
+      </button>
+    }
+    <button
+      class="btn btn-default btn-sm"
+      type="button"
+      data-cy="navigation-and-search--rollupcfg-reset"
+      [disabled]="!hasOwnEntry()"
+      (click)="reset()"
+    >
+      {{ 'Reset to default' | translate }}
+    </button>
+  </footer>
+</div>
