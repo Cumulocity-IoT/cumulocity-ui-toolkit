@@ -210,6 +210,12 @@ Overrides that are not security fixes (same reason: `package.json` cannot hold c
 |---|---|
 | `"@angular-devkit/build-angular@21": "21.2.27"` | 21.2.28 pulls webpack 5.112, which breaks `license-webpack-plugin` in every plugin build (`@c8y/devkit:build`). Drop it once a build-angular or webpack release fixes that; the Karma test builder (`@angular/build`) is unaffected and stays on the latest 21.2. |
 
+Security overrides pinned to an exact version instead of `^`, so a freshly published release is not pulled in before it had time to be vetted (supply-chain risk). Each pin is temporary: once the date in the last column has passed, switch it back to the `^` range and run `pnpm install`.
+
+| Override | Why exact | Back to `^` after |
+|---|---|---|
+| `"systeminformation@5": "5.33.16"` | GHSA-3f7j-7jwc-fxfj (high, via Cypress). `^5.33.16` resolved to 5.33.19, published 2026-10-30, the day of the fix; 5.33.16 is the first patched release. | 2026-11-13 → `"^5.33.16"` |
+
 ---
 
 ## MCP Servers

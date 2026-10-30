@@ -6,7 +6,7 @@
 
 **CI**: the dependency audit runs before `pnpm install`, so a flagged package is never installed. The PR and e2e workflows skip packages a PR deletes or renames, which have no directory left to test.
 
-**Dependencies**: `systeminformation` (via Cypress) is forced to `^5.33.16` with a `pnpm.overrides` entry (GHSA-3f7j-7jwc-fxfj, Windows command injection).
+**Dependencies**: `systeminformation` (via Cypress) is pinned to 5.33.16, the first patched release, with a `pnpm.overrides` entry (GHSA-3f7j-7jwc-fxfj, Windows command injection). The pin is exact rather than `^` so that a release published the same day is not pulled in; `AGENTS.md` notes when to relax it.
 
 ## 2026.10.27 — shell compatibility check
 
