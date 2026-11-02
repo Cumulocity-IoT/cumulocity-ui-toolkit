@@ -14,12 +14,12 @@ The plugins currently in the workspace:
 
 | Plugin | What it does |
 |---|---|
-| `asset-navigator` | Asset tree navigator drawer and global asset search palette. |
 | `energy-consumption-widget` | Displays consumption derived from increasing measurements. |
 | `favorites-manager` | Mark any device, group, or DTM asset as a favorite; stored per user in the `currentUser` object. |
 | `index-db-cache` | Caches measurement and series requests in IndexedDB via HTTP interceptors, with a drawer showing cache state. |
 | `kpi-widget` | Configure inventory queries and count or aggregate result fragments client-side. |
 | `layered-map-widget` | Map with position markers for `c8y_Position` devices, across multiple query-defined layers. |
+| `navigation-and-search` | Asset tree navigator drawer and global asset search palette. |
 | `operations-widget` | Send predefined or custom operations from configurable buttons in the Cockpit. |
 | `release-notes` | Create release notes that other users can view in the shell. |
 | `reminder` | Manually created reminders (Cumulocity events) attached to groups or devices, surfaced in their own drawer. |
@@ -55,13 +55,13 @@ cumulocity-ui-toolkit/
 │   │       ├── pipes/
 │   │       └── services/
 │   │
-│   ├── asset-navigator/
 │   ├── energy-consumption-widget/
 │   ├── events-graph-widget/
 │   ├── favorites-manager/
 │   ├── index-db-cache/
 │   ├── kpi-widget/
 │   ├── layered-map-widget/
+│   ├── navigation-and-search/
 │   ├── operations-widget/
 │   ├── release-notes/
 │   ├── reminder/
@@ -108,13 +108,13 @@ All plugins are registered as Angular projects in the single root `angular.json`
 | Angular project                    | Package directory                    | Deployed plugin name                         |
 | ---------------------------------- | ------------------------------------ | -------------------------------------------- |
 | `shared`                           | `packages/shared`                    | — (internal library)                         |
-| `plugin.asset-navigator`           | `packages/asset-navigator`           | `cumulocity-asset-navigator-plugin`          |
 | `plugin.energy-consumption-widget` | `packages/energy-consumption-widget` | `cumulocity-energy-consumption-widget-plugin` |
 | `plugin.events-graph-widget`      | `packages/events-graph-widget`      | `cumulocity-events-graph-plugin`             |
 | `plugin.favorites-manager`         | `packages/favorites-manager`         | `cumulocity-favorites-manager-plugin`        |
 | `plugin.index-db-cache`            | `packages/index-db-cache`            | `cumulocity-index-db-cache-plugin`           |
 | `plugin.kpi-widget`                | `packages/kpi-widget`                | `cumulocity-kpi-aggregator-widget-plugin`    |
 | `plugin.layered-map-widget`        | `packages/layered-map-widget`        | `cumulocity-layered-map-widget`              |
+| `plugin.navigation-and-search`     | `packages/navigation-and-search`     | `cumulocity-navigation-and-search-plugin`    |
 | `plugin.operations-widget`         | `packages/operations-widget`         | `cumulocity-operations-widget-plugin`        |
 | `plugin.release-notes`             | `packages/release-notes`             | `cumulocity-release-notes-plugin`            |
 | `plugin.reminder`                  | `packages/reminder`                  | `cumulocity-reminder-plugin`                 |

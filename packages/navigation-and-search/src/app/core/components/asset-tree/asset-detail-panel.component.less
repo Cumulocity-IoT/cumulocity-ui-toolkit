@@ -1,0 +1,99 @@
+:host {
+  display: block;
+}
+
+.ps-detail {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px 10px;
+  gap: 2px;
+  font-size: var(--ps-tree-font-sm, 14px);
+}
+
+.ps-detail__header {
+  gap: 4px;
+  min-height: 24px;
+}
+
+.ps-detail__icon {
+  color: var(--c8y-palette-gray-40, #6f7b8a);
+}
+
+.ps-detail__title {
+  font-weight: 600;
+  font-size: var(--ps-tree-font, 15px);
+  min-width: 0;
+}
+
+.ps-detail__path {
+  margin: 0 0 6px;
+  font-size: var(--ps-tree-font-xs, 13px);
+}
+
+.ps-detail__fields {
+  margin: 0;
+
+  dt,
+  dd {
+    margin: 0;
+    font-weight: normal;
+  }
+}
+
+.ps-detail__field {
+  gap: 8px;
+  padding: 2px 0;
+  border-bottom: 1px solid var(--c8y-root-component-border-color, rgba(0, 0, 0, 0.06));
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  dt {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  dd {
+    flex: 0 0 auto;
+    // Values are compared down the column, so they line up on the digit.
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+}
+
+.ps-detail__value--status {
+  font-weight: 600;
+}
+
+// A value that has been requested but not arrived. Deliberately not a spinner: the
+// panel is already readable, and a spinner per row reads as "everything is broken".
+.ps-detail__pending {
+  display: inline-block;
+  width: 32px;
+  height: 8px;
+  border-radius: 4px;
+  background-color: var(--c8y-palette-gray-70, rgba(0, 0, 0, 0.08));
+}
+
+.ps-detail__error {
+  margin: 6px 0 0;
+  font-size: var(--ps-tree-font-xs, 13px);
+}
+
+.ps-detail__actions {
+  gap: 4px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--c8y-root-component-border-color, rgba(0, 0, 0, 0.12));
+  // One line: four actions across the panel's width, which is what it is sized for.
+  flex-wrap: nowrap;
+
+  .btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 3px 8px;
+    font-size: var(--ps-tree-font-xs, 13px);
+    white-space: nowrap;
+  }
+}

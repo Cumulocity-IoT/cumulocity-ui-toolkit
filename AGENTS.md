@@ -30,13 +30,13 @@ cumulocity-ui-toolkit/
 │   │   ├── tsconfig.json
 │   │   ├── tsconfig.spec.json
 │   │   └── src/index.ts      # Barrel export – the public API of shared/
-│   ├── asset-navigator/      # asset tree explorer drawer + global asset search (⌘K)
 │   ├── energy-consumption-widget/
 │   ├── events-graph-widget/  # device events as colored state bars on a timeline (echarts)
 │   ├── favorites-manager/
 │   ├── index-db-cache/
 │   ├── kpi-widget/
 │   ├── layered-map-widget/
+│   ├── navigation-and-search/ # asset tree explorer drawer + global asset search (⌘K)
 │   ├── operations-widget/
 │   ├── release-notes/
 │   ├── reminder/
@@ -190,7 +190,7 @@ Changelogs are **mandatory**: every change that a user, deployer or contributor 
 
 ## Dependency Audit
 
-CI runs `pnpm audit --audit-level high` before every build and test job; any unignored high or critical advisory fails the PR.
+CI runs `pnpm audit --audit-level high` before every build and test job, ahead of `pnpm install`: the audit reads only the lockfile, so a vulnerable package is never downloaded or run. Any unignored high or critical advisory fails the PR.
 
 - **A patched release exists** → force it with an entry in `pnpm.overrides` (`package.json`), scoped to the major (e.g. `"undici@7": "^7.30.1"`). Never ignore a fixable advisory.
 - **No patched release** → add the GHSA id to `pnpm.auditConfig.ignoreGhsas` (`package.json`) **and** a row to the table below. pnpm 10.6 reads `auditConfig` only from `package.json`, which cannot hold comments, so this table is the justification.
@@ -209,6 +209,12 @@ Overrides that are not security fixes (same reason: `package.json` cannot hold c
 | Override | Why |
 |---|---|
 | `"@angular-devkit/build-angular@21": "21.2.27"` | 21.2.28 pulls webpack 5.112, which breaks `license-webpack-plugin` in every plugin build (`@c8y/devkit:build`). Drop it once a build-angular or webpack release fixes that; the Karma test builder (`@angular/build`) is unaffected and stays on the latest 21.2. |
+
+Security overrides pinned to an exact version instead of `^`, so a freshly published release is not pulled in before it had time to be vetted (supply-chain risk). Each pin is temporary: once the date in the last column has passed, switch it back to the `^` range and run `pnpm install`.
+
+| Override | Why exact | Back to `^` after |
+|---|---|---|
+| `"systeminformation@5": "5.33.16"` | GHSA-3f7j-7jwc-fxfj (high, via Cypress). `^5.33.16` resolved to 5.33.19, published 2026-10-30, the day of the fix; 5.33.16 is the first patched release. | 2026-11-13 → `"^5.33.16"` |
 
 ---
 

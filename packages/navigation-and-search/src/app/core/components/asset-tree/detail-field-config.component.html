@@ -1,0 +1,99 @@
+<div class="ps-fieldcfg" data-cy="navigation-and-search--fieldcfg">
+  <!--
+    Which list is being configured, spelled out: the selection applies to every asset of
+    this type (or to every leaf type without its own list), not to one asset.
+  -->
+  <p class="ps-fieldcfg__scope" data-cy="navigation-and-search--fieldcfg-scope" [attr.title]="assetType()">
+    @if (assetType() === null) {
+      {{ 'Default for all types without their own list' | translate }}
+    } @else {
+      {{ 'For all' | translate }} <span class="text-medium">{{ typeLabel() }}</span>
+      {{ 'assets' | translate }} · <code>{{ assetType() }}</code>
+    }
+  </p>
+
+  @if (!hasOwnEntry() || isBranch()) {
+    <div class="ps-fieldcfg__notes">
+      @if (!hasOwnEntry()) {
+        <p class="text-muted ps-fieldcfg__note" data-cy="navigation-and-search--fieldcfg-inherited">
+          {{ (isBranch() ? 'No fields of its own yet.' : 'Uses the default fields until you change them.') | translate }}
+        </p>
+      }
+      @if (isBranch()) {
+        <p class="text-muted ps-fieldcfg__note">
+          {{ 'A group shows its rollups first; these fields follow them.' | translate }}
+        </p>
+      }
+    </div>
+  }
+
+  <div class="ps-fieldcfg__columns">
+    <section>
+      <p class="text-muted ps-fieldcfg__hint">{{ 'Shown, in order. Drag to reorder.' | translate }}</p>
+      <ul class="ps-fieldcfg__list" cdkDropList (cdkDropListDropped)="drop($event)">
+        @for (field of selected(); track fieldId(field)) {
+          <li
+            class="ps-fieldcfg__item d-flex a-i-center"
+            cdkDrag
+            data-cy="navigation-and-search--fieldcfg-selected"
+            [attr.data-field-id]="fieldId(field)"
+          >
+            <i class="ps-fieldcfg__grip text-muted" cdkDragHandle c8yIcon="drag" aria-hidden="true"></i>
+            <label class="ps-fieldcfg__label">
+              <input type="checkbox" [checked]="true" (change)="toggleField(field)" />
+              <span>{{ field.label | translate }}</span>
+            </label>
+            @if (pathOf(field); as path) {
+              <!-- A picked inventory path: unchecking drops it entirely, so it shows what it reads. -->
+              <code class="ps-fieldcfg__path text-muted" [attr.title]="path">{{ path }}</code>
+            }
+          </li>
+        } @empty {
+          <li class="ps-fieldcfg__item text-muted">{{ 'No fields selected.' | translate }}</li>
+        }
+      </ul>
+    </section>
+
+    <section>
+      <p class="text-muted ps-fieldcfg__hint">{{ 'Available' | translate }}</p>
+      <ul class="ps-fieldcfg__list">
+        @for (field of available(); track fieldId(field)) {
+          <li
+            class="ps-fieldcfg__item d-flex a-i-center"
+            data-cy="navigation-and-search--fieldcfg-available"
+            [attr.data-field-id]="fieldId(field)"
+          >
+            <label class="ps-fieldcfg__label">
+              <input type="checkbox" [checked]="false" (change)="toggleField(field)" />
+              <span>{{ field.label | translate }}</span>
+            </label>
+          </li>
+        } @empty {
+          <li class="ps-fieldcfg__item text-muted">{{ 'All fields are shown.' | translate }}</li>
+        }
+      </ul>
+    </section>
+  </div>
+
+  <footer class="ps-fieldcfg__footer">
+    <!-- The platform's asset property selector, over an asset of this type. -->
+    <button
+      class="btn btn-default btn-sm"
+      type="button"
+      data-cy="navigation-and-search--fieldcfg-add-properties"
+      [disabled]="!contextAssetId()"
+      (click)="addAssetProperties()"
+    >
+      <i c8yIcon="cubes"></i> {{ 'Add asset properties' | translate }}
+    </button>
+    <button
+      class="btn btn-default btn-sm"
+      type="button"
+      data-cy="navigation-and-search--fieldcfg-reset"
+      [disabled]="!hasOwnEntry()"
+      (click)="reset()"
+    >
+      {{ 'Reset to default' | translate }}
+    </button>
+  </footer>
+</div>

@@ -10,6 +10,7 @@ overrides:
   http-proxy-middleware@3: ^3.0.7
   piscina@5: ^5.3.2
   postcss@8: ^8.5.18
+  systeminformation@5: 5.33.16
   undici@7: ^7.30.1
   vite@7: ^7.3.5
   webpack-dev-middleware@7: ^7.4.6
@@ -198,37 +199,6 @@ importers:
         specifier: ^9.0.10
         version: 9.0.10
 
-  packages/asset-navigator:
-    dependencies:
-      '@leeoniya/ufuzzy':
-        specifier: ^1.0.19
-        version: 1.0.19
-      echarts:
-        specifier: 6.1.0
-        version: 6.1.0
-      leaflet:
-        specifier: ^1.9.4
-        version: 1.9.4
-      leaflet.markercluster:
-        specifier: ^1.5.3
-        version: 1.5.3(leaflet@1.9.4)
-      minisearch:
-        specifier: ^7.2.0
-        version: 7.2.0
-      scule:
-        specifier: ^1.3.0
-        version: 1.3.0
-      shared:
-        specifier: workspace:*
-        version: link:../shared
-    devDependencies:
-      '@types/leaflet':
-        specifier: 1.9.21
-        version: 1.9.21
-      '@types/leaflet.markercluster':
-        specifier: ^1.5.6
-        version: 1.5.6
-
   packages/energy-consumption-widget:
     dependencies:
       ng2-charts:
@@ -289,6 +259,37 @@ importers:
       '@types/leaflet':
         specifier: 1.9.21
         version: 1.9.21
+
+  packages/navigation-and-search:
+    dependencies:
+      '@leeoniya/ufuzzy':
+        specifier: ^1.0.19
+        version: 1.0.19
+      echarts:
+        specifier: 6.1.0
+        version: 6.1.0
+      leaflet:
+        specifier: ^1.9.4
+        version: 1.9.4
+      leaflet.markercluster:
+        specifier: ^1.5.3
+        version: 1.5.3(leaflet@1.9.4)
+      minisearch:
+        specifier: ^7.2.0
+        version: 7.2.0
+      scule:
+        specifier: ^1.3.0
+        version: 1.3.0
+      shared:
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      '@types/leaflet':
+        specifier: 1.9.21
+        version: 1.9.21
+      '@types/leaflet.markercluster':
+        specifier: ^1.5.6
+        version: 1.5.6
 
   packages/operations-widget:
     dependencies:
@@ -7253,9 +7254,9 @@ packages:
     resolution: {integrity: sha512-eNRKgb3z66Yp3D2CixVujOUvXLFUTij/zVnV8KRyvFdQwpz7I5DS8UfRkTeLzb64u+dkzDSdelE24izu+zSSUg==}
     engines: {node: ^14.18.0 || >=16.0.0}
 
-  systeminformation@5.31.9:
-    resolution: {integrity: sha512-aqepyutSy94zJB552q3LGV2nPfUGZV7LoGhUUjLjs36aLzW3ghpKI7BEpEoQ/OOM+0On4RsyVp1+v6dfYQbqdw==}
-    engines: {node: '>=8.0.0'}
+  systeminformation@5.33.16:
+    resolution: {integrity: sha512-R+Lh69IJXfJj6bfyH1In5cIR9FTr4hBS39YvlZHZjsK1p9cuELPq7hplZZIb56ZESMMb+DzdKqqE6Iomi01Mvg==}
+    engines: {node: '>=10.0.0'}
     os: [darwin, linux, win32, freebsd, openbsd, netbsd, sunos, android]
     hasBin: true
 
@@ -12332,7 +12333,7 @@ snapshots:
       proxy-from-env: 1.0.0
       request-progress: 3.0.0
       supports-color: 8.1.1
-      systeminformation: 5.31.9
+      systeminformation: 5.33.16
       tmp: 0.2.7
       tree-kill: 1.2.2
       tslib: 1.14.1
@@ -15887,7 +15888,7 @@ snapshots:
     dependencies:
       '@pkgr/core': 0.3.6
 
-  systeminformation@5.31.9: {}
+  systeminformation@5.33.16: {}
 
   tapable@2.3.3: {}
 

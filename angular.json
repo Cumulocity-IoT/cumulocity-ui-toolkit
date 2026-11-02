@@ -1091,23 +1091,23 @@
         }
       }
     },
-    "plugin.asset-navigator": {
+    "plugin.navigation-and-search": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
           "style": "less"
         }
       },
-      "root": "packages/asset-navigator",
-      "sourceRoot": "packages/asset-navigator/src",
+      "root": "packages/navigation-and-search",
+      "sourceRoot": "packages/navigation-and-search/src",
       "prefix": "app",
       "architect": {
         "build": {
           "builder": "@c8y/devkit:build",
           "options": {
-            "outputPath": "dist/cumulocity-asset-navigator-plugin",
-            "main": "packages/asset-navigator/src/main.ts",
-            "tsConfig": "packages/asset-navigator/tsconfig.app.json",
+            "outputPath": "dist/cumulocity-navigation-and-search-plugin",
+            "main": "packages/navigation-and-search/src/main.ts",
+            "tsConfig": "packages/navigation-and-search/tsconfig.app.json",
             "polyfills": [
               "zone.js"
             ],
@@ -1150,10 +1150,10 @@
           "builder": "@c8y/devkit:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "plugin.asset-navigator:build:production"
+              "buildTarget": "plugin.navigation-and-search:build:production"
             },
             "development": {
-              "buildTarget": "plugin.asset-navigator:build:development"
+              "buildTarget": "plugin.navigation-and-search:build:development"
             }
           },
           "defaultConfiguration": "development",
@@ -1166,10 +1166,10 @@
           "builder": "@c8y/devkit:deploy",
           "configurations": {
             "production": {
-              "buildTarget": "plugin.asset-navigator:build:production"
+              "buildTarget": "plugin.navigation-and-search:build:production"
             },
             "development": {
-              "buildTarget": "plugin.asset-navigator:build:development"
+              "buildTarget": "plugin.navigation-and-search:build:development"
             }
           },
           "defaultConfiguration": "production"
@@ -1181,7 +1181,7 @@
               "zone.js",
               "zone.js/testing"
             ],
-            "tsConfig": "packages/asset-navigator/tsconfig.spec.json",
+            "tsConfig": "packages/navigation-and-search/tsconfig.spec.json",
             "inlineStyleLanguage": "less",
             "karmaConfig": "karma.conf.js"
           }

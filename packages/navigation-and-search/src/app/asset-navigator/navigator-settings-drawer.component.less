@@ -1,0 +1,150 @@
+.ps-settings__tabs {
+  padding: 0 16px;
+}
+
+.ps-settings__general {
+  max-width: 640px;
+}
+
+.ps-settings__counts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.ps-settings__recording {
+  border-color: var(--c8y-brand-primary);
+}
+
+// The level strip: one row per depth, siblings side by side, so it reads top-down like the
+// tree. Each row's label column lines the chips up across rows.
+.ps-settings__strip {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.ps-settings__row {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.ps-settings__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ps-settings__depth {
+  align-self: start;
+  padding-top: 12px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ps-settings__level {
+  display: grid;
+  gap: 1px;
+  min-width: 120px;
+  max-width: 220px;
+  padding: 5px 12px;
+  border: 1px solid var(--c8y-root-component-border-color, rgba(0, 0, 0, 0.12));
+  border-radius: 4px;
+  background: var(--c8y-level-1);
+  color: var(--c8y-root-component-color-default);
+  text-align: left;
+
+  &:hover {
+    background: var(--c8y-root-component-background-hover);
+  }
+
+  &.active {
+    border-color: var(--c8y-btn-primary-background-default);
+    background: var(--c8y-btn-primary-background-default);
+    color: var(--c8y-btn-primary-color-default);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--c8y-brand-primary);
+    outline-offset: 2px;
+  }
+
+  // The fallback list, not a type: set apart like the "add" affordances elsewhere.
+  &--default {
+    border-style: dashed;
+    background: none;
+  }
+}
+
+.ps-settings__level-name {
+  font-weight: 500;
+}
+
+.ps-settings__level-meta {
+  opacity: 0.8;
+}
+
+// Editor beside the preview; the preview drops below it once the drawer is narrow.
+.ps-settings__levels {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  align-items: start;
+
+  @media (max-width: 991px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.ps-settings__preview {
+  position: sticky;
+  top: 0;
+}
+
+.ps-settings__preview-title {
+  margin: 0 0 4px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+// Framed like the hover cascade it previews.
+.ps-settings__preview-card {
+  border: 1px solid var(--c8y-root-component-border-color, rgba(0, 0, 0, 0.12));
+  border-radius: 8px;
+  background: var(--c8y-root-component-background-default, #fff);
+  box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+// Buttons centred, as in the Codex bottom drawer; the storage note sits at the left edge
+// without pushing them off centre, and moves above them once the drawer is narrow.
+.ps-settings__footer {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.ps-settings__storage {
+  position: absolute;
+  left: 24px;
+
+  @media (max-width: 767px) {
+    position: static;
+    flex-basis: 100%;
+    text-align: center;
+  }
+}
+
+// Rollups above detail fields, each a titled section.
+.ps-settings__sections {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
