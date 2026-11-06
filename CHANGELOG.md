@@ -1,5 +1,11 @@
 # UI Toolkit Changelog
 
+## 2026.11.05 — ui-sdk 2.3.2
+
+**Test infrastructure**: `@cumulocity-iot/ui-sdk` 1.3.1 → 2.3.2 (root and `test/`). `test/config/base.config.ts` passes `C8Y_MOCK_URL` to Cypress, so the SDK's support file reports each test to the mock and the mock's gap report lists the tests behind each gap (needed by the C8Y UI Agent's `prove_regression`). The SDK APIs the toolkit uses (`readConfig`, `writeConfig`, `startProjectMock`, `pullWorld`, `/vite`, `/cypress`) are unchanged.
+
+**Dependencies**: `peerDependencyRules` accepts Cypress 15 for `@cumulocity-iot/ui-sdk` and `cumulocity-cypress` (both declare Cypress 14), and webpack 5.105 for `schema-utils` (the `@angular-devkit/build-angular` pin holds webpack below 5.112). Without them a non-frozen `pnpm install` failed on `main` too; the reasons are in `AGENTS.md`. Overrides for three high advisories published since the last lockfile update: `follow-redirects` ≥ 1.16.2 (GHSA-mrwp-f3q8-3g9p), `joi` ≥ 18.3.1 (GHSA-4528-x5fx-h6hg), `systeminformation` ≥ 5.33.16 (GHSA-3f7j-7jwc-fxfj).
+
 ## 2026.10.27 — shell compatibility check
 
 **CI**: `shell-compat.yml` checks daily whether a newer cockpit CD release than the pinned Web SDK version is out and, if so, runs every plugin's e2e suite on the tenant mock inside it. A failure opens a `shell-compat` issue (or comments on the open one for that version); a pass closes it. `e2e-test.yml` names its screenshot artifacts per plugin, so PRs that change several plugins no longer fail on duplicate artifact names.

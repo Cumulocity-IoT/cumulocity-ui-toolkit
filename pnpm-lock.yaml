@@ -6,10 +6,13 @@ settings:
 
 overrides:
   dompurify@3: ^3.4.17
+  follow-redirects@1: ^1.16.2
   form-data@4: ^4.0.6
+  joi@18: ^18.3.1
   http-proxy-middleware@3: ^3.0.7
   piscina@5: ^5.3.2
   postcss@8: ^8.5.18
+  systeminformation@5: ^5.33.16
   undici@7: ^7.30.1
   vite@7: ^7.3.5
   webpack-dev-middleware@7: ^7.4.6
@@ -114,8 +117,8 @@ importers:
         specifier: 1024.21.3
         version: 1024.21.3(@c8y/client@1024.21.3)
       '@cumulocity-iot/ui-sdk':
-        specifier: 1.3.1
-        version: 1.3.1(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.41(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@types/node@24.13.2)(chokidar@5.0.0)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0))
+        specifier: 2.3.2
+        version: 2.3.2(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.41(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))
       '@module-federation/vite':
         specifier: ~1.23.5
         version: 1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0))
@@ -378,8 +381,8 @@ importers:
         version: 14.0.0
     devDependencies:
       '@cumulocity-iot/ui-sdk':
-        specifier: 1.3.1
-        version: 1.3.1(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.42(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)))(@types/node@24.13.2)(chokidar@5.0.0)(cypress@15.15.0)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))
+        specifier: 2.3.2
+        version: 2.3.2(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.42(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(cypress@15.15.0)
       '@types/chai':
         specifier: ^5.2.3
         version: 5.2.3
@@ -1440,23 +1443,20 @@ packages:
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
 
-  '@cumulocity-iot/ui-sdk@1.3.1':
-    resolution: {integrity: sha512-c3pjsYF025mVRjSe+qwAent5zY0xHbibO5iGQ5BOYdbOthqd6a5ShAfKrIKnO4fEJMS4/2/+boxsluoxfK4fzA==, tarball: https://npm.pkg.github.com/download/@cumulocity-iot/ui-sdk/1.3.1/3bcc8ca763f35214ab7edbe7933aea2721db1495}
-    engines: {node: '>=24.0.0'}
+  '@cumulocity-iot/ui-sdk@2.3.2':
+    resolution: {integrity: sha512-OKzukuNRnVLI+IGh8TV+pJHyFHxdOBOdD7RSfxm+iZEZqYFT3w1A0M8Q5++oEPSOa/8ParMJ11xsU/L854pS7A==, tarball: https://npm.pkg.github.com/download/@cumulocity-iot/ui-sdk/2.3.2/d8d5cf705c1cca986f0a28313d2f8eb2757b6a2e}
+    engines: {node: '>=22.13.0'}
     hasBin: true
     peerDependencies:
-      '@module-federation/vite': ^1.15.0
-      '@oxc-angular/vite': '>=0.0.28'
-      cypress: '>=13 <15'
-      vite: '>=8.0.0'
+      '@module-federation/vite': ^1.23.0
+      '@oxc-angular/vite': '>=0.0.41 <0.1.0'
+      cypress: ^14.5.4
     peerDependenciesMeta:
       '@module-federation/vite':
         optional: true
       '@oxc-angular/vite':
         optional: true
       cypress:
-        optional: true
-      vite:
         optional: true
 
   '@cypress/grep@5.1.0':
@@ -4742,8 +4742,8 @@ packages:
   fn.name@1.1.0:
     resolution: {integrity: sha512-GRnmB5gPyJpAhTQdSZTSp9uaPSvl09KoYcMQtsB9rQoOmzs9dH6ffeccH+Z+cv6P68Hu5bC6JjRh4Ah/mHSNRw==}
 
-  follow-redirects@1.16.1:
-    resolution: {integrity: sha512-FNvFGzoMLWmE6Yj9spb/zjd7yiNCHiAW9/Tg9CXrQ8wuu32HtlJOwWO11OJafl5FfY3DxTdQ0vj42zU1kvv5jg==}
+  follow-redirects@1.16.2:
+    resolution: {integrity: sha512-/kVP2U8z596Ia0gwFrwyIeo74ta5aVmSeU1FfAUMAmcEP5EP7zydmag3SLiN64NaRKef3lxsq7i/g7ltJQDGow==}
     engines: {node: '>=4.0'}
     peerDependencies:
       debug: '*'
@@ -5432,8 +5432,8 @@ packages:
     resolution: {integrity: sha512-9FzQjJ7MATs1tSpnco1K6ayiYE3figslrXA72G2HQ/n76RzvYlofyi5QM+iX4YRs/pu3yzxlVQSST23+dMDknw==}
     engines: {node: '>= 0.6.0'}
 
-  joi@18.3.0:
-    resolution: {integrity: sha512-/RwAK4BAfzcdbdFg073tzq4/xhY6Q7lMd5AmjqTL6pu0QFJdEmtswgm8BvgwXvOKuPNYQ8XrdQrrW/gF65LiNw==}
+  joi@18.3.2:
+    resolution: {integrity: sha512-iUivApKYw5GpZmq2Sy6El99j7noo8QSUFZlyQtr3HCkosC/b5wKF6/Y3teiHIlaM8WI38sAT3P+51rB0lhAhJA==}
     engines: {node: '>= 20'}
 
   jose@6.2.13:
@@ -7253,9 +7253,9 @@ packages:
     resolution: {integrity: sha512-eNRKgb3z66Yp3D2CixVujOUvXLFUTij/zVnV8KRyvFdQwpz7I5DS8UfRkTeLzb64u+dkzDSdelE24izu+zSSUg==}
     engines: {node: ^14.18.0 || >=16.0.0}
 
-  systeminformation@5.31.9:
-    resolution: {integrity: sha512-aqepyutSy94zJB552q3LGV2nPfUGZV7LoGhUUjLjs36aLzW3ghpKI7BEpEoQ/OOM+0On4RsyVp1+v6dfYQbqdw==}
-    engines: {node: '>=8.0.0'}
+  systeminformation@5.33.19:
+    resolution: {integrity: sha512-Zm7wGeCG7PqfvzegMJIzrxICopWqYCeLATVmvxOOci1isLcNVKgY4Fr0hhYQzvc7cgtK3377jQVChTFAnznOiA==}
+    engines: {node: '>=10.0.0'}
     os: [darwin, linux, win32, freebsd, openbsd, netbsd, sunos, android]
     hasBin: true
 
@@ -9578,36 +9578,22 @@ snapshots:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
 
-  '@cumulocity-iot/ui-sdk@1.3.1(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.41(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@types/node@24.13.2)(chokidar@5.0.0)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0))':
+  '@cumulocity-iot/ui-sdk@2.3.2(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.41(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))':
     dependencies:
-      '@angular/cli': 21.2.28(@types/node@24.13.2)(chokidar@5.0.0)
       citty: 0.2.2
       fflate: 0.8.3
     optionalDependencies:
       '@module-federation/vite': 1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0))
       '@oxc-angular/vite': 0.0.41(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0))
-      vite: 8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)
-    transitivePeerDependencies:
-      - '@cfworker/json-schema'
-      - '@types/node'
-      - chokidar
-      - supports-color
 
-  '@cumulocity-iot/ui-sdk@1.3.1(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.42(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)))(@types/node@24.13.2)(chokidar@5.0.0)(cypress@15.15.0)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))':
+  '@cumulocity-iot/ui-sdk@2.3.2(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.42(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(cypress@15.15.0)':
     dependencies:
-      '@angular/cli': 21.2.28(@types/node@24.13.2)(chokidar@5.0.0)
       citty: 0.2.2
       fflate: 0.8.3
     optionalDependencies:
-      '@module-federation/vite': 1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))
-      '@oxc-angular/vite': 0.0.42(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))
+      '@module-federation/vite': 1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0))
+      '@oxc-angular/vite': 0.0.42(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0))
       cypress: 15.15.0
-      vite: 8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)
-    transitivePeerDependencies:
-      - '@cfworker/json-schema'
-      - '@types/node'
-      - chokidar
-      - supports-color
 
   '@cypress/grep@5.1.0(@babel/core@7.29.7)(cypress@15.15.0)':
     dependencies:
@@ -10251,19 +10237,6 @@ snapshots:
       - utf-8-validate
       - vue-tsc
 
-  '@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))':
-    dependencies:
-      '@module-federation/dts-plugin': 2.9.2(typescript@5.9.3)
-      '@module-federation/runtime': 2.9.2
-      '@module-federation/sdk': 2.9.2
-      vite: 8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)
-    transitivePeerDependencies:
-      - bufferutil
-      - typescript
-      - utf-8-validate
-      - vue-tsc
-    optional: true
-
   '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.4':
     optional: true
 
@@ -10520,10 +10493,10 @@ snapshots:
       '@oxc-angular/binding-win32-arm64-msvc': 0.0.41
       '@oxc-angular/binding-win32-x64-msvc': 0.0.41
 
-  '@oxc-angular/vite@0.0.42(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))':
+  '@oxc-angular/vite@0.0.42(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0))':
     dependencies:
       obug: 3.0.0
-      vite: 8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)
+      vite: 8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)
     optionalDependencies:
       '@oxc-angular/binding-darwin-arm64': 0.0.42
       '@oxc-angular/binding-darwin-x64': 0.0.42
@@ -11601,7 +11574,7 @@ snapshots:
 
   axios@1.20.0:
     dependencies:
-      follow-redirects: 1.16.1(debug@4.4.3)
+      follow-redirects: 1.16.2(debug@4.4.3)
       form-data: 4.0.6
       https-proxy-agent: 5.0.1
       proxy-from-env: 2.1.0
@@ -12332,7 +12305,7 @@ snapshots:
       proxy-from-env: 1.0.0
       request-progress: 3.0.0
       supports-color: 8.1.1
-      systeminformation: 5.31.9
+      systeminformation: 5.33.19
       tmp: 0.2.7
       tree-kill: 1.2.2
       tslib: 1.14.1
@@ -13110,7 +13083,7 @@ snapshots:
 
   fn.name@1.1.0: {}
 
-  follow-redirects@1.16.1(debug@4.4.3):
+  follow-redirects@1.16.2(debug@4.4.3):
     optionalDependencies:
       debug: 4.4.3(supports-color@8.1.1)
 
@@ -13443,7 +13416,7 @@ snapshots:
   http-proxy@1.18.1(debug@4.4.3):
     dependencies:
       eventemitter3: 4.0.7
-      follow-redirects: 1.16.1(debug@4.4.3)
+      follow-redirects: 1.16.2(debug@4.4.3)
       requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
@@ -13801,7 +13774,7 @@ snapshots:
 
   jmespath@0.16.0: {}
 
-  joi@18.3.0:
+  joi@18.3.2:
     dependencies:
       '@hapi/address': 5.1.1
       '@hapi/formula': 3.0.2
@@ -15887,7 +15860,7 @@ snapshots:
     dependencies:
       '@pkgr/core': 0.3.6
 
-  systeminformation@5.31.9: {}
+  systeminformation@5.33.19: {}
 
   tapable@2.3.3: {}
 
@@ -16269,31 +16242,12 @@ snapshots:
       tsx: 4.22.4
       yaml: 2.9.0
 
-  vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.9.0)(sass@1.101.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0):
-    dependencies:
-      lightningcss: 1.33.0
-      picomatch: 4.0.7
-      postcss: 8.5.31
-      rolldown: 1.2.15
-      tinyglobby: 0.2.17
-    optionalDependencies:
-      '@types/node': 24.13.2
-      esbuild: 0.28.1
-      fsevents: 2.3.3
-      jiti: 2.7.0
-      less: 4.9.0
-      sass: 1.101.0
-      terser: 5.48.0
-      tsx: 4.22.4
-      yaml: 2.9.0
-    optional: true
-
   void-elements@2.0.1: {}
 
   wait-on@9.0.10:
     dependencies:
       axios: 1.20.0
-      joi: 18.3.0
+      joi: 18.3.2
       lodash: 4.18.1
       minimist: 1.2.8
       rxjs: 7.8.2

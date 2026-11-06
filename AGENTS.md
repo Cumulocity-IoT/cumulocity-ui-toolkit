@@ -210,6 +210,15 @@ Overrides that are not security fixes (same reason: `package.json` cannot hold c
 |---|---|
 | `"@angular-devkit/build-angular@21": "21.2.27"` | 21.2.28 pulls webpack 5.112, which breaks `license-webpack-plugin` in every plugin build (`@c8y/devkit:build`). Drop it once a build-angular or webpack release fixes that; the Karma test builder (`@angular/build`) is unaffected and stays on the latest 21.2. |
 
+Peer ranges relaxed in `pnpm.peerDependencyRules.allowedVersions` (`strict-peer-dependencies=true` fails any non-frozen install otherwise):
+
+| Rule | Why |
+|---|---|
+| `"@module-federation/vite>vite": "8"` | The Vite dev server (`pnpm run dev`) runs on Vite 8; `@module-federation/vite` declares a narrower range. |
+| `"@cumulocity-iot/ui-sdk>cypress": "15"` | The ui-sdk declares Cypress `^14.5.4`; the suite runs on Cypress 15 and passes. Drop it once the ui-sdk accepts 15. |
+| `"cumulocity-cypress>cypress": "15"` | `cumulocity-cypress` declares Cypress `<15.0.0`; same as above. |
+| `"schema-utils>webpack": "5.105"` | `schema-utils` 4.8 declares webpack `^5.112.0`, which the `@angular-devkit/build-angular` pin above keeps out. Drop it with that pin. |
+
 ---
 
 ## MCP Servers
