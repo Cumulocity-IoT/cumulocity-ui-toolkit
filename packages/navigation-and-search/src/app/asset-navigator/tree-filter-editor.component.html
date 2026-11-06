@@ -1,0 +1,173 @@
+<div class="ps-treefilter" data-cy="navigation-and-search--treefilter">
+  <p class="text-muted ps-treefilter__intro">
+    {{ 'Show only the assets you care about. Each condition is checked on the assets of one level; an asset that fails it is hidden with everything below it. The global search still finds every asset.' | translate }}
+  </p>
+
+  <div class="form-group">
+    <label class="c8y-switch">
+      <input
+        type="checkbox"
+        data-cy="navigation-and-search--treefilter-enabled"
+        [checked]="config().enabled"
+        (change)="set('enabled', $any($event.target).checked)"
+      />
+      <span></span>
+      {{ 'Apply the filter to the tree' | translate }}
+    </label>
+  </div>
+
+  <ul class="ps-treefilter__list" [class.ps-treefilter__list--off]="!config().enabled">
+    @for (condition of config().conditions; track $index; let i = $index) {
+      <li class="ps-treefilter__condition" data-cy="navigation-and-search--treefilter-condition">
+        <span class="ps-treefilter__joiner text-muted">{{ (i === 0 ? 'Show' : 'and') | translate }}</span>
+
+        <div class="c8y-select-wrapper">
+          <select
+            class="form-control"
+            data-cy="navigation-and-search--treefilter-level"
+            [attr.aria-label]="'Level' | translate"
+            [value]="condition.type"
+            (change)="setType(i, $any($event.target).value)"
+          >
+            @for (type of levels(); track type) {
+              <option [value]="type" [selected]="type === condition.type">{{ label(type) }}</option>
+            }
+            @if (!levels().includes(condition.type)) {
+              <option [value]="condition.type" selected>{{ label(condition.type) }} ({{ 'not in the tree' | translate }})</option>
+            }
+          </select>
+        </div>
+
+        <span class="text-muted">{{ 'with' | translate }}</span>
+
+        <div class="c8y-select-wrapper">
+          <select
+            class="form-control"
+            data-cy="navigation-and-search--treefilter-kind"
+            [attr.aria-label]="'Condition' | translate"
+            [value]="condition.test.kind"
+            (change)="setKind(i, $any($event.target).value)"
+          >
+            <option value="alarms" [selected]="condition.test.kind === 'alarms'">{{ 'active alarms' | translate }}</option>
+            <option value="unavailable" [selected]="condition.test.kind === 'unavailable'">{{ 'an unavailable device' | translate }}</option>
+            <option
+              value="property"
+              [selected]="condition.test.kind === 'property'"
+              [disabled]="!propertiesOf(condition.type).length"
+            >
+              {{ 'a property' | translate }}
+            </option>
+          </select>
+        </div>
+
+        @switch (condition.test.kind) {
+          @case ('alarms') {
+            <span class="text-muted">{{ 'of at least' | translate }}</span>
+            <div class="c8y-select-wrapper">
+              <select
+                class="form-control"
+                data-cy="navigation-and-search--treefilter-severity"
+                [attr.aria-label]="'Severity' | translate"
+                (change)="setSeverity(i, $any($event.target).value)"
+              >
+                @for (severity of severities; track severity) {
+                  <option [value]="severity" [selected]="condition.test.kind === 'alarms' && condition.test.atLeast === severity">
+                    {{ severity | translate }}
+                  </option>
+                }
+              </select>
+            </div>
+          }
+          @case ('property') {
+            @if (condition.test.kind === 'property') {
+              <div class="c8y-select-wrapper">
+                <select
+                  class="form-control"
+                  data-cy="navigation-and-search--treefilter-path"
+                  [attr.aria-label]="'Property' | translate"
+                  (change)="setProperty(i, { path: $any($event.target).value })"
+                >
+                  @for (option of propertiesOf(condition.type); track option.path) {
+                    <option [value]="option.path" [selected]="option.path === condition.test.path">{{ option.path }}</option>
+                  }
+                </select>
+              </div>
+              <div class="c8y-select-wrapper">
+                <select
+                  class="form-control"
+                  data-cy="navigation-and-search--treefilter-op"
+                  [attr.aria-label]="'Comparison' | translate"
+                  (change)="setProperty(i, { op: $any($event.target).value })"
+                >
+                  @for (op of operators; track op) {
+                    <option [value]="op" [selected]="op === condition.test.op">{{ operatorLabels[op] | translate }}</option>
+                  }
+                </select>
+              </div>
+              @if (condition.test.op !== 'exists') {
+                <input
+                  class="form-control ps-treefilter__value"
+                  data-cy="navigation-and-search--treefilter-value"
+                  [attr.aria-label]="'Value' | translate"
+                  [attr.list]="'psTreeFilterValues' + i"
+                  [value]="condition.test.value ?? ''"
+                  (change)="setProperty(i, { value: $any($event.target).value })"
+                />
+                <datalist [id]="'psTreeFilterValues' + i">
+                  @for (value of valuesOf(condition.type, condition.test.path); track value) {
+                    <option [value]="value"></option>
+                  }
+                </datalist>
+              }
+            }
+          }
+        }
+
+        <button
+          class="btn-clean text-muted m-l-auto"
+          type="button"
+          data-cy="navigation-and-search--treefilter-remove"
+          [attr.aria-label]="'Remove condition' | translate"
+          [attr.title]="'Remove condition' | translate"
+          (click)="remove(i)"
+        >
+          <i c8yIcon="times"></i>
+        </button>
+      </li>
+    } @empty {
+      <li class="ps-treefilter__condition text-muted">{{ 'No conditions — the tree shows every asset.' | translate }}</li>
+    }
+  </ul>
+
+  <div class="d-flex flex-wrap gap-8 a-i-center">
+    <button
+      class="btn btn-default btn-sm"
+      type="button"
+      data-cy="navigation-and-search--treefilter-add"
+      [disabled]="!levels().length"
+      (click)="add()"
+    >
+      <i c8yIcon="plus-circle-o"></i> {{ 'Add condition' | translate }}
+    </button>
+    <span class="text-muted" data-cy="navigation-and-search--treefilter-result">
+      @if (active()) {
+        {{ 'Hides {{ hidden }} of {{ total }} assets.' | translate: { hidden: hidden(), total: total() } }}
+      } @else {
+        {{ 'The tree shows all {{ total }} assets.' | translate: { total: total() } }}
+      }
+    </span>
+  </div>
+
+  <div class="form-group m-t-16">
+    <label class="c8y-switch">
+      <input
+        type="checkbox"
+        data-cy="navigation-and-search--treefilter-hide-empty"
+        [checked]="config().hideEmpty"
+        (change)="set('hideEmpty', $any($event.target).checked)"
+      />
+      <span></span>
+      {{ 'Hide groups the filter leaves empty' | translate }}
+    </label>
+  </div>
+</div>

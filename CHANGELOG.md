@@ -4,7 +4,15 @@
 
 **Test infrastructure**: `@cumulocity-iot/ui-sdk` 1.3.1 → 2.3.2 (root and `test/`). `test/config/base.config.ts` passes `C8Y_MOCK_URL` to Cypress, so the SDK's support file reports each test to the mock and the mock's gap report lists the tests behind each gap (needed by the C8Y UI Agent's `prove_regression`). The SDK APIs the toolkit uses (`readConfig`, `writeConfig`, `startProjectMock`, `pullWorld`, `/vite`, `/cypress`) are unchanged.
 
-**Dependencies**: `peerDependencyRules` accepts Cypress 15 for `@cumulocity-iot/ui-sdk` and `cumulocity-cypress` (both declare Cypress 14), and webpack 5.105 for `schema-utils` (the `@angular-devkit/build-angular` pin holds webpack below 5.112). Without them a non-frozen `pnpm install` failed on `main` too; the reasons are in `AGENTS.md`. Overrides for three high advisories published since the last lockfile update: `follow-redirects` ≥ 1.16.2 (GHSA-mrwp-f3q8-3g9p), `joi` ≥ 18.3.1 (GHSA-4528-x5fx-h6hg), `systeminformation` ≥ 5.33.16 (GHSA-3f7j-7jwc-fxfj).
+**Dependencies**: `peerDependencyRules` accepts Cypress 15 for `@cumulocity-iot/ui-sdk` and `cumulocity-cypress` (both declare Cypress 14), and webpack 5.105 for `schema-utils` (the `@angular-devkit/build-angular` pin holds webpack below 5.112). Without them a non-frozen `pnpm install` failed on `main` too; the reasons are in `AGENTS.md`. Overrides for two more high advisories: `follow-redirects` ≥ 1.16.2 (GHSA-mrwp-f3q8-3g9p) and `joi` pinned to 18.3.1, the first patched release (GHSA-4528-x5fx-h6hg; exact for now, like `systeminformation`, see `AGENTS.md`).
+
+## 2026.10.30 — navigation-and-search
+
+**Renamed plugin**: `packages/asset-navigator` is now `packages/navigation-and-search` (Angular project `plugin.navigation-and-search`, scripts `build:` / `test:` / `serve:navigation-and-search`, `e2e:mock navigation-and-search`, specs `navigation-and-search-*.cy.ts`). Context path and plugin key stay `ps-iot-pkg-asset-navigator-plugin`. Its settings moved into a bottom drawer — see `packages/navigation-and-search/CHANGELOG.md` (1.3.0).
+
+**CI**: the dependency audit runs before `pnpm install`, so a flagged package is never installed. The PR and e2e workflows skip packages a PR deletes or renames, which have no directory left to test.
+
+**Dependencies**: `systeminformation` (via Cypress) is pinned to 5.33.16, the first patched release, with a `pnpm.overrides` entry (GHSA-3f7j-7jwc-fxfj, Windows command injection). The pin is exact rather than `^` so that a release published the same day is not pulled in; `AGENTS.md` notes when to relax it.
 
 ## 2026.10.27 — shell compatibility check
 
