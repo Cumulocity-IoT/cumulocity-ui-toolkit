@@ -215,6 +215,16 @@ Security overrides pinned to an exact version instead of `^`, so a freshly publi
 | Override | Why exact | Back to `^` after |
 |---|---|---|
 | `"systeminformation@5": "5.33.16"` | GHSA-3f7j-7jwc-fxfj (high, via Cypress). `^5.33.16` resolved to 5.33.19, published 2026-10-30, the day of the fix; 5.33.16 is the first patched release. | 2026-11-13 → `"^5.33.16"` |
+| `"joi@18": "18.3.1"` | GHSA-4528-x5fx-h6hg (high, via `wait-on`). `^18.3.1` resolved to 18.3.2, published 2026-11-04; 18.3.1 is the first patched release. | 2026-11-18 → `"^18.3.1"` |
+
+Peer ranges relaxed in `pnpm.peerDependencyRules.allowedVersions` (`strict-peer-dependencies=true` fails any non-frozen install otherwise):
+
+| Rule | Why |
+|---|---|
+| `"@module-federation/vite>vite": "8"` | The Vite dev server (`pnpm run dev`) runs on Vite 8; `@module-federation/vite` declares a narrower range. |
+| `"@cumulocity-iot/ui-sdk>cypress": "15"` | The ui-sdk declares Cypress `^14.5.4`; the suite runs on Cypress 15 and passes. Drop it once the ui-sdk accepts 15. |
+| `"cumulocity-cypress>cypress": "15"` | `cumulocity-cypress` declares Cypress `<15.0.0`; same as above. |
+| `"schema-utils>webpack": "5.105"` | `schema-utils` 4.8 declares webpack `^5.112.0`, which the `@angular-devkit/build-angular` pin above keeps out. Drop it with that pin. |
 
 ---
 

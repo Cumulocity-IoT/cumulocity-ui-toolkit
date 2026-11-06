@@ -52,6 +52,9 @@ export function baseConfig(remote?: string, pattern?: string[], packageName?: st
         C8Y_REMOTES: remote || '',
         C8Y_USERNAME: process.env.CYPRESS_C8Y_USERNAME || process.env.C8Y_USERNAME,
         C8Y_PASSWORD: process.env.CYPRESS_C8Y_PASSWORD || process.env.C8Y_PASSWORD,
+        // set by e2e-mock.mts: the ui-sdk support file then reports each test to the mock (PUT /_mock/test),
+        // so the mock's gap report lists the tests behind each gap
+        C8Y_MOCK_URL: process.env.C8Y_MOCK_URL,
       },
     },
   });
