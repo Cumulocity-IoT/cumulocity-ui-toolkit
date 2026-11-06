@@ -117,8 +117,8 @@ importers:
         specifier: 1024.21.3
         version: 1024.21.3(@c8y/client@1024.21.3)
       '@cumulocity-iot/ui-sdk':
-        specifier: 2.3.2
-        version: 2.3.2(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.41(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(cypress@15.15.0)
+        specifier: 2.3.3
+        version: 2.3.3(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.41(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(cypress@15.15.0)
       '@module-federation/vite':
         specifier: ~1.23.5
         version: 1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0))
@@ -381,8 +381,8 @@ importers:
         version: 14.0.0
     devDependencies:
       '@cumulocity-iot/ui-sdk':
-        specifier: 2.3.2
-        version: 2.3.2(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.42(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(cypress@15.15.0)
+        specifier: 2.3.3
+        version: 2.3.3(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.42(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(cypress@15.15.0)
       '@types/chai':
         specifier: ^5.2.3
         version: 5.2.3
@@ -1443,8 +1443,8 @@ packages:
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
 
-  '@cumulocity-iot/ui-sdk@2.3.2':
-    resolution: {integrity: sha512-OKzukuNRnVLI+IGh8TV+pJHyFHxdOBOdD7RSfxm+iZEZqYFT3w1A0M8Q5++oEPSOa/8ParMJ11xsU/L854pS7A==, tarball: https://npm.pkg.github.com/download/@cumulocity-iot/ui-sdk/2.3.2/d8d5cf705c1cca986f0a28313d2f8eb2757b6a2e}
+  '@cumulocity-iot/ui-sdk@2.3.3':
+    resolution: {integrity: sha512-VIhSH+OW1E7LTYHQMH8u5p3B1DFLXRHdqn6RejWzE+Xfyj+9ypBSkCAHFQcuHGmiIjAwp7gyeiA+sdV2sZqG8A==, tarball: https://npm.pkg.github.com/download/@cumulocity-iot/ui-sdk/2.3.3/95f5cd104fa8c17f20111f311fe6084189f991c2}
     engines: {node: '>=22.13.0'}
     hasBin: true
     peerDependencies:
@@ -9571,7 +9571,7 @@ snapshots:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
 
-  '@cumulocity-iot/ui-sdk@2.3.2(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.41(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(cypress@15.15.0)':
+  '@cumulocity-iot/ui-sdk@2.3.3(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.41(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(cypress@15.15.0)':
     dependencies:
       '@module-federation/vite': 1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0))
       '@oxc-angular/vite': 0.0.41(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0))
@@ -9579,7 +9579,7 @@ snapshots:
       cypress: 15.15.0
       fflate: 0.8.3
 
-  '@cumulocity-iot/ui-sdk@2.3.2(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.42(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(cypress@15.15.0)':
+  '@cumulocity-iot/ui-sdk@2.3.3(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.42(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(cypress@15.15.0)':
     dependencies:
       '@module-federation/vite': 1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0))
       '@oxc-angular/vite': 0.0.42(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0))

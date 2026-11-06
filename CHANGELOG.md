@@ -1,8 +1,8 @@
 # UI Toolkit Changelog
 
-## 2026.11.05 — ui-sdk 2.3.2
+## 2026.11.06 — ui-sdk 2.3.3
 
-**Test infrastructure**: `@cumulocity-iot/ui-sdk` 1.3.1 → 2.3.2 (root and `test/`). `test/config/base.config.ts` passes `C8Y_MOCK_URL` to Cypress, so the SDK's support file reports each test to the mock and the mock's gap report lists the tests behind each gap (needed by the C8Y UI Agent's `prove_regression`). The SDK APIs the toolkit uses (`readConfig`, `writeConfig`, `startProjectMock`, `pullWorld`, `/vite`, `/cypress`) are unchanged.
+**Test infrastructure**: `@cumulocity-iot/ui-sdk` 1.3.1 → 2.3.3 (root and `test/`). `test/config/base.config.ts` passes `C8Y_MOCK_URL` to Cypress, so the SDK's support file reports each test to the mock and the mock's gap report lists the tests behind each gap (needed by the C8Y UI Agent's `prove_regression`). The SDK APIs the toolkit uses (`readConfig`, `writeConfig`, `startProjectMock`, `pullWorld`, `/vite`, `/cypress`) are unchanged.
 
 **Dependencies**: `peerDependencyRules` accepts Cypress 15 for `@cumulocity-iot/ui-sdk` and `cumulocity-cypress` (both declare Cypress 14), and webpack 5.105 for `schema-utils` (the `@angular-devkit/build-angular` pin holds webpack below 5.112). Without them a non-frozen `pnpm install` failed on `main` too; the reasons are in `AGENTS.md`. Overrides for two more high advisories: `follow-redirects` ≥ 1.16.2 (GHSA-mrwp-f3q8-3g9p) and `joi` pinned to 18.3.1, the first patched release (GHSA-4528-x5fx-h6hg; exact for now, like `systeminformation`, see `AGENTS.md`).
 
