@@ -13,7 +13,7 @@ import { TenantOptionHelperService } from '~services/tenant-options-helper.servi
 import {
   REMINDER__LOCAL_STORAGE__CONFIG,
   REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG,
-  REMINDER__REALTIME_UPDATE_DEBOUNCE_MS,
+  REMINDER__REALTIME_UPDATE_THROTTLE_MS,
   REMINDER__TYPE,
   Reminder,
   ReminderGroupStatus,
@@ -498,7 +498,7 @@ describe('ReminderService', () => {
      * `reminders` stays synchronous so every event merges into the latest state;
      * `remindersView` (what the drawer renders) is debounced and may briefly lag.
      */
-    it('debounces remindersView without dropping intermediate realtime updates', fakeAsync(() => {
+    it('throttles remindersView without dropping intermediate realtime updates', fakeAsync(() => {
       const now = new Date(Date.now() - 5_000).toISOString();
       const source$ = new Subject<RealtimeMessage<Reminder>>();
 
@@ -507,25 +507,57 @@ describe('ReminderService', () => {
 
       service['setupReminderSubscription']();
 
+      // Trailing-edge throttle: the window starts on this first call and
+      // fires REMINDER__REALTIME_UPDATE_THROTTLE_MS after it, regardless of
+      // further calls in between — it does not reset like a debounce would.
       source$.next({
         realtimeAction: 'CREATE',
         data: makeReminder({ id: 'a', time: now, status: ReminderStatus.active }),
       } as RealtimeMessage<Reminder>);
-      tick(REMINDER__REALTIME_UPDATE_DEBOUNCE_MS / 2);
+      tick(REMINDER__REALTIME_UPDATE_THROTTLE_MS / 4);
 
       source$.next({
         realtimeAction: 'CREATE',
         data: makeReminder({ id: 'b', time: now, status: ReminderStatus.active }),
       } as RealtimeMessage<Reminder>);
-      tick(REMINDER__REALTIME_UPDATE_DEBOUNCE_MS / 2);
+      tick(REMINDER__REALTIME_UPDATE_THROTTLE_MS / 4);
 
       // both events are already merged into the authoritative signal
       expect(service.reminders().length).toBe(2);
-      // but the debounced view hasn't caught up yet
+      // but the throttled view hasn't caught up yet (window not elapsed)
       expect(service.remindersView().length).toBe(0);
 
-      tick(REMINDER__REALTIME_UPDATE_DEBOUNCE_MS);
+      // elapses the remaining half of the window, measured from the first call
+      tick(REMINDER__REALTIME_UPDATE_THROTTLE_MS / 2);
       expect(service.remindersView().length).toBe(2);
+    }));
+
+    it('keeps flushing remindersView at a bounded rate under continuous realtime activity', fakeAsync(() => {
+      const now = new Date(Date.now() - 5_000).toISOString();
+      const source$ = new Subject<RealtimeMessage<Reminder>>();
+
+      eventRealtimeService.onAll$.and.returnValue(source$);
+      service.reminders.set([]);
+
+      service['setupReminderSubscription']();
+
+      // Events keep arriving faster than the throttle window (every 100ms for
+      // 1.2s) — a plain debounce would never fire here since the gap between
+      // calls never exceeds the window; throttle must still flush regularly.
+      for (let i = 0; i < 12; i++) {
+        source$.next({
+          realtimeAction: 'CREATE',
+          data: makeReminder({ id: `r-${i}`, time: now, status: ReminderStatus.active }),
+        } as RealtimeMessage<Reminder>);
+        tick(100);
+      }
+
+      expect(service.reminders().length).toBe(12);
+      expect(service.remindersView().length).toBeGreaterThan(0);
+      expect(service.remindersView().length).toBeLessThan(12);
+
+      tick(REMINDER__REALTIME_UPDATE_THROTTLE_MS);
+      expect(service.remindersView().length).toBe(12);
     }));
   });
 

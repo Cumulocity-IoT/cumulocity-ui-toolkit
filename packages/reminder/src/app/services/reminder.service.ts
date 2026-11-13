@@ -2,7 +2,7 @@ import { ComponentRef, inject, Injectable, signal } from '@angular/core';
 import { EventService, IEvent, IResult } from '@c8y/client';
 import { AlertService, EventRealtimeService, RealtimeMessage } from '@c8y/ngx-components';
 import { TranslateService } from '@ngx-translate/core';
-import { filter as _filter, cloneDeep, debounce, has, orderBy, sortBy } from 'lodash';
+import { filter as _filter, cloneDeep, debounce, has, orderBy, sortBy, throttle } from 'lodash';
 import moment from 'moment';
 import { Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
@@ -18,7 +18,7 @@ import {
   REMINDER__INITIAL_QUERY_SIZE,
   REMINDER__LOCAL_STORAGE__CONFIG,
   REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG,
-  REMINDER__REALTIME_UPDATE_DEBOUNCE_MS,
+  REMINDER__REALTIME_UPDATE_THROTTLE_MS,
   REMINDER__TENANT_OPTION__CATEGORY,
   REMINDER__TYPE,
   REMINDER__TYPE_FRAGMENT,
@@ -58,9 +58,9 @@ export class ReminderService {
   readonly open = signal(false);
   readonly reminders = signal<Reminder[]>([]);
   /**
-   * Debounced mirror of `reminders`, for consumers (the drawer) that render the list.
+   * Throttled mirror of `reminders`, for consumers (the drawer) that render the list.
    * `reminders` itself stays synchronous so realtime events always merge into the
-   * latest state; only the UI-facing copy is throttled.
+   * latest state; only the UI-facing copy is rate-limited.
    */
   readonly remindersView = signal<Reminder[]>([]);
   readonly reminderCounter = signal(0);
@@ -79,11 +79,21 @@ export class ReminderService {
 
   private subscriptions = new Subscription();
   private debouncedSetUpdateTimer = debounce(() => this.setUpdateTimer(), 300);
-  /** Collapses bursts of realtime events into a single `remindersView` update. */
-  private debouncedSyncRemindersView = debounce(() => {
-    this.devLog('setRemindersView (debounced)', { count: this.reminders().length });
-    this.remindersView.set(this.reminders());
-  }, REMINDER__REALTIME_UPDATE_DEBOUNCE_MS);
+  /**
+   * Caps `remindersView` updates to once per window, however continuously
+   * realtime events arrive. A plain debounce only fires after a quiet gap and
+   * would never fire — or fire almost every time — depending on how the event
+   * stream happens to be spaced, so this needs throttle semantics (equivalent
+   * to the `auditTime` this replaces), not debounce semantics.
+   */
+  private throttledSyncRemindersView = throttle(
+    () => {
+      this.devLog('setRemindersView (throttled)', { count: this.reminders().length });
+      this.remindersView.set(this.reminders());
+    },
+    REMINDER__REALTIME_UPDATE_THROTTLE_MS,
+    { leading: false, trailing: true }
+  );
 
   private _reminderTypes: ReminderType[] = [];
   private _reminderTenantConfig: ReminderTenantConfig | null = null;
@@ -104,7 +114,7 @@ export class ReminderService {
   destroy() {
     if (this.drawerRef) this.domService.destroyComponent(this.drawerRef);
     this.subscriptions.unsubscribe();
-    this.debouncedSyncRemindersView.cancel();
+    this.throttledSyncRemindersView.cancel();
   }
 
   /**
@@ -652,7 +662,7 @@ export class ReminderService {
     this.reminders.set(reminders);
     this.updateCounter();
     this.debouncedSetUpdateTimer();
-    this.debouncedSyncRemindersView();
+    this.throttledSyncRemindersView();
   }
 
   private setUpdateTimer(): void {
