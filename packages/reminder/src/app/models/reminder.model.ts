@@ -10,6 +10,7 @@ export const REMINDER__MAIN_HEADER_CLASS = 'app-main-header';
 export const REMINDER__COUNTER_DISPLAY_THRESHOLD = 9;
 export const REMINDER__TEXT_LENGTH = 100;
 export const REMINDER__HIGHLIGHT_DURATION_SECONDS = 5;
+export const REMINDER__REALTIME_UPDATE_DEBOUNCE_MS = 500;
 export const REMINDER__TENANT_OPTION__CATEGORY: ITenantOption['category'] = 'c8y.reminder';
 export const REMINDER__LOCAL_STORAGE__FILTER = 'c8y_rpFilter';
 export const REMINDER__LOCAL_STORAGE__CONFIG = 'c8y_rpConfig';

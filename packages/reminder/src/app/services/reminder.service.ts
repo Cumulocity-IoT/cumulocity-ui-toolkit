@@ -18,6 +18,7 @@ import {
   REMINDER__INITIAL_QUERY_SIZE,
   REMINDER__LOCAL_STORAGE__CONFIG,
   REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG,
+  REMINDER__REALTIME_UPDATE_DEBOUNCE_MS,
   REMINDER__TENANT_OPTION__CATEGORY,
   REMINDER__TYPE,
   REMINDER__TYPE_FRAGMENT,
@@ -56,6 +57,12 @@ export class ReminderService {
   readonly config = signal<ReminderConfig>({});
   readonly open = signal(false);
   readonly reminders = signal<Reminder[]>([]);
+  /**
+   * Debounced mirror of `reminders`, for consumers (the drawer) that render the list.
+   * `reminders` itself stays synchronous so realtime events always merge into the
+   * latest state; only the UI-facing copy is throttled.
+   */
+  readonly remindersView = signal<Reminder[]>([]);
   readonly reminderCounter = signal(0);
   readonly responsibilityFilterEnabled = signal(false);
 
@@ -72,11 +79,19 @@ export class ReminderService {
 
   private subscriptions = new Subscription();
   private debouncedSetUpdateTimer = debounce(() => this.setUpdateTimer(), 300);
+  /** Collapses bursts of realtime events into a single `remindersView` update. */
+  private debouncedSyncRemindersView = debounce(() => {
+    this.devLog('setRemindersView (debounced)', { count: this.reminders().length });
+    this.remindersView.set(this.reminders());
+  }, REMINDER__REALTIME_UPDATE_DEBOUNCE_MS);
 
   private _reminderTypes: ReminderType[] = [];
   private _reminderTenantConfig: ReminderTenantConfig | null = null;
   // private _assetFilterConfig: AssetFilterConfig | null = null;
   private _reminderDefaults: ReminderConfig | null = null;
+  // TODO remove: temporary `?dev=true` logging to validate the realtime debounce in the browser.
+  private readonly devLoggingEnabled =
+    new URLSearchParams(window.location.search).get('dev') === 'true';
 
   constructor() {
     this.activeTabService.init();
@@ -89,6 +104,7 @@ export class ReminderService {
   destroy() {
     if (this.drawerRef) this.domService.destroyComponent(this.drawerRef);
     this.subscriptions.unsubscribe();
+    this.debouncedSyncRemindersView.cancel();
   }
 
   /**
@@ -318,9 +334,18 @@ export class ReminderService {
     if (deleted && deleted.status === ReminderStatus.active)
       this.reminderCounter.update((count) => count - 1);
 
+    this.devLog('DELETE', { id: message.data, deleted });
     this.setReminders(this.digestReminders(reminders));
 
     return deleted;
+  }
+
+  // TODO remove: temporary `?dev=true` logging to validate the realtime debounce in the browser.
+  private devLog(label: unknown, data?: unknown): void {
+    if (!this.devLoggingEnabled) return;
+
+    // eslint-disable-next-line no-console
+    console.log(`[reminder] ${String(label)}`, data);
   }
 
   private digestReminders(reminders: Reminder[]): Reminder[] {
@@ -392,6 +417,8 @@ export class ReminderService {
   private handleReminderUpdate(message: Partial<RealtimeMessage<Reminder>>): Reminder | undefined {
     let reminders = cloneDeep(this.reminders());
     const now = moment();
+
+    this.devLog(message.realtimeAction, message.data);
 
     if (message.realtimeAction === 'DELETE') return this.deleteReminderFromList(message, reminders);
 
@@ -621,9 +648,11 @@ export class ReminderService {
    * due counter and reschedules the update timer.
    */
   private setReminders(reminders: Reminder[]): void {
+    this.devLog('setReminders (sync)', { count: reminders.length });
     this.reminders.set(reminders);
     this.updateCounter();
     this.debouncedSetUpdateTimer();
+    this.debouncedSyncRemindersView();
   }
 
   private setUpdateTimer(): void {

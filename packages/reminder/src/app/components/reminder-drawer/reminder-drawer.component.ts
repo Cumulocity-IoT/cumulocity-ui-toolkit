@@ -1,6 +1,6 @@
 import { Component, effect, inject, OnDestroy, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { AlertService, CoreModule, HeaderService } from '@c8y/ngx-components';
 import { isEmpty } from 'lodash';
 import { CollapseModule } from 'ngx-bootstrap/collapse';
@@ -33,6 +33,7 @@ import { ReminderTypeComponent } from '../reminder-type/reminder-type.component'
   imports: [
     CoreModule,
     FormsModule,
+    RouterLink,
     CollapseModule,
     TooltipModule,
     MomentModule,
@@ -300,7 +301,7 @@ export class ReminderDrawerComponent implements OnDestroy {
 
     // Live updates on reminders and config come from the service signals.
     effect(() => {
-      const reminders = this.reminderService.reminders();
+      const reminders = this.reminderService.remindersView();
       const content = this.stripDiff(reminders);
 
       // `diff` is refreshed by the service timer without any visible change

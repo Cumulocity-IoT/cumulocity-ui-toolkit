@@ -1,5 +1,5 @@
 import { ComponentRef, signal } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { EventService, IFetchResponse, IResult } from '@c8y/client';
 import { AlertService, EventRealtimeService, RealtimeMessage } from '@c8y/ngx-components';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,6 +13,7 @@ import { TenantOptionHelperService } from '~services/tenant-options-helper.servi
 import {
   REMINDER__LOCAL_STORAGE__CONFIG,
   REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG,
+  REMINDER__REALTIME_UPDATE_DEBOUNCE_MS,
   REMINDER__TYPE,
   Reminder,
   ReminderGroupStatus,
@@ -492,6 +493,40 @@ describe('ReminderService', () => {
       expect(service.reminderCounter()).toBe(0);
       expect(service.reminders()).toEqual([]);
     });
+
+    /**
+     * `reminders` stays synchronous so every event merges into the latest state;
+     * `remindersView` (what the drawer renders) is debounced and may briefly lag.
+     */
+    it('debounces remindersView without dropping intermediate realtime updates', fakeAsync(() => {
+      const now = new Date(Date.now() - 5_000).toISOString();
+      const source$ = new Subject<RealtimeMessage<Reminder>>();
+
+      eventRealtimeService.onAll$.and.returnValue(source$);
+      service.reminders.set([]);
+
+      service['setupReminderSubscription']();
+
+      source$.next({
+        realtimeAction: 'CREATE',
+        data: makeReminder({ id: 'a', time: now, status: ReminderStatus.active }),
+      } as RealtimeMessage<Reminder>);
+      tick(REMINDER__REALTIME_UPDATE_DEBOUNCE_MS / 2);
+
+      source$.next({
+        realtimeAction: 'CREATE',
+        data: makeReminder({ id: 'b', time: now, status: ReminderStatus.active }),
+      } as RealtimeMessage<Reminder>);
+      tick(REMINDER__REALTIME_UPDATE_DEBOUNCE_MS / 2);
+
+      // both events are already merged into the authoritative signal
+      expect(service.reminders().length).toBe(2);
+      // but the debounced view hasn't caught up yet
+      expect(service.remindersView().length).toBe(0);
+
+      tick(REMINDER__REALTIME_UPDATE_DEBOUNCE_MS);
+      expect(service.remindersView().length).toBe(2);
+    }));
   });
 
   describe('tenant defaults', () => {

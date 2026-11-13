@@ -13,17 +13,17 @@ import { ReminderDrawerComponent } from './reminder-drawer.component';
 describe('ReminderDrawerComponent', () => {
   let component: ReminderDrawerComponent;
   let fixture: ReturnType<typeof TestBed.createComponent<ReminderDrawerComponent>>;
-  let reminders: ReturnType<typeof signal<Reminder[]>>;
+  let remindersView: ReturnType<typeof signal<Reminder[]>>;
   let config: ReturnType<typeof signal<ReminderConfig>>;
   let groupReminders: jasmine.Spy;
 
   beforeEach(() => {
-    reminders = signal<Reminder[]>([]);
+    remindersView = signal<Reminder[]>([]);
     config = signal<ReminderConfig>({});
     groupReminders = jasmine.createSpy('groupReminders').and.returnValue([]);
 
     const reminderService = {
-      reminders,
+      remindersView,
       config,
       types: [],
       groupReminders,
@@ -67,15 +67,15 @@ describe('ReminderDrawerComponent', () => {
   });
 
   it('skips re-digesting when only the diff of a reminder changes', () => {
-    reminders.set([{ id: '1', diff: 100 } as Reminder]);
+    remindersView.set([{ id: '1', diff: 100 } as Reminder]);
     fixture.detectChanges();
     groupReminders.calls.reset();
 
-    reminders.set([{ id: '1', diff: 200 } as Reminder]);
+    remindersView.set([{ id: '1', diff: 200 } as Reminder]);
     fixture.detectChanges();
     expect(groupReminders).not.toHaveBeenCalled();
 
-    reminders.set([{ id: '1', diff: 200, text: 'edited' } as Reminder]);
+    remindersView.set([{ id: '1', diff: 200, text: 'edited' } as Reminder]);
     fixture.detectChanges();
     expect(groupReminders).toHaveBeenCalledTimes(1);
   });
