@@ -1,0 +1,457 @@
+// `display: contents` lets `.kpi-trend` be the direct child of `c8y-dynamic-component`, which
+// the platform turns into a full-height flex column because `.kpi-trend` carries `.inner-scroll`
+// (the same mechanism as operating-state and the sibling widgets).
+:host {
+  display: contents;
+}
+
+// ── CSS custom properties for threshold-driven accent ─────────────────────
+// These mirror the spec's §Color tokens exactly — no hardcoded hex in rules.
+// `.inner-scroll` supplies `height: 100%` and `overflow: auto`; the flex settings let it take
+// the card's height as a flex item. Each layout below fills it, and its sparkline takes the space
+// that is left, so the card has neither empty space below nor a scrollbar.
+.kpi-trend {
+  flex: 1 1 auto;
+  min-height: 0;
+
+  --kt-accent:       var(--c8y-brand-primary, #1776bf);
+  --kt-accent-soft:  color-mix(in srgb, var(--kt-accent) 16%, transparent);
+  --kt-good:         var(--c8y-palette-status-success, #0ca30c);
+  --kt-good-soft:    color-mix(in srgb, var(--kt-good) 16%, transparent);
+  --kt-warn:         var(--c8y-palette-status-warning, #d98c05);
+  --kt-warn-soft:    color-mix(in srgb, var(--kt-warn) 16%, transparent);
+  --kt-critical:     var(--c8y-palette-status-danger, #d03b3b);
+  --kt-critical-soft: color-mix(in srgb, var(--kt-critical) 16%, transparent);
+  --kt-muted:        var(--c8y-text-muted, #657381);
+  // Tokens checked against the running shell: the --c8y-component-* names do not resolve, so
+  // their light fallbacks used to show in dark mode as well.
+  --kt-border:       var(--c8y-root-component-border-color, #dfe4e8);
+  --kt-bg:           var(--c8y-root-component-background-default, #fff);
+  --kt-surface:      var(--c8y-root-component-background-odd, #f2f5f7);
+}
+
+// ── Shared: source badge ───────────────────────────────────────────────────
+.kpi-trend__src {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 9.5px;
+  letter-spacing: -0.01em;
+  color: var(--kt-muted);
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: 4px;
+  padding: 1.5px 5px;
+  white-space: nowrap;
+
+  &--dark {
+    color: rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+}
+
+// ── Shared: trend indicator ────────────────────────────────────────────────
+.kpi-trend__trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 10.5px;
+  font-weight: 700;
+
+  &--good  { color: var(--kt-good); }
+  &--bad   { color: var(--kt-critical); }
+  &--flat  { color: var(--kt-muted); }
+}
+
+// The main gauge's arc colouring lives in `GaugeArcComponent` (components/gauge-arc): it resolves the same
+// platform status tokens from its own `tone`, so nothing is restated here.
+
+// ── Shared: sparkline coloring ─────────────────────────────────────────────
+.kpi-trend__spark-fill {
+  fill: var(--kt-accent);
+  opacity: 0.1;
+  &.kpi-trend__spark--warning  { fill: var(--kt-warn); }
+  &.kpi-trend__spark--critical { fill: var(--kt-critical); }
+}
+
+.kpi-trend__spark-line {
+  stroke: var(--kt-accent);
+  &.kpi-trend__spark--warning  { stroke: var(--kt-warn); }
+  &.kpi-trend__spark--critical { stroke: var(--kt-critical); }
+}
+
+.kpi-trend__spark-dot {
+  fill: var(--kt-accent);
+  stroke: var(--kt-bg);
+  stroke-width: 2;
+  &.kpi-trend__spark--warning  { fill: var(--kt-warn); }
+  &.kpi-trend__spark--critical { fill: var(--kt-critical); }
+}
+
+// ── Stale overlay ──────────────────────────────────────────────────────────
+// The arc gauge dims itself via its own `stale` input; these are the arc-less readouts.
+.kpi-trend--stale {
+  .kpi-trend__value-large,
+  .kpi-trend__compact-value {
+    opacity: 0.5;
+  }
+}
+
+// ── Skeleton loading state ─────────────────────────────────────────────────
+.kpi-trend__skeleton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  height: 100%;
+  justify-content: center;
+}
+
+.kpi-trend__skeleton-arc {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: var(--kt-surface);
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: kpi-pulse 1.4s ease-in-out infinite;
+  }
+}
+
+.kpi-trend__skeleton-text {
+  width: 80px;
+  height: 12px;
+  border-radius: 4px;
+  background: var(--kt-surface);
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: kpi-pulse 1.4s ease-in-out 0.2s infinite;
+  }
+}
+
+@keyframes kpi-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VARIANT A — Radial primary
+// ═══════════════════════════════════════════════════════════════════════════
+.kpi-trend__radial {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px 12px;
+  height: 100%;
+}
+
+.kpi-trend__header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--kt-muted);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  align-self: stretch;
+}
+
+.kpi-trend__icon--warning  { color: var(--kt-warn); }
+.kpi-trend__icon--critical { color: var(--kt-critical); }
+
+.kpi-trend__label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kpi-trend__window-badge {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--kt-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+// The arc gauge is `<ps-kpi-trend-gauge-arc>`; it owns its geometry and readout layout. Its box takes the
+// height the other rows leave, which pins the header to the top and the meta row and sparkline to
+// the bottom of the card. The gauge scales with the card: 70 % of the width, but never taller than
+// the box. `container-type: size` makes the box the reference for the cq units; size containment
+// is safe because the box gets its size from the flex layout, not from the gauge.
+.kpi-trend__gauge-box {
+  flex: 1 1 0;
+  min-height: 112px;
+  align-self: stretch;
+  container-type: size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Width and height override the component's `size` input (an inline custom property), which only
+// takes fixed pixels.
+.kpi-trend__gauge-box > ps-kpi-trend-gauge-arc {
+  --kt-gauge-size: max(96px, min(70cqw, 100cqh));
+
+  width: var(--kt-gauge-size);
+  height: var(--kt-gauge-size);
+}
+
+// The shared readout type scale is set for the default 140 px gauge; scale it with the gauge so
+// the readout keeps its proportion to the ring.
+.kpi-trend__gauge-box .kt-gauge-arc__value {
+  font-size: calc(var(--kt-gauge-size) * 23 / 140);
+}
+
+.kpi-trend__gauge-box .kt-gauge-arc__sub {
+  font-size: max(9.5px, calc(var(--kt-gauge-size) * 9.5 / 140));
+}
+
+// Bare value (no max): auto margins centre it in the space the rows leave.
+.kpi-trend__radial > .kpi-trend__bare-value {
+  margin-block: auto;
+}
+
+// Bare value (no max configured)
+.kpi-trend__bare-value {
+  flex-shrink: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.kpi-trend__value-large {
+  font-size: 32px;
+  font-weight: 730;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.kpi-trend__unit-large {
+  font-size: 13px;
+  color: var(--kt-muted);
+}
+
+// Meta row
+.kpi-trend__meta {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+  justify-content: space-between;
+}
+
+// Sparkline strip: a quiet footer of at most 48px, the first thing to give up height in a small
+// card. It does not grow: stretched to the card's height, the min-max scaled line turns noise
+// into peaks. The free space goes to the gauge instead, see above.
+.kpi-trend__spark-strip {
+  width: 100%;
+  flex: 0 1 48px;
+  min-height: 0;
+}
+
+.kpi-trend__spark-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VARIANT B — Compact tile
+// ═══════════════════════════════════════════════════════════════════════════
+.kpi-trend__compact {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 15px;
+  height: 100%;
+  border-radius: inherit;
+  color: var(--c8y-text-color, #1e2a33);
+
+  // Compact uses fixed accent; threshold coloring is on the ring and trend only.
+  // Chains through --kt-accent so a configured/manual color applies here too.
+  --kt-compact-accent: var(--kt-accent);
+}
+
+// Header and value on the left, the ring on the right beside both rows.
+.kpi-trend__compact-top {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.kpi-trend__compact-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kpi-trend__compact-hd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kpi-trend__compact-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--kt-compact-accent);
+
+  i {
+    font-size: 14px;
+  }
+}
+
+.kpi-trend__compact-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--kt-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kpi-trend__compact-title {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.kpi-trend__compact-window {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--kt-muted);
+  white-space: nowrap;
+}
+
+// % ring beside the header and value rows. The track is a lighter step of the ring's colour,
+// not flat grey, so the ratio reads as one instrument (spec, Color tokens).
+.kpi-trend__compact-ring {
+  --kt-ring: var(--kt-compact-accent);
+
+  position: relative;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+
+  &--warning  { --kt-ring: var(--kt-warn); }
+  &--critical { --kt-ring: var(--kt-critical); }
+}
+
+.kpi-trend--stale .kpi-trend__compact-ring {
+  opacity: 0.5;
+}
+
+// padding: 0 against the platform's 4px vertical padding on every SVG in a card, which would
+// shrink the ring inside its box.
+.kpi-trend__ring-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  padding: 0;
+}
+
+.kpi-trend__ring-track {
+  stroke: color-mix(in srgb, var(--kt-ring) 18%, transparent);
+}
+
+.kpi-trend__ring-val {
+  stroke: var(--kt-ring);
+  stroke-linecap: round;
+}
+
+.kpi-trend__ring-pct {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 730;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--c8y-text-color, #1e2a33);
+}
+
+// Value row
+.kpi-trend__compact-val-row {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.kpi-trend__compact-value {
+  font-size: 30px;
+  font-weight: 730;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-trend__compact-unit {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--kt-muted);
+}
+
+// Compact sparkline: takes the height the other rows leave, and gives it up first in a small card.
+.kpi-trend__compact-spark {
+  width: 100%;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.kpi-trend__compact-spark-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
+.kpi-trend__compact-spark-fill {
+  fill: var(--kt-compact-accent);
+  opacity: 0.16;
+}
+
+.kpi-trend__compact-spark-line {
+  stroke: var(--kt-compact-accent);
+}
+
+.kpi-trend__compact-spark-dot {
+  fill: var(--kt-compact-accent);
+  stroke: var(--kt-bg);
+  stroke-width: 2;
+}
+
+// Footer
+.kpi-trend__compact-ft {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--kt-border);
+  flex-shrink: 0;
+}

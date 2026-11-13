@@ -34,6 +34,7 @@ cumulocity-ui-toolkit/
 │   ├── events-graph-widget/  # device events as colored state bars on a timeline (echarts)
 │   ├── favorites-manager/
 │   ├── index-db-cache/
+│   ├── kpi-trend-widget/     # one measurement as gauge or tile with a trend sparkline (from the DER Add-on)
 │   ├── kpi-widget/
 │   ├── layered-map-widget/
 │   ├── navigation-and-search/ # asset tree explorer drawer + global asset search (⌘K)
@@ -108,7 +109,7 @@ All commands run from the **repository root** unless noted.
 - Test files: `**/*.spec.ts` inside `packages/`.
 - The root `karma.conf.js` is shared by all projects.
 - Each package has a `tsconfig.spec.json` with `"types": ["jasmine", "node"]`.
-- All 13 Angular projects in `angular.json` (`shared` + 12 plugins) have a `test` architect target.
+- All 14 Angular projects in `angular.json` (`shared` + 13 plugins) have a `test` architect target.
 - Run a single project: `pnpm exec ng test <project> --watch=false --browsers=ChromeHeadlessCI`
 - `ChromeHeadlessCI` custom launcher (defined in `karma.conf.js`) adds `--no-sandbox --disable-gpu --disable-dev-shm-usage` — required in CI.
 - Test helper for creating Jasmine spies: `packages/shared/src/helpers/auto-mock.helper.ts`.
@@ -162,7 +163,7 @@ All commands run from the **repository root** unless noted.
 
 The `tools/generate-scripts.mts` file is an **ESM TypeScript** script (`.mts` extension — run with `node --experimental-strip-types`). It reads all projects from `angular.json` and regenerates the `build:*`, `serve:*`, `test:*`, and `test:watch:*` entries in `package.json`. The source of truth for which projects get test scripts is whether the project has a `@angular/build:karma` test target in `angular.json`.
 
-The root `test` script (which chains all 12 suites sequentially) is also regenerated. Do **not** hand-edit anything after the `--generated----------` marker in `package.json`. CI verifies this: a change to root configuration re-runs `generate:scripts` and fails if `package.json` is stale.
+The root `test` script (which chains all 14 suites sequentially) is also regenerated. Do **not** hand-edit anything after the `--generated----------` marker in `package.json`. CI verifies this: a change to root configuration re-runs `generate:scripts` and fails if `package.json` is stale.
 
 ---
 

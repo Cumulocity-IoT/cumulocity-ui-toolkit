@@ -1,5 +1,9 @@
 # UI Toolkit Changelog
 
+## 2026.11.13 — kpi-trend-widget
+
+**New plugin**: `packages/kpi-trend-widget`, one measurement as a radial gauge or compact tile with its trend over a time window as a sparkline. Moved from the DER Add-on (c8y-windy-solution), where it was built on the same Web SDK line. The widget id stays `windy.kpi-trend`, so dashboards created there keep working. Registered in `angular.json` with build, serve and test targets, covered by unit tests (gauge geometry) and an e2e suite on the tenant mock. See `packages/kpi-trend-widget/CHANGELOG.md`.
+
 ## 2026.11.06 — ui-sdk 2.3.3
 
 **Test infrastructure**: `@cumulocity-iot/ui-sdk` 1.3.1 → 2.3.3 (root and `test/`). `test/config/base.config.ts` passes `C8Y_MOCK_URL` to Cypress, so the SDK's support file reports each test to the mock and the mock's gap report lists the tests behind each gap (needed by the C8Y UI Agent's `prove_regression`). The SDK APIs the toolkit uses (`readConfig`, `writeConfig`, `startProjectMock`, `pullWorld`, `/vite`, `/cypress`) are unchanged.
