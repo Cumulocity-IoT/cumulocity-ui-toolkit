@@ -1,0 +1,287 @@
+<!-- inner-scroll: the platform then makes c8y-dynamic-component a full-height flex column
+     (@c8y/style _card-dashboard.scss), so the widget fills the card instead of keeping its
+     natural height (empty space below, or a card scrollbar). -->
+@let trend = ariaTrend();
+@let a11yLabel = ariaLabel() + (trend ? ', ' + (trend.key | translate: trend.params) : '');
+<div
+  class="kpi-trend inner-scroll"
+  role="group"
+  [class.kpi-trend--radial]="variant() === 'radial'"
+  [class.kpi-trend--compact]="variant() === 'compact'"
+  [attr.aria-label]="a11yLabel"
+  [style.--kt-accent]="accentColor()"
+>
+  <!-- ── Loading ─────────────────────────────────────────────────────────── -->
+  @if (loading()) {
+    <div class="kpi-trend__skeleton" aria-busy="true" aria-live="polite">
+      <div class="kpi-trend__skeleton-arc"></div>
+      <div class="kpi-trend__skeleton-text"></div>
+    </div>
+  }
+
+  <!-- ── No datapoint configured ─────────────────────────────────────────── -->
+  @else if (!datapoint()) {
+    <c8y-ui-empty-state
+      icon="line-chart"
+      [title]="'kpi-trend.no-datapoint' | translate"
+      [subtitle]="'kpi-trend.no-datapoint-hint' | translate"
+    ></c8y-ui-empty-state>
+  }
+
+  <!-- ── Radial variant (A) ──────────────────────────────────────────────── -->
+  @else if (variant() === 'radial') {
+    <div class="kpi-trend__radial" [class.kpi-trend--stale]="isStale()">
+      <!-- Header: icon + label -->
+      <div class="kpi-trend__header">
+        <!-- c8yIcon, not a hand-built class: it maps "c8y-…" names (built-in and uploaded duo-color
+             icons) to "c8y-icon c8y-icon-…" and the rest to "dlt-c8y-icon-…". -->
+        <i
+          [c8yIcon]="icon()"
+          aria-hidden="true"
+          [class.kpi-trend__icon--warning]="thresholdState() === 'warning'"
+          [class.kpi-trend__icon--critical]="thresholdState() === 'critical'"
+        ></i>
+        <!-- The pipe, not the translate attribute: with child elements the attribute directive
+             replaces the span's content once, and the label and window then never update. -->
+        <span class="kpi-trend__label">{{ label() | translate }} <span class="kpi-trend__window-badge" [title]="('kpi-trend.window-title' | translate) + ' ' + trendWindowLabel()">({{ trendWindowLabel() }})</span></span>
+        @if (isStale()) {
+          <span
+            class="kpi-trend__stale-badge label label-warning m-l-4"
+            [title]="'kpi-trend.stale' | translate"
+          >
+            {{ 'kpi-trend.stale-short' | translate }}
+          </span>
+        }
+      </div>
+
+      <!-- Arc gauge (only when max is configured) — the shared primitive; see GaugeArcComponent.
+           The box takes the height the other rows leave, and the gauge scales to fit it. -->
+      @if (showArc()) {
+        <div class="kpi-trend__gauge-box">
+          <ps-kpi-trend-gauge-arc
+            mode="magnitude"
+            [value]="currentValue()"
+            [min]="minValue() ?? 0"
+            [max]="maxValue()!"
+            [tone]="thresholdState()"
+            [color]="gaugeColor()"
+            [stale]="isStale()"
+            [ariaLabel]="a11yLabel"
+            [title]="
+              lastMeasurementTime()
+                ? ('kpi-trend.received-at' | translate) +
+                  ' ' +
+                  (lastMeasurementTime() | date: 'medium')
+                : ''
+            "
+          >
+            <span
+              class="kt-gauge-arc__value"
+              [class.text-muted]="isMissing() || isStale()"
+              >{{ formattedValue() }}</span
+            >
+            <span class="kt-gauge-arc__sub">
+              {{ unit() }}
+              @if (maxValue() !== undefined) {
+                / {{ maxValue() | number }}
+              }
+            </span>
+          </ps-kpi-trend-gauge-arc>
+        </div>
+      } @else {
+        <!-- No max: display bare value prominently (arc-less fallback) -->
+        <div
+          class="kpi-trend__bare-value"
+          [title]="
+            lastMeasurementTime()
+              ? ('kpi-trend.received-at' | translate) +
+                ' ' +
+                (lastMeasurementTime() | date: 'medium')
+              : ''
+          "
+        >
+          <span
+            class="kpi-trend__value-large"
+            [class.text-muted]="isMissing() || isStale()"
+            >{{ formattedValue() }}</span
+          >
+          <span class="kpi-trend__unit-large">{{ unit() }}</span>
+        </div>
+      }
+
+      <!-- Source badge + trend indicator row -->
+      <div class="kpi-trend__meta">
+        <span class="kpi-trend__src">{{ sourceBadge() }}</span>
+        @if (hasSufficientHistory()) {
+          <span
+            class="kpi-trend__trend"
+            [class.kpi-trend__trend--good]="trendIsGood()"
+            [class.kpi-trend__trend--bad]="trendIsBad()"
+            [class.kpi-trend__trend--flat]="trendDirection() === 'flat'"
+            >{{ trendLabel() ?? '— ' + ('kpi-trend.steady' | translate) }}</span
+          >
+        }
+      </div>
+
+      <!-- Sparkline footer strip -->
+      @if (hasSufficientHistory()) {
+        <div class="kpi-trend__spark-strip" aria-hidden="true">
+          <svg
+            viewBox="0 0 100 48"
+            preserveAspectRatio="none"
+            class="kpi-trend__spark-svg"
+          >
+            <path
+              class="kpi-trend__spark-fill"
+              [class.kpi-trend__spark--warning]="thresholdState() === 'warning'"
+              [class.kpi-trend__spark--critical]="
+                thresholdState() === 'critical'
+              "
+              [attr.d]="sparklineFillPoints()"
+            />
+            <path
+              class="kpi-trend__spark-line"
+              [class.kpi-trend__spark--warning]="thresholdState() === 'warning'"
+              [class.kpi-trend__spark--critical]="
+                thresholdState() === 'critical'
+              "
+              fill="none"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              vector-effect="non-scaling-stroke"
+              [attr.d]="sparklineLinePoints()"
+            />
+          </svg>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ── Compact variant (B) ────────────────────────────────────────────── -->
+  @else if (variant() === 'compact') {
+    <div class="kpi-trend__compact" [class.kpi-trend--stale]="isStale()">
+      <!-- Top block: header and value on the left, the % ring beside both rows on the right, so
+           the ring can be large without making the tile taller. -->
+      <div class="kpi-trend__compact-top">
+        <div class="kpi-trend__compact-main">
+          <div class="kpi-trend__compact-hd">
+            <div class="kpi-trend__compact-icon">
+              <i [c8yIcon]="icon()" aria-hidden="true"></i>
+            </div>
+            <div class="kpi-trend__compact-title">
+              <span class="kpi-trend__compact-label">{{ label() | translate }}</span>
+              <span class="kpi-trend__compact-window" [title]="('kpi-trend.window-title' | translate) + ' ' + trendWindowLabel()">{{ trendWindowLabel() }}</span>
+            </div>
+          </div>
+
+          <div
+            class="kpi-trend__compact-val-row"
+            [title]="
+              lastMeasurementTime()
+                ? ('kpi-trend.received-at' | translate) +
+                  ' ' +
+                  (lastMeasurementTime() | date: 'medium')
+                : ''
+            "
+          >
+            <span
+              class="kpi-trend__compact-value"
+              [class.text-muted]="isMissing() || isStale()"
+              >{{ formattedValue() }}</span
+            >
+            <span class="kpi-trend__compact-unit">{{ unit() }}</span>
+            @if (isStale()) {
+              <span
+                class="label label-warning m-l-4"
+                [title]="'kpi-trend.stale' | translate"
+              >
+                {{ 'kpi-trend.stale-short' | translate }}
+              </span>
+            }
+          </div>
+        </div>
+
+        <!-- Ring only shown when an effective max is configured -->
+        @if (showArc()) {
+          <div
+            class="kpi-trend__compact-ring"
+            [class.kpi-trend__compact-ring--warning]="thresholdState() === 'warning'"
+            [class.kpi-trend__compact-ring--critical]="thresholdState() === 'critical'"
+            aria-hidden="true"
+          >
+            <svg viewBox="0 0 30 30" class="kpi-trend__ring-svg">
+              <!-- Full-circle track -->
+              <circle
+                class="kpi-trend__ring-track"
+                cx="15"
+                cy="15"
+                r="12"
+                fill="none"
+                stroke-width="3.5"
+              />
+              <!-- Value arc starts from 12 o'clock (rotate −90°) -->
+              <circle
+                class="kpi-trend__ring-val"
+                cx="15"
+                cy="15"
+                r="12"
+                fill="none"
+                stroke-width="3.5"
+                stroke-linecap="round"
+                [attr.stroke-dasharray]="
+                  ringDashValue() + ' ' + ringCircumference
+                "
+                transform="rotate(-90 15 15)"
+              />
+            </svg>
+            @if (ringPercent()) {
+              <span class="kpi-trend__ring-pct">{{ ringPercent() }}</span>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Sparkline -->
+      @if (hasSufficientHistory()) {
+        <div class="kpi-trend__compact-spark" aria-hidden="true">
+          <svg
+            viewBox="0 0 100 48"
+            preserveAspectRatio="none"
+            class="kpi-trend__compact-spark-svg"
+          >
+            <path
+              class="kpi-trend__compact-spark-fill"
+              [attr.d]="sparklineFillPoints()"
+            />
+            <path
+              class="kpi-trend__compact-spark-line"
+              fill="none"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              vector-effect="non-scaling-stroke"
+              [attr.d]="sparklineLinePoints()"
+            />
+          </svg>
+        </div>
+      }
+
+      <!-- Footer: source badge + trend -->
+      <div class="kpi-trend__compact-ft">
+        <span class="kpi-trend__src">{{
+          sourceBadge()
+        }}</span>
+        @if (hasSufficientHistory()) {
+          <span
+            class="kpi-trend__trend"
+            [class.kpi-trend__trend--good]="trendIsGood()"
+            [class.kpi-trend__trend--bad]="trendIsBad()"
+            [class.kpi-trend__trend--flat]="trendDirection() === 'flat'"
+            >{{ trendLabel() ?? '— ' + ('kpi-trend.steady' | translate) }}</span
+          >
+        }
+      </div>
+    </div>
+  }
+</div>

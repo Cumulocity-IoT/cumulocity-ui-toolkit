@@ -1295,6 +1295,114 @@
           }
         }
       }
+    },
+    "plugin.kpi-trend-widget": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "less"
+        }
+      },
+      "root": "packages/kpi-trend-widget",
+      "sourceRoot": "packages/kpi-trend-widget/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@c8y/devkit:build",
+          "options": {
+            "outputPath": "dist/cumulocity-kpi-trend-widget-plugin",
+            "main": "packages/kpi-trend-widget/src/main.ts",
+            "tsConfig": "packages/kpi-trend-widget/tsconfig.app.json",
+            "polyfills": [
+              "zone.js"
+            ],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "packages/kpi-trend-widget/public"
+              }
+            ],
+            "inlineStyleLanguage": "less",
+            "styles": [
+              "packages/kpi-trend-widget/src/styles.less"
+            ],
+            "scripts": [],
+            "aot": false,
+            "buildOptimizer": false,
+            "allowedCommonJsDependencies": [
+              "regenerator-runtime/runtime",
+              "@cordobo/qrcode",
+              "zone.js/dist/zone",
+              "chroma-js",
+              "lodash"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "all",
+              "buildOptimizer": false
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@c8y/devkit:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.kpi-trend-widget:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.kpi-trend-widget:build:development"
+            }
+          },
+          "defaultConfiguration": "development",
+          "options": {
+            "port": 9001,
+            "publicHost": "localhost:9001"
+          }
+        },
+        "deploy": {
+          "builder": "@c8y/devkit:deploy",
+          "configurations": {
+            "production": {
+              "buildTarget": "plugin.kpi-trend-widget:build:production"
+            },
+            "development": {
+              "buildTarget": "plugin.kpi-trend-widget:build:development"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:karma",
+          "options": {
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
+            "tsConfig": "packages/kpi-trend-widget/tsconfig.spec.json",
+            "inlineStyleLanguage": "less",
+            "karmaConfig": "karma.conf.js"
+          }
+        }
+      }
     }
   },
   "cli": {

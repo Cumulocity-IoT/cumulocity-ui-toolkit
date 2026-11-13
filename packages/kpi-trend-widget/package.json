@@ -1,0 +1,7 @@
+{
+  "name": "cumulocity-kpi-trend-widget-plugin",
+  "version": "1.0.0",
+  "description": "Shows one measurement with a radial gauge or a compact tile, and its trend over a time window as a sparkline.",
+  "author": "Cumulocity GmbH",
+  "homepage": "https://github.com/Cumulocity-IoT/cumulocity-ui-toolkit/tree/main/packages/kpi-trend-widget"
+}

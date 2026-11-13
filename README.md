@@ -8,7 +8,7 @@
 
 ---
 
-This is a **pnpm monorepo** of Cumulocity IoT UI plugins built with **Angular 21** and the **Cumulocity Web SDK 1024.21.x** (TypeScript 5.9, Node 24 in CI). All plugin projects are registered in a single root `angular.json` and share dependencies via pnpm workspaces. Shared logic lives in `packages/shared/`; the 11 individually deployable plugin packages live alongside it under `packages/`. Unit tests run with **Karma + Jasmine** via `@angular/build:karma`. End-to-end tests use **Cypress** with `cumulocity-cypress`, from the separate `test/` workspace.
+This is a **pnpm monorepo** of Cumulocity IoT UI plugins built with **Angular 21** and the **Cumulocity Web SDK 1024.21.x** (TypeScript 5.9, Node 24 in CI). All plugin projects are registered in a single root `angular.json` and share dependencies via pnpm workspaces. Shared logic lives in `packages/shared/`; the 13 individually deployable plugin packages live alongside it under `packages/`. Unit tests run with **Karma + Jasmine** via `@angular/build:karma`. End-to-end tests use **Cypress** with `cumulocity-cypress`, from the separate `test/` workspace.
 
 The plugins currently in the workspace:
 
@@ -17,6 +17,7 @@ The plugins currently in the workspace:
 | `energy-consumption-widget` | Displays consumption derived from increasing measurements. |
 | `favorites-manager` | Mark any device, group, or DTM asset as a favorite; stored per user in the `currentUser` object. |
 | `index-db-cache` | Caches measurement and series requests in IndexedDB via HTTP interceptors, with a drawer showing cache state. |
+| `kpi-trend-widget` | One measurement as a radial gauge or compact tile, with its trend over a time window as a sparkline. |
 | `kpi-widget` | Configure inventory queries and count or aggregate result fragments client-side. |
 | `layered-map-widget` | Map with position markers for `c8y_Position` devices, across multiple query-defined layers. |
 | `navigation-and-search` | Asset tree navigator drawer and global asset search palette. |
@@ -59,6 +60,7 @@ cumulocity-ui-toolkit/
 │   ├── events-graph-widget/
 │   ├── favorites-manager/
 │   ├── index-db-cache/
+│   ├── kpi-trend-widget/
 │   ├── kpi-widget/
 │   ├── layered-map-widget/
 │   ├── navigation-and-search/
@@ -112,6 +114,7 @@ All plugins are registered as Angular projects in the single root `angular.json`
 | `plugin.events-graph-widget`      | `packages/events-graph-widget`      | `cumulocity-events-graph-plugin`             |
 | `plugin.favorites-manager`         | `packages/favorites-manager`         | `cumulocity-favorites-manager-plugin`        |
 | `plugin.index-db-cache`            | `packages/index-db-cache`            | `cumulocity-index-db-cache-plugin`           |
+| `plugin.kpi-trend-widget`          | `packages/kpi-trend-widget`          | `cumulocity-kpi-trend-widget-plugin`         |
 | `plugin.kpi-widget`                | `packages/kpi-widget`                | `cumulocity-kpi-aggregator-widget-plugin`    |
 | `plugin.layered-map-widget`        | `packages/layered-map-widget`        | `cumulocity-layered-map-widget`              |
 | `plugin.navigation-and-search`     | `packages/navigation-and-search`     | `cumulocity-navigation-and-search-plugin`    |
@@ -304,7 +307,7 @@ Unit tests use **Karma + Jasmine** with the `@angular/build:karma` builder. All 
 #### Running Tests
 
 ```bash
-# Run all 13 suites in sequence (shared + 12 plugins):
+# Run all 14 suites in sequence (shared + 13 plugins):
 pnpm test
 
 # Run a single suite headless (CI mode):
@@ -313,6 +316,7 @@ pnpm run test:energy-consumption-widget
 pnpm run test:events-graph-widget
 pnpm run test:favorites-manager
 pnpm run test:index-db-cache
+pnpm run test:kpi-trend-widget
 pnpm run test:kpi-widget
 pnpm run test:layered-map-widget
 pnpm run test:operations-widget
