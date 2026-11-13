@@ -494,6 +494,28 @@ describe('ReminderService', () => {
       expect(service.reminders()).toEqual([]);
     });
 
+    it('ignores DELETE events for ids outside the tracked reminders', () => {
+      // `onAll$()` is tenant-wide, so most DELETE messages are for unrelated
+      // events; this must not reprocess the list, update the counter, or
+      // replace the `reminders` signal reference.
+      const initial = [makeReminder({ id: 'kept', status: ReminderStatus.active })];
+
+      service.reminders.set(initial);
+      service.reminderCounter.set(1);
+
+      const source$ = new BehaviorSubject({
+        realtimeAction: 'DELETE',
+        data: 'unrelated-event-id',
+      } as never);
+
+      eventRealtimeService.onAll$.and.returnValue(source$);
+
+      service['setupReminderSubscription']();
+
+      expect(service.reminderCounter()).toBe(1);
+      expect(service.reminders()).toBe(initial);
+    });
+
     /**
      * `reminders` stays synchronous so every event merges into the latest state;
      * `remindersView` (what the drawer renders) is debounced and may briefly lag.

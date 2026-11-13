@@ -88,8 +88,8 @@ export class ReminderService {
    */
   private throttledSyncRemindersView = throttle(
     () => {
-      this.devLog('setRemindersView (throttled)', { count: this.reminders().length });
       this.remindersView.set(this.reminders());
+      this.devLog('update handled', { count: this.reminders().length });
     },
     REMINDER__REALTIME_UPDATE_THROTTLE_MS,
     { leading: false, trailing: true }
@@ -325,26 +325,23 @@ export class ReminderService {
     this.drawer.openChange.subscribe((open) => this.open.set(open));
   }
 
-  private deleteReminderFromList(
-    message: Partial<RealtimeMessage<Reminder>>,
-    reminders: Reminder[]
-  ): Reminder | undefined {
-    let deleted: Reminder | undefined;
+  /**
+   * `eventRealtimeService.onAll$()` is tenant-wide: a DELETE message fires for
+   * every deleted event, not just reminders, and its payload is a bare id with
+   * no `type` to pre-filter on. On a busy tenant that is a near-constant stream
+   * of irrelevant deletes, so the cheap membership check has to happen first —
+   * cloning/digesting/recounting/re-rendering must not run for ids we never
+   * tracked in the first place.
+   */
+  private handleReminderDelete(message: Partial<RealtimeMessage<Reminder>>): Reminder | undefined {
+    const deleted = this.reminders().find((r) => r.id === message.data);
 
-    reminders = reminders.filter((r) => {
-      if (r.id === message.data) {
-        deleted = r;
+    if (!deleted) return undefined;
 
-        return false;
-      } else {
-        return true;
-      }
-    });
+    if (deleted.status === ReminderStatus.active) this.reminderCounter.update((count) => count - 1);
 
-    if (deleted && deleted.status === ReminderStatus.active)
-      this.reminderCounter.update((count) => count - 1);
+    const reminders = this.reminders().filter((r) => r.id !== message.data);
 
-    this.devLog('DELETE', { id: message.data, deleted });
     this.setReminders(this.digestReminders(reminders));
 
     return deleted;
@@ -425,13 +422,10 @@ export class ReminderService {
   }
 
   private handleReminderUpdate(message: Partial<RealtimeMessage<Reminder>>): Reminder | undefined {
+    if (message.realtimeAction === 'DELETE') return this.handleReminderDelete(message);
+
     let reminders = cloneDeep(this.reminders());
     const now = moment();
-
-    this.devLog(message.realtimeAction, message.data);
-
-    if (message.realtimeAction === 'DELETE') return this.deleteReminderFromList(message, reminders);
-
     const reminder = this.digestReminders([message.data as Reminder])[0];
 
     switch (message.realtimeAction) {
@@ -658,7 +652,6 @@ export class ReminderService {
    * due counter and reschedules the update timer.
    */
   private setReminders(reminders: Reminder[]): void {
-    this.devLog('setReminders (sync)', { count: reminders.length });
     this.reminders.set(reminders);
     this.updateCounter();
     this.debouncedSetUpdateTimer();
