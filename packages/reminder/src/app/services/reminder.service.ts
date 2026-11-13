@@ -1,8 +1,8 @@
-import { ComponentRef, inject, Injectable, signal } from '@angular/core';
+import { ComponentRef, inject, Injectable, OnDestroy, signal } from '@angular/core';
 import { EventService, IEvent, IResult } from '@c8y/client';
-import { AlertService, EventRealtimeService, RealtimeMessage } from '@c8y/ngx-components';
+import { AlertService } from '@c8y/ngx-components';
 import { TranslateService } from '@ngx-translate/core';
-import { filter as _filter, cloneDeep, debounce, has, orderBy, sortBy, throttle } from 'lodash';
+import { has, orderBy, sortBy } from 'lodash';
 import moment from 'moment';
 import { Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
@@ -15,10 +15,14 @@ import { TenantOptionHelperService } from '~services/tenant-options-helper.servi
 import { ReminderDrawerComponent } from '../components/reminder-drawer/reminder-drawer.component';
 import {
   Reminder,
+  REMINDER__ANNOUNCE_WINDOW_MS,
+  REMINDER__COUNTER_MAX_AGE_MS,
   REMINDER__INITIAL_QUERY_SIZE,
+  REMINDER__LOCAL_STORAGE__ANNOUNCED,
   REMINDER__LOCAL_STORAGE__CONFIG,
   REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG,
-  REMINDER__REALTIME_UPDATE_THROTTLE_MS,
+  REMINDER__POLL_INTERVAL_MS,
+  REMINDER__REFRESH_MIN_INTERVAL_MS,
   REMINDER__TENANT_OPTION__CATEGORY,
   REMINDER__TYPE,
   REMINDER__TYPE_FRAGMENT,
@@ -34,10 +38,9 @@ import {
 } from '../models/reminder.model';
 
 @Injectable()
-export class ReminderService {
+export class ReminderService implements OnDestroy {
   private alertService = inject(AlertService);
   private eventService = inject(EventService);
-  private eventRealtimeService = inject(EventRealtimeService);
   private tenantOptionHelperService = inject(TenantOptionHelperService);
   private translateService = inject(TranslateService);
   private localStorageService = inject(LocalStorageService);
@@ -57,14 +60,10 @@ export class ReminderService {
   readonly config = signal<ReminderConfig>({});
   readonly open = signal(false);
   readonly reminders = signal<Reminder[]>([]);
-  /**
-   * Throttled mirror of `reminders`, for consumers (the drawer) that render the list.
-   * `reminders` itself stays synchronous so realtime events always merge into the
-   * latest state; only the UI-facing copy is rate-limited.
-   */
-  readonly remindersView = signal<Reminder[]>([]);
   readonly reminderCounter = signal(0);
   readonly responsibilityFilterEnabled = signal(false);
+  /** Time of the last successful load, shown in the drawer. */
+  readonly lastLoaded = signal<Date | undefined>(undefined);
 
   get types(): ReminderType[] {
     return this._reminderTypes;
@@ -75,46 +74,120 @@ export class ReminderService {
   private responsibilityFilter: ResponsibilityFilter = { enabled: false };
   private drawer?: ReminderDrawerComponent;
   private drawerRef?: ComponentRef<unknown>;
-  private updateTimer?: NodeJS.Timeout;
+  private updateTimer?: ReturnType<typeof setTimeout>;
 
   private subscriptions = new Subscription();
-  private debouncedSetUpdateTimer = debounce(() => this.setUpdateTimer(), 300);
+
+  private pollTimer?: ReturnType<typeof setTimeout>;
+  private polling = false;
+  private destroyed = false;
+  private refreshInFlight?: Promise<void>;
+  private refreshQueued = false;
+  /** Alert once per failure streak, not on every poll. */
+  private loadFailed = false;
+  /** Start of the most recent load, successful or not (ms since epoch). */
+  private lastLoadStartedAt = 0;
   /**
-   * Caps `remindersView` updates to once per window, however continuously
-   * realtime events arrive. A plain debounce only fires after a quiet gap and
-   * would never fire — or fire almost every time — depending on how the event
-   * stream happens to be spaced, so this needs throttle semantics (equivalent
-   * to the `auditTime` this replaces), not debounce semantics.
+   * When this tab started. Reminders due before it are not announced, as they were
+   * already due when the application was opened.
    */
-  private throttledSyncRemindersView = throttle(
-    () => {
-      this.remindersView.set(this.reminders());
-      this.devLog('update handled', { count: this.reminders().length });
-    },
-    REMINDER__REALTIME_UPDATE_THROTTLE_MS,
-    { leading: false, trailing: true }
-  );
+  private announceFrom: number;
+  /** Lower bound of the last announcement window; never moves back (clock changes). */
+  private lastAnnounceWindowStart = 0;
+  /** Announcements made by this tab, in case the shared record cannot be written. */
+  private announcedHere = new Map<string, number>();
+  /**
+   * Content of each reminder as last loaded from the API, by id. Compared instead of
+   * the live objects, which the drawer changes optimistically (`status`).
+   */
+  private loadedContent = new Map<string, string>();
+  /** True when the last load returned fewer reminders than one page, i.e. all of them. */
+  private listComplete = false;
+  /** When the API due counter was last loaded (ms since epoch). */
+  private counterLoadedAt = 0;
+  /** Set when the API due counter must be reloaded with the next load. */
+  private counterOutdated = true;
+  private visibilityHandler = () => {
+    if (document.visibilityState !== 'visible') return;
+    // switching tabs back and forth must not send a request each time
+    if (Date.now() - this.lastLoadStartedAt < REMINDER__REFRESH_MIN_INTERVAL_MS) return;
+
+    void this.refresh();
+  };
 
   private _reminderTypes: ReminderType[] = [];
   private _reminderTenantConfig: ReminderTenantConfig | null = null;
   // private _assetFilterConfig: AssetFilterConfig | null = null;
   private _reminderDefaults: ReminderConfig | null = null;
-  // TODO remove: temporary `?dev=true` logging to validate the realtime debounce in the browser.
-  private readonly devLoggingEnabled =
-    new URLSearchParams(window.location.search).get('dev') === 'true';
 
   constructor() {
+    // The tab claims "active" right here, so it is responsible for announcing from now on.
+    this.announceFrom = Date.now();
     this.activeTabService.init();
   }
 
   clear(): void {
+    if (this.destroyed) return;
+
     this.setReminders([]);
+    this.reminderCounter.set(0);
+  }
+
+  ngOnDestroy(): void {
+    this.destroy();
   }
 
   destroy() {
+    if (this.destroyed) return;
+
+    this.destroyed = true;
     if (this.drawerRef) this.domService.destroyComponent(this.drawerRef);
+    this.drawerRef = undefined;
+    this.drawer = undefined;
     this.subscriptions.unsubscribe();
-    this.throttledSyncRemindersView.cancel();
+    this.stopPolling();
+    clearTimeout(this.updateTimer);
+  }
+
+  /**
+   * Reloads reminders and the due counter from the API. Concurrent calls share
+   * the request in flight and trigger one follow-up load, because a request that
+   * started before the caller's change may return stale data.
+   * @returns {Promise<void>} A promise that resolves when the (first) load is complete.
+   */
+  refresh(): Promise<void> {
+    if (this.destroyed) return Promise.resolve();
+
+    if (this.refreshInFlight) {
+      this.refreshQueued = true;
+
+      return this.refreshInFlight;
+    }
+
+    // a load now replaces the scheduled poll; it is rescheduled when the load completes
+    clearTimeout(this.pollTimer);
+    this.refreshInFlight = this.loadReminders().finally(() => {
+      this.refreshInFlight = undefined;
+
+      if (this.refreshQueued) {
+        this.refreshQueued = false;
+        void this.refresh();
+      } else {
+        this.schedulePoll();
+      }
+    });
+
+    return this.refreshInFlight;
+  }
+
+  /**
+   * Pushes the current list again, so views re-render local changes to the reminder
+   * objects (e.g. an optimistic status change the drawer reverted).
+   */
+  refreshView(): void {
+    if (this.destroyed) return;
+
+    this.setReminders([...this.reminders()]);
   }
 
   /**
@@ -122,9 +195,11 @@ export class ReminderService {
    * @returns {Promise<void>} A promise that resolves when initialization is complete.
    */
   async init(): Promise<void> {
-    if (this.drawer) return;
+    if (this.drawer || this.destroyed) return;
 
     await this.fetchTenantOptions();
+    // `destroy()` may run while any of the requests below is pending
+    if (this.destroyed) return;
     this.loadConfig();
     this.hasNotificationPermission =
       'Notification' in window && Notification.permission === 'granted';
@@ -144,11 +219,12 @@ export class ReminderService {
       this.responsibilityFilter = this._reminderTenantConfig?.responsibilityFilter;
       this.responsibilityFilterEnabled.set(true);
       await this.loadResponsibilityIds();
+      if (this.destroyed) return;
     }
 
-    this.setReminders(await this.fetchReminders(REMINDER__INITIAL_QUERY_SIZE));
-    void this.fetchActiveReminderCounter();
-    this.setupReminderSubscription();
+    await this.refresh();
+    if (this.destroyed) return;
+    this.startPolling();
     this.setupConfigSubscription();
   }
 
@@ -263,7 +339,15 @@ export class ReminderService {
     // (un)set `isCleared` fragment to support using retention rules for cleared reminders
     event.isCleared = reminder.status === ReminderStatus.cleared ? {} : null;
 
-    return (await this.eventService.update(event)) as IResult<Reminder>;
+    const result = (await this.eventService.update(event)) as IResult<Reminder>;
+
+    // the reminder may be outside the first page, so the list alone may not change
+    this.counterOutdated = true;
+
+    // reminders are polled, so pull the change (and the new counter) in right away
+    void this.refresh();
+
+    return result;
   }
 
   private applyContextFilter(groups: ReminderGroup[], context?: string): ReminderGroup[] {
@@ -323,36 +407,6 @@ export class ReminderService {
     // The drawer owns its open state; mirror it into the service signal.
     this.open.set(this.drawer.open());
     this.drawer.openChange.subscribe((open) => this.open.set(open));
-  }
-
-  /**
-   * `eventRealtimeService.onAll$()` is tenant-wide: a DELETE message fires for
-   * every deleted event, not just reminders, and its payload is a bare id with
-   * no `type` to pre-filter on. On a busy tenant that is a near-constant stream
-   * of irrelevant deletes, so the cheap membership check has to happen first —
-   * cloning/digesting/recounting/re-rendering must not run for ids we never
-   * tracked in the first place.
-   */
-  private handleReminderDelete(message: Partial<RealtimeMessage<Reminder>>): Reminder | undefined {
-    const deleted = this.reminders().find((r) => r.id === message.data);
-
-    if (!deleted) return undefined;
-
-    if (deleted.status === ReminderStatus.active) this.reminderCounter.update((count) => count - 1);
-
-    const reminders = this.reminders().filter((r) => r.id !== message.data);
-
-    this.setReminders(this.digestReminders(reminders));
-
-    return deleted;
-  }
-
-  // TODO remove: temporary `?dev=true` logging to validate the realtime debounce in the browser.
-  private devLog(label: unknown, data?: unknown): void {
-    if (!this.devLoggingEnabled) return;
-
-    // eslint-disable-next-line no-console
-    console.log(`[reminder] ${String(label)}`, data);
   }
 
   private digestReminders(reminders: Reminder[]): Reminder[] {
@@ -421,109 +475,244 @@ export class ReminderService {
     return url;
   }
 
-  private handleReminderUpdate(message: Partial<RealtimeMessage<Reminder>>): Reminder | undefined {
-    if (message.realtimeAction === 'DELETE') return this.handleReminderDelete(message);
-
-    let reminders = cloneDeep(this.reminders());
-    const now = moment();
-    const reminder = this.digestReminders([message.data as Reminder])[0];
-
-    switch (message.realtimeAction) {
-      case 'UPDATE':
-        reminders = this.reminders().map((r) => {
-          if (r.id === reminder.id) r = reminder;
-
-          return r;
-        });
-        // Apply responsibility filter before digest & counting
-        reminders = this.applyResponsibilityFilter(reminders);
-        void this.fetchActiveReminderCounter();
-        break;
-      case 'CREATE':
-        reminders = [...reminders, reminder];
-        // Apply responsibility filter before digest & counting
-        reminders = this.applyResponsibilityFilter(reminders);
-        // Only increment counter if reminder passed the responsibility filter
-        if (
-          reminders.some(
-            (r) =>
-              r.id === reminder.id && r.status === ReminderStatus.active && moment(r.time) <= now
-          )
-        )
-          this.reminderCounter.update((count) => count + 1);
-        break;
-    }
-
-    // update order & diff
-    this.setReminders(this.digestReminders(reminders));
-
-    return reminder;
-  }
-
-  // all reminders whos `time` is in the past and are still active
+  /**
+   * Counts all reminders whose `time` is in the past and that are still active, via
+   * the API. Throws on API errors.
+   * @returns {Promise<number>} The total across all pages.
+   */
   private async fetchActiveReminderCounter(): Promise<number> {
-    // When the responsibility filter is active the API total would include reminders outside the
-    // user's responsibility scope. Count from the already-filtered in-memory list instead.
-    if (this.responsibilityFilter.enabled) {
-      const now = new Date().getTime();
-      const counter = this.reminders().filter(
-        (r) => r.status === ReminderStatus.active && new Date(r.time).getTime() <= now
-      ).length;
+    const response = await this.eventService.list({
+      type: REMINDER__TYPE,
+      pageSize: 1,
+      fragmentType: 'status',
+      fragmentValue: ReminderStatus.active,
+      withTotalPages: true,
+      dateFrom: '1970-01-01',
+      dateTo: moment().toISOString(),
+    });
 
-      this.reminderCounter.set(counter);
-
-      return counter;
-    }
-
-    let counter = 0;
-
-    try {
-      const response = await this.eventService.list({
-        type: REMINDER__TYPE,
-        pageSize: 1,
-        fragmentType: 'status',
-        fragmentValue: ReminderStatus.active,
-        withTotalPages: true,
-        dateFrom: '1970-01-01',
-        dateTo: moment().toISOString(),
-      });
-
-      counter = response?.paging?.totalPages || 0;
-    } catch (error) {
-      this.alertService.danger(
-        this.translateService.instant('reminder.error.load') as string,
-        error as string
-      );
-    }
-
-    this.reminderCounter.set(counter);
-
-    return counter;
+    return response?.paging?.totalPages || 0;
   }
 
-  private async fetchReminders(pageSize: number, currentPage = 1): Promise<Reminder[]> {
-    let reminders: Reminder[] = [];
-
-    try {
-      const response = await this.eventService.list({
-        type: REMINDER__TYPE,
-        withTotalPages: currentPage === 1,
-        pageSize,
-        currentPage,
-      });
-
-      reminders = response.data as Reminder[];
-    } catch (error) {
-      this.alertService.danger(
-        this.translateService.instant('reminder.error.load') as string,
-        error as string
-      );
-    }
+  /**
+   * Throws on API errors, so a failed poll cannot replace the list with an empty one.
+   * @returns {Promise<{ reminders: Reminder[]; complete: boolean }>} The reminders after
+   * the responsibility filter, and whether the API returned less than a full page.
+   */
+  private async fetchReminders(
+    pageSize: number,
+    currentPage = 1
+  ): Promise<{ reminders: Reminder[]; complete: boolean }> {
+    // no `withTotalPages`: the total is never read, and it costs an extra count query per poll
+    const response = await this.eventService.list({
+      type: REMINDER__TYPE,
+      pageSize,
+      currentPage,
+    });
+    const data = response.data as Reminder[];
 
     // Apply responsibility filter before digest & grouping
-    reminders = this.applyResponsibilityFilter(reminders);
+    const reminders = this.applyResponsibilityFilter(data);
 
-    return this.digestReminders(reminders);
+    return { reminders: this.digestReminders(reminders), complete: data.length < pageSize };
+  }
+
+  private async loadReminders(): Promise<void> {
+    const startedAt = Date.now();
+
+    this.lastLoadStartedAt = startedAt;
+
+    try {
+      const { reminders: fetched, complete } = await this.fetchReminders(
+        REMINDER__INITIAL_QUERY_SIZE
+      );
+
+      if (this.destroyed) return;
+
+      const previous = this.reminders();
+      const reminders = this.reuseUnchanged(previous, fetched);
+      const changed = reminders !== previous;
+
+      this.listComplete = complete;
+      // Only a changed list is pushed, so an unchanged poll neither re-renders nor reschedules.
+      if (changed) this.setReminders(reminders);
+      this.announceDue();
+
+      if (this.countsFromMemory()) {
+        this.reminderCounter.set(this.countDueReminders());
+      } else if (
+        changed ||
+        this.counterOutdated ||
+        startedAt - this.counterLoadedAt >= REMINDER__COUNTER_MAX_AGE_MS
+      ) {
+        // The count query scans all reminder events of the tenant: only when needed.
+        // Cleared before the request, so an invalidation while it is pending (due
+        // timer, update) is kept for the next load.
+        this.counterOutdated = false;
+
+        let counter: number;
+
+        try {
+          counter = await this.fetchActiveReminderCounter();
+        } catch (error) {
+          this.counterOutdated = true;
+          throw error;
+        }
+
+        if (this.destroyed) return;
+
+        this.reminderCounter.set(counter);
+        this.counterLoadedAt = startedAt;
+      }
+
+      this.lastLoaded.set(new Date());
+      this.loadFailed = false;
+    } catch (error) {
+      if (this.destroyed) return;
+
+      // Keep the current list; the next poll retries. The due timer keeps announcing.
+      if (!this.loadFailed) {
+        this.alertService.danger(
+          this.translateService.instant('reminder.error.load') as string,
+          error as string
+        );
+      }
+      this.loadFailed = true;
+    }
+  }
+
+  /**
+   * Keeps the existing object for every reminder whose content in the API did not
+   * change. The drawer renders those objects and the due timer updates their `diff`,
+   * so replacing them on every poll would leave the drawer showing stale copies.
+   * Comparing against the previously loaded content (not the live object) keeps an
+   * optimistic status change by the drawer until the API reports a real change.
+   * @returns {Reminder[]} `previous` itself when nothing changed, otherwise a new array.
+   */
+  private reuseUnchanged(previous: Reminder[], fetched: Reminder[]): Reminder[] {
+    const known = new Map(previous.map((reminder) => [reminder.id, reminder]));
+    let changed = previous.length !== fetched.length;
+
+    const reminders = fetched.map((reminder, index) => {
+      const existing = known.get(reminder.id);
+
+      if (!existing || this.loadedContent.get(String(reminder.id)) !== this.contentKey(reminder)) {
+        changed = true;
+
+        return reminder;
+      }
+
+      // becoming due regroups the reminder in the drawer
+      if (this.isDue(existing) !== this.isDue(reminder)) changed = true;
+      if (previous[index] !== existing) changed = true;
+      existing.diff = reminder.diff;
+
+      return existing;
+    });
+
+    this.loadedContent = new Map(fetched.map((r) => [String(r.id), this.contentKey(r)]));
+
+    return changed ? reminders : previous;
+  }
+
+  /** Stored content of a reminder, without the fields that are only set locally. */
+  private contentKey(reminder: Reminder): string {
+    const { diff: _diff, changed: _changed, ...stored } = reminder;
+
+    return JSON.stringify(stored);
+  }
+
+  private isDue(reminder: Reminder): boolean {
+    return (reminder.diff ?? -1) >= 0;
+  }
+
+  /**
+   * The single place that decides which reminders to announce, used by the due
+   * timer and by every poll. Announces each active reminder that is due, became due
+   * within `REMINDER__ANNOUNCE_WINDOW_MS` (and after the first load attempt), and was
+   * not announced yet by any tab. This covers:
+   * - a timer firing slightly early or late (the next run or poll catches up),
+   * - reminders created elsewhere that are already due when a poll brings them,
+   * - a tab resuming after a pause (sleep, throttled timers): nothing older is replayed.
+   * Only the active tab announces and records; the record is shared by all tabs via
+   * local storage, so switching tabs neither repeats nor drops a notification.
+   */
+  private announceDue(): void {
+    if (!this.activeTabService.isActive()) return;
+
+    const now = Date.now();
+    const from = Math.max(
+      this.announceFrom,
+      now - REMINDER__ANNOUNCE_WINDOW_MS,
+      this.lastAnnounceWindowStart
+    );
+
+    this.lastAnnounceWindowStart = from;
+
+    const shared = this.localStorageService.getOrDefault<Record<string, number>>(
+      REMINDER__LOCAL_STORAGE__ANNOUNCED,
+      {}
+    );
+    const isAnnounced = (key: string) => Object.hasOwn(shared, key) || this.announcedHere.has(key);
+    const due = this.reminders().filter((reminder) => {
+      const time = new Date(reminder.time).getTime();
+
+      return (
+        reminder.status === ReminderStatus.active &&
+        time > from &&
+        time <= now &&
+        !isAnnounced(`${reminder.id}@${time}`)
+      );
+    });
+    const expired = (time: number) => time <= now - REMINDER__ANNOUNCE_WINDOW_MS;
+
+    this.announcedHere.forEach((time, key) => {
+      if (expired(time)) this.announcedHere.delete(key);
+    });
+
+    if (!due.length) return;
+
+    // keep only entries that can still match, plus the new ones
+    const record: Record<string, number> = {};
+
+    Object.entries(shared).forEach(([key, time]) => {
+      if (!expired(time)) record[key] = time;
+    });
+    due.forEach((reminder) => {
+      const time = new Date(reminder.time).getTime();
+      const key = `${reminder.id}@${time}`;
+
+      record[key] = time;
+      this.announcedHere.set(key, time);
+    });
+
+    // A full storage must not fail the load.
+    try {
+      this.localStorageService.set(REMINDER__LOCAL_STORAGE__ANNOUNCED, record);
+    } catch {
+      // other tabs may announce again; this tab still remembers via `announcedHere`
+    }
+
+    this.notify(due);
+  }
+
+  /**
+   * The counter can be computed from the list when the list is complete, or when the
+   * responsibility filter applies (the API total would include reminders outside
+   * the user's responsibility).
+   */
+  private countsFromMemory(): boolean {
+    return this.responsibilityFilter.enabled || this.listComplete;
+  }
+
+  /** Counts active reminders whose `time` has passed, from the in-memory list. */
+  private countDueReminders(): number {
+    const now = new Date().getTime();
+
+    return this.reminders().filter(
+      (reminder) =>
+        reminder.status === ReminderStatus.active && new Date(reminder.time).getTime() <= now
+    ).length;
   }
 
   private filterReminder(groups: ReminderGroup[], context?: string): ReminderGroup[] {
@@ -585,14 +774,18 @@ export class ReminderService {
     return (this.hasNotificationPermission = response === 'granted');
   }
 
-  private sendNotification(reminder: Reminder): void {
-    if (!this.activeTabService.isActive()) return;
-
+  private notify(reminders: Reminder[]): void {
     const config = this.config();
 
-    // all reminders due at the same time are announced together
-    this.getRemindersForNotification(reminder).forEach((r) => {
-      if (config.browser) this.sendBrowserNotification(r);
+    reminders.forEach((r) => {
+      if (config.browser) {
+        try {
+          this.sendBrowserNotification(r);
+        } catch {
+          // e.g. `new Notification()` is an illegal constructor on Android Chrome;
+          // must not fail the load or skip the remaining notifications
+        }
+      }
       if (config.toast) this.sendToast(r);
     });
   }
@@ -648,45 +841,48 @@ export class ReminderService {
   }
 
   /**
-   * Replaces the former `reminders` setter: updating the list also refreshes the
-   * due counter and reschedules the update timer.
+   * Replaces the former `reminders` setter: updating the list also reschedules the
+   * due timer and, when the counter is computed from the list, recounts.
    */
   private setReminders(reminders: Reminder[]): void {
     this.reminders.set(reminders);
-    this.updateCounter();
-    this.debouncedSetUpdateTimer();
-    this.throttledSyncRemindersView();
+    if (this.countsFromMemory()) this.updateCounter();
+    this.setUpdateTimer();
   }
 
+  /** Wakes up when the next not-cleared reminder becomes due (it changes groups then). */
   private setUpdateTimer(): void {
-    const now = moment();
-
     clearTimeout(this.updateTimer);
 
-    if (!this.reminders().length) return;
+    if (this.destroyed) return;
 
-    const dueReminders = _filter(
-      this.reminders(),
-      (r) => r.status !== ReminderStatus.cleared && moment(r.time) > now
-    );
-    const closestReminder: Reminder = sortBy(dueReminders, 'time')[0];
+    const now = Date.now();
+    const next = this.reminders()
+      .filter((r) => r.status !== ReminderStatus.cleared)
+      .map((r) => new Date(r.time).getTime())
+      .filter((time) => time > now)
+      .sort((a, b) => a - b)[0];
 
-    if (!closestReminder) return;
+    if (next === undefined) return;
 
     // timeouts larger than 24.8 days result in immediate execution
-    const diff = moment(closestReminder.time).diff(now);
-    const timeout = diff > this.DAY_IN_MS ? this.DAY_IN_MS : diff;
+    const timeout = Math.min(next - now, this.DAY_IN_MS);
 
-    this.updateTimer = setTimeout(() => {
-      this.setReminders(this.digestReminders(this.reminders()));
-      this.sendNotification(closestReminder);
-    }, timeout);
+    this.updateTimer = setTimeout(() => this.onDueTimer(next), timeout);
   }
 
-  private getRemindersForNotification(reminder: Reminder): Reminder[] {
-    const now = moment(reminder.time);
+  /** @param dueAt - The due time the timer was armed for. */
+  private onDueTimer(dueAt: number): void {
+    // New array with updated `diff`: the drawer regroups the reminders that became due.
+    // This also re-arms the timer, including when it fired early (1-day cap, clock skew).
+    this.setReminders(this.digestReminders(this.reminders()));
+    this.announceDue();
 
-    return _filter(this.reminders(), (r) => moment(r.time).isSame(now));
+    // a reminder became due: the API due counter changed as well
+    if (Date.now() >= dueAt && !this.countsFromMemory()) {
+      this.counterOutdated = true;
+      void this.refresh();
+    }
   }
 
   private setupConfigSubscription(): void {
@@ -712,20 +908,33 @@ export class ReminderService {
     );
   }
 
-  private setupReminderSubscription(): void {
-    this.subscriptions.add(
-      this.eventRealtimeService
-        .onAll$()
-        .pipe(
-          filter(
-            (message) =>
-              message.realtimeAction === 'DELETE' ||
-              (has(message.data, 'type') && message.data['type'] === REMINDER__TYPE)
-          ),
-          map((message) => message as RealtimeMessage<Reminder>)
-        )
-        .subscribe((message) => this.handleReminderUpdate(message))
-    );
+  /**
+   * Polls instead of subscribing to `/events/*`: that realtime channel cannot be
+   * filtered by type and carries every event of the tenant. Each message runs a
+   * full change detection cycle (Angular and AngularJS), which saturated the CPU
+   * on busy tenants (~100 messages/s, none of them reminders).
+   * Polling continues in background tabs, as the last focused tab sends the notifications.
+   */
+  private startPolling(): void {
+    if (this.polling || this.destroyed) return;
+
+    this.polling = true;
+    document.addEventListener('visibilitychange', this.visibilityHandler);
+    this.schedulePoll();
+  }
+
+  private stopPolling(): void {
+    this.polling = false;
+    clearTimeout(this.pollTimer);
+    document.removeEventListener('visibilitychange', this.visibilityHandler);
+  }
+
+  private schedulePoll(): void {
+    clearTimeout(this.pollTimer);
+
+    if (!this.polling) return;
+
+    this.pollTimer = setTimeout(() => void this.refresh(), REMINDER__POLL_INTERVAL_MS);
   }
 
   private sortReminder(
@@ -741,16 +950,7 @@ export class ReminderService {
   }
 
   private updateCounter(): void {
-    const now = new Date().getTime();
-    let count = 0;
-    let dueDate: number;
-
-    this.reminders().forEach((reminder) => {
-      dueDate = new Date(reminder.time).getTime();
-      if (dueDate <= now && reminder.status === ReminderStatus.active) count++;
-    });
-
-    this.reminderCounter.set(count);
+    this.reminderCounter.set(this.countDueReminders());
   }
 
   /**

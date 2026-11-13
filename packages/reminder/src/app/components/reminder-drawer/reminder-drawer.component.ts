@@ -53,7 +53,6 @@ export class ReminderDrawerComponent implements OnDestroy {
   readonly openChange = new Subject<boolean>();
   reminders: Reminder[] = [];
   reminderGroups: ReminderGroup[] = [];
-  lastUpdate?: Date;
   types: ReminderType[] = [];
 
   // for template
@@ -179,12 +178,18 @@ export class ReminderDrawerComponent implements OnDestroy {
    * @returns void
    */
   async updateReminder(reminder: Reminder, status: Reminder['status']): Promise<void> {
+    const previousStatus = reminder.status;
+
+    // optimistic: the service keeps this until a poll reports a real change
     reminder.status = status;
 
     try {
       await this.reminderService.update(reminder);
       this.alertService.success(`Reminder ${String(status).toLowerCase()}`);
     } catch (error) {
+      reminder.status = previousStatus;
+      // the list may have been regrouped with the optimistic status in the meantime
+      this.reminderService.refreshView();
       this.alertService.danger('Failed to update reminder', `${JSON.stringify(error)}`);
     }
   }
@@ -196,7 +201,6 @@ export class ReminderDrawerComponent implements OnDestroy {
    */
   private digestReminders(reminders: Reminder[]): void {
     this.reminders = reminders;
-    this.lastUpdate = new Date();
     this.reminderGroups = this.reminderService.groupReminders(reminders, this.context);
 
     if (reminders.length) this.highlightChanges();
@@ -301,10 +305,10 @@ export class ReminderDrawerComponent implements OnDestroy {
 
     // Live updates on reminders and config come from the service signals.
     effect(() => {
-      const reminders = this.reminderService.remindersView();
-      const content = this.stripDiff(reminders);
+      const reminders = this.reminderService.reminders();
+      const content = this.contentKey(reminders);
 
-      // `diff` is refreshed by the service timer without any visible change
+      // `diff` is refreshed by the service without any visible change, unless a reminder became due
       if (content === this._lastDigestContent) return;
 
       this._lastDigestContent = content;
@@ -346,22 +350,25 @@ export class ReminderDrawerComponent implements OnDestroy {
   }
 
   /**
+   * Content of the list as rendered: the exact `diff` and the temporary highlight flag
+   * are left out, but whether a reminder is due is kept, as it decides its group.
+   * @param reminders - The list of reminders.
+   * @returns A string that changes only when the drawer needs to regroup.
+   */
+  private contentKey(reminders: Reminder[]): string {
+    return JSON.stringify(
+      reminders.map(({ diff, changed: _changed, ...rest }) => ({
+        ...rest,
+        due: diff !== undefined && diff >= 0,
+      }))
+    );
+  }
+
+  /**
    * Pauses execution for a specified duration.
    * @param milliseconds - The duration to sleep in milliseconds.
    * @returns A promise that resolves after the specified duration.
    */
-  private stripDiff(reminders: Reminder[]): string {
-    return JSON.stringify(
-      reminders.map((r) => {
-        const copy = { ...r };
-
-        delete copy.diff;
-
-        return copy;
-      })
-    );
-  }
-
   private sleep(milliseconds: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, milliseconds));
   }

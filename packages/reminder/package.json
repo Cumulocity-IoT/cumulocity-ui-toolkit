@@ -1,6 +1,6 @@
 {
   "name": "cumulocity-reminder-plugin",
-  "version": "1.5.1-rc4",
+  "version": "1.5.1-rc6",
   "description": "Adds a simple manual reminder functionality to Cumulocity",
   "author": "@dirk-peter-c8y",
   "homepage": "https://github.com/Cumulocity-IoT/cumulocity-ui-toolkit/tree/main/packages/reminder",

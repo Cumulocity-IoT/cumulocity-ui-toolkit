@@ -146,6 +146,8 @@ export class ReminderModalComponent implements OnInit {
     // status to check — failures arrive as a rejection.
     try {
       await this.eventService.create(reminder);
+      // reminders are polled, so pull the new one in right away
+      void this.reminderService.refresh();
       this.alertService.success(
         this.translateService.instant('reminder.feedback.created') as string
       );

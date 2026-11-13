@@ -6,27 +6,31 @@ import { TranslateService } from '@ngx-translate/core';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { EMPTY, Subject } from 'rxjs';
 import { provideMock } from '~helpers/auto-mock.helper';
-import { Reminder, ReminderConfig } from '../../models/reminder.model';
+import { Reminder, ReminderConfig, ReminderStatus } from '../../models/reminder.model';
 import { ReminderService } from '../../services/reminder.service';
 import { ReminderDrawerComponent } from './reminder-drawer.component';
 
 describe('ReminderDrawerComponent', () => {
   let component: ReminderDrawerComponent;
   let fixture: ReturnType<typeof TestBed.createComponent<ReminderDrawerComponent>>;
-  let remindersView: ReturnType<typeof signal<Reminder[]>>;
+  let reminders: ReturnType<typeof signal<Reminder[]>>;
   let config: ReturnType<typeof signal<ReminderConfig>>;
   let groupReminders: jasmine.Spy;
+  let update: jasmine.Spy;
 
   beforeEach(() => {
-    remindersView = signal<Reminder[]>([]);
+    reminders = signal<Reminder[]>([]);
     config = signal<ReminderConfig>({});
     groupReminders = jasmine.createSpy('groupReminders').and.returnValue([]);
+    update = jasmine.createSpy('update').and.resolveTo({});
 
     const reminderService = {
-      remindersView,
+      reminders,
       config,
       types: [],
       groupReminders,
+      update,
+      refreshView: jasmine.createSpy('refreshView'),
       resetFilterConfig: jasmine.createSpy('resetFilterConfig'),
       setConfig: jasmine.createSpy('setConfig'),
     } as unknown as ReminderService;
@@ -67,17 +71,46 @@ describe('ReminderDrawerComponent', () => {
   });
 
   it('skips re-digesting when only the diff of a reminder changes', () => {
-    remindersView.set([{ id: '1', diff: 100 } as Reminder]);
+    reminders.set([{ id: '1', diff: 100 } as Reminder]);
     fixture.detectChanges();
     groupReminders.calls.reset();
 
-    remindersView.set([{ id: '1', diff: 200 } as Reminder]);
+    reminders.set([{ id: '1', diff: 200 } as Reminder]);
     fixture.detectChanges();
     expect(groupReminders).not.toHaveBeenCalled();
 
-    remindersView.set([{ id: '1', diff: 200, text: 'edited' } as Reminder]);
+    reminders.set([{ id: '1', diff: 200, text: 'edited' } as Reminder]);
     fixture.detectChanges();
     expect(groupReminders).toHaveBeenCalledTimes(1);
+  });
+
+  it('regroups when a reminder becomes due', () => {
+    reminders.set([{ id: '1', diff: -100 } as Reminder]);
+    fixture.detectChanges();
+    groupReminders.calls.reset();
+
+    reminders.set([{ id: '1', diff: 100 } as Reminder]);
+    fixture.detectChanges();
+    expect(groupReminders).toHaveBeenCalledTimes(1);
+  });
+
+  it('reverts the optimistic status when the update fails', async () => {
+    const reminder = { id: '1', status: ReminderStatus.active } as Reminder;
+
+    update.and.rejectWith('failed');
+    await component.updateReminder(reminder, ReminderStatus.cleared);
+
+    expect(reminder.status).toBe(ReminderStatus.active);
+    expect(TestBed.inject(ReminderService).refreshView).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the new status when the update succeeds', async () => {
+    const reminder = { id: '1', status: ReminderStatus.active } as Reminder;
+
+    await component.updateReminder(reminder, ReminderStatus.cleared);
+
+    expect(update).toHaveBeenCalledWith(reminder);
+    expect(reminder.status).toBe(ReminderStatus.cleared);
   });
 
   it('reports the state set through toggleDrawer', () => {

@@ -1,6 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { ENVIRONMENT_INITIALIZER, importProvidersFrom, inject } from '@angular/core';
-import { AlertModule, CoreModule, EventRealtimeService, hookAction } from '@c8y/ngx-components';
+import { AlertModule, CoreModule, hookAction } from '@c8y/ngx-components';
 import { AssetSelectorModule } from '@c8y/ngx-components/assets-navigator';
 import { FormlyModule } from '@ngx-formly/core';
 import { CollapseModule } from 'ngx-bootstrap/collapse';
@@ -19,7 +19,6 @@ import { ReminderService } from './services/reminder.service';
 export const ReminderPlugin = [
   // dependencies: api services
   provideHttpClient(),
-  EventRealtimeService,
   // dependencies: toolkit services
   AssetAccessService,
   ActiveTabService,

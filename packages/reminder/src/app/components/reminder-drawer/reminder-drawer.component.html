@@ -1,8 +1,8 @@
 <aside [class.open]="open()">
   <header>
     <h2 translate>Reminder</h2>
-    <small class="text-muted" title="{{ lastUpdate | c8yDate }}">
-      {{ 'reminder.labels.last-update' | translate }}: {{ lastUpdate | c8yDate: 'DD.MM.YYYY HH:mm:ss' }} <!-- time ago -->
+    <small class="text-muted" title="{{ reminderService.lastLoaded() | c8yDate }}">
+      {{ 'reminder.labels.last-update' | translate }}: {{ reminderService.lastLoaded() | c8yDate: 'dd.MM.yyyy HH:mm:ss' }} <!-- time ago -->
     </small>
   </header>
 
