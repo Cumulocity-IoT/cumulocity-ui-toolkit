@@ -1,6 +1,6 @@
 import { ComponentRef, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { EventService, IFetchResponse, IResult, TenantOptionsService } from '@c8y/client';
+import { EventService, IFetchResponse, IResult } from '@c8y/client';
 import { AlertService, EventRealtimeService, RealtimeMessage } from '@c8y/ngx-components';
 import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, EMPTY, Subject } from 'rxjs';
@@ -9,8 +9,10 @@ import { ActiveTabService } from '~services/active-tab.service';
 import { AssetAccessService } from '~services/asset-access.service';
 import { DomService } from '~services/dom.service';
 import { LocalStorageService } from '~services/local-storage.service';
+import { TenantOptionHelperService } from '~services/tenant-options-helper.service';
 import {
   REMINDER__LOCAL_STORAGE__CONFIG,
+  REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG,
   REMINDER__TYPE,
   Reminder,
   ReminderGroupStatus,
@@ -48,7 +50,7 @@ describe('ReminderService', () => {
   let domService: jasmine.SpyObj<DomService>;
   let localStorageService: jasmine.SpyObj<LocalStorageService>;
   let activeTabService: jasmine.SpyObj<ActiveTabService>;
-  let tenantOptionsService: jasmine.SpyObj<TenantOptionsService>;
+  let tenantOptionHelperService: jasmine.SpyObj<TenantOptionHelperService>;
   let translateService: jasmine.SpyObj<TranslateService>;
   let assetAccessService: jasmine.SpyObj<AssetAccessService>;
   let eventRealtimeService: jasmine.SpyObj<EventRealtimeService>;
@@ -65,7 +67,7 @@ describe('ReminderService', () => {
             onAll$: jasmine.createSpy('onAll$'),
           },
         },
-        provideMock(TenantOptionsService),
+        provideMock(TenantOptionHelperService),
         provideMock(TranslateService),
         provideMock(LocalStorageService),
         provideMock(ActiveTabService),
@@ -81,9 +83,9 @@ describe('ReminderService', () => {
       LocalStorageService
     ) as jasmine.SpyObj<LocalStorageService>;
     activeTabService = TestBed.inject(ActiveTabService) as jasmine.SpyObj<ActiveTabService>;
-    tenantOptionsService = TestBed.inject(
-      TenantOptionsService
-    ) as jasmine.SpyObj<TenantOptionsService>;
+    tenantOptionHelperService = TestBed.inject(
+      TenantOptionHelperService
+    ) as jasmine.SpyObj<TenantOptionHelperService>;
     translateService = TestBed.inject(TranslateService) as jasmine.SpyObj<TranslateService>;
     assetAccessService = TestBed.inject(AssetAccessService) as jasmine.SpyObj<AssetAccessService>;
     eventRealtimeService = TestBed.inject(
@@ -102,10 +104,7 @@ describe('ReminderService', () => {
     localStorageService.getOrDefault.and.returnValue({});
     translateService.instant.and.callFake((key: string) => key);
     assetAccessService.getAssetIdsFromConfigAsync.and.resolveTo([]);
-    tenantOptionsService.detail.and.resolveTo({
-      data: undefined as never,
-      res: FETCH_RES,
-    });
+    tenantOptionHelperService.getOptionsByCategory.and.resolveTo({});
     eventService.list.and.resolveTo({
       data: [],
       paging: { totalPages: 0 },
@@ -137,7 +136,7 @@ describe('ReminderService', () => {
       { id: 'type-b', name: 'B' },
     ];
 
-    service['\x5ftypes'] = types;
+    service['_reminderTypes'] = types;
 
     expect(service.types).toEqual(types);
   });
@@ -213,13 +212,13 @@ describe('ReminderService', () => {
 
   describe('getReminderTypeName()', () => {
     it('returns the translated name for known type ids', () => {
-      service['\x5ftypes'] = [{ id: 'type-1', name: 'Type One' }];
+      service['_reminderTypes'] = [{ id: 'type-1', name: 'Type One' }];
 
       expect(service.getReminderTypeName('type-1')).toBe('Type One');
     });
 
     it('returns UNKNOWN for missing type ids', () => {
-      service['\x5ftypes'] = [];
+      service['_reminderTypes'] = [];
 
       expect(service.getReminderTypeName('missing')).toBe(ReminderStatus.unknown);
     });
@@ -358,24 +357,13 @@ describe('ReminderService', () => {
     });
 
     it('loads config and reminders without creating the drawer', async () => {
-      const typesResponse = {
-        data: {
-          value: JSON.stringify([
-            { id: 'b', name: 'type.b' },
-            { id: 'a', name: 'type.a' },
-          ]),
-        },
-        res: FETCH_RES,
-      };
-
       localStorageService.getOrDefault.and.returnValue({ useContext: false });
-      tenantOptionsService.detail.and.callFake((query) => {
-        if (query.key === 'types') return typesResponse as never;
-
-        return Promise.resolve({
-          data: { value: JSON.stringify({ useContext: true }) },
-          res: FETCH_RES,
-        } as never);
+      tenantOptionHelperService.getOptionsByCategory.and.resolveTo({
+        types: [
+          { id: 'b', name: 'type.b' },
+          { id: 'a', name: 'type.a' },
+        ],
+        config: { useContext: true },
       });
 
       await service.init();
@@ -391,18 +379,19 @@ describe('ReminderService', () => {
 
       expect(domService.appendComponentToBody.calls.count()).toBe(1);
       expect(
-        (domService.appendComponentToBody.calls.mostRecent().returnValue.instance as {
-          toggleDrawer: jasmine.Spy;
-        }).toggleDrawer
+        (
+          domService.appendComponentToBody.calls.mostRecent().returnValue.instance as {
+            toggleDrawer: jasmine.Spy;
+          }
+        ).toggleDrawer
       ).toHaveBeenCalled();
     });
 
     it('resets useContext config when tenant disallows context filtering', async () => {
       localStorageService.getOrDefault.and.returnValue({ useContext: true });
-      tenantOptionsService.detail.and.resolveTo({
-        data: { value: JSON.stringify({ useContext: false }) },
-        res: FETCH_RES,
-      } as never);
+      tenantOptionHelperService.getOptionsByCategory.and.resolveTo({
+        config: { useContext: false },
+      });
 
       await service.init();
 
@@ -416,24 +405,16 @@ describe('ReminderService', () => {
 
     it('loads responsibility ids and enables stream when configured', async () => {
       localStorageService.getOrDefault.and.returnValue({ useContext: false });
-      tenantOptionsService.detail.and.callFake((query) => {
-        if (query.key === 'config') {
-          return Promise.resolve({
-            data: {
-              value: JSON.stringify({
-                useContext: false,
-                responsibilityFilter: {
-                  enabled: true,
-                  method: 'inventoryQuery',
-                  query: '$filter=id ne null',
-                },
-              }),
-            },
-            res: FETCH_RES,
-          } as never);
-        }
-
-        return Promise.resolve({ data: { value: '[]' }, res: FETCH_RES } as never);
+      tenantOptionHelperService.getOptionsByCategory.and.resolveTo({
+        types: [],
+        config: {
+          useContext: false,
+          responsibilityFilter: {
+            enabled: true,
+            method: 'inventoryQuery',
+            query: '$filter=id ne null',
+          },
+        },
       });
       assetAccessService.getAssetIdsFromConfigAsync.and.resolveTo(['a1', 'a2']);
 
@@ -453,7 +434,7 @@ describe('ReminderService', () => {
       await service.init();
 
       expect(createDrawerSpy.calls.count()).toBe(0);
-      expect(tenantOptionsService.detail.calls.count()).toBe(0);
+      expect(tenantOptionHelperService.getOptionsByCategory.calls.count()).toBe(0);
     });
 
     it('enables browser notifications after permission is granted', async () => {
@@ -510,6 +491,98 @@ describe('ReminderService', () => {
 
       expect(service.reminderCounter()).toBe(0);
       expect(service.reminders()).toEqual([]);
+    });
+  });
+
+  describe('tenant defaults', () => {
+    it('applies tenant notification defaults when the user has no stored config', async () => {
+      const privateService = service as unknown as ReminderServicePrivateForInit;
+
+      spyOn(privateService, 'requestNotificationPermission').and.resolveTo(true);
+      spyOn(privateService, 'fetchReminders').and.resolveTo([]);
+      spyOn(privateService, 'fetchActiveReminderCounter').and.resolveTo(0);
+      spyOn(privateService, 'setupConfigSubscription').and.callFake(() => undefined);
+      spyOn(privateService, 'setupReminderSubscription').and.callFake(() => undefined);
+      localStorageService.getOrDefault.and.callFake((_key, fallback) => fallback);
+      tenantOptionHelperService.getOptionsByCategory.and.resolveTo({ defaults: { toast: true } });
+
+      await service.init();
+
+      expect(service.config().toast).toBeTrue();
+      expect(REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG.toast).not.toBeTrue();
+    });
+  });
+
+  describe('notifications', () => {
+    const due = new Date(Date.now() - 1_000).toISOString();
+    let alertService: jasmine.SpyObj<AlertService>;
+
+    beforeEach(() => {
+      alertService = TestBed.inject(AlertService) as jasmine.SpyObj<AlertService>;
+      activeTabService.isActive.and.returnValue(true);
+      service.reminders.set([
+        makeReminder({ id: 'a', time: due }),
+        makeReminder({ id: 'b', time: due, source: { id: 'device-2', name: 'Device 2' } }),
+        makeReminder({ id: 'c', time: new Date(Date.now() + 60_000).toISOString() }),
+      ]);
+    });
+
+    it('announces every reminder due at the same time with a toast', () => {
+      service.config.set({ toast: true });
+
+      service['sendNotification'](service.reminders()[0]);
+
+      expect(alertService.add).toHaveBeenCalledTimes(2);
+    });
+
+    it('sends persistent browser notifications grouped per source with the type', () => {
+      const created: [string, NotificationOptions][] = [];
+
+      class FakeNotification {
+        onclick: unknown;
+
+        constructor(title: string, options: NotificationOptions) {
+          created.push([title, options]);
+        }
+
+        close(): void {
+          // not needed
+        }
+      }
+
+      const original = Object.getOwnPropertyDescriptor(window, 'Notification');
+
+      Object.defineProperty(window, 'Notification', {
+        value: FakeNotification,
+        configurable: true,
+        writable: true,
+      });
+
+      service['hasNotificationPermission'] = true;
+      service.config.set({ browser: true });
+      service.reminders.set([makeReminder({ id: 'a', time: due, reminderType: 'type.a' })]);
+
+      service['sendNotification'](service.reminders()[0]);
+
+      expect(created.length).toBe(1);
+
+      const [title, options] = created[0];
+
+      expect(title).toBe('Device 1');
+      expect(options.requireInteraction).toBeTrue();
+      expect(options.tag).toBe('reminder.due-device-1');
+      expect(options.body).toContain('[type.a]');
+
+      if (original) Object.defineProperty(window, 'Notification', original);
+    });
+
+    it('does not notify from an inactive tab', () => {
+      activeTabService.isActive.and.returnValue(false);
+      service.config.set({ toast: true });
+
+      service['sendNotification'](service.reminders()[0]);
+
+      expect(alertService.add).not.toHaveBeenCalled();
     });
   });
 });

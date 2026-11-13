@@ -83,6 +83,7 @@ export class ReminderDrawerComponent implements OnDestroy {
   private rightDrawerOpen = false;
   private updateTimer?: NodeJS.Timeout;
   private _previousState: Reminder['id'][][] = [];
+  private _lastDigestContent?: string;
   private _contextFilterEnabled = REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG.useContext ?? false;
 
   constructor() {
@@ -298,7 +299,16 @@ export class ReminderDrawerComponent implements OnDestroy {
     );
 
     // Live updates on reminders and config come from the service signals.
-    effect(() => this.digestReminders(this.reminderService.reminders()));
+    effect(() => {
+      const reminders = this.reminderService.reminders();
+      const content = this.stripDiff(reminders);
+
+      // `diff` is refreshed by the service timer without any visible change
+      if (content === this._lastDigestContent) return;
+
+      this._lastDigestContent = content;
+      this.digestReminders(reminders);
+    });
     effect(() => this.handleConfigChange(this.reminderService.config()));
 
     // route change for context
@@ -339,6 +349,18 @@ export class ReminderDrawerComponent implements OnDestroy {
    * @param milliseconds - The duration to sleep in milliseconds.
    * @returns A promise that resolves after the specified duration.
    */
+  private stripDiff(reminders: Reminder[]): string {
+    return JSON.stringify(
+      reminders.map((r) => {
+        const copy = { ...r };
+
+        delete copy.diff;
+
+        return copy;
+      })
+    );
+  }
+
   private sleep(milliseconds: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, milliseconds));
   }

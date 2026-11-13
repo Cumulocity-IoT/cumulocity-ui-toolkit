@@ -66,6 +66,20 @@ describe('ReminderDrawerComponent', () => {
     expect(groupReminders).toHaveBeenCalled();
   });
 
+  it('skips re-digesting when only the diff of a reminder changes', () => {
+    reminders.set([{ id: '1', diff: 100 } as Reminder]);
+    fixture.detectChanges();
+    groupReminders.calls.reset();
+
+    reminders.set([{ id: '1', diff: 200 } as Reminder]);
+    fixture.detectChanges();
+    expect(groupReminders).not.toHaveBeenCalled();
+
+    reminders.set([{ id: '1', diff: 200, text: 'edited' } as Reminder]);
+    fixture.detectChanges();
+    expect(groupReminders).toHaveBeenCalledTimes(1);
+  });
+
   it('reports the state set through toggleDrawer', () => {
     expect(component.toggleDrawer(true)).toBeTrue();
     expect(component.open()).toBeTrue();

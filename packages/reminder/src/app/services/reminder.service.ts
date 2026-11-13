@@ -527,7 +527,8 @@ export class ReminderService {
   }
 
   private loadConfig(): void {
-    const defaults = REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG;
+    // copy: the tenant defaults must not leak into the shared constant
+    const defaults = { ...REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG };
 
     if (this._reminderDefaults) {
       if (this._reminderDefaults.browser) defaults.browser = this._reminderDefaults.browser;
@@ -558,8 +559,24 @@ export class ReminderService {
 
     const config = this.config();
 
-    if (config.browser) this.sendBrowserNotification(reminder);
-    if (config.toast) this.sendToast(reminder);
+    // all reminders due at the same time are announced together
+    this.getRemindersForNotification(reminder).forEach((r) => {
+      if (config.browser) this.sendBrowserNotification(r);
+      if (config.toast) this.sendToast(r);
+    });
+  }
+
+  private buildBrowserNotificationOptions(reminder: Reminder): NotificationOptions {
+    let body = `[${this.translateService.instant('reminder.status.DUE')}] ${this.translateService.instant(reminder.text)}`;
+
+    if (reminder.reminderType) body += ` [${this.translateService.instant(reminder.reminderType)}]`;
+
+    return {
+      body,
+      requireInteraction: true,
+      data: reminder,
+      tag: `reminder.due-${reminder.source.id}`, // group in notification center by this tag
+    };
   }
 
   private sendBrowserNotification(reminder: Reminder): void {
@@ -568,18 +585,17 @@ export class ReminderService {
       return;
     }
 
-    const notification: Notification = new Notification(`${reminder.source.name}`, {
-      body: `[${this.translateService.instant('reminder.status.DUE')}] ${this.translateService.instant(reminder.text)}`,
-      data: reminder,
-      tag: 'reminder.due',
-    });
+    const notification = new Notification(
+      `${reminder.source.name}`,
+      this.buildBrowserNotificationOptions(reminder)
+    );
 
-    notification.addEventListener('click', () => {
+    notification.onclick = () => {
       // `data` was read off the event target; the notification instance carries
       // the same payload and is properly typed.
       window.open(this.getAssetUrlFromReminder(reminder, true), '_blank');
       notification.close();
-    });
+    };
   }
 
   private sendToast(reminder: Reminder): void {
@@ -633,6 +649,12 @@ export class ReminderService {
       this.setReminders(this.digestReminders(this.reminders()));
       this.sendNotification(closestReminder);
     }, timeout);
+  }
+
+  private getRemindersForNotification(reminder: Reminder): Reminder[] {
+    const now = moment(reminder.time);
+
+    return _filter(this.reminders(), (r) => moment(r.time).isSame(now));
   }
 
   private setupConfigSubscription(): void {
