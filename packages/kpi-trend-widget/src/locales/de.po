@@ -1,0 +1,130 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: c8yui\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language: de\n"
+"Language-Team: \n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "kpi-trend.no-datapoint"
+msgstr "Kein Datenpunkt ausgewählt"
+
+msgid "kpi-trend.no-datapoint-hint"
+msgstr "Öffnen Sie die Widget-Konfiguration und wählen Sie einen Datenpunkt aus."
+
+msgid "kpi-trend.stale"
+msgstr "Letzte Messung älter als 60 Sekunden — Wert möglicherweise veraltet."
+
+msgid "kpi-trend.stale-short"
+msgstr "Veraltet"
+
+msgid "kpi-trend.received-at"
+msgstr "Empfangen um"
+
+msgid "kpi-trend.window-title"
+msgstr "Trendfenster:"
+
+
+msgid "KPI Trend"
+msgstr "KPI-Trend"
+
+msgid "Layout variant"
+msgstr "Layout-Variante"
+
+msgid "Radial primary"
+msgstr "Radial (primär)"
+
+msgid "Compact tile"
+msgstr "Kompaktkachel"
+
+msgid "Dominant arc gauge — best when the ratio to max matters."
+msgstr "Dominante Kreisbogenanzeige — ideal, wenn das Verhältnis zum Maximum wichtig ist."
+
+msgid "Value & sparkline lead — best when recent movement matters most."
+msgstr "Wert und Trendlinie führend — ideal, wenn aktuelle Bewegung entscheidend ist."
+
+msgid "Icon"
+msgstr "Symbol"
+
+msgid "Trend window"
+msgstr "Trendfenster"
+
+msgid "Unit"
+msgstr "Einheit"
+
+msgid "Minutes"
+msgstr "Minuten"
+
+msgid "Hours"
+msgstr "Stunden"
+
+msgid "Days"
+msgstr "Tage"
+
+msgid "Sample count"
+msgstr "Stichprobenanzahl"
+
+msgid "Trend direction"
+msgstr "Trendrichtung"
+
+msgid "Higher value is better (up trend = green)"
+msgstr "Höherer Wert ist besser (Aufwärtstrend = grün)"
+
+msgid "Data point"
+msgstr "Datenpunkt"
+
+msgid "Appearance"
+msgstr "Darstellung"
+
+msgid "Accent color"
+msgstr "Akzentfarbe"
+
+msgid "Min value"
+msgstr "Minimalwert"
+
+msgid "Max value"
+msgstr "Maximalwert"
+
+msgid "kpi-trend.config.layout-help"
+msgstr "Wählen Sie, wie Anzeige und Trend auf der Karte angeordnet werden."
+
+msgid "kpi-trend.config.icon-help"
+msgstr "Wird neben der Bezeichnung in der Widget-Kopfzeile angezeigt."
+
+msgid "kpi-trend.config.color-help"
+msgstr "Wird für den Kreisbogen und die Trendlinie verwendet. Übernimmt zunächst die Farbe des Datenpunkts; wählen Sie eine andere Farbe, um sie zu ersetzen, oder „Zurücksetzen“, um zur Farbe des Datenpunkts zurückzukehren."
+
+msgid "kpi-trend.config.window-help"
+msgstr "Der Zeitraum, den die Trendlinie und die Trendprozentangabe abdecken, bis zur letzten Messung. Die Trendprozentangabe vergleicht den Durchschnitt am Anfang dieses Zeitraums mit dem Durchschnitt an seinem Ende."
+
+msgid "kpi-trend.config.points-help"
+msgstr "Die Anzahl der Punkte, die die Trendlinie über das Trendfenster zeichnet, von 2 bis 40. Jeder Punkt ist der Durchschnitt der Messwerte in seinem Abschnitt des Fensters."
+
+msgid "kpi-trend.config.min-help"
+msgstr "Unteres Ende des Füllbereichs der Anzeige. Leer lassen, um das Minimum des Datenpunkts zu verwenden, oder 0, wenn er keines hat."
+
+msgid "kpi-trend.config.max-help"
+msgstr "Oberes Ende des Füllbereichs der Anzeige. Leer lassen, um das Maximum des Datenpunkts zu verwenden. Ohne Maximum wird die Anzeige ausgeblendet."
+
+msgid "kpi-trend.config.direction-help"
+msgstr "Deaktivieren für KPIs, bei denen ein niedrigerer Wert besser ist, zum Beispiel Temperatur oder Vibration."
+
+msgid "kpi-trend.steady"
+msgstr "stabil"
+
+msgid "kpi-trend.aria-trend-up"
+msgstr "um {{delta}} Prozent gestiegen in {{window}}"
+
+msgid "kpi-trend.aria-trend-down"
+msgstr "um {{delta}} Prozent gefallen in {{window}}"
+
+msgid "From KPI"
+msgstr "Aus KPI"
+
+msgid "Displays a single measurement value with a radial gauge (value vs. max) and a trend sparkline. Configurable as a radial primary or compact tile layout."
+msgstr "Zeigt einen einzelnen Messwert mit einer radialen Anzeige (Wert im Verhältnis zum Maximum) und einer Trendlinie. Als radiales oder kompaktes Kachel-Layout konfigurierbar."
