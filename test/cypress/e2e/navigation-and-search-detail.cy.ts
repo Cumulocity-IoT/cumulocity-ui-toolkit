@@ -7,7 +7,7 @@
  * Covered:
  *  - footer counts devices without the Digital Twin Manager (the mock has none) and assets with it
  *    (DTM stubbed), matching the world
- *  - availability from `c8y_Availability` (set through the mock's REST API): footer stat + row ring
+ *  - availability from `c8y_Availability` (a device made unavailable in the mock's world): footer stat + row ring
  *  - branch detail rows (Devices / Available x of y / Unavailable / Alarms)
  *  - leaf detail panel shows the default fields
  *  - the settings drawer's "Detail fields by level" tab: one entry per type of the tree, a live
@@ -16,6 +16,8 @@
  *
  * Names, ids and counts are read from the inventory at runtime — the world is re-pulled in CI.
  */
+
+import { makeUnavailable, restoreWorld } from '../support/availability';
 
 const NAV_NODE = 'c8y-navigator-node button[data-cy="Tree"]';
 const DRAWER = '[data-cy="navigation-and-search--drawer"]';
@@ -157,6 +159,8 @@ function previewLabels() {
 describe('Navigation and search — counts, availability and detail fields', () => {
   let world: World;
 
+  afterEach(() => restoreWorld());
+
   beforeEach(() => {
     cy.request('POST', '/_mock/reset');
     cy.getAuth().login().disableGainsight();
@@ -199,9 +203,7 @@ describe('Navigation and search — counts, availability and detail fields', () 
   it('reads availability from c8y_Availability: footer stat, row ring and branch rows', () => {
     const device = world.leafDevices[0];
 
-    cy.request('PUT', `/inventory/managedObjects/${device.id}`, {
-      c8y_Availability: { status: 'UNAVAILABLE', lastMessage: '2026-10-01T00:00:00.000Z' },
-    });
+    makeUnavailable(device.id);
     const wasAvailable = world.availableCount - (world.leafDevices[0] ? 1 : 0);
 
     openDrawer();

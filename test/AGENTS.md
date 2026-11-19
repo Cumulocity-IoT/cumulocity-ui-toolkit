@@ -92,6 +92,7 @@ downloads the new cockpit on the next run and records its checksum in `c8y-ui.js
 |---|---|
 | Run one plugin's suite on the mock | `pnpm run e2e:mock <name>` (`--browser=chrome` locally; CI uses chromium) |
 | Same, in the Cypress UI | `pnpm run e2e:mock <name> --open` |
+| Run one plugin's Playwright specs on the mock | `pnpm run e2e:mock <name> --runner=playwright` (`--open` for Playwright's UI mode). Specs: `playwright/<name>*.spec.ts`, fixtures from `@cumulocity-iot/ui-sdk/playwright`; so far `favorites-manager`, `navigation-and-search` (tree drawer) and `tenant-option-management`, next to their Cypress specs. Browser once: `pnpm -C test exec playwright install chromium` |
 | Re-pull the world from windy-dev | `pnpm run e2e:world:pull` (`e2e:mock` does it when the file is missing) |
 | Run one plugin's suite in another cockpit release | `E2E_SHELL_VERSION=1024.22.1 pnpm run e2e:mock <name>` (what `shell-compat.yml` does daily with the latest CD release; `E2E_MOCK_GAPS=<file>` lists the requests the mock does not emulate). Rewrites `c8y-ui.json` → `version` and adds the checksums; do not commit that |
 
@@ -200,6 +201,7 @@ stubs, e.g. `cy.intercept('GET', '**/inventory/managedObjects?*', mockListRespon
 |---|---|
 | `cy.createDevice(options)` | Creates a device (`c8y_IsDevice`) via `cy.c8yclient`, yields the managed object |
 | `interceptAssetNavigatorInventoryQueries()` | Rewrites `_id` → `id` in inventory queries (tenant-mock gap) |
+| `makeUnavailable(...ids)` / `restoreWorld()` (`availability.ts`) | Makes devices unavailable the way a tenant does: loads the mock's world again with their last message hours back (the mock derives `c8y_Availability`; a PUT of it does not stick). Call `restoreWorld()` in `afterEach` |
 
 Commands provided **natively by `cumulocity-cypress` 1.x** (do not redefine):
 `cy.getAuth`, `cy.login`, `cy.createUser`, `cy.deleteUser`, `cy.createGlobalRole`,

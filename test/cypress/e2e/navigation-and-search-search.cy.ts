@@ -41,9 +41,15 @@ interface World {
 function loadWorld(): Cypress.Chainable<World> {
   return cy.request('/inventory/managedObjects?pageSize=2000&withChildren=false').then((res) => {
     const all = res.body.managedObjects as (MO & Record<string, unknown>)[];
-    const device = all.find(
+    const devices = all.filter(
       (mo) => 'c8y_IsDevice' in mo && !('c8y_IsAsset' in mo) && !('c8y_IsDeviceGroup' in mo),
-    ) as MO;
+    );
+    // One whose name prefix another object shares ("CUWTG06-Main-Controller" and its turbine "CUWTG06 · …"):
+    // the arrow-key test needs two results. The inventory's order is not the world file's.
+    const prefix = (mo: MO) => mo.name.split('-')[0].toLowerCase();
+    const device = (devices.find((mo) =>
+      all.some((other) => other.id !== mo.id && other.name.toLowerCase().includes(prefix(mo))),
+    ) ?? devices[0]) as MO;
     const turbine = all.find((mo) => mo.type === 'wind_turbine') as MO;
     return { device, turbine, all };
   });

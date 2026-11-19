@@ -16,6 +16,8 @@
  * Names, types and values are read from the inventory at runtime — the world is re-pulled in CI.
  */
 
+import { makeUnavailable, restoreWorld } from '../support/availability';
+
 const NAV_NODE = 'c8y-navigator-node button[data-cy="Tree"]';
 const DRAWER = '[data-cy="navigation-and-search--drawer"]';
 const ROW = '[data-cy="navigation-and-search--row"]';
@@ -71,7 +73,10 @@ function loadWorld(): Cypress.Chainable<World> {
 
     for (const asset of assets) byType.set(asset.type, [...(byType.get(asset.type) ?? []), asset]);
     const [type, ofType] = [...byType].sort((a, b) => b[1].length - a[1].length)[0];
+    // Fields the platform keeps (each object's own lastUpdated, …) are not properties the filter offers.
+    const platformFields = new Set(['self', 'id', 'name', 'type', 'owner', 'creationTime', 'lastUpdated']);
     const path = Object.keys(ofType[0])
+      .filter((key) => !platformFields.has(key))
       .sort()
       .find((key) => {
         const values = ofType.map((mo) => mo[key]);
@@ -166,6 +171,8 @@ function hiddenCount() {
 
 describe('Navigation and search — tree filter', () => {
   let world: World;
+
+  afterEach(() => restoreWorld());
 
   beforeEach(() => {
     cy.request('POST', '/_mock/reset');
@@ -318,9 +325,7 @@ describe('Navigation and search — tree filter', () => {
   it('keeps the assets of a level with an unavailable device below them', () => {
     const [down, up] = world.withDevice;
 
-    cy.request('PUT', `/inventory/managedObjects/${down.deviceId}`, {
-      c8y_Availability: { status: 'UNAVAILABLE', lastMessage: '2026-10-01T00:00:00.000Z' },
-    });
+    makeUnavailable(down.deviceId);
     openDrawer();
     openFilterTab();
     cy.get(tf('add')).click();

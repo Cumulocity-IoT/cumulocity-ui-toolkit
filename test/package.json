@@ -19,7 +19,8 @@
     "uuid": "14.0.0"
   },
   "devDependencies": {
-    "@cumulocity-iot/ui-sdk": "2.3.3",
+    "@cumulocity-iot/ui-sdk": "file:../.sdk-pack/ui-sdk.tgz",
+    "@playwright/test": "1.64.1",
     "@types/chai": "^5.2.3",
     "@types/lodash": "^4.17.24",
     "cypress": "~15.15.0",

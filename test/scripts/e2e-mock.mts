@@ -3,7 +3,7 @@
 // tenant when missing — it is not committed) and the cockpit
 // release build of the Web SDK version the workspace is on (root package.json →
 // @c8y/ngx-components), the plugin's dev server proxies to it.
-//   node scripts/e2e-mock.mts <plugin> [--open] [--browser=chrome] [--spec=<file>]
+//   node scripts/e2e-mock.mts <plugin> [--open] [--browser=chrome] [--spec=<file>] [--runner=playwright]
 // E2E_MOCK_PORT / E2E_DEV_PORT override the ports from c8y-ui.json (parallel runs).
 // E2E_SHELL_VERSION runs the plugin in another cockpit release (shell-compat.yml: the latest CD release),
 // E2E_MOCK_GAPS=<file> lists the requests the mock does not emulate (endpoints or parameters it lacks).
@@ -18,6 +18,7 @@ const [plugin, ...rest] = process.argv.slice(2);
 const open = rest.includes('--open');
 const spec = rest.find((a) => a.startsWith('--spec='))?.split('=')[1];
 const browser = rest.find((a) => a.startsWith('--browser='))?.split('=')[1] ?? 'chromium';
+const runner = rest.find((a) => a.startsWith('--runner='))?.split('=')[1] ?? 'cypress';
 if (!plugin) {
   console.error('usage: e2e-mock.mts <plugin> [--open] [--browser=chrome]');
   process.exit(1);
@@ -75,20 +76,29 @@ const serve = run(
 let code = 1;
 try {
   await waitFor(`${devUrl}/apps/cockpit/index.html`, 300_000);
-  const cypress = run(
-    'pnpm',
-    ['-C', 'test', 'exec', '--', 'cypress', open ? 'open' : 'run', ...(open ? [] : ['--browser', browser]), '--config-file', `config/${plugin}.config.ts`, ...(spec ? ['--spec', spec] : [])],
-    rootDir,
-    {
-      C8Y_CYPRESS_URL: devUrl,
-      C8Y_SHELL_TARGET: 'cockpit',
-      C8Y_TENANT: world.tenant.id,
-      C8Y_USERNAME: world.currentUser,
-      // Users without a password in the world accept any.
-      C8Y_PASSWORD: process.env.C8Y_MOCK_PASSWORD ?? 'mock-password',
-      C8Y_MOCK_URL: mock.url,
-    }
-  );
+  const runEnv = {
+    C8Y_CYPRESS_URL: devUrl,
+    C8Y_SHELL_TARGET: 'cockpit',
+    C8Y_TENANT: world.tenant.id,
+    C8Y_USERNAME: world.currentUser,
+    // Users without a password in the world accept any.
+    C8Y_PASSWORD: process.env.C8Y_MOCK_PASSWORD ?? 'mock-password',
+    C8Y_MOCK_URL: mock.url,
+  };
+  const cypress =
+    runner === 'playwright'
+      ? run(
+          resolve(testDir, 'node_modules/.bin/playwright'),
+          ['test', ...(open ? ['--ui'] : []), ...(spec ? [spec] : [])],
+          testDir,
+          { ...runEnv, E2E_PLUGIN: plugin, C8Y_BASEURL: devUrl, C8Y_SHELL: 'cockpit' }
+        )
+      : run(
+          'pnpm',
+          ['-C', 'test', 'exec', '--', 'cypress', open ? 'open' : 'run', ...(open ? [] : ['--browser', browser]), '--config-file', `config/${plugin}.config.ts`, ...(spec ? ['--spec', spec] : [])],
+          rootDir,
+          runEnv
+        );
   code = await new Promise<number>((done) => cypress.on('exit', (c) => done(c ?? 1)));
 } finally {
   serve.kill();

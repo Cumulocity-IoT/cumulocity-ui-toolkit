@@ -70,6 +70,8 @@ test/cypress/videos
 test/cypress/screenshots
 test/cypress/downloads
 test/cypress/logs
+# Playwright (test/playwright.config.ts → outputDir)
+test/playwright-results
 # Claude Code local (per-machine) settings
 .claude/settings.local.json
 

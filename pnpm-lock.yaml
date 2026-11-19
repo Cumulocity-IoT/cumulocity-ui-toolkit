@@ -6,10 +6,8 @@ settings:
 
 overrides:
   dompurify@3: ^3.4.17
-  follow-redirects@1: ^1.16.2
   form-data@4: ^4.0.6
   http-proxy-middleware@3: ^3.0.7
-  joi@18: 18.3.1
   piscina@5: ^5.3.2
   postcss@8: ^8.5.18
   systeminformation@5: 5.33.16
@@ -117,8 +115,8 @@ importers:
         specifier: 1024.21.3
         version: 1024.21.3(@c8y/client@1024.21.3)
       '@cumulocity-iot/ui-sdk':
-        specifier: 2.3.3
-        version: 2.3.3(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.41(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(cypress@15.15.0)
+        specifier: file:./.sdk-pack/ui-sdk.tgz
+        version: file:.sdk-pack/ui-sdk.tgz(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.41(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@playwright/test@1.64.1)
       '@module-federation/vite':
         specifier: ~1.23.5
         version: 1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0))
@@ -239,6 +237,8 @@ importers:
       shared:
         specifier: workspace:*
         version: link:../shared
+
+  packages/kpi-trend-widget: {}
 
   packages/kpi-widget:
     dependencies:
@@ -381,8 +381,11 @@ importers:
         version: 14.0.0
     devDependencies:
       '@cumulocity-iot/ui-sdk':
-        specifier: 2.3.3
-        version: 2.3.3(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.42(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(cypress@15.15.0)
+        specifier: file:../.sdk-pack/ui-sdk.tgz
+        version: file:.sdk-pack/ui-sdk.tgz(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.42(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@playwright/test@1.64.1)(cypress@15.15.0)
+      '@playwright/test':
+        specifier: 1.64.1
+        version: 1.64.1
       '@types/chai':
         specifier: ^5.2.3
         version: 5.2.3
@@ -1443,14 +1446,25 @@ packages:
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
 
-  '@cumulocity-iot/ui-sdk@2.3.3':
-    resolution: {integrity: sha512-VIhSH+OW1E7LTYHQMH8u5p3B1DFLXRHdqn6RejWzE+Xfyj+9ypBSkCAHFQcuHGmiIjAwp7gyeiA+sdV2sZqG8A==, tarball: https://npm.pkg.github.com/download/@cumulocity-iot/ui-sdk/2.3.3/95f5cd104fa8c17f20111f311fe6084189f991c2}
+  '@cumulocity-iot/ui-sdk@file:.sdk-pack/ui-sdk.tgz':
+    resolution: {integrity: sha512-ZCT5O4F41LzuZGnC3CCNRdq6/mOk4xrMGI1T8liBOTqr0zsWNR5YvJf3BxcwAyBXzaqYCfA1oddA+T3ga28DYA==, tarball: file:.sdk-pack/ui-sdk.tgz}
+    version: 0.0.0-development
     engines: {node: '>=22.13.0'}
     hasBin: true
     peerDependencies:
       '@module-federation/vite': ^1.23.0
       '@oxc-angular/vite': '>=0.0.41 <0.1.0'
+      '@playwright/test': ^1.64.1
       cypress: ^14.5.4
+    peerDependenciesMeta:
+      '@module-federation/vite':
+        optional: true
+      '@oxc-angular/vite':
+        optional: true
+      '@playwright/test':
+        optional: true
+      cypress:
+        optional: true
 
   '@cypress/grep@5.1.0':
     resolution: {integrity: sha512-n/8m5g2AuZf4thHhuo+rp7Fgkfm06k0uM9NlP0GrfWE5vaIJJ+8U10SOtjVj9bapjYI7l9RZiT87XSBU3wBFOA==}
@@ -2566,6 +2580,11 @@ packages:
   '@pkgr/core@0.3.6':
     resolution: {integrity: sha512-SEeaJLb3qBNF/OaXnaR1NmmBbFYk1zC0ZH/52fATcRPLFg/p791YrcyFFy44Bo9sLaGuSuLp5Q6axbb/O+v/RA==}
     engines: {node: ^14.18.0 || >=16.0.0}
+
+  '@playwright/test@1.64.1':
+    resolution: {integrity: sha512-IaYGml/nSOiZWROfPtuIL7neuu9qDOZ3TNvNljUIrhDMxiGTgPjzj/g9p9RxpS2tSepPDRY+UwAaEeiKtUvIAg==}
+    engines: {node: '>=20'}
+    hasBin: true
 
   '@rolldown/binding-android-arm-eabi@1.2.15':
     resolution: {integrity: sha512-aLcgK9gIJ3YRvrrtfSBbRa27F5WrpiTaPulnFpsHPxpUHgFlSgnU4854MHwoRGEBhfRJDWCS2WQ7lIjskE9Olw==}
@@ -6470,6 +6489,16 @@ packages:
     resolution: {integrity: sha512-emEcLuomt2j03vxD54giVB4SxTjnsqkU692xZOZXHDVoYyypEm+b3jpiTcc+Cf+myooc+/Ly0z01jqeNHVgJGw==}
     engines: {node: '>=16.0.0'}
 
+  playwright-core@1.64.1:
+    resolution: {integrity: sha512-BC4s8y6SEVA6Q1rSxZTto8hI1KUI3xXlHGZgvGqP4IqPdI/a6FX9H29IDNz7vKo9l21b6LfYosScPL6M3xxyDQ==}
+    engines: {node: '>=20'}
+    hasBin: true
+
+  playwright@1.64.1:
+    resolution: {integrity: sha512-HCrVhHr5QQuwYoswEUGTb7gGp522yflbv/ST8nF4sFWGuLjQCt17Q/EubpGGSNKYn1tsTCPZxqHhHCfVURu7UA==}
+    engines: {node: '>=20'}
+    hasBin: true
+
   pngjs@5.0.0:
     resolution: {integrity: sha512-40QW5YalBNfQo5yRYmiw7Yz6TKKVr3h6970B2YE+3fQpsWcrbj1PzJgxeJ19DRQjhMbKPIuMY8rFaXc8moolVw==}
     engines: {node: '>=10.13.0'}
@@ -9571,21 +9600,24 @@ snapshots:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
 
-  '@cumulocity-iot/ui-sdk@2.3.3(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.41(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(cypress@15.15.0)':
+  '@cumulocity-iot/ui-sdk@file:.sdk-pack/ui-sdk.tgz(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.41(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@playwright/test@1.64.1)':
     dependencies:
+      citty: 0.2.2
+      fflate: 0.8.3
+    optionalDependencies:
       '@module-federation/vite': 1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0))
       '@oxc-angular/vite': 0.0.41(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0))
-      citty: 0.2.2
-      cypress: 15.15.0
-      fflate: 0.8.3
+      '@playwright/test': 1.64.1
 
-  '@cumulocity-iot/ui-sdk@2.3.3(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.42(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(cypress@15.15.0)':
+  '@cumulocity-iot/ui-sdk@file:.sdk-pack/ui-sdk.tgz(@module-federation/vite@1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@oxc-angular/vite@0.0.42(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0)))(@playwright/test@1.64.1)(cypress@15.15.0)':
     dependencies:
+      citty: 0.2.2
+      fflate: 0.8.3
+    optionalDependencies:
       '@module-federation/vite': 1.23.5(typescript@5.9.3)(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0))
       '@oxc-angular/vite': 0.0.42(vite@8.3.5(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.6)(sass@1.97.3)(terser@5.46.0)(tsx@4.22.4)(yaml@2.9.0))
-      citty: 0.2.2
+      '@playwright/test': 1.64.1
       cypress: 15.15.0
-      fflate: 0.8.3
 
   '@cypress/grep@5.1.0(@babel/core@7.29.7)(cypress@15.15.0)':
     dependencies:
@@ -10498,6 +10530,7 @@ snapshots:
       '@oxc-angular/binding-linux-x64-musl': 0.0.42
       '@oxc-angular/binding-win32-arm64-msvc': 0.0.42
       '@oxc-angular/binding-win32-x64-msvc': 0.0.42
+    optional: true
 
   '@oxc-project/types@0.113.0': {}
 
@@ -10659,6 +10692,10 @@ snapshots:
       tsyringe: 4.10.0
 
   '@pkgr/core@0.3.6': {}
+
+  '@playwright/test@1.64.1':
+    dependencies:
+      playwright: 1.64.1
 
   '@rolldown/binding-android-arm-eabi@1.2.15':
     optional: true
@@ -14917,6 +14954,12 @@ snapshots:
       pvtsutils: 1.3.6
       pvutils: 1.1.5
       tslib: 2.8.1
+
+  playwright-core@1.64.1: {}
+
+  playwright@1.64.1:
+    dependencies:
+      playwright-core: 1.64.1
 
   pngjs@5.0.0: {}
 

@@ -87,11 +87,9 @@ function openDrawer() {
 describe('Asset Navigator — tree drawer', () => {
   let world: World;
 
-  before(() => {
-    cy.request('POST', '/_mock/reset');
-  });
-
   beforeEach(() => {
+    // Per test: the drawer's pin and width are stored on the user and would carry over to the next test.
+    cy.request('POST', '/_mock/reset');
     cy.getAuth().login().disableGainsight();
     cy.clearLocalStorage();
     loadWorld().then((w) => (world = w));
