@@ -461,6 +461,27 @@ export class ReminderService implements OnDestroy {
     }
   }
 
+  /**
+   * Route to the reminder's asset, honoring `ReminderTenantConfig.linkOverride`
+   * for the reminder's type. Falls back to the generic `/device/{id}` or
+   * `/group/{id}` route when no override is configured for the type.
+   * @param {Reminder} reminder - The reminder to build the route for.
+   * @returns {string} The route path, e.g. `/device/123` or an overridden path.
+   */
+  getReminderRouterLink(reminder: Reminder): string {
+    const override = reminder.reminderType
+      ? this._reminderTenantConfig?.linkOverride?.[reminder.reminderType]
+      : undefined;
+
+    if (override) {
+      return override.replace('{id}', reminder.source.id);
+    }
+
+    const assetType = reminder.isGroup ? 'group' : 'device';
+
+    return `/${assetType}/${reminder.source.id}`;
+  }
+
   private getAssetUrlFromReminder(reminder: Reminder, absoluteUrl = false): string {
     let url = '';
 
@@ -468,9 +489,7 @@ export class ReminderService implements OnDestroy {
       url = `${location.origin}${location.pathname}${location.search}#`;
     }
 
-    const assetType = reminder.isGroup ? 'group' : 'device';
-
-    url += `/${assetType}/${reminder.source.id}`;
+    url += this.getReminderRouterLink(reminder);
 
     return url;
   }

@@ -234,6 +234,47 @@ describe('ReminderService', () => {
     });
   });
 
+  describe('getReminderRouterLink()', () => {
+    it('returns the generic device route when no override is configured', () => {
+      const reminder = makeReminder({ source: { id: 'device-1', name: 'Device 1' } });
+
+      expect(service.getReminderRouterLink(reminder)).toBe('/device/device-1');
+    });
+
+    it('returns the generic group route when no override is configured', () => {
+      const reminder = makeReminder({
+        source: { id: 'group-1', name: 'Group 1' },
+        isGroup: {},
+      });
+
+      expect(service.getReminderRouterLink(reminder)).toBe('/group/group-1');
+    });
+
+    it('substitutes {id} in the override for the reminder type', () => {
+      service['_reminderTenantConfig'] = {
+        linkOverride: { 'downtime.start': '/group/{id}/dashboard/downtimeDashboard' },
+      };
+      const reminder = makeReminder({
+        source: { id: 'group-1', name: 'Group 1' },
+        isGroup: {},
+        reminderType: 'downtime.start',
+      });
+
+      expect(service.getReminderRouterLink(reminder)).toBe(
+        '/group/group-1/dashboard/downtimeDashboard'
+      );
+    });
+
+    it('falls back to the generic route for a type without an override entry', () => {
+      service['_reminderTenantConfig'] = {
+        linkOverride: { 'downtime.start': '/group/{id}/dashboard/downtimeDashboard' },
+      };
+      const reminder = makeReminder({ reminderType: 'maintenance' });
+
+      expect(service.getReminderRouterLink(reminder)).toBe('/device/device-1');
+    });
+  });
+
   describe('groupReminders()', () => {
     it('returns empty due/upcoming/cleared groups for empty input', () => {
       const result = service.groupReminders([]);

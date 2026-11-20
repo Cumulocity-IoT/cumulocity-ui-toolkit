@@ -74,6 +74,13 @@ export interface ResponsibilityFilter extends Partial<AssetFilterConfig> {
 export interface ReminderTenantConfig {
   useContext?: boolean;
   responsibilityFilter?: ResponsibilityFilter;
+  /**
+   * Per reminder-type route override for the asset link in the drawer, toast, and
+   * browser notification. Keyed by `ReminderType['id']`; the value is a route path
+   * containing an `{id}` placeholder, replaced with `reminder.source.id`. Types
+   * without an entry keep the generic `/device/{id}` or `/group/{id}` link.
+   */
+  linkOverride?: Record<ReminderType['id'], string>;
 }
 
 export interface ReminderGroup {

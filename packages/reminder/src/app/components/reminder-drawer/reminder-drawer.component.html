@@ -226,18 +226,15 @@
         </button>
       }
       <!-- asset reference -->
-      @if (reminder.isGroup) {
-        <a [routerLink]="['/group', reminder.source.id]">
+      <a [routerLink]="reminderService.getReminderRouterLink(reminder)">
+        @if (reminder.isGroup) {
           <i [c8yIcon]="'c8y-group-open'"></i>
-          {{ reminder.source.name }}
-        </a>
-      } @else {
-        <a [routerLink]="['/device', reminder.source.id]">
+        } @else {
           <!-- arrows-dotted-left-right -->
           <i [c8yIcon]="'c8y-device'"></i>
-          {{ reminder.source.name }}
-        </a>
-      }
+        }
+        {{ reminder.source.name }}
+      </a>
     </footer>
   </li>
 </ng-template>

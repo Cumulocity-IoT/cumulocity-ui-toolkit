@@ -78,6 +78,23 @@ Selectable reminder types can be configured using the tenant option – best usi
 ]
 ```
 
+### Link Override
+
+The asset link shown in the drawer, toast, and browser notification (which points at `/device/{id}` or `/group/{id}` by default) can be overridden per reminder type, using the `config` tenant option under Category `c8y.reminder`, Key `config`.
+
+Set `linkOverride` to an object keyed by `ReminderType.id`; the value is a route path containing an `{id}` placeholder, which is replaced with the reminder's asset (device or group) ID. Types without an entry keep the default link.
+
+##### Example Config
+
+```json
+{
+  "linkOverride": {
+    "downtime-start": "/group/{id}/dashboard/downtimeDashboard",
+    "downtime-end": "/group/{id}/dashboard/downtimeDashboard"
+  }
+}
+```
+
 ---
 
 <!--
