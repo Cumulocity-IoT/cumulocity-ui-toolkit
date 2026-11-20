@@ -1,12 +1,4 @@
-import {
-  Component,
-  effect,
-  inject,
-  type OnDestroy,
-  type OnInit,
-  signal,
-  untracked,
-} from '@angular/core';
+import { Component, effect, inject, type OnDestroy, type OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { AlertService, CoreModule, HeaderService } from '@c8y/ngx-components';
@@ -61,7 +53,6 @@ export class ReminderDrawerComponent implements OnInit, OnDestroy {
   readonly openChange = new Subject<boolean>();
   reminders: Reminder[] = [];
   reminderGroups: ReminderGroup[] = [];
-  lastUpdate?: Date;
   types: ReminderType[] = [];
 
   // for template
@@ -96,22 +87,23 @@ export class ReminderDrawerComponent implements OnInit, OnDestroy {
   private rightDrawerOpen = false;
   private updateTimer?: NodeJS.Timeout;
   private _previousState: Reminder['id'][][] = [];
+  private _lastDigestContent?: string;
   private _contextFilterEnabled = REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG.useContext ?? false;
 
   constructor() {
+    // effect() requires an injection context, available here but not from ngOnInit.
     // Live updates on reminders and config come from the service signals.
-    // The handlers group reminders, which reads and writes the config signal —
-    // run them untracked so each effect only depends on its own source signal.
     effect(() => {
       const reminders = this.reminderService.reminders();
+      const content = this.contentKey(reminders);
 
-      untracked(() => this.digestReminders(reminders));
-    });
-    effect(() => {
-      const config = this.reminderService.config();
+      // `diff` is refreshed by the service without any visible change, unless a reminder became due
+      if (content === this._lastDigestContent) return;
 
-      untracked(() => this.handleConfigChange(config));
+      this._lastDigestContent = content;
+      this.digestReminders(reminders);
     });
+    effect(() => this.handleConfigChange(this.reminderService.config()));
   }
 
   ngOnInit(): void {
@@ -178,7 +170,9 @@ export class ReminderDrawerComponent implements OnInit, OnDestroy {
         this.reminderService.setConfig('toast', this.toastNotificationsEnabled);
         break;
       case 'browser':
-        this.reminderService.setConfig('browser', this.browserNotificationsEnabled);
+        void this.reminderService.setBrowserNotifications(
+          Boolean(this.browserNotificationsEnabled)
+        );
         break;
     }
   }
@@ -204,12 +198,18 @@ export class ReminderDrawerComponent implements OnInit, OnDestroy {
    * @returns void
    */
   async updateReminder(reminder: Reminder, status: Reminder['status']): Promise<void> {
+    const previousStatus = reminder.status;
+
+    // optimistic: the service keeps this until a poll reports a real change
     reminder.status = status;
 
     try {
       await this.reminderService.update(reminder);
       this.alertService.success(`Reminder ${String(status).toLowerCase()}`);
     } catch (error) {
+      reminder.status = previousStatus;
+      // the list may have been regrouped with the optimistic status in the meantime
+      this.reminderService.refreshView();
       this.alertService.danger('Failed to update reminder', `${JSON.stringify(error)}`);
     }
   }
@@ -227,7 +227,6 @@ export class ReminderDrawerComponent implements OnInit, OnDestroy {
    */
   private digestReminders(reminders: Reminder[]): void {
     this.reminders = reminders;
-    this.lastUpdate = new Date();
     this.reminderGroups = this.reminderService.groupReminders(reminders, this.context);
 
     if (reminders.length) this.highlightChanges();
@@ -361,6 +360,21 @@ export class ReminderDrawerComponent implements OnInit, OnDestroy {
         if (open) drawer?.classList.add(REMINDER__DRAWER_OPEN_CLASS);
       }, 1);
     }
+  }
+
+  /**
+   * Content of the list as rendered: the exact `diff` and the temporary highlight flag
+   * are left out, but whether a reminder is due is kept, as it decides its group.
+   * @param reminders - The list of reminders.
+   * @returns A string that changes only when the drawer needs to regroup.
+   */
+  private contentKey(reminders: Reminder[]): string {
+    return JSON.stringify(
+      reminders.map(({ diff, changed: _changed, ...rest }) => ({
+        ...rest,
+        due: diff !== undefined && diff >= 0,
+      }))
+    );
   }
 
   /**

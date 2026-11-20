@@ -1,5 +1,11 @@
 # Reminder Plugin Changelog
 
+## 2.1.0
+
+### Features
+
+- **Link Override**: `ReminderTenantConfig` now supports an optional `linkOverride` map, keyed by `ReminderType.id`, to replace the default `/device/{id}` or `/group/{id}` asset link (drawer, toast, and browser notification) with a custom route containing an `{id}` placeholder.
+
 ## 2.0.0
 
 ### Breaking Changes
@@ -15,6 +21,37 @@
 - **Drawer layout**: the group headers (DUE / UPCOMING / CLEARED) use the drawer's 16px inset like the rest of the drawer; the counts and chevrons no longer touch the drawer edges and the focus outline is no longer clipped.
 - Tenant notification defaults also apply to existing users: only switches a user set themselves keep their stored value (older versions stored every switch).
 - A tenant option that is valid JSON but no object (e.g. `null`) no longer stops the plugin from starting.
+
+## 1.5.2
+
+### Features
+
+- **Link Override**: `ReminderTenantConfig` now supports an optional `linkOverride` map, keyed by `ReminderType.id`, to replace the default `/device/{id}` or `/group/{id}` asset link (drawer, toast, and browser notification) with a custom route containing an `{id}` placeholder.
+
+## 1.5.1
+
+### Features
+
+- **Notifications**: Browser notifications are now sent grouped per source, show the reminder type in the body, and announce all reminders due at the same time
+- **Drawer**: The last update is now shown with an explicit date format
+
+### Performance
+
+- **Polling instead of realtime subscription**: Replaced the tenant-wide realtime event subscription (`EventRealtimeService.onAll$()`), which delivered unrelated events at high volume on busy tenants and triggered a full change-detection cycle per message, with polling: reminders are loaded every 30 s, on tab visibility (5 s minimum gap), after an update, and after creating a reminder, with concurrent refreshes sharing the load in flight
+  - Due counts are computed from memory where possible, and only re-queried when the list changed, the counter is outdated, or it's older than 5 minutes
+  - Due reminders are announced from a single place, in the active tab only, with a shared `localStorage` record so multiple tabs don't repeat each other
+  - Drawer re-digest is skipped when only a reminder's computed diff changes, so unrelated UI doesn't regroup
+
+### Fixes
+
+- **Asset links**: Fixed the drawer's device/group footer links not navigating (missing `RouterLink` import)
+- **Drawer date format**: Fixed the header date rendering a literal `"DD"` by using Angular `DatePipe` symbols (`'dd.MM.yyyy'`) instead of moment-style ones
+- **Optimistic updates**: The drawer now reverts a reminder's optimistic status if an update request fails
+- **Realtime updates**: Reminder view updates are now throttled (not debounced) and no longer processed for tenant-wide no-op deletes unrelated to reminders
+
+## 1.5.0
+
+- update to c8y 1023.14 (2026-lts)
 
 ## 1.4.5
 

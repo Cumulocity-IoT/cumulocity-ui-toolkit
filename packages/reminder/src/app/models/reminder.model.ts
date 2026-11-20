@@ -10,6 +10,25 @@ export const REMINDER__MAIN_HEADER_CLASS = 'app-main-header';
 export const REMINDER__COUNTER_DISPLAY_THRESHOLD = 9;
 export const REMINDER__TEXT_LENGTH = 100;
 export const REMINDER__HIGHLIGHT_DURATION_SECONDS = 5;
+/**
+ * Reminders are polled instead of received via realtime: the event realtime
+ * channel is tenant-wide (`/events/*`), and on busy tenants every message on it
+ * triggers a full change detection cycle, regardless of whether it is a reminder.
+ */
+export const REMINDER__POLL_INTERVAL_MS = 30 * 1000;
+/**
+ * How far back a due reminder is still announced. Covers a reminder created
+ * elsewhere for "now" (the modal rounds down to the minute, up to 59 s) plus one
+ * poll interval, while a tab resuming from sleep does not replay older ones.
+ */
+export const REMINDER__ANNOUNCE_WINDOW_MS = 2 * 60 * 1000;
+/**
+ * Maximum age of the due counter from the API when nothing in the first page changed.
+ * The count query scans all reminder events of the tenant, so it is not sent on every poll.
+ */
+export const REMINDER__COUNTER_MAX_AGE_MS = 5 * 60 * 1000;
+/** Minimum gap between loads triggered by switching back to the tab. */
+export const REMINDER__REFRESH_MIN_INTERVAL_MS = 5 * 1000;
 export const REMINDER__TENANT_OPTION__CATEGORY: ITenantOption['category'] = 'c8y.reminder';
 export const REMINDER__TENANT_OPTION__TYPE_KEY: ITenantOption['key'] = 'types';
 export const REMINDER__TENANT_OPTION__CONFIG_KEY: ITenantOption['key'] = 'config';
@@ -17,6 +36,8 @@ export const REMINDER__TENANT_OPTION__DEFAULTS_KEY: ITenantOption['key'] = 'defa
 export const REMINDER__TENANT_OPTION__ASSET_ACCESS_KEY: ITenantOption['key'] = 'assetFilter';
 export const REMINDER__LOCAL_STORAGE__FILTER = 'c8y_rpFilter';
 export const REMINDER__LOCAL_STORAGE__CONFIG = 'c8y_rpConfig';
+/** Reminders announced recently (`id@time` → due time), shared by all tabs. */
+export const REMINDER__LOCAL_STORAGE__ANNOUNCED = 'c8y_rpAnnounced';
 /**
  * The notification switches (`browser`, `toast`) the user set themselves. Only these keep
  * their stored value; the others follow the tenant defaults (`c8y.reminder` / `defaults`).
@@ -33,9 +54,19 @@ export interface Reminder extends IEvent {
   type: typeof REMINDER__TYPE;
   status: ReminderStatus;
   isGroup?: object;
+  /** ms since `time`; positive once the reminder is due. Set locally, not stored. */
   diff?: number;
+  /** Highlight flag set by the drawer for a few seconds. Set locally, not stored. */
+  changed?: boolean;
   isCleared?: object;
   reminderType?: ReminderType['id'];
+}
+
+export interface ReminderTenantOptions {
+  types?: ReminderType[];
+  config?: ReminderTenantConfig;
+  assetFilter?: AssetFilterConfig;
+  defaults?: ReminderConfig;
 }
 
 export interface ReminderConfig {
@@ -52,6 +83,13 @@ export interface ResponsibilityFilter extends Partial<AssetFilterConfig> {
 export interface ReminderTenantConfig {
   useContext?: boolean;
   responsibilityFilter?: ResponsibilityFilter;
+  /**
+   * Per reminder-type route override for the asset link in the drawer, toast, and
+   * browser notification. Keyed by `ReminderType['id']`; the value is a route path
+   * containing an `{id}` placeholder, replaced with `reminder.source.id`. Types
+   * without an entry keep the generic `/device/{id}` or `/group/{id}` link.
+   */
+  linkOverride?: Record<ReminderType['id'], string>;
 }
 
 /** Tenant-wide notification defaults, used until a user stores their own settings. */

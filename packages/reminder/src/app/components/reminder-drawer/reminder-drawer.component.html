@@ -1,8 +1,12 @@
 <aside [class.open]="open()" data-cy="reminder--drawer">
   <header>
     <h2 translate>Reminder</h2>
-    <small class="text-muted" title="{{ lastUpdate | c8yDate }}" data-cy="reminder--last-update">
-      {{ 'reminder.labels.last-update' | translate }}: {{ lastUpdate | c8yDate: 'short' }} <!-- time ago -->
+    <small
+      class="text-muted"
+      title="{{ reminderService.lastLoaded() | c8yDate }}"
+      data-cy="reminder--last-update"
+    >
+      {{ 'reminder.labels.last-update' | translate }}: {{ reminderService.lastLoaded() | c8yDate: 'dd.MM.yyyy HH:mm:ss' }} <!-- time ago -->
     </small>
   </header>
 
@@ -237,18 +241,15 @@
         </button>
       }
       <!-- asset reference -->
-      @if (reminder.isGroup) {
-        <a [routerLink]="['/group', reminder.source.id]" data-cy="reminder--asset-link">
+      <a [routerLink]="reminderService.getReminderRouterLink(reminder)" data-cy="reminder--asset-link">
+        @if (reminder.isGroup) {
           <i [c8yIcon]="'c8y-group-open'"></i>
-          {{ reminder.source.name }}
-        </a>
-      } @else {
-        <a [routerLink]="['/device', reminder.source.id]" data-cy="reminder--asset-link">
+        } @else {
           <!-- arrows-dotted-left-right -->
           <i [c8yIcon]="'c8y-device'"></i>
-          {{ reminder.source.name }}
-        </a>
-      }
+        }
+        {{ reminder.source.name }}
+      </a>
     </footer>
   </li>
 </ng-template>
