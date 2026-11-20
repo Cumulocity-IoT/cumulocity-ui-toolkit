@@ -1,13 +1,13 @@
 import { inject, Injectable } from '@angular/core';
-import { IManagedObject } from '@c8y/client';
-import { FeatureGroup, LatLng, latLng, Marker } from 'leaflet';
+import { type IManagedObject } from '@c8y/client';
+import { FeatureGroup, type LatLng, latLng, Marker } from 'leaflet';
 import { has, isEmpty, set } from 'lodash';
 import {
-  BasicLayerConfig,
+  type BasicLayerConfig,
   isQueryLayerConfig,
-  LayerConfig,
+  type LayerConfig,
   MyLayer,
-  PollingDelta,
+  type PollingDelta,
 } from '../layered-map-widget.model';
 import { MarkerIconService } from './marker-icon.service';
 import { PopUpService } from './popup.service';

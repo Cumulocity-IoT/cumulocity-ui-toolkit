@@ -1,4 +1,4 @@
-import { DynamicWidgetDefinition, hookWidget } from '@c8y/ngx-components';
+import { type DynamicWidgetDefinition, hookWidget } from '@c8y/ngx-components';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { assets } from './assets/assets';
 

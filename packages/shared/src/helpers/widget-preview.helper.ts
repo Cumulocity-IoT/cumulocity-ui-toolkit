@@ -1,5 +1,5 @@
-import { TemplateRef } from '@angular/core';
-import { WidgetConfigService } from '@c8y/ngx-components/context-dashboard';
+import { type TemplateRef } from '@angular/core';
+import { type WidgetConfigService } from '@c8y/ngx-components/context-dashboard';
 
 /**
  * Registers or clears the widget configuration preview.
@@ -31,6 +31,6 @@ export function setWidgetPreview(
   // ESLint type-checks against the root tsconfig, where `strictNullChecks` is
   // still off, so it sees this assertion as redundant — under this package's
   // strict config it is required.
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
   service.setPreview(null as unknown as true);
 }

@@ -2,10 +2,10 @@ import {
   effect,
   input,
   output,
-  AfterViewInit,
+  type AfterViewInit,
   Component,
-  OnDestroy,
-  OnInit,
+  type OnDestroy,
+  type OnInit,
   ViewChild,
 } from '@angular/core';
 import { Subject } from 'rxjs';

@@ -1,8 +1,8 @@
 import { inject, Injectable } from '@angular/core';
 import { FetchClient, InventoryService, TenantOptionsService } from '@c8y/client';
-import { defer, firstValueFrom, from, Observable, of, throwError } from 'rxjs';
+import { defer, firstValueFrom, from, type Observable, of, throwError } from 'rxjs';
 import { catchError, map, retry, switchMap, tap } from 'rxjs/operators';
-import { AssetFilterConfig, AssetFilterMethod } from '../models/asset-access.model';
+import { type AssetFilterConfig, type AssetFilterMethod } from '../models/asset-access.model';
 
 export type { AssetFilterMethod };
 export type { AssetFilterConfig };

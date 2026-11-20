@@ -1,6 +1,6 @@
-import { AbstractControl, ValidationErrors } from '@angular/forms';
-import { FormlyFieldConfig } from '@ngx-formly/core';
-import { AstNode } from './reverse-queries-util.model';
+import { type AbstractControl, type ValidationErrors } from '@angular/forms';
+import { type FormlyFieldConfig } from '@ngx-formly/core';
+import { type AstNode } from './reverse-queries-util.model';
 import { QueryParser } from './query-parser';
 import { Tokenizer } from './string-tokenizer';
 import { unwrapQuery } from './unwrap-query';

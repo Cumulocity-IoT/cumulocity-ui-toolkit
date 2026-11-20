@@ -1,6 +1,6 @@
-import { inject, output, Component, Input, TemplateRef } from '@angular/core';
-import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
-import { OperationButtonConfig } from '../../models/operations-widget-config.model';
+import { inject, output, Component, Input, type TemplateRef } from '@angular/core';
+import { type BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
+import { type OperationButtonConfig } from '../../models/operations-widget-config.model';
 import { CoreModule } from '@c8y/ngx-components';
 
 @Component({

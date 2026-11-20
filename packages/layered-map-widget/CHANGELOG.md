@@ -1,5 +1,15 @@
 # Layered Map Widget Changelog
 
+## 8.0.0
+
+### Breaking Changes
+
+- Built for Cumulocity Web SDK 1024.21.x / Angular 21: needs a cockpit on 1024 or newer (part of toolkit release v1.0.0). Stay on 7.0.1 for 1023 shells.
+
+### Bug Fixes
+
+- The map redraws after the widget is resized (drag, size preset, fullscreen); on 1024 dashboards it kept its old size with grey, untiled areas.
+
 ## 7.0.0 — 2026-06-23
 
 ### Features

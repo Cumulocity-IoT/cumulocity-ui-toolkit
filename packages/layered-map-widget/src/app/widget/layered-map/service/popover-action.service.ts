@@ -2,19 +2,19 @@ import { inject, Injectable } from '@angular/core';
 import {
   AlarmService,
   EventService,
-  IAlarm,
-  IEvent,
-  IManagedObject,
-  IOperation,
-  IResult,
+  type IAlarm,
+  type IEvent,
+  type IManagedObject,
+  type IOperation,
+  type IResult,
   OperationService,
 } from '@c8y/client';
 import { AlertService } from '@c8y/ngx-components';
 import {
-  AlarmAction,
-  EventAction,
-  OperationAction,
-  PopoverAction,
+  type AlarmAction,
+  type EventAction,
+  type OperationAction,
+  type PopoverAction,
 } from '../layered-map-widget.model';
 
 @Injectable()
@@ -23,17 +23,6 @@ export class PopoverActionService {
   private alarmService = inject(AlarmService);
   private eventService = inject(EventService);
   private alert = inject(AlertService);
-
-  send(action: PopoverAction, mo: IManagedObject) {
-    switch (action.type) {
-      case 'alarm':
-        return this.addToast(action, this.sendAlarm(action, mo));
-      case 'event':
-        return this.addToast(action, this.sendEvent(action, mo));
-      case 'operation':
-        return this.addToast(action, this.sendOperation(action, mo));
-    }
-  }
 
   protected addToast<T>(action: PopoverAction, promise: Promise<IResult<T>>) {
     return promise.then(
@@ -97,5 +86,16 @@ export class PopoverActionService {
     newOperation = { ...newOperation, ...partial };
 
     return this.operationService.create(newOperation);
+  }
+
+  send(action: PopoverAction, mo: IManagedObject) {
+    switch (action.type) {
+      case 'alarm':
+        return this.addToast(action, this.sendAlarm(action, mo));
+      case 'event':
+        return this.addToast(action, this.sendEvent(action, mo));
+      case 'operation':
+        return this.addToast(action, this.sendOperation(action, mo));
+    }
   }
 }

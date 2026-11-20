@@ -1,0 +1,55 @@
+:host {
+  display: block;
+}
+
+.ps-qa-section {
+  // No ring on the region itself: the active row inside it draws one (`--focused` below),
+  // and outlining the section as well would double up — two boxes for one focus.
+  &:focus,
+  &:focus-visible {
+    outline: none;
+  }
+}
+
+.ps-qa-row {
+  width: 100%;
+  gap: 6px;
+  // Fixed, and tunable by the container: the drawer lines the rule *below* this row up with
+  // the navigator's own header separator, which only works if the row's height is known
+  // rather than content-derived (see `explorer-drawer.component.less`).
+  height: var(--ps-tree-quick-row-height, 34px);
+  padding: 0 8px;
+  background: none;
+  border: 0;
+  font-size: var(--ps-tree-font-sm, 14px);
+  text-align: left;
+  color: inherit;
+
+  &:hover {
+    background-color: var(--c8y-palette-gray-80, rgba(0, 0, 0, 0.04));
+  }
+
+  // The keyboard's position within the section: the platform's focus ring, exactly as a
+  // focused tree row draws it (see `asset-tree-row.component.less`), so one highlight
+  // vocabulary covers both regions. A tint would have been a second vocabulary — and a grey
+  // one reads as "disabled" rather than "here".
+  &--focused {
+    outline: 2px solid var(--c8y-component-color-focus, var(--c8y-root-component-color-focus));
+    outline-offset: -2px;
+    border-radius: var(--c8y-component-border-radius-focus, var(--c8y-root-component-border-radius-focus));
+  }
+}
+
+.ps-qa-row__star {
+  color: var(--c8y-brand-primary, #119d11);
+  font-size: var(--ps-tree-font-xs, 13px);
+}
+
+.ps-qa-row__counts {
+  font-size: var(--ps-tree-font-xs, 13px);
+  font-variant-numeric: tabular-nums;
+}
+
+// The lists' styles (`.ps-qa-lists`, `.ps-qa-entry`, …) live with the lists, in
+// `quick-access-panel.component.less` — this file styles the one header row only.
+

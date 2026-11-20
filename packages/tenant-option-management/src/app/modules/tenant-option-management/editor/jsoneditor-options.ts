@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-empty-object-type */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /*
  * Copyright (c) 2022 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA,
  * and/or its subsidiaries and/or its affiliates and/or their licensors.
@@ -20,166 +18,30 @@
  *
  * @authors Christof Strack
  */
+import type { EditableNode, JSONEditorMode, JSONEditorOptions, ValidationError } from 'jsoneditor';
 
-export type JsonEditorMode = 'tree' | 'view' | 'form' | 'code' | 'text';
+export type JsonEditorMode = JSONEditorMode;
+export type JsonEditorTreeNode = EditableNode;
+export type IError = ValidationError;
 
-export interface JsonEditorTreeNode {
-  field: string;
-  value: string;
-  path: string[];
-}
+/**
+ * The options of `jsoneditor` (typed by `@types/jsoneditor`), plus `expandAll`, which the
+ * wrapper component applies itself after creating the editor.
+ */
+export type JsonEditorOptions = JSONEditorOptions & { expandAll?: boolean };
 
-export interface IError {
-  path: (string | number)[];
-  message: string;
-}
-
-export class JsonEditorOptions {
-  public ace: any;
-  public ajv: object;
-
-  /**
-   *   {function} onChange  Callback method, triggered
-  on change of contents.
-  Does not pass the contents itself.
-  See also `onChangeJSON` and
-  `onChangeText`.
-   */
-  public onChange: () => void;
-
-  /**
-*   // {function} onChangeJSON  Callback method, triggered
-//     in modes on change of contents,
-//     passing the changed contents
-//     as JSON.
-//     Only applicable for modes
-//     'tree', 'view', and 'form'.
-*/
-  public onChangeJSON: () => void;
-
-  public onNodeName: () => void;
-  public onCreateMenu: () => void;
-  public onColorPicker: () => void;
-
-  /**
-*   // {function} onChangeText  Callback method, triggered
-//     in modes on change of contents,
-//     passing the changed contents
-//     as stringified JSON.
-*/
-  public onChangeText: (jsonstr: string) => void;
-
-  /**
-   *   {function} onSelectionChange Callback method,
-  triggered on node selection change
-  Only applicable for modes
-  'tree', 'view', and 'form'
-   */
-  public onSelectionChange: () => void;
-
-  /**
-*     {function} onTextSelectionChange Callback method,
-  triggered on text selection change
-  Only applicable for modes
-*/
-  public onTextSelectionChange: () => void;
-
-  /**
-   *   // {function} onEvent Callback method, triggered
-    // when an event occurs in
-    // a JSON field or value.
-    // Only applicable for
-    // modes 'form', 'tree' and
-    // 'view'
-   */
-  public onEvent: () => void;
-
-  /**
-* // *   {function} onFocus  Callback method, triggered
-//  when the editor comes into focus,
-//  passing an object {type, target},
-//  Applicable for all modes
-*/
-  public onFocus: () => void;
-
-  // *   {function} onBlur   Callback method, triggered
-  //  when the editor goes out of focus,
-  //  passing an object {type, target},
-  //  Applicable for all modes
-  public onBlur: () => void;
-
-  /**
-*  // *   {function} onClassName Callback method, triggered
-// when a Node DOM is rendered. Function returns
-// a css class name to be set on a node.
-// Only applicable for
-// modes 'form', 'tree' and
-// 'view'
-*/
-  public onClassName: () => void;
-
-  public onEditable: (
-    node: JsonEditorTreeNode | {}
-  ) => boolean | { field: boolean; value: boolean };
-
-  /**
-   *   {function} onError   Callback method, triggered
-  when an error occurs
-   */
-  public onError: (error: any) => void;
-  public onModeChange: (newMode: JsonEditorMode, oldMode: JsonEditorMode) => void;
-  public onValidate: (json: object) => IError[];
-  public onValidationError: (errors: object[]) => void;
-
-  public enableSort: boolean;
-  public enableTransform: boolean;
-  public escapeUnicode: boolean;
-  public expandAll?: boolean;
-  public sortObjectKeys: boolean;
-  public history: boolean;
-  public mode: JsonEditorMode;
-  public modes: JsonEditorMode[];
-  public name: string;
-  public schema: object;
-  public search: boolean;
-  public indentation: number;
-  public template: object;
-  public theme: number;
-  public language: string;
-  public languages: object;
-
-  /**
-   * Adds main menu bar - Contains format, sort, transform, search etc. functionality. True
-   * by default. Applicable in all types of mode.
-   */
-  public mainMenuBar: boolean;
-
-  /**
-   * Adds navigation bar to the menu - the navigation bar visualize the current position on
-   * the tree structure as well as allows breadcrumbs navigation.
-   * True by default.
-   * Only applicable when mode is 'tree', 'form' or 'view'.
-   */
-  public navigationBar: boolean;
-
-  /**
-   * Adds status bar to the bottom of the editor - the status bar shows the cursor position
-   * and a count of the selected characters.
-   * True by default.
-   * Only applicable when mode is 'code' or 'text'.
-   */
-  public statusBar: boolean;
-
-  constructor() {
-    this.mainMenuBar = false;
-    this.enableSort = true;
-    this.enableTransform = true;
-    this.escapeUnicode = false;
-    this.expandAll = false;
-    this.sortObjectKeys = false;
-    this.history = true;
-    this.mode = 'code';
-    this.search = true;
-    this.indentation = 2;
-  }
+/** The wrapper's defaults: code mode, no main menu bar, history and search on. */
+export function createJsonEditorOptions(): JsonEditorOptions {
+  return {
+    mainMenuBar: false,
+    enableSort: true,
+    enableTransform: true,
+    escapeUnicode: false,
+    expandAll: false,
+    sortObjectKeys: false,
+    history: true,
+    mode: 'code',
+    search: true,
+    indentation: 2,
+  };
 }

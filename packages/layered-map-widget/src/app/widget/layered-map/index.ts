@@ -1,5 +1,5 @@
 import { ENVIRONMENT_INITIALIZER, inject } from '@angular/core';
-import { DynamicWidgetDefinition, hookWidget } from '@c8y/ngx-components';
+import { type DynamicWidgetDefinition, hookWidget } from '@c8y/ngx-components';
 import { FormlyConfig } from '@ngx-formly/core';
 import { RelativeDateTypeComponent } from '~components/_formly-fields/query-forms/relative-date-type.component';
 import { assetPaths } from '../../../assets/assets';

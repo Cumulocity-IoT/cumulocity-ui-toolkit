@@ -1,9 +1,6 @@
 import type { ConfigurationOptions } from '@c8y/devkit';
-import pkg from './package.json';
-import rootPkg from '../../package.json';
-
-const { author, description, version } = pkg;
-const { license } = rootPkg;
+import { author, description, version } from './package.json';
+import { license } from '../../package.json';
 
 export default {
   runTime: {

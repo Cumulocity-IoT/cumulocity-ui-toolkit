@@ -55,10 +55,11 @@
             type="checkbox"
             [checked]="cachingActive()"
             (change)="onActiveToggle($event)"
+            data-cy="index-db-cache--active-toggle"
           />
           <span></span>
         </label>
-        <span [class]="cachingActive() ? 'text-success' : 'text-muted'">
+        <span data-cy="index-db-cache--active-state" [class]="cachingActive() ? 'text-success' : 'text-muted'">
           @if (cachingActive()) {
             <i c8yIcon="check-circle"></i>
             <strong translate> Caching active</strong>
@@ -110,7 +111,7 @@
       <legend translate>Statistics</legend>
 
       @if (statRows(); as rows) {
-        <table class="table table-condensed m-b-8">
+        <table class="table table-condensed m-b-8" data-cy="index-db-cache--stats">
           <thead>
             <tr>
               <th translate>Cache</th>
@@ -119,7 +120,7 @@
           </thead>
           <tbody>
             @for (row of rows; track row.name) {
-              <tr>
+              <tr data-cy="index-db-cache--stats-row">
                 <td>
                   <span class="idb-badge" [class]="'idb-badge--' + row.name">{{ row.shortLabel }}</span>
                 </td>
@@ -178,6 +179,7 @@
             class="btn btn-xs btn-clean"
             tooltip="{{ 'Clear log' | translate }}"
             (click)="clearLog()"
+            data-cy="index-db-cache--clear-log"
             type="button"
           >
             <i c8yIcon="trash"></i>
@@ -187,7 +189,7 @@
 
       <div class="idb-log">
         @for (entry of logs(); track entry.id) {
-          <div class="idb-log__entry" [class]="'idb-log__entry--' + entry.eventType">
+          <div class="idb-log__entry" data-cy="index-db-cache--log-entry" [class]="'idb-log__entry--' + entry.eventType">
             <span class="idb-log__time">{{ entry.ts | date:'HH:mm:ss' }}</span>
             <span class="idb-badge" [class]="'idb-badge--' + entry.cache">{{ entry.cache }}</span>
             <i [c8yIcon]="logIcons[entry.eventType]" [class]="logIconClasses[entry.eventType]"></i>
@@ -203,7 +205,7 @@
             </span>
           </div>
         } @empty {
-          <p class="text-muted small m-0 p-8" translate>No intercepted requests yet.</p>
+          <p class="text-muted small m-0 p-8" data-cy="index-db-cache--log-empty" translate>No intercepted requests yet.</p>
         }
       </div>
     </fieldset>

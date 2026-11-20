@@ -1,0 +1,341 @@
+// Tokens, deliberately:
+//
+// The upstream stylesheet this was ported from leaned on `--c8y-component-background`,
+// `--c8y-component-border-color`, `--c8y-border-radius-base`, `--c8y-palette-gray-90` and the
+// `--c8y-palette-status-*-light` pair. Where a token does not resolve, `var(--x, fallback)`
+// silently makes the fallback the actual value — code that reads as themed but ships one
+// hardcoded light-mode colour (AGENTS.md → "Never assume a `--c8y-*` token resolves").
+//
+// Precisely, because the first version of this comment overstated it: `--c8y-component-background`
+// and `--c8y-border-radius-base` are declared nowhere in `@c8y/style`. `--c8y-component-border-color`
+// *is* declared, but AGENTS.md's table — read off a live shell, which is the authority — has it
+// not resolving, because a declaration can sit under a selector that never applies.
+// `--c8y-palette-gray-90` and the `-light` pair are declared and were never checked live.
+//
+// So everything here uses either the `--c8y-root-component-*` variants the rest of `shared`
+// already relies on, a token AGENTS.md verified, or a literal where no token exists (the 4px
+// radius). The upstream tinted section backgrounds stayed out on the strength of the overstated
+// claim above — if they are wanted back, `--c8y-palette-status-{warning,info}-light` are the
+// tokens, and they need checking in the running shell first.
+
+.ps-search-palette {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  width: 100%;
+  max-height: 80vh;
+  min-height: 0;
+}
+
+// The row itself is the field: the icon, the applied filters and the text all sit inside one
+// border, so the chips read as part of the query being typed rather than as decoration next
+// to it. Several filters wrap to a second line inside the field rather than squashing it.
+.ps-search-palette__input-row {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  row-gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid var(--c8y-root-component-border-color);
+  border-radius: 4px;
+  min-height: 34px;
+
+  &:focus-within {
+    border-color: var(--c8y-brand-primary);
+    // Pre-`color-mix` browsers keep the plain ring; both themes read it as focus.
+    box-shadow: 0 0 0 2px rgba(23, 118, 191, 0.35);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--c8y-brand-primary) 35%, transparent);
+  }
+}
+
+.ps-search-palette__input {
+  flex: 1 1 120px;
+  min-width: 120px;
+  border: 0;
+  outline: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 14px;
+
+  // Chrome draws its own clear button on search inputs, which would sit next to ours and
+  // clear only the text without touching the filters.
+  &::-webkit-search-cancel-button {
+    display: none;
+  }
+}
+
+// The chip preview keeps its natural width up to a point; the detail beside it takes the rest.
+.ps-search-suggestion__chip {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ps-search-suggestion__detail {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.ps-search-palette__facets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  // Two rows of chips is enough context; beyond that the filters push the results
+  // themselves off the screen, which is the wrong trade in a palette.
+  max-height: 66px;
+  overflow-y: auto;
+  flex: 0 0 auto;
+}
+
+// `.tag.chip` supplies the shape and colours; these are the two things it cannot know — how
+// wide a type identifier may get, and that these chips are buttons rather than static labels.
+.ps-search-chip {
+  max-width: 220px;
+  border: 0;
+  cursor: pointer;
+}
+
+// Severity chips carry the severity's own colour, so the filter row and the result dots read as
+// one scale: critical red, major orange, minor yellow, warning blue — the same four tokens
+// `ps-status-dot` uses, which resolve to red-30 / orange-50 (#ff8800) / yellow-60 (#ffbe00) /
+// blue-30.
+//
+// The colour goes on the *dot and the edge*, never on the chip's background behind the label:
+// #ffbe00 under white text is ~1.7:1, and a yellow-filled chip is unreadable in both themes. So
+// the label keeps the platform's own foreground and the selected state is a tinted wash plus a
+// ring, which stays legible and still reads as "pressed".
+.ps-search-severity {
+  --ps-sev: var(--c8y-text-muted);
+
+  border: 1px solid transparent;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ps-sev) 35%, transparent);
+
+  &--critical {
+    --ps-sev: var(--c8y-palette-status-danger, #d70f0f);
+  }
+  &--major {
+    --ps-sev: var(--c8y-palette-status-warning, #ff8800);
+  }
+  &--minor {
+    --ps-sev: var(--c8y-palette-yellow-60, #ffbe00);
+  }
+  &--warning {
+    --ps-sev: var(--c8y-palette-status-info, #056ad6);
+  }
+
+  // Selected: a wash of the severity plus a full-strength ring. Pre-`color-mix` browsers fall
+  // back to the platform's own selected chip, which is why `tag--default` is no longer needed.
+  &--on {
+    box-shadow: inset 0 0 0 2px var(--ps-sev);
+    background-color: color-mix(in srgb, var(--ps-sev) 16%, transparent);
+    font-weight: 600;
+  }
+}
+
+// The count follows the chip's own foreground. `text-muted` was legible on an unselected
+// chip and almost invisible once the chip filled with colour.
+.ps-search-chip__count {
+  margin-left: 4px;
+  color: inherit;
+  opacity: 0.7;
+}
+
+// The two filter groups answer different questions — "what kind of thing" and "what state is
+// it in" — so each gets a quiet label and a status-coloured edge.
+.ps-search-section {
+  flex: 0 0 auto;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border-left: 3px solid transparent;
+}
+
+.ps-search-section--alarm {
+  border-left-color: var(--c8y-palette-status-warning);
+}
+
+.ps-search-section--type {
+  border-left-color: var(--c8y-brand-primary);
+}
+
+.ps-search-section__label {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--c8y-text-muted);
+}
+
+.ps-search-palette__results {
+  margin: 0;
+  padding: 0;
+  // The results are what the palette is for, so they get the remaining space.
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+.ps-search-group {
+  & + & {
+    border-top: 1px solid var(--c8y-root-component-border-color);
+    margin-top: 4px;
+    padding-top: 4px;
+  }
+}
+
+.ps-search-group__label {
+  margin: 0;
+  padding: 4px 8px 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c8y-text-muted);
+}
+
+// The keys for the filter rows, beside their heading — quiet, but on the screen where they apply.
+.ps-search-group__hint {
+  margin-left: 8px;
+  font-weight: normal;
+  opacity: 0.7;
+}
+
+.ps-search-result {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  padding: 8px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+
+  // Hover moves the selection, so the active state is the only highlight needed; a separate
+  // hover colour would let two rows look chosen at once.
+  &--active {
+    background-color: rgba(23, 118, 191, 0.12);
+    background-color: color-mix(in srgb, var(--c8y-brand-primary) 12%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--c8y-brand-primary);
+    outline-offset: -2px;
+  }
+}
+
+.ps-search-result__name {
+  font-weight: 500;
+  flex: 0 0 auto;
+  max-width: 45%;
+}
+
+// The parent trail leads the label for pages, the way a menu path reads.
+.ps-search-result__parent {
+  flex: 0 0 auto;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.ps-search-result__breadcrumb {
+  font-size: 12px;
+  // The breadcrumb is context, not the answer: it yields before the name does.
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ps-search-result__alarm {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  margin-left: 8px;
+}
+
+// Only rendered above 1, so it reads as "how many" rather than restating the dot.
+.ps-search-result__alarm-count {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ps-search-result__type {
+  margin-left: auto;
+  flex: 0 0 auto;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// `.tag.chip` brings its own layout, colours and spacing; only the two things the platform
+// cannot know are set here.
+.ps-search-filter {
+  max-width: 240px;
+  // `.tag` aligns to flex-start and only re-centres inside a `.form-control`. The field here
+  // is the row itself, not the input, so it centres explicitly — without this the chip rides
+  // above the text it sits beside.
+  align-self: center;
+
+  // The chip Backspace would remove next. An outline, not a box-shadow: the severity chips draw
+  // their colour ring with box-shadow, and a dashed edge reads as "about to go", not "focused".
+  &--armed {
+    outline: 2px dashed var(--c8y-brand-primary);
+    outline-offset: 1px;
+  }
+}
+
+// The kind reads as a quiet prefix so the value stays the thing you scan for.
+.ps-search-filter__kind {
+  opacity: 0.7;
+
+  &::after {
+    content: ':';
+  }
+}
+
+.ps-search-timing {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+// A borrowed spinner would pull in a component just for 12px of chrome.
+.ps-search-palette__loader {
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--c8y-root-component-border-color);
+  border-top-color: var(--c8y-brand-primary);
+  border-radius: 50%;
+  animation: ps-search-spin 0.7s linear infinite;
+}
+
+@keyframes ps-search-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Respect a reduced-motion preference: a permanently spinning ring is exactly the kind of
+// motion that setting exists to stop.
+@media (prefers-reduced-motion: reduce) {
+  .ps-search-palette__loader {
+    animation: none;
+  }
+}
+
+.ps-search-palette__empty {
+  padding: 8px;
+  margin: 0;
+}

@@ -1,7 +1,13 @@
-import { createComponent, inject, ApplicationRef, ComponentRef, Injectable } from '@angular/core';
+import {
+  createComponent,
+  inject,
+  ApplicationRef,
+  type ComponentRef,
+  Injectable,
+} from '@angular/core';
 import { PopupComponent } from '../popup/popup.component';
-import { MyLayer } from '../layered-map-widget.model';
-import { Marker } from 'leaflet';
+import { type MyLayer } from '../layered-map-widget.model';
+import { type Marker } from 'leaflet';
 
 @Injectable({ providedIn: 'root' })
 export class PopUpService {

@@ -1,0 +1,70 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: c8y.plugin\n"
+"Language: de\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Events Graph"
+msgstr "Ereignisdiagramm"
+
+msgid "Show event occurrence in a timeline chart."
+msgstr "Zeigt das Auftreten von Ereignissen in einem Zeitstrahl-Diagramm."
+
+msgid "Display duration"
+msgstr "Anzeigedauer"
+
+msgid "hours"
+msgstr "Stunden"
+
+msgid "Refresh Interval"
+msgstr "Aktualisierungsintervall"
+
+msgid "seconds"
+msgstr "Sekunden"
+
+msgid "Event Type"
+msgstr "Ereignistyp"
+
+msgid "Event Text"
+msgstr "Ereignistext"
+
+msgid "Add Event Type"
+msgstr "Ereignistyp hinzufügen"
+
+msgid "Remove event type"
+msgstr "Ereignistyp entfernen"
+
+msgid "Add value"
+msgstr "Wert hinzufügen"
+
+msgid "Remove value"
+msgstr "Wert entfernen"
+
+msgid "No device selected"
+msgstr "Kein Gerät ausgewählt"
+
+msgid "Select a device in the widget configuration."
+msgstr "Wählen Sie in der Widget-Konfiguration ein Gerät aus."
+
+msgid "No event types configured"
+msgstr "Keine Ereignistypen konfiguriert"
+
+msgid "Add an event type in the widget configuration."
+msgstr "Fügen Sie in der Widget-Konfiguration einen Ereignistyp hinzu."
+
+msgid "Could not load events"
+msgstr "Ereignisse konnten nicht geladen werden"
+
+msgid "Duration"
+msgstr "Dauer"
+
+msgid "Hover the chart to compare all lanes at one point in time."
+msgstr "Zeigen Sie auf das Diagramm, um alle Zeilen zu einem Zeitpunkt zu vergleichen."
+
+msgid "Device"
+msgstr "Gerät"
+
+msgid "The group itself"
+msgstr "Die Gruppe selbst"

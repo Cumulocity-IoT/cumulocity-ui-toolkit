@@ -1,6 +1,6 @@
 import { input, output, Component } from '@angular/core';
 import { CoreModule } from '@c8y/ngx-components';
-import { ITrack } from '../layered-map-widget.model';
+import { type ITrack } from '../layered-map-widget.model';
 
 @Component({
   selector: 'track-list',

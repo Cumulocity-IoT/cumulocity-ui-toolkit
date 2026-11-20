@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { ActionBarFactory, ActionBarItem } from '@c8y/ngx-components';
+import { type ActivatedRoute } from '@angular/router';
+import { type ActionBarFactory, type ActionBarItem } from '@c8y/ngx-components';
 import { FavoritesActionComponent } from './favorites-action.component';
-import { IManagedObjectExtended } from './favorites-manager.model';
+import { findContextData } from './context-route.helper';
 
 @Injectable()
 export class FavoritesActionFactory implements ActionBarFactory {
@@ -20,8 +20,7 @@ export class FavoritesActionFactory implements ActionBarFactory {
       return [];
     }
 
-    const managedObject = activatedRoute.parent?.snapshot?.data
-      .contextData as IManagedObjectExtended;
+    const managedObject = findContextData(activatedRoute.snapshot);
 
     if (
       !managedObject ||

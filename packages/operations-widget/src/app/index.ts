@@ -1,4 +1,4 @@
-import { DynamicWidgetDefinition, hookWidget } from '@c8y/ngx-components';
+import { type DynamicWidgetDefinition, hookWidget } from '@c8y/ngx-components';
 import {
   exportConfigWithDevice,
   importConfigWithDevice,

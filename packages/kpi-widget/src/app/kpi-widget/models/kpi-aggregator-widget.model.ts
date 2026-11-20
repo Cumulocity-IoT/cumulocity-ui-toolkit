@@ -1,4 +1,4 @@
-import { LayoutPosition } from 'chart.js';
+import { type LayoutPosition } from 'chart.js';
 
 // sort options
 export const KpiAggregatorWidgetSort = {

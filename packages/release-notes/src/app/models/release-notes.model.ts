@@ -1,4 +1,4 @@
-import { IEvent } from '@c8y/client';
+import { type IEvent } from '@c8y/client';
 
 export const RELEASE_NOTES__ADMIN_PATH = 'release-notes';
 export const RELEASE_NOTES__EVENT_TYPE = 'c8y_ReleaseNotes';

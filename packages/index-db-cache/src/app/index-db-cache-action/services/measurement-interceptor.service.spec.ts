@@ -1,3 +1,7 @@
+import { TestBed } from '@angular/core/testing';
+import { MeasurementCacheService } from './measurement-cache.service';
+import { CacheStateService } from './cache-state.service';
+import { CacheLogService } from './cache-log.service';
 import { MeasurementInterceptorService } from './measurement-interceptor.service';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -32,7 +36,15 @@ describe('MeasurementInterceptorService.tryParseParams', () => {
   });
 
   beforeEach(() => {
-    service = new MeasurementInterceptorService(null as any, null as any, null as any);
+    // URL matching and parameter parsing do not touch the injected services: stub them
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: MeasurementCacheService, useValue: {} },
+        { provide: CacheStateService, useValue: {} },
+        { provide: CacheLogService, useValue: {} },
+      ],
+    });
+    service = TestBed.inject(MeasurementInterceptorService);
   });
 
   // ─── URL matching ────────────────────────────────────────────────────────────
@@ -53,6 +65,27 @@ describe('MeasurementInterceptorService.tryParseParams', () => {
     expect(
       parse(service, makeReq('https://example.com/measurement/measurements', validParams()))
     ).not.toBeNull();
+  });
+
+  // ─── Requests the cache cannot answer ────────────────────────────────────────
+
+  const URL = 'https://example.com/measurement/measurements';
+
+  it('returns null for latest-first requests (revert=true)', () => {
+    expect(parse(service, makeReq(URL, { ...validParams(), revert: 'true' }))).toBeNull();
+  });
+
+  it('accepts revert=false', () => {
+    expect(parse(service, makeReq(URL, { ...validParams(), revert: 'false' }))).not.toBeNull();
+  });
+
+  it('returns null for pages after the first', () => {
+    expect(parse(service, makeReq(URL, { ...validParams(), currentPage: '2' }))).toBeNull();
+    expect(parse(service, makeReq(URL, { ...validParams(), currentPage: '1' }))).not.toBeNull();
+  });
+
+  it('returns null for type-filtered requests', () => {
+    expect(parse(service, makeReq(URL, { ...validParams(), type: 'c8y_Temp' }))).toBeNull();
   });
 
   // ─── Missing params object ───────────────────────────────────────────────────

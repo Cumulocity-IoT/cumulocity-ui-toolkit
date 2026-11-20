@@ -7,7 +7,7 @@ import { provideMock } from '~helpers/auto-mock.helper';
 import {
   EnergyWidgetDateDisplayMode,
   EnergyWidgetDateRange,
-  EnergyConsumptionWidgetConfig,
+  type EnergyConsumptionWidgetConfig,
 } from '../../models/energy-consumption-widget.model';
 import { EnergyConsumptionWidgetComponent } from './energy-consumption-widget.component';
 

@@ -96,6 +96,8 @@ aside {
   > header {
     font-size: var(--c8y-font-size-base);
     display: flex;
+    // the same 16px inset as the drawer's header, actions and reminders; without it the count and
+    // the chevron sat flush against the drawer edges and the focus outline was clipped
     padding: 8px 16px;
     box-shadow: inset 0 1px 0 var(--c8y-component-border-color, var(--c8y-root-component-border-color));
 

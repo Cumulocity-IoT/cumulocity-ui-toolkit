@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { InventoryService } from '@c8y/client';
-import { CustomBaseTileLayerEntry } from '../base-tile-layers';
+import { type CustomBaseTileLayerEntry } from '../base-tile-layers';
 
 export const CUSTOM_BASE_LAYER_MO_TYPE = 'ps_layeredMapBaseLayerConfig';
 

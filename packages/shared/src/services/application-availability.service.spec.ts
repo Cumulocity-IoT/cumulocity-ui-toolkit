@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ApplicationService, IApplication } from '@c8y/client';
+import { ApplicationService, type IApplication } from '@c8y/client';
 import { ApplicationAvailabilityService } from './application-availability.service';
 
 function makeApp(overrides: Partial<IApplication> = {}): IApplication {

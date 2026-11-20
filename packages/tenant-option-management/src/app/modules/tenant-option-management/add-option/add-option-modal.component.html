@@ -8,11 +8,11 @@
   <div class="modal-body">
     <c8y-form-group class="m-16" [hasError]="showConflictError || !!apiError">
       <label for="categoryInput" translate>Category</label>
-      <input type="text" class="form-control" id="categoryInput" [(ngModel)]="option.category"
+      <input type="text" class="form-control" id="categoryInput" data-cy="add-option--category" [(ngModel)]="option.category"
         (ngModelChange)="validateExistence()" [disabled]="isEditing" required />
       <c8y-messages>
         @if (showConflictError) {
-        <c8y-message>{{
+        <c8y-message data-cy="add-option--conflict">{{
           'Combination of Category and Key exists already.' | translate
           }}</c8y-message>
         }
@@ -21,7 +21,7 @@
 
     <c8y-form-group class="m-16" [hasError]="showConflictError">
       <label for="keyInput" translate>Key</label>
-      <input type="text" class="form-control" id="keyInput" [(ngModel)]="option.key"
+      <input type="text" class="form-control" id="keyInput" data-cy="add-option--key" [(ngModel)]="option.key"
         (ngModelChange)="validateExistence()" [disabled]="isEditing" required />
       <c8y-messages>
         @if (showConflictError) {
@@ -38,7 +38,7 @@
         <ul class="nav nav-tabs nav-tabsc8y m-b-8">
           @for (t of tabs; track t) {
           <li [class.active]="t.active">
-            <button type="button" [title]="t.label" [disabled]="t.disabled" (click)="changeTab(t.id)">
+            <button type="button" [title]="t.label" [attr.data-cy]="'add-option--tab-' + t.id" [disabled]="t.disabled" (click)="changeTab(t.id)">
               @if (t.icon) {
               <i class="{{ t.icon }}"></i>
               }
@@ -53,7 +53,7 @@
             @case ('text') {
             <c8y-form-group class="m-b-16">
               <label for="valueInput" translate>Value</label>
-              <input type="text" class="form-control" id="valueInput" [(ngModel)]="option.value" required />
+              <input type="text" class="form-control" id="valueInput" data-cy="add-option--value" [(ngModel)]="option.value" required />
             </c8y-form-group>
             }
             @case ('json') {
@@ -64,18 +64,18 @@
             }
           }
           @if (apiError) {
-            <small class="text-danger">{{ apiError }}</small>
+            <small class="text-danger" data-cy="add-option--api-error">{{ apiError }}</small>
           }
         </div>
       </div>
     </div>
   </div>
   <div class="modal-footer separator-top bg-level-0 sticky-bottom">
-    <button title="{{ 'Cancel' | translate }}" class="btn btn-default" type="button" (click)="close()">
+    <button title="{{ 'Cancel' | translate }}" class="btn btn-default" type="button" (click)="close()" data-cy="add-option--cancel">
       {{ 'Cancel' | translate }}
     </button>
     <button title="{{ 'Save' | translate }}" class="btn btn-primary" [class.btn-pending]="isLoading" type="button"
-      (click)="save()" [disabled]="
+      (click)="save()" data-cy="add-option--save" [disabled]="
         !option.key.length || !option.category.length || !option.value.length || showConflictError || isLoading
       ">
       {{ 'Save' | translate }}

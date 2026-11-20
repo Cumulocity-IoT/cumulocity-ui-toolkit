@@ -1,4 +1,4 @@
-import { Pipe, PipeTransform } from '@angular/core';
+import { Pipe, type PipeTransform } from '@angular/core';
 import { sortBy } from 'lodash';
 
 @Pipe({ name: 'sort', standalone: true })

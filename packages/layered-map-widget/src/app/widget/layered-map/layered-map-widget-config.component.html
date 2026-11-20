@@ -4,7 +4,7 @@
       <div class="form-group form-group-sm m-b-0">
         <label for="baseTileLayer" class="control-label">{{ 'Map provider' | translate }}</label>
         <div class="c8y-select-wrapper">
-          <select class="form-control" id="baseTileLayer" [(ngModel)]="config.baseTileLayerId">
+          <select class="form-control" id="baseTileLayer" data-cy="layered-map-config--base-layer" [(ngModel)]="config.baseTileLayerId">
             <optgroup label="{{ 'Built-in' | translate }}">
               @for (layer of baseTileLayers; track layer.id) {
                 <option [value]="layer.id">{{ layer.label }}</option>
@@ -29,16 +29,16 @@
         } @else {
           @for (layer of customTileLayers; track layer.id) {
             <div class="d-flex a-i-center" style="gap: 4px;">
-              <span class="label label-default">{{ layer.label }}</span>
-              <button class="btn btn-clean btn-xs" title="{{ 'Edit' | translate }}" (click)="openCustomBaseLayerModal(layer)">
+              <span class="label label-default" data-cy="layered-map-config--custom-base-layer">{{ layer.label }}</span>
+              <button class="btn btn-clean btn-xs" title="{{ 'Edit' | translate }}" data-cy="layered-map-config--custom-base-layer-edit" (click)="openCustomBaseLayerModal(layer)">
                 <i c8yIcon="pencil"></i>
               </button>
-              <button class="btn btn-clean btn-xs text-danger" title="{{ 'Delete' | translate }}" (click)="deleteCustomBaseLayer(layer)">
+              <button class="btn btn-clean btn-xs text-danger" title="{{ 'Delete' | translate }}" data-cy="layered-map-config--custom-base-layer-delete" (click)="deleteCustomBaseLayer(layer)">
                 <i c8yIcon="trash-o"></i>
               </button>
             </div>
           }
-          <button class="btn btn-default btn-xs btn-icon" (click)="openCustomBaseLayerModal()">
+          <button class="btn btn-default btn-xs btn-icon" data-cy="layered-map-config--custom-base-layer-add" (click)="openCustomBaseLayerModal()">
             <i c8yIcon="plus-circle"></i>
             <span translate>Add</span>
           </button>
@@ -52,7 +52,7 @@
       <div class="form-group form-group-sm">
         <label for="autoCenter" class="control-label">{{ 'Auto-Center' | translate }}</label>
         <div class="c8y-select-wrapper">
-          <select class="form-control" id="autoCenter" [(ngModel)]="config.autoCenter">
+          <select class="form-control" id="autoCenter" data-cy="layered-map-config--auto-center" [(ngModel)]="config.autoCenter">
             <option [ngValue]="true" title="Center map automatically to fit all markers">Fit all markers</option>
             <option [ngValue]="false" title="Set zoom-level and center manually">Set zoom-level and center map manually</option>
           </select>
@@ -71,10 +71,10 @@
       <div class="form-group form-group-sm m-b-8">
         <label translate>Center bound</label>
         <div class="input-group input-group-sm">
-          <input type="number" required placeholder="lat (required)" name="centerLat" class="form-control" [(ngModel)]="config.manualCenter.lat" [disabled]="config.autoCenter" />
-          <input type="number" required placeholder="lng (required)" name="centerLng" class="form-control" [(ngModel)]="config.manualCenter.long" [disabled]="config.autoCenter" />
+          <input type="number" required placeholder="lat (required)" name="centerLat" data-cy="layered-map-config--center-lat" class="form-control" [(ngModel)]="config.manualCenter.lat" [disabled]="config.autoCenter" />
+          <input type="number" required placeholder="lng (required)" name="centerLng" data-cy="layered-map-config--center-lng" class="form-control" [(ngModel)]="config.manualCenter.long" [disabled]="config.autoCenter" />
           <div class="input-group-btn">
-            <button container="body" placement="top" (click)="openCenterMapModal()" class="btn btn-default" [disabled]="config.autoCenter">
+            <button container="body" placement="top" (click)="openCenterMapModal()" data-cy="layered-map-config--center-picker" class="btn btn-default" [disabled]="config.autoCenter">
               <i c8yIcon="target"></i>
             </button>
           </div>
@@ -87,7 +87,7 @@
       <div class="form-group m-b-0 form-group-sm">
         <label for="positionPolling" class="control-label">{{ 'Position Polling' | translate }}</label>
         <div class="c8y-select-wrapper">
-          <select class="form-control" [(ngModel)]="config.positionPolling.enabled" id="positionPolling">
+          <select class="form-control" [(ngModel)]="config.positionPolling.enabled" id="positionPolling" data-cy="layered-map-config--position-polling">
             <option [ngValue]="false" title="Only refreshing on interaction">No automatic polling</option>
             <option [ngValue]="true" title="Refreshing after a give interval and on interaction">Use position polling</option>
           </select>
@@ -98,7 +98,7 @@
       <div class="form-group form-group-sm m-b-0">
         <label for="positionPollingSlider" class="control-label">{{ 'Polling interval in seconds' | translate }}</label>
         <c8y-range [(ngModel)]="config.positionPolling.interval" [disabled]="!config.positionPolling.enabled">
-          <input id="positionPollingSlider" type="range" min="1" max="180" step="1" [disabled]="!config.positionPolling.enabled" />
+          <input id="positionPollingSlider" data-cy="layered-map-config--position-polling-interval" type="range" min="1" max="180" step="1" [disabled]="!config.positionPolling.enabled" />
         </c8y-range>
       </div>
     </div>
@@ -114,7 +114,7 @@
     {{ 'Layers' | translate }}
   </div>
 
-  <button title="{{ 'Add layer' | translate }}" class="btn btn-default btn-icon btn-sm m-t-8" (click)="openLayerModal()">
+  <button title="{{ 'Add layer' | translate }}" class="btn btn-default btn-icon btn-sm m-t-8" (click)="openLayerModal()" data-cy="layered-map-config--add-layer">
     <i c8yIcon="plus-circle"></i>
     <span translate>Add layer</span>
   </button>

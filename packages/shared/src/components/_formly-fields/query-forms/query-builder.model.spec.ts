@@ -1,5 +1,5 @@
 import {
-  BuilderNode,
+  type BuilderNode,
   makeNode,
   nodeToJson,
   parseToRoot,

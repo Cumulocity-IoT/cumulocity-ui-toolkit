@@ -1,0 +1,367 @@
+<div class="card-header separator flex-no-shrink">
+  <i class="m-r-8" c8yIcon="cog" aria-hidden="true"></i>
+  <span class="h4 card-title" id="drawerTitle">{{
+    'Navigation and search settings' | translate
+  }}</span>
+</div>
+
+<ul class="nav nav-tabs nav-tabsc8y flex-no-shrink ps-settings__tabs" role="tablist">
+  <li [class.active]="tab() === 'general'" role="presentation">
+    <button
+      [attr.aria-selected]="tab() === 'general'"
+      (click)="tab.set('general')"
+      type="button"
+      role="tab"
+      data-cy="navigation-and-search--settings-tab-general"
+    >
+      <i class="m-r-4" c8yIcon="cog" aria-hidden="true"></i>
+      {{ 'General' | translate }}
+    </button>
+  </li>
+  <li [class.active]="tab() === 'levels'" role="presentation">
+    <button
+      [attr.aria-selected]="tab() === 'levels'"
+      (click)="tab.set('levels')"
+      type="button"
+      role="tab"
+      data-cy="navigation-and-search--settings-tab-levels"
+    >
+      <i class="m-r-4" c8yIcon="sitemap" aria-hidden="true"></i>
+      {{ 'By level' | translate }}
+    </button>
+  </li>
+  <li [class.active]="tab() === 'filter'" role="presentation">
+    <button
+      [attr.aria-selected]="tab() === 'filter'"
+      (click)="tab.set('filter')"
+      type="button"
+      role="tab"
+      data-cy="navigation-and-search--settings-tab-filter"
+    >
+      <i class="m-r-4" c8yIcon="filter" aria-hidden="true"></i>
+      {{ 'Tree filter' | translate }}
+      @if (filterActive()) {
+        <span class="badge badge-info m-l-4">{{ filterCount() }}</span>
+      }
+    </button>
+  </li>
+</ul>
+
+<div class="inner-scroll flex-grow" data-cy="navigation-and-search--settings" role="tabpanel">
+  @if (tab() === 'general') {
+    <form class="card-block ps-settings__general" (submit)="$event.preventDefault()">
+      <fieldset>
+        <div class="legend form-block">{{ 'Asset tree' | translate }}</div>
+
+        <div class="form-group">
+          <label class="c8y-switch">
+            <input
+              [checked]="settings().showSearch"
+              (change)="set('showSearch', $any($event.target).checked)"
+              type="checkbox"
+              data-cy="navigation-and-search--setting-search"
+            />
+            <span></span>
+            {{ 'Show search' | translate }}
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label class="c8y-switch">
+            <input
+              [checked]="settings().showQuickAccess"
+              (change)="set('showQuickAccess', $any($event.target).checked)"
+              type="checkbox"
+              data-cy="navigation-and-search--setting-quick-access"
+            />
+            <span></span>
+            {{ 'Show Pinned & Recent' | translate }}
+          </label>
+        </div>
+
+        <div class="ps-settings__counts">
+          <div class="form-group">
+            <label for="psSettingsMaxPinned">{{ 'Pinned items shown' | translate }}</label>
+            <input
+              class="form-control"
+              id="psSettingsMaxPinned"
+              [min]="limit.min"
+              [max]="limit.max"
+              [value]="settings().maxPinned"
+              [disabled]="!settings().showQuickAccess"
+              (change)="setCount('maxPinned', $any($event.target).value)"
+              type="number"
+              data-cy="navigation-and-search--setting-max-pinned"
+            />
+          </div>
+          <div class="form-group">
+            <label for="psSettingsMaxRecent">{{ 'Recent items shown' | translate }}</label>
+            <input
+              class="form-control"
+              id="psSettingsMaxRecent"
+              [min]="limit.min"
+              [max]="limit.max"
+              [value]="settings().maxRecent"
+              [disabled]="!settings().showQuickAccess"
+              (change)="setCount('maxRecent', $any($event.target).value)"
+              type="number"
+              data-cy="navigation-and-search--setting-max-recent"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="psSettingsShortcut">{{
+            'Keyboard shortcut to open the tree' | translate
+          }}</label>
+          <div class="input-group">
+            <input
+              class="form-control"
+              id="psSettingsShortcut"
+              [value]="
+                recording()
+                  ? ('Press a key combination…' | translate)
+                  : shortcutLabel() || ('None' | translate)
+              "
+              [class.ps-settings__recording]="recording()"
+              (focus)="startRecording()"
+              (blur)="stopRecording()"
+              (keydown)="onShortcutKeydown($event)"
+              type="text"
+              readonly
+              data-cy="navigation-and-search--setting-shortcut"
+            />
+            <span class="input-group-btn">
+              <button
+                class="btn btn-default"
+                [disabled]="!settings().shortcut"
+                [attr.title]="'Remove shortcut' | translate"
+                [attr.aria-label]="'Remove shortcut' | translate"
+                (click)="clearShortcut()"
+                type="button"
+                data-cy="navigation-and-search--setting-shortcut-clear"
+              >
+                <i c8yIcon="times"></i>
+              </button>
+            </span>
+          </div>
+          <p class="help-block">
+            {{
+              'Click the field, then press e.g. Alt+Shift+T. A modifier is required.' | translate
+            }}
+          </p>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <div class="legend form-block">{{ 'Search' | translate }}</div>
+
+        <div class="form-group">
+          <label for="psSettingsSearchShortcut">{{
+            'Keyboard shortcut to open the search' | translate
+          }}</label>
+          <input
+            class="form-control"
+            id="psSettingsSearchShortcut"
+            [value]="searchShortcutLabel"
+            type="text"
+            readonly
+            data-cy="navigation-and-search--setting-search-shortcut"
+          />
+          <p class="help-block">
+            {{ 'Set by your administrator for the whole tenant.' | translate }}
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label class="c8y-switch">
+            <input
+              [checked]="settings().inventoryFallback"
+              (change)="set('inventoryFallback', $any($event.target).checked)"
+              type="checkbox"
+              data-cy="navigation-and-search--setting-inventory-fallback"
+            />
+            <span></span>
+            {{ 'Inventory fallback without DTM' | translate }}
+          </label>
+          <p class="help-block">
+            {{
+              'Without the Digital Twin Manager, search asset properties and type filters from the inventory.'
+                | translate
+            }}
+          </p>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <div class="legend form-block">{{ 'Status dot' | translate }}</div>
+        <p class="help-block m-t-0">
+          {{ 'Severities that colour the status dot of a row. The others still count in rollups.' | translate }}
+        </p>
+        <div class="d-flex flex-wrap gap-16 m-b-16">
+          @for (severity of severities; track severity) {
+            <label class="c8y-checkbox">
+              <input
+                [checked]="dotSeverities().includes(severity)"
+                (change)="setDotSeverity(severity, $any($event.target).checked)"
+                type="checkbox"
+                [attr.data-cy]="'navigation-and-search--setting-dot-' + severity"
+              />
+              <span></span>
+              <span>{{ severity | translate }}</span>
+            </label>
+          }
+        </div>
+      </fieldset>
+    </form>
+  } @else if (tab() === 'filter') {
+    <div class="card-block">
+      <ps-tree-filter-editor />
+    </div>
+  } @else {
+    <div class="card-block" data-cy="navigation-and-search--settings-levels">
+      <!-- The hierarchy's types, one row per depth from the root down; then the rest. -->
+      <div
+        class="ps-settings__strip"
+        [attr.aria-label]="'Hierarchy levels' | translate"
+        role="tablist"
+      >
+        @for (row of rows(); track row.depth) {
+          <div class="ps-settings__row" role="presentation">
+            <span class="ps-settings__depth text-muted">
+              {{ 'Level {{ n }}' | translate: { n: row.depth + 1 } }}
+            </span>
+            <div class="ps-settings__chips">
+              @for (level of row.levels; track level.type) {
+                <button
+                  class="ps-settings__level"
+                  [attr.data-type]="level.type"
+                  [attr.aria-selected]="selected() === level.type"
+                  [class.active]="selected() === level.type"
+                  [attr.title]="level.type"
+                  (click)="pick(level.type)"
+                  type="button"
+                  role="tab"
+                  data-cy="navigation-and-search--settings-level"
+                >
+                  <span class="ps-settings__level-name text-truncate">{{ label(level.type) }}</span>
+                  <small class="ps-settings__level-meta">
+                    {{
+                      (level.own ? 'Custom' : level.branch ? 'Rollups only' : 'Default') | translate
+                    }}
+                    · {{ level.count }}
+                  </small>
+                </button>
+              }
+            </div>
+          </div>
+        }
+        <div class="ps-settings__row" role="presentation">
+          <span class="ps-settings__depth text-muted">{{ 'Other' | translate }}</span>
+          <div class="ps-settings__chips">
+            @for (level of levels().elsewhere; track level.type) {
+              <button
+                class="ps-settings__level"
+                [attr.data-type]="level.type"
+                [attr.aria-selected]="selected() === level.type"
+                [class.active]="selected() === level.type"
+                [attr.title]="level.type"
+                (click)="pick(level.type)"
+                type="button"
+                role="tab"
+                data-cy="navigation-and-search--settings-level"
+              >
+                <span class="ps-settings__level-name text-truncate">{{ label(level.type) }}</span>
+                <small class="ps-settings__level-meta">{{ 'Not in this tree' | translate }}</small>
+              </button>
+            }
+            <button
+              class="ps-settings__level ps-settings__level--default"
+              [attr.aria-selected]="selected() === defaultLevel"
+              [class.active]="selected() === defaultLevel"
+              (click)="pick(defaultLevel)"
+              type="button"
+              role="tab"
+              data-cy="navigation-and-search--settings-level-default"
+            >
+              <span class="ps-settings__level-name">{{ 'Default' | translate }}</span>
+              <small class="ps-settings__level-meta">{{
+                'Types without their own list' | translate
+              }}</small>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="ps-settings__levels">
+        <div class="ps-settings__sections">
+          @if (showRollups()) {
+            <section data-cy="navigation-and-search--settings-rollups">
+              <div class="legend form-block">
+                {{ (selected() === defaultLevel ? 'Rollups of groups without their own' : 'Rollups') | translate }}
+              </div>
+              <p class="help-block m-t-0">
+                {{ 'What a group summarises about everything below it — the first rows of its panel and its badge in the tree.' | translate }}
+              </p>
+              <ps-rollup-config [assetType]="editedType()" [sampleId]="rollupSampleId()" />
+            </section>
+          }
+          <section>
+            <div class="legend form-block">
+              {{ (selected() === defaultLevel ? 'Detail fields of assets without their own' : 'Detail fields') | translate }}
+            </div>
+            <ps-detail-field-config [assetType]="editedType()" />
+          </section>
+        </div>
+
+        <aside
+          class="ps-settings__preview"
+          [attr.aria-label]="'Preview of the hover panel' | translate"
+        >
+          <p class="text-muted ps-settings__preview-title">
+            {{ 'Preview of the hover panel' | translate }}
+          </p>
+          @if (previewId(); as id) {
+            <div
+              class="ps-settings__preview-card"
+              data-cy="navigation-and-search--settings-preview"
+            >
+              <ps-asset-detail-panel [assetId]="id" [actions]="false" />
+            </div>
+          } @else {
+            <p class="text-muted">
+              {{ 'No asset of this type is loaded in the tree.' | translate }}
+            </p>
+          }
+        </aside>
+      </div>
+    </div>
+  }
+</div>
+
+<div class="card-footer separator flex-no-shrink ps-settings__footer">
+  <small class="text-muted ps-settings__storage" data-cy="navigation-and-search--setting-storage">
+    {{
+      (service.storage() === 'inventory'
+        ? 'Stored in your settings object (single sign-on user).'
+        : 'Stored with your user.'
+      ) | translate
+    }}
+  </small>
+  <button
+    class="btn btn-default"
+    (click)="reset()"
+    type="button"
+    data-cy="navigation-and-search--setting-reset"
+  >
+    {{ 'Reset to defaults' | translate }}
+  </button>
+  <button
+    class="btn btn-primary"
+    (click)="close()"
+    type="button"
+    data-cy="navigation-and-search--settings-done"
+  >
+    {{ 'Done' | translate }}
+  </button>
+</div>

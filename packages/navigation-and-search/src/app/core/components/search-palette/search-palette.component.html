@@ -1,0 +1,280 @@
+<div class="ps-search-palette" data-cy="asset-search--palette" (keydown)="onKeydown($event)">
+  <div class="ps-search-palette__input-row">
+    <i c8yIcon="search" class="text-muted" aria-hidden="true"></i>
+
+    @for (chip of chips(); track chip.field + ':' + chip.value; let last = $last) {
+      <!-- An alarm chip is tinted by its own severity, so "Alarm : Minor" never reads as major.
+           The last chip is outlined while the input is empty: it is the one Backspace removes. -->
+      <span
+        [class]="
+          'tag chip font-size-inherit ps-search-filter' +
+          (chip.field === 'alarm'
+            ? ' ps-search-severity ps-search-severity--on ps-search-severity--' + chip.value
+            : '')
+        "
+        [class.tag--info]="chip.field === 'type'"
+        [class.tag--primary]="chip.field === 'in'"
+        [class.ps-search-filter--armed]="last && term() === ''" data-cy="asset-search--chip"
+      >
+        <span class="ps-search-filter__kind">{{ fieldLabels[chip.field] | translate }}</span>
+        @if (chip.icon) {
+          <i [c8yIcon]="chip.icon" aria-hidden="true"></i>
+        }
+        @if (chip.field === 'type' || chip.field === 'alarm') {
+          {{ chip.label | humanize | translate }}
+        } @else {
+          {{ chip.label }}
+        }
+        <button
+          type="button"
+          class="btn btn-clean"
+          [attr.aria-label]="
+            ('Remove filter' | translate) + ': ' + (fieldLabels[chip.field] | translate) + ' ' + (chip.label | humanize | translate)
+          "
+          (click)="removeChip(chip)" data-cy="asset-search--chip-remove"
+        >
+          <i c8yIcon="times" aria-hidden="true"></i>
+        </button>
+      </span>
+    }
+
+    <input
+      #searchInput data-cy="asset-search--input"
+      type="search"
+      class="ps-search-palette__input"
+      [attr.placeholder]="(placeholder | translate) + ' (' + chordLabel().label + ')'"
+      [attr.aria-label]="(placeholder | translate) + ' (' + chordLabel().label + ')'"
+      [value]="term()"
+      (input)="onTermInput($any($event.target).value)"
+      autocomplete="off"
+      role="combobox"
+      aria-expanded="true"
+      aria-controls="ps-search-results"
+      aria-autocomplete="list"
+      [attr.aria-activedescendant]="
+        entries().length > 0 ? 'ps-search-option-' + activeIndex() : null
+      "
+    />
+    @if (loading()) {
+      <span class="ps-search-palette__loader" aria-hidden="true"></span>
+    } @else if (timingLabel(); as timing) {
+      <span class="ps-search-timing text-muted">{{ timing }}</span>
+    }
+    <button
+      type="button"
+      class="btn btn-clean"
+      [attr.aria-label]="(hasQuery() ? 'Clear search' : 'Close') | translate"
+      [attr.title]="(hasQuery() ? 'Clear search' : 'Close') | translate"
+      (click)="clearOrClose()" data-cy="asset-search--clear"
+    >
+      <i c8yIcon="times" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <!-- Chip changes are otherwise only visual. One polite region, re-announced per change. -->
+  <span class="sr-only" aria-live="polite">
+    @if (announcement(); as change) {
+      {{ change.action | translate }}: {{ fieldLabels[change.chip.field] | translate }}
+      {{ change.chip.label | humanize }}
+    }
+  </span>
+
+  <!-- Shortcuts to browse from while nothing is typed. Once text is typed, the "Add filter" rows
+       in the list offer the same chips for what the text means. -->
+  @if (showShortcuts()) {
+    <section class="ps-search-section ps-search-section--alarm animated fast fadeIn">
+      <h6 class="ps-search-section__label">{{ 'Alarms' | translate }}</h6>
+      <div
+        class="ps-search-palette__facets"
+        role="group"
+        [attr.aria-label]="'Alarm severity' | translate"
+      >
+        @for (severity of severityOptions; track severity) {
+          <button
+            type="button"
+            [class]="
+              'tag chip font-size-inherit ps-search-chip ps-search-severity ps-search-severity--' +
+              severity
+            "
+            [class.ps-search-severity--on]="alarmSeverities().includes(severity)"
+            [attr.aria-pressed]="alarmSeverities().includes(severity)"
+            (click)="toggleSeverity(severity)" data-cy="asset-search--severity"
+          >
+            <!-- The dot, not a bell: the chip names the severity the result rows colour, so it
+                 should use the same mark rather than a second symbol for the same idea. -->
+            <ps-status-dot [severity]="severity" />
+            {{ severity | humanize }}
+          </button>
+        }
+      </div>
+    </section>
+
+    @if (visibleFacets().length > 0) {
+      <section class="ps-search-section ps-search-section--type animated fast fadeIn">
+        <h6 class="ps-search-section__label">{{ 'Asset types' | translate }}</h6>
+        <div
+          class="ps-search-palette__facets"
+          role="group"
+          [attr.aria-label]="'Asset types' | translate"
+        >
+          @for (facet of visibleFacets(); track facet.type) {
+            <button
+              type="button"
+              class="tag chip font-size-inherit ps-search-chip"
+              [class.tag--primary]="facet.selected"
+              [class.tag--default]="!facet.selected"
+              [attr.aria-pressed]="facet.selected"
+              (click)="toggleFacet(facet.type)" data-cy="asset-search--facet"
+            >
+              @if (facet.icon) {
+                <i [c8yIcon]="facet.icon" aria-hidden="true"></i>
+              }
+              {{ facet.label | humanize }}
+              @if (facet.count !== undefined) {
+                <span class="ps-search-chip__count">{{ facet.count }}</span>
+              }
+            </button>
+          }
+        </div>
+      </section>
+    }
+  }
+
+  @if (errorMessage(); as error) {
+    <div class="alert alert-danger" role="alert">{{ error | translate }}</div>
+  }
+
+  @if (limitedRecall()) {
+    <div class="alert alert-info" role="status">{{ limitedRecallMessage | translate }}</div>
+  }
+
+  @if (truncated()) {
+    <div class="alert alert-warning" role="status">
+      {{ 'Showing the first matches only. Narrow the search to see more.' | translate }}
+    </div>
+  }
+
+  @if (searchingRemotely()) {
+    <c8y-loading [message]="'Searching…' | translate" />
+  }
+
+  <div #resultList id="ps-search-results" class="ps-search-palette__results" role="listbox">
+    @for (group of groups(); track group.key) {
+      <div
+        class="ps-search-group animated fast fadeIn"
+        role="group"
+        [attr.aria-labelledby]="'ps-search-group-' + group.key"
+      >
+        <h6 class="ps-search-group__label" data-cy="asset-search--group-label" [id]="'ps-search-group-' + group.key">
+          {{ group.label | translate }}
+          @if (group.key === 'filters') {
+            <!-- The keys are the feature; without this line nobody finds them. -->
+            <span class="ps-search-group__hint" aria-hidden="true">
+              {{ '→ or Enter adds · Backspace removes the last filter' | translate }}
+            </span>
+          }
+        </h6>
+        @for (entry of group.entries; track entry.id) {
+          <button
+            type="button"
+            role="option" data-cy="asset-search--result"
+            [id]="'ps-search-option-' + entry.index"
+            [attr.data-entry-index]="entry.index"
+            [attr.aria-selected]="entry.index === activeIndex()"
+            [attr.aria-label]="
+              entry.suggestion
+                ? ('Add filter' | translate) + ': ' + (fieldLabels[entry.suggestion.chip.field] | translate) + ' ' +
+                  (entry.suggestion.chip.label | humanize) +
+                  (entry.suggestion.detail ? ', ' + entry.suggestion.detail : '')
+                : null
+            "
+            tabindex="-1"
+            class="ps-search-result"
+            [class.ps-search-result--active]="entry.index === activeIndex()"
+            (mouseenter)="setActive(entry.index)"
+            (click)="open(entry)"
+          >
+            @if (entry.suggestion; as suggestion) {
+              <!-- A filter row shows the chip exactly as it will sit in the input once added —
+                   same colours, same "Field:" prefix — so it reads as "this becomes a filter". -->
+              <span
+                [class]="
+                  'tag chip font-size-inherit ps-search-filter ps-search-suggestion__chip' +
+                  (suggestion.chip.field === 'alarm'
+                    ? ' ps-search-severity ps-search-severity--on ps-search-severity--' +
+                      suggestion.chip.value
+                    : '')
+                "
+                [class.tag--info]="suggestion.chip.field === 'type'"
+                [class.tag--primary]="suggestion.chip.field === 'in'"
+              >
+                <!-- One line: whitespace inside would put a space before the CSS colon. -->
+                <span class="ps-search-filter__kind">{{ fieldLabels[suggestion.chip.field] | translate }}</span>
+                @if (suggestion.icon) {
+                  <i [c8yIcon]="suggestion.icon" aria-hidden="true"></i>
+                }
+                @if (suggestion.chip.field === 'type' || suggestion.chip.field === 'alarm') {
+                  {{ suggestion.chip.label | humanize | translate }}
+                } @else {
+                  {{ suggestion.chip.label }}
+                }
+              </span>
+              @if (suggestion.detail && suggestion.chip.field === 'type') {
+                <span class="ps-search-chip__count" [attr.title]="'Matching results' | translate">
+                  {{ suggestion.detail }}
+                </span>
+              } @else if (suggestion.detail || suggestion.typeLabel) {
+                <span class="ps-search-suggestion__detail text-muted">
+                  @if (suggestion.typeLabel) {
+                    {{ suggestion.typeLabel | humanize }}
+                  }
+                  @if (suggestion.typeLabel && suggestion.detail) {
+                    ·
+                  }
+                  {{ suggestion.detail }}
+                </span>
+              }
+            } @else {
+              <i [c8yIcon]="entry.icon" class="text-muted" aria-hidden="true"></i>
+
+              @if (entry.breadcrumb.length > 0 && entry.kind !== 'result') {
+                <span class="ps-search-result__parent text-muted">
+                  {{ entry.breadcrumb.join(' › ') }} ›
+                </span>
+              }
+
+              <span class="ps-search-result__name">
+                <c8y-highlight [text]="entry.label" [pattern]="freeText()" />
+              </span>
+
+              @if (entry.kind === 'result' && entry.breadcrumb.length > 0) {
+                <span class="ps-search-result__breadcrumb text-muted">
+                  {{ entry.breadcrumb.join(' › ') }}
+                </span>
+              }
+
+              @if (dotOf(entry); as dot) {
+                <span class="ps-search-result__alarm">
+                  <ps-status-dot [severity]="dot.severity" [description]="dot.description" />
+                  @if (dot.count > 1) {
+                    <span class="ps-search-result__alarm-count text-muted">{{ dot.count }}</span>
+                  }
+                </span>
+              }
+
+              @if (entry.result) {
+                <span class="label label-info ps-search-result__type">{{ entry.result.type }}</span>
+              }
+            }
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  @if (showEmptyState()) {
+    <p class="text-muted ps-search-palette__empty" data-cy="asset-search--empty">
+      {{ 'No assets or devices match that search.' | translate }}
+    </p>
+  }
+</div>

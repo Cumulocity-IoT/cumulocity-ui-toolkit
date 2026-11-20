@@ -1,14 +1,22 @@
-import { inject, AfterViewInit, Component } from '@angular/core';
+import { inject, type AfterViewInit, Component } from '@angular/core';
 import { Subject } from 'rxjs';
-import { IManagedObject } from '@c8y/client';
-import { CoreModule, ModalLabels } from '@c8y/ngx-components';
-import { latLng, LatLng, Map as LMap, MapOptions, polyline, Polyline, tileLayer } from 'leaflet';
+import { type IManagedObject } from '@c8y/client';
+import { CoreModule, type ModalLabels } from '@c8y/ngx-components';
+import {
+  latLng,
+  type LatLng,
+  type Map as LMap,
+  type MapOptions,
+  polyline,
+  type Polyline,
+  tileLayer,
+} from 'leaflet';
 import { BsDatepickerModule } from 'ngx-bootstrap/datepicker';
 import { TimepickerModule } from 'ngx-bootstrap/timepicker';
 import { LayeredMapWidgetService } from '../service/layered-map-widget.service';
 import { isEmpty } from 'lodash';
 import { BsModalRef } from 'ngx-bootstrap/modal';
-import { ITrack } from '../layered-map-widget.model';
+import { type ITrack } from '../layered-map-widget.model';
 import { OSM_TILE_OPTIONS, OSM_TILE_URL } from '../base-tile-layers';
 
 type IEventsForm = {

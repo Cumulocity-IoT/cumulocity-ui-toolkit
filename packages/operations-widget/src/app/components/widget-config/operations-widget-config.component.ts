@@ -1,12 +1,12 @@
-import { Component, inject, Input, TemplateRef, ViewChild } from '@angular/core';
+import { Component, inject, Input, type TemplateRef, ViewChild } from '@angular/core';
 import { CoreModule, HumanizePipe } from '@c8y/ngx-components';
 import { IconSelectorService } from '@c8y/ngx-components/icon-selector';
 import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
 import { extractPlaceholdersFromObject } from '~helpers/extract-placeholders';
 import {
-  OperationButtonConfig,
-  OperationParamConfig,
-  OperationWidgetConfig,
+  type OperationButtonConfig,
+  type OperationParamConfig,
+  type OperationWidgetConfig,
 } from '../../models/operations-widget-config.model';
 import { OperationsEditorComponent } from '../operations-value/operations-editor.component';
 import { OperationsWidgetComponent } from '../operations-widget/operations-widget.component';
@@ -61,20 +61,6 @@ export class OperationsWidgetConfigComponent {
     if (icon) {
       item.icon = icon;
     }
-  }
-
-  /**
-   * `buttons` and `fields` are optional on the persisted config, so every access
-   * goes through these two helpers instead of repeating the guards inline.
-   */
-  private fieldsOf(buttonIndex: number): OperationParamConfig[] | undefined {
-    const button = this.config.buttons?.[buttonIndex];
-
-    if (!button) {
-      return undefined;
-    }
-
-    return (button.fields ??= []);
   }
 
   addField(buttonIndex: number, placeholder: { key: string; path: string }) {
@@ -186,6 +172,20 @@ export class OperationsWidgetConfigComponent {
     for (const key of removedFieldKeys) {
       this.removeField(buttonIndex, key);
     }
+  }
+
+  /**
+   * `buttons` and `fields` are optional on the persisted config, so every access
+   * goes through these two helpers instead of repeating the guards inline.
+   */
+  private fieldsOf(buttonIndex: number): OperationParamConfig[] | undefined {
+    const button = this.config.buttons?.[buttonIndex];
+
+    if (!button) {
+      return undefined;
+    }
+
+    return (button.fields ??= []);
   }
 
   private setSupportedOperations(): void {

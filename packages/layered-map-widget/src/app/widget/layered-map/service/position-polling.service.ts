@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
-import { IManagedObject, InventoryService } from '@c8y/client';
+import { type IManagedObject, InventoryService } from '@c8y/client';
 import type { LatLngBounds } from 'leaflet';
-import { EMPTY, from, Observable, timer } from 'rxjs';
+import { EMPTY, from, type Observable, timer } from 'rxjs';
 import { catchError, exhaustMap, filter, map, tap } from 'rxjs/operators';
 
 @Injectable()

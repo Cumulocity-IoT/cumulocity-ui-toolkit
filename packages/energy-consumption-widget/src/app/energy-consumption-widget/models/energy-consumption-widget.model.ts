@@ -1,4 +1,4 @@
-import { ISource } from '@c8y/client';
+import { type ISource } from '@c8y/client';
 
 export const EnergyWidgetDateDisplayMode = {
   TOTAL: 'total',

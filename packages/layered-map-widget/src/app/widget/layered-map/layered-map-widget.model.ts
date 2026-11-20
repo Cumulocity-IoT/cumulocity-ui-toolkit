@@ -1,5 +1,5 @@
-import { IAlarm, IEvent, IManagedObject, IOperation } from '@c8y/client';
-import { FeatureGroup, LatLng, Marker } from 'leaflet';
+import { type IAlarm, type IEvent, type IManagedObject, type IOperation } from '@c8y/client';
+import { FeatureGroup, type LatLng, type Marker } from 'leaflet';
 import { has } from 'lodash';
 
 export type BasicLayerConfig = {

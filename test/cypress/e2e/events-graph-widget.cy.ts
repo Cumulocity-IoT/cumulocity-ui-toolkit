@@ -1,0 +1,429 @@
+/// <reference types="cypress" />
+import { IManagedObject } from '@c8y/client';
+import {
+  AddWidgetDialog,
+  Dashboard,
+  DashboardSelectors,
+  openWidgetForEditing,
+  saveWidgetAndDashboard,
+  WidgetConfigSelectors,
+} from '@cumulocity-iot/ui-sdk/cypress';
+
+const WIDGET_ID = 'events-graph.widget';
+const WIDGET = 'c8y-events-graph';
+const CONFIG = 'c8y-event-status';
+const TYPE = 'e2e_MachineState';
+const cy_ = (name: string) => `[data-cy="events-graph${name}"]`;
+
+const BASE_CONFIG = {
+  hours: 4,
+  realtime: false,
+  realtimeInterval: 30000,
+  scale: 0.2,
+  types: [
+    {
+      type: TYPE,
+      values: [
+        { name: 'RUNNING', label: 'Running', color: '#00aa00' },
+        { name: 'STOPPED', label: 'Stopped', color: '#aa0000' },
+      ],
+    },
+  ],
+};
+
+function createDashboard(
+  device: IManagedObject,
+  config: Record<string, unknown> | null,
+  context: 'device' | 'group' = 'device'
+): Cypress.Chainable<IManagedObject> {
+  const children: Record<string, unknown> = {};
+  if (config) {
+    children['egw1'] = {
+      id: 'egw1',
+      componentId: WIDGET_ID,
+      name: WIDGET_ID,
+      title: 'Machine states',
+      config,
+      _x: 0,
+      _y: 0,
+      _width: 12,
+      _height: 6,
+    };
+  }
+  return cy
+    .c8yclient((c) =>
+      c.inventory.create({
+        name: 'Events Graph Dashboard',
+        c8y_Dashboard: { name: 'Events Graph Dashboard', icon: 'th', priority: 10000, children },
+        [`c8y_Dashboard!${context}!${device.id}`]: {},
+      })
+    )
+    .then((res) => res.body as IManagedObject);
+}
+
+describe('Events Graph Widget', () => {
+  let device: IManagedObject;
+
+  function visitDashboard(dashboard: IManagedObject, selector: string) {
+    cy.visitApp(`device/${device.id}/dashboard/${dashboard.id}`, { language: 'en', waitFor: selector });
+  }
+
+  function visitWithConfig(config: Record<string, unknown>, selector = WIDGET) {
+    createDashboard(device, {
+      ...BASE_CONFIG,
+      device: { id: device.id, name: device.name },
+      ...config,
+    }).then((dashboard) => visitDashboard(dashboard, selector));
+  }
+
+  before(() => {
+    cy.getAuth().login();
+    cy.createDevice({ name: `Machine ${Date.now()}` }).then((d) => {
+      device = d;
+      // one state before the 4 h window (picked up as the initial state) and alternating
+      // states every 30 minutes inside it
+      const states = ['STOPPED', 'RUNNING', 'STOPPED', 'RUNNING', 'STOPPED', 'RUNNING', 'STOPPED'];
+      states.forEach((text, i) => {
+        const time = new Date(Date.now() - (5 - i * 0.5) * 3600 * 1000).toISOString();
+        cy.c8yclient((c) => c.event.create({ source: { id: d.id }, type: TYPE, text, time }));
+      });
+    });
+  });
+
+  beforeEach(() => {
+    cy.getAuth().login().disableGainsight();
+  });
+
+  it('is offered in the add-widget dialog and saves the configured event types', () => {
+    createDashboard(device, null).then((dashboard) => {
+      cy.intercept('PUT', `**/inventory/managedObjects/${dashboard.id}`).as('saveDashboard');
+      visitDashboard(dashboard, DashboardSelectors.WIDGET_EDIT_READY);
+    });
+    AddWidgetDialog.openAndSelect('Events Graph');
+
+    cy.get(CONFIG).within(() => {
+      cy.get(cy_('-config--type')).should('not.exist');
+      cy.get(cy_('-config--refresh-interval')).should('have.value', '30').and('be.disabled');
+
+      cy.get(cy_('-config--hours')).type('{selectall}6');
+      cy.get(cy_('-config--realtime')).check({ force: true });
+      cy.get(cy_('-config--refresh-interval')).should('be.enabled').type('{selectall}10');
+
+      // first type with two values
+      cy.get(cy_('-config--add-type')).click();
+      cy.get(cy_('-config--type')).should('have.length', 1);
+      cy.get(cy_('-config--remove-type')).should('not.exist');
+      cy.get(cy_('-config--type-input')).type(TYPE);
+      cy.get(cy_('-config--value-name')).type('RUNNING');
+      cy.get(cy_('-config--value-label')).type('Running');
+      cy.get(cy_('-config--value-color'))
+        .invoke('val', '#00aa00')
+        .trigger('input')
+        .trigger('change');
+      cy.get(cy_('-config--remove-value')).should('not.exist');
+      cy.get(cy_('-config--add-value')).click();
+      cy.get(cy_('-config--value-name')).should('have.length', 2).last().type('STOPPED');
+
+      // a second type that is removed again, and a value that is removed again
+      cy.get(cy_('-config--add-type')).click();
+      cy.get(cy_('-config--type')).should('have.length', 2);
+      cy.get(cy_('-config--remove-type')).last().click();
+      cy.get(cy_('-config--type')).should('have.length', 1);
+      cy.get(cy_('-config--add-value')).click();
+      cy.get(cy_('-config--value-name')).should('have.length', 3);
+      cy.get(cy_('-config--remove-value')).last().click();
+      cy.get(cy_('-config--value-name')).should('have.length', 2);
+    });
+    cy.get(WidgetConfigSelectors.SAVE).should('be.enabled').click();
+    Dashboard.saveIfVisible();
+
+    cy.wait('@saveDashboard')
+      .its('request.body.c8y_Dashboard.children')
+      .then((children: Record<string, { config: Record<string, unknown> }>) => {
+        const config = Object.values(children)[0].config;
+        expect(config).to.deep.include({ hours: 6, realtime: true, realtimeInterval: 10000 });
+        expect(config).to.have.nested.property('device.id', device.id);
+        expect(config.types).to.deep.equal([
+          {
+            type: TYPE,
+            values: [
+              { name: 'RUNNING', label: 'Running', color: '#00aa00' },
+              {
+                name: 'STOPPED',
+                label: '',
+                color: (config.types as { values: { color: string }[] }[])[0].values[1].color,
+              },
+            ],
+          },
+        ]);
+      });
+    cy.get(`${WIDGET} ${cy_('--chart')} canvas`).should('be.visible');
+  });
+
+  it('queries the events of each configured type and renders the timeline', () => {
+    cy.intercept('GET', '**/event/events?*').as('events');
+    visitWithConfig({});
+
+    // in parallel: the time box newest first, page by page, and the state active at its start
+    cy.wait(['@events', '@events']).then((calls) => {
+      const queries = calls.map((call) => call.request.query);
+      const inBox = queries.find((query) => query.pageSize === '2000');
+      const before = queries.find((query) => query.pageSize === '1');
+
+      expect(inBox).to.deep.include({ source: device.id, type: TYPE, currentPage: '1' });
+      expect(inBox).not.to.have.property('revert');
+      expect(before).to.deep.include({ source: device.id, type: TYPE });
+      expect(before).to.have.property('dateTo');
+      expect(before).not.to.have.property('dateFrom');
+    });
+    cy.get(`${WIDGET} ${cy_('--chart')} canvas`).should('be.visible');
+    cy.get(`${WIDGET} ${cy_('--reload-button')}`).should('not.exist');
+  });
+
+  it('queries one request pair per event type', () => {
+    cy.intercept('GET', '**/event/events?*').as('events');
+    visitWithConfig({
+      types: [
+        ...BASE_CONFIG.types,
+        { type: 'e2e_Other', values: [{ name: 'X', label: '', color: '#000000' }] },
+      ],
+    });
+
+    cy.get(`${WIDGET} ${cy_('--chart')} canvas`).should('be.visible');
+    // the earlier state is looked up for every type, with or without events in the time box
+    cy.get('@events.all').should('have.length', 4);
+    cy.get('@events.all').then((calls) => {
+      const types = (calls as unknown as { request: { query: { type: string } } }[]).map(
+        (c) => c.request.query.type
+      );
+      expect(types).to.include('e2e_Other');
+    });
+  });
+
+  it('reloads the events with the auto refresh reload button', () => {
+    cy.intercept('GET', '**/event/events?*').as('events');
+    visitWithConfig({ realtime: true, realtimeInterval: 600000 });
+
+    cy.get(`${WIDGET} ${cy_('--chart')} canvas`).should('be.visible');
+    cy.get('@events.all').should('have.length', 2);
+    cy.get(`${WIDGET} c8y-countdown-interval`).should('exist');
+    cy.get(`${WIDGET} ${cy_('--reload-button')}`).click();
+    cy.get('@events.all').should('have.length', 4);
+  });
+
+  it('shows an empty state when no event type is configured', () => {
+    cy.intercept('GET', '**/event/events?*').as('events');
+    visitWithConfig({ types: [] });
+
+    cy.get(`${WIDGET} ${cy_('--no-types')}`).should('contain.text', 'No event types configured');
+    cy.get(`${WIDGET} ${cy_('--chart')}`).should('not.exist');
+    cy.get('@events.all').should('have.length', 0);
+  });
+
+  it('shows an empty state when no device is selected', () => {
+    createDashboard(device, BASE_CONFIG).then((dashboard) => visitDashboard(dashboard, WIDGET));
+
+    cy.get(`${WIDGET} ${cy_('--no-device')}`).should('contain.text', 'No device selected');
+  });
+
+  it('shows an error state when the events cannot be loaded', () => {
+    cy.intercept('GET', '**/event/events?*', { statusCode: 500, body: {} }).as('eventsFail');
+    visitWithConfig({});
+
+    cy.wait('@eventsFail');
+    cy.get(`${WIDGET} ${cy_('--error')}`).should('contain.text', 'Could not load events');
+    cy.get(`${WIDGET} ${cy_('--chart')}`).should('not.exist');
+  });
+
+  describe('correlating lanes', () => {
+    const GRID_TYPE = 'e2e_GridState';
+    const GRID_CONFIG = {
+      type: GRID_TYPE,
+      values: [{ name: 'CURTAILED', label: 'Curtailed', color: '#0000aa' }],
+    };
+    let group: IManagedObject;
+    let pump: IManagedObject;
+
+    before(() => {
+      cy.getAuth().login();
+      // a second lane type on the machine, active from 3 h ago on (the cursor hovers ~2 h ago)
+      cy.c8yclient((c) =>
+        c.event.create({
+          source: { id: device.id },
+          type: GRID_TYPE,
+          text: 'CURTAILED',
+          time: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
+        })
+      );
+      // a group with the machine and a second device, which has its own state events
+      cy.createDevice({ name: `Pump ${Date.now()}` }).then((p) => {
+        pump = p;
+        cy.c8yclient((c) =>
+          c.event.create({
+            source: { id: p.id },
+            type: TYPE,
+            text: 'RUNNING',
+            time: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
+          })
+        );
+      });
+      cy.c8yclient((c) =>
+        c.inventory.create({ name: `Line ${Date.now()}`, type: 'c8y_DeviceGroup', c8y_IsDeviceGroup: {} })
+      ).then((res) => {
+        group = res.body as IManagedObject;
+        cy.c8yclient((c) => c.inventory.childAssetsAdd(device.id, group.id));
+        cy.c8yclient((c) => c.inventory.childAssetsAdd(pump.id, group.id));
+      });
+    });
+
+    function visitGroupDashboard(config: Record<string, unknown>, selector = WIDGET) {
+      createDashboard(
+        group,
+        { ...BASE_CONFIG, device: { id: group.id, name: group.name }, ...config },
+        'group'
+      ).then((dashboard) =>
+        cy.visitApp(`group/${group.id}/dashboard/${dashboard.id}`, {
+          language: 'en',
+          waitFor: selector,
+        })
+      );
+    }
+
+    it('shows the state of every lane at the time cursor', () => {
+      visitWithConfig({ types: [...BASE_CONFIG.types, GRID_CONFIG] });
+
+      cy.get(`${WIDGET} ${cy_('--cursor')}`).should('contain.text', 'Hover the chart');
+      cy.get(`${WIDGET} ${cy_('--chart')} canvas`).should('be.visible').trigger('mousemove', 'center');
+
+      cy.get(`${WIDGET} ${cy_('--cursor-time')}`).invoke('text').should('match', /^\d{2}:\d{2}:\d{2}$/);
+      cy.get(`${WIDGET} ${cy_('--cursor-lane')}`).should('have.length', 2);
+      cy.get(`${WIDGET} ${cy_('--cursor-lane')}`).first().should('contain.text', TYPE);
+      cy.get(`${WIDGET} ${cy_('--cursor-state')}`)
+        .first()
+        .invoke('text')
+        .should('match', /^(Running|Stopped)$/);
+      cy.get(`${WIDGET} ${cy_('--cursor-lane')}`).last().should('contain.text', 'Curtailed');
+
+      cy.get(`${WIDGET} ${cy_('--chart')} canvas`).trigger('mouseout');
+      cy.get(`${WIDGET} ${cy_('--cursor')}`).should('contain.text', 'Hover the chart');
+    });
+
+    it('offers no device per lane on a device dashboard', () => {
+      createDashboard(device, { ...BASE_CONFIG, device: { id: device.id, name: device.name } }).then(
+        (dashboard) => visitDashboard(dashboard, WIDGET)
+      );
+      openWidgetForEditing();
+
+      cy.get(CONFIG).within(() => {
+        cy.get(cy_('-config--type')).should('have.length', 1);
+        cy.get(cy_('-config--type-device')).should('not.exist');
+      });
+    });
+
+    it('lets a lane of a group dashboard take its events from a device of the group', () => {
+      visitGroupDashboard({});
+      cy.intercept('PUT', '**/inventory/managedObjects/*').as('saveDashboard');
+      openWidgetForEditing();
+
+      cy.get(CONFIG).within(() => {
+        cy.get(cy_('-config--type-device'))
+          .find('option:selected')
+          .should('have.text', 'The group itself');
+        cy.get(cy_('-config--type-device'))
+          .find('option')
+          .should('have.length', 3)
+          .then((options) => {
+            const labels = [...options].map((o) => o.textContent?.trim());
+            expect(labels).to.include.members(['The group itself', device.name, pump.name]);
+          });
+        cy.get(cy_('-config--type-device')).select(pump.name);
+      });
+      saveWidgetAndDashboard();
+
+      cy.wait('@saveDashboard')
+        .its('request.body.c8y_Dashboard.children')
+        .then((children: Record<string, { config: { types: { device?: unknown }[] } }>) => {
+          expect(Object.values(children)[0].config.types[0].device).to.deep.equal({
+            id: pump.id,
+            name: pump.name,
+          });
+        });
+    });
+
+    it('queries each lane from its own device and labels the lanes with it', () => {
+      cy.intercept('GET', '**/event/events?*').as('events');
+      visitGroupDashboard({
+        types: [
+          { ...BASE_CONFIG.types[0], device: { id: device.id, name: device.name } },
+          { ...BASE_CONFIG.types[0], device: { id: pump.id, name: pump.name } },
+        ],
+      });
+
+      cy.get(`${WIDGET} ${cy_('--chart')} canvas`).should('be.visible');
+      cy.get('@events.all').then((calls) => {
+        const sources = (calls as unknown as { request: { query: { source: string } } }[]).map(
+          (c) => c.request.query.source
+        );
+        expect(sources).to.include.members([device.id, pump.id]);
+        expect(sources).not.to.include(group.id);
+      });
+
+      cy.get(`${WIDGET} ${cy_('--chart')} canvas`).trigger('mousemove', 'center');
+      cy.get(`${WIDGET} ${cy_('--cursor-lane')}`).should('have.length', 2);
+      cy.get(`${WIDGET} ${cy_('--cursor-lane')}`).first().should('contain.text', device.name);
+      cy.get(`${WIDGET} ${cy_('--cursor-lane')}`).last().should('contain.text', pump.name);
+    });
+  });
+
+  describe('placing the states on the time axis', () => {
+    /** The readout of the time cursor at `fraction` of the plot width. */
+    function stateAt(fraction: number): Cypress.Chainable<string> {
+      cy.get(`${WIDGET} ${cy_('--chart')} canvas`)
+        .should('be.visible')
+        .then(($canvas) => {
+          const { width, height } = $canvas[0].getBoundingClientRect();
+
+          cy.wrap($canvas).trigger('mousemove', width * fraction, height / 2);
+        });
+
+      return cy.get(`${WIDGET} ${cy_('--cursor-state')}`).first().invoke('text');
+    }
+
+    function visitDevice(source: IManagedObject) {
+      createDashboard(source, {
+        ...BASE_CONFIG,
+        device: { id: source.id, name: source.name },
+      }).then((dashboard) =>
+        cy.visitApp(`device/${source.id}/dashboard/${dashboard.id}`, {
+          language: 'en',
+          waitFor: WIDGET,
+        })
+      );
+    }
+
+    function deviceWithEvent(name: string, hoursAgo: number, text: string) {
+      return cy.createDevice({ name: `${name} ${Date.now()}` }).then((created) => {
+        const time = new Date(Date.now() - hoursAgo * 3600 * 1000).toISOString();
+
+        cy.c8yclient((c) => c.event.create({ source: { id: created.id }, type: TYPE, text, time }));
+
+        return cy.wrap(created);
+      });
+    }
+
+    it('starts a bar at its event time, not at the start of the time box', () => {
+      // the only event: 2 h into the 4 h window, nothing before it
+      deviceWithEvent('Late start', 2, 'RUNNING').then((late) => visitDevice(late));
+
+      stateAt(0.15).should('equal', '–');
+      stateAt(0.9).should('equal', 'Running');
+    });
+
+    it('shows the state a device has been in since before the time box', () => {
+      // changed 5 h ago — before the 4 h window — and nothing since
+      deviceWithEvent('Long stop', 5, 'STOPPED').then((stopped) => visitDevice(stopped));
+
+      stateAt(0.5).should('equal', 'Stopped');
+    });
+  });
+});

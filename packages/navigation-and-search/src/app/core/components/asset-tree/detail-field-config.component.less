@@ -1,0 +1,101 @@
+:host {
+  display: block;
+}
+
+.ps-fieldcfg {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ps-fieldcfg__scope {
+  margin: 0;
+}
+
+.ps-fieldcfg__notes {
+  padding: 6px 12px;
+  border-left: 3px solid var(--c8y-root-component-border-color, rgba(0, 0, 0, 0.12));
+  background: var(--c8y-level-1);
+}
+
+.ps-fieldcfg__note {
+  margin: 0;
+  font-size: 12px;
+}
+
+// Shown and Available side by side; one column once the drawer is narrow.
+.ps-fieldcfg__columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.ps-fieldcfg__hint {
+  margin: 0 0 4px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ps-fieldcfg__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--c8y-root-component-border-color, rgba(0, 0, 0, 0.12));
+  border-radius: 4px;
+}
+
+.ps-fieldcfg__item {
+  gap: 8px;
+  min-height: 34px;
+  padding: 4px 10px;
+  background: var(--c8y-root-component-background-default, #fff);
+
+  & + & {
+    border-top: 1px solid var(--c8y-root-component-border-color, rgba(0, 0, 0, 0.12));
+  }
+
+  // Keep the drop placeholder the same height as a row, so reordering does not make the
+  // list jump.
+  &.cdk-drag-placeholder {
+    opacity: 0.4;
+  }
+}
+
+.ps-fieldcfg__grip {
+  flex: 0 0 14px;
+  cursor: grab;
+}
+
+.ps-fieldcfg__label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-weight: normal;
+  cursor: pointer;
+
+  input {
+    margin: 0;
+  }
+}
+
+// The MO path of a picked field. Truncates rather than wraps: a nested path is long.
+.ps-fieldcfg__path {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-left: auto;
+  padding: 0 2px;
+  background: none;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ps-fieldcfg__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

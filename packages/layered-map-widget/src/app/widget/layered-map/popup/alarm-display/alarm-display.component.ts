@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { IManagedObject } from '@c8y/client';
+import { type IManagedObject } from '@c8y/client';
 import { CoreModule } from '@c8y/ngx-components';
 
 @Component({

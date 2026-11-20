@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { debounce, DebouncedFuncLeading } from 'lodash';
+import { debounce, type DebouncedFuncLeading } from 'lodash';
 import { Subject } from 'rxjs';
 
 /**

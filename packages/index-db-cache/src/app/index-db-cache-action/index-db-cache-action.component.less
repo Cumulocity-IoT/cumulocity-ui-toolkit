@@ -4,12 +4,13 @@
     @media (min-width: 768px) {
       // Sit above the navigator (z-index 1031) and action bar (1030)
       z-index: 1032;
-      // Start below both the main header (48px) and the page toolbar (another 48px)
-      top: 171px;
-      left: 250px;
+      // Start right below the page toolbar and right of the navigator; both are measured by the
+      // component (--idb-drawer-*), which also follows the navigator's collapse frame by frame —
+      // hence no transition on `left`.
+      top: var(--idb-drawer-top, 171px);
+      left: var(--idb-drawer-left, 250px);
       right: 10px;
-      // Smooth left transition for nav open/close at all breakpoints
-      transition: left 0.4s ease-in-out, top 0.2s ease;
+      transition: top 0.2s ease;
     }
   }
 }

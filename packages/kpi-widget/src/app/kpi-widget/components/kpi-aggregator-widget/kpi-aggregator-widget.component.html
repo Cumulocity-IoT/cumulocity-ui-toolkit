@@ -2,11 +2,12 @@
   <span class="text-muted">{{ timestampEnd | c8yDate }}</span>
 
   @if (paging && config.showMeta) {
-    <span>
+    <span data-cy="kpi-aggregator--results">
       {{ results }} Results
       @if (paging.totalPages <= pageLimit) {
         <span
           class="text-muted"
+          data-cy="kpi-aggregator--paging"
           [tooltip]="'Current Page: ' + paging.currentPage + '\nTotal Pages: ' + paging.totalPages"
           [placement]="'bottom'"
         >
@@ -15,6 +16,7 @@
       } @else {
         <span
           class="text-muted"
+          data-cy="kpi-aggregator--paging"
           [tooltip]="
             'Current Page: ' +
             paging.currentPage +
@@ -41,6 +43,7 @@
       dropdownToggle
       type="button"
       title="dropdown-toggle"
+      data-cy="kpi-aggregator--menu"
     >
       <i [c8yIcon]="'ellipsis-v'"></i>
     </button>
@@ -50,6 +53,7 @@
         <button
           [disabled]="!paging || paging?.totalPages <= paging?.currentPage"
           (click)="loadNextBatch()"
+          data-cy="kpi-aggregator--load-next"
           type="button"
         >
           <i [c8yIcon]="'chevron-double-right'"></i>
@@ -57,7 +61,7 @@
         </button>
       </li>
       <li>
-        <button (click)="loadData()" type="button">
+        <button (click)="loadData()" type="button" data-cy="kpi-aggregator--refresh">
           <i [c8yIcon]="'refresh'"></i>
           {{ 'Refresh' | translate }}
         </button>
@@ -69,7 +73,7 @@
 <!-- manual load trigger -->
 @if (!config.runOnLoad && !timestampStart) {
   <div class="d-flex j-c-center p-16">
-    <button class="btn btn-primary" (click)="loadData()" type="button">
+    <button class="btn btn-primary" (click)="loadData()" type="button" data-cy="kpi-aggregator--load">
       {{ 'Load data' | translate }}
     </button>
   </div>
@@ -110,14 +114,14 @@
     }
   } @else {
     <!-- empty -->
-    <div class="p-16">
+    <div class="p-16" data-cy="kpi-aggregator--empty">
       <h2 class="m-b-16">Empty AssetGroup Result</h2>
       <pre>{{ config | json }}</pre>
     </div>
   }
   @if (config.showMeta && timestampEnd) {
     <div class="d-flex j-c-center m-t-16 p-b-8">
-      <small class="text-muted">{{ 'Query duration' | translate }}: {{ duration }}</small>
+      <small class="text-muted" data-cy="kpi-aggregator--duration">{{ 'Query duration' | translate }}: {{ duration }}</small>
     </div>
   }
 } @else {
@@ -132,7 +136,7 @@
   @if (assetGroups) {
     <ul class="bar-chart">
       @for (group of assetGroups; track group) {
-        <li>
+        <li data-cy="kpi-aggregator--bar">
           <ng-template
             [ngTemplateOutlet]="barChartItemTemplateDefault"
             [ngTemplateOutletContext]="{ group: group }"
@@ -146,8 +150,8 @@
 
 <!-- bar chat item -->
 <ng-template #barChartItemTemplateDefault let-group="group">
-  <label class="text-truncate">{{ group.label }}</label>
-  <span>
+  <label class="text-truncate" data-cy="kpi-aggregator--bar-label">{{ group.label }}</label>
+  <span data-cy="kpi-aggregator--bar-value">
     {{ group.value }}
     @if (config.percent) {
       <span class="percent text-muted"> {{ (group.value / total) * 100 | number: '1.1-1' }}% </span>
@@ -162,7 +166,7 @@
 
 <!-- table -->
 <ng-template #assetListTemplateDefault let-assets="assets">
-  <table class="table table-striped">
+  <table class="table table-striped" data-cy="kpi-aggregator--table">
     <thead>
       <tr>
         <th translate>Asset</th>
@@ -196,7 +200,7 @@
 
 <!-- pie chart -->
 <ng-template #pieCHartTemplateDefault let-assets="assets">
-  <div class="chart-wrap">
+  <div class="chart-wrap" data-cy="kpi-aggregator--pie">
     <canvas [data]="pieChartData" [type]="'pie'" [options]="pieChartOptions" baseChart> </canvas>
   </div>
 </ng-template>

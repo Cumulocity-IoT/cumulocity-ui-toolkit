@@ -1,7 +1,12 @@
 import { effect, inject, input, output, Component } from '@angular/core';
-import { IIdentified, IManagedObject, InventoryService, IResultList } from '@c8y/client';
+import {
+  type IIdentified,
+  type IManagedObject,
+  InventoryService,
+  type IResultList,
+} from '@c8y/client';
 import { CoreModule } from '@c8y/ngx-components';
-import { map, Observable, pipe, UnaryFunction } from 'rxjs';
+import { map, type Observable, pipe, type UnaryFunction } from 'rxjs';
 
 @Component({
   selector: 'ps-action-bar-search',

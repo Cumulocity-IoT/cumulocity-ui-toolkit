@@ -1,0 +1,52 @@
+// The cascade surface. Reads as one piece of furniture with the container it grows
+// out of, not as a floating tooltip (§6.4).
+
+// The host spans the container and is itself the positioning context, so the panel's
+// `left`/`top` are container-relative and `getBoundingClientRect()` on the host
+// measures the container — which is what the vertical clamp needs. It must not
+// swallow pointer events over the container it covers.
+:host {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  // Rule 3: below the container's own stacking level, so the seam is hidden and the
+  // container is never covered. The container sets a higher z-index on itself.
+  z-index: 0;
+}
+
+.ps-cascade {
+  position: absolute;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden auto;
+  background-color: var(--c8y-root-component-background-default, #fff);
+  color: var(--c8y-text-color, inherit);
+
+  // Rule 2: no left border — the container's right edge is this panel's left edge.
+  border: 1px solid var(--c8y-root-component-border-color, rgba(0, 0, 0, 0.12));
+  border-left: 0;
+  border-radius: 0 8px 8px 0;
+  // Shadow cast rightward only, so nothing darkens the container.
+  box-shadow: 6px 0 16px -6px rgba(0, 0, 0, 0.25);
+
+  animation: ps-cascade-in 140ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes ps-cascade-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+// §6.5: `prefers-reduced-motion` → no slide, instant show.
+@media (prefers-reduced-motion: reduce) {
+  .ps-cascade {
+    animation: none;
+  }
+}

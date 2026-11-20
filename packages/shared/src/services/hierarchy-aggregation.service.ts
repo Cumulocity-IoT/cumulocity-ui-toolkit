@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
-import { IManagedObject, InventoryService } from '@c8y/client';
-import { Observable, combineLatest, from, of } from 'rxjs';
+import { type IManagedObject, InventoryService } from '@c8y/client';
+import { type Observable, combineLatest, from, of } from 'rxjs';
 import { switchMap, map, startWith, shareReplay } from 'rxjs/operators';
 import { uniq, uniqBy } from 'lodash';
 

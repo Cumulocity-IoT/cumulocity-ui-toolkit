@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
-import { IManagedObject, InventoryService } from '@c8y/client';
-import { MyLayer } from '../layered-map-widget.model';
-import { EMPTY, from, Observable, timer } from 'rxjs';
+import { type IManagedObject, InventoryService } from '@c8y/client';
+import { type MyLayer } from '../layered-map-widget.model';
+import { EMPTY, from, type Observable, timer } from 'rxjs';
 import { catchError, exhaustMap, filter } from 'rxjs/operators';
 import { normalizeQueryFilter } from '~components/_formly-fields/query-forms/formly-query-blocks';
 

@@ -1,4 +1,4 @@
-import { Pipe, PipeTransform } from '@angular/core';
+import { Pipe, type PipeTransform } from '@angular/core';
 import { get } from 'lodash';
 
 @Pipe({ name: 'fileNameToIcon', standalone: true })

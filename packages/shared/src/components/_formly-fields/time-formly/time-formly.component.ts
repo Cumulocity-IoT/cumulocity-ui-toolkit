@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, type OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { C8yTranslatePipe, DateTimePickerModule } from '@c8y/ngx-components';
-import { FieldType, FieldTypeConfig, FormlyModule } from '@ngx-formly/core';
+import { FieldType, type FieldTypeConfig, FormlyModule } from '@ngx-formly/core';
 import { BsDatepickerModule } from 'ngx-bootstrap/datepicker';
 import { TimepickerModule } from 'ngx-bootstrap/timepicker';
 

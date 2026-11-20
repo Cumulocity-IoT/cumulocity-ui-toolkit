@@ -8,7 +8,7 @@
   </div>
 
   <div class="modal-footer">
-    <button class="btn btn-default" (click)="close()" type="button">
+    <button class="btn btn-default" (click)="close()" type="button" data-cy="reminder-modal--cancel">
       {{ 'reminder.actions.cancel' | translate }}
     </button>
 
@@ -17,6 +17,7 @@
       [disabled]="!form.valid || isLoading"
       [class.btn-pending]="isLoading"
       type="submit"
+      data-cy="reminder-modal--submit"
     >
       {{ 'reminder.actions.add-short' | translate }}
     </button>

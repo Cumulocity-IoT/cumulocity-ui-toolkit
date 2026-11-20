@@ -1,7 +1,11 @@
 import { Injectable } from '@angular/core';
-import { Column, DataSourceModifier, ServerSideDataResult } from '@c8y/ngx-components';
-import { QueryFilter } from '../models/query-utils.model';
-import { hasSearchableConfig, SearchColumn } from '../models/data-grid.model';
+import {
+  type Column,
+  type DataSourceModifier,
+  type ServerSideDataResult,
+} from '@c8y/ngx-components';
+import { type QueryFilter } from '../models/query-utils.model';
+import { hasSearchableConfig, type SearchColumn } from '../models/data-grid.model';
 import { BaseInventoryDatasourceService } from './base-inventory-datasource.service';
 
 @Injectable({ providedIn: 'root' })

@@ -1,5 +1,5 @@
-import { ActivatedRouteSnapshot } from '@angular/router';
-import { IManagedObject } from '@c8y/client';
+import { type ActivatedRouteSnapshot } from '@angular/router';
+import { type IManagedObject } from '@c8y/client';
 import { cloneDeep } from 'lodash';
 
 /** How far up the route tree to look before giving up. */

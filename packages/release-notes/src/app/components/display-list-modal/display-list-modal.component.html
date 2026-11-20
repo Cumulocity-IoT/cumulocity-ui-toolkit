@@ -8,7 +8,7 @@
 <div class="modal-body">
   <c8y-list-group>
     @for (release of releaseNotes; track release.id) {
-      <c8y-li>
+      <c8y-li data-cy="release-notes-display--item">
         <header>
           <span>{{ release.version }}</span>
           <time>{{ release.publicationTime | c8yDate: 'shortDate' }}</time>
@@ -19,6 +19,7 @@
     } @empty {
       <c8y-li>
         <c8y-ui-empty-state
+          data-cy="release-notes-display--empty"
           [icon]="'search'"
           [title]="'No release notes available' | translate"
           [subtitle]="'Well… maybe later' | translate"
@@ -30,5 +31,5 @@
 </div>
 
 <div class="modal-footer">
-  <button class="btn btn-default" (click)="close()" type="button" translate>Close</button>
+  <button class="btn btn-default" (click)="close()" type="button" data-cy="release-notes-display--close" translate>Close</button>
 </div>

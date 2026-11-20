@@ -1,15 +1,15 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, type OnInit } from '@angular/core';
 import {
-  ActionControl,
+  type ActionControl,
   AlertService,
   BuiltInActionType,
-  Column,
-  ColumnDataType,
+  type Column,
+  type ColumnDataType,
   CoreModule,
   FormsModule,
   ModalService,
-  Pagination,
-  Row,
+  type Pagination,
+  type Row,
   Status,
 } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
@@ -21,7 +21,7 @@ import { TenantOptionManagementService } from './tenant-option-management.servic
 import { ImportOptionModalComponent } from './import-option/import-option-modal.component';
 import { ExportModalComponent } from './export-modal/export-modal.component';
 import { FileImportModalComponent } from './file-import-modal/file-import-modal.component';
-import { TenantOptionRow } from './tenant-option-management.model';
+import { type TenantOptionRow } from './tenant-option-management.model';
 import { ButtonsModule } from 'ngx-bootstrap/buttons';
 
 @Component({
@@ -40,7 +40,7 @@ import { ButtonsModule } from 'ngx-bootstrap/buttons';
 })
 export class TenantOptionManagementComponent implements OnInit {
   columns: Column[];
-  rows: (Row | TenantOptionRow)[];
+  rows: (Row | TenantOptionRow)[] = [];
 
   pagination: Pagination = {
     pageSize: 30,
@@ -88,7 +88,7 @@ export class TenantOptionManagementComponent implements OnInit {
       for (const r of this.rows) {
         r.value = options.find((o) => o.id === r.id)?.value;
       }
-    } catch (e) {
+    } catch {
       this.rows = [];
     } finally {
       this.isLoading = false;
@@ -102,35 +102,35 @@ export class TenantOptionManagementComponent implements OnInit {
         name: 'category',
         path: 'category',
         filterable: true,
-        dataType: ColumnDataType.TextShort,
+        dataType: 'text-short' as ColumnDataType,
       },
       {
         header: 'Key',
         name: 'key',
         path: 'key',
         filterable: true,
-        dataType: ColumnDataType.TextShort,
+        dataType: 'text-short' as ColumnDataType,
       },
       {
         header: 'Content',
         name: 'content',
         path: 'value',
         filterable: true,
-        dataType: ColumnDataType.TextLong,
+        dataType: 'text-long' as ColumnDataType,
       },
       {
         header: 'Last updated',
         name: 'lastUpdated',
         path: 'lastUpdated',
         filterable: true,
-        dataType: ColumnDataType.TextShort,
+        dataType: 'text-short' as ColumnDataType,
       },
       {
         header: 'Owner',
         name: 'user',
         path: 'user',
         filterable: true,
-        dataType: ColumnDataType.TextShort,
+        dataType: 'text-short' as ColumnDataType,
       },
     ];
   }
@@ -175,10 +175,12 @@ export class TenantOptionManagementComponent implements OnInit {
   openAllowListModal() {
     const modalRef = this.bsModalService.show(ImportOptionModalComponent, { class: 'modal-lg' });
 
-    modalRef.content?.closeSubject.pipe(take(1)).subscribe((row) => {
-      if (row) {
-        this.rows.push(row);
-        this.rows = [...this.rows]; // trigger binding
+    modalRef.content?.closeSubject.pipe(take(1)).subscribe((rows) => {
+      if (rows && rows.length) {
+        const existingIds = new Set(this.rows.map((r) => r.id));
+        const newRows = rows.filter((row) => !existingIds.has(row.id));
+
+        this.rows = [...this.rows, ...newRows]; // trigger binding
       }
     });
   }

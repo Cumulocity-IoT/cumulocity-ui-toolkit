@@ -1,6 +1,6 @@
 import { Injectable, effect, inject, signal } from '@angular/core';
 import { CacheEventsService } from './cache-events.service';
-import { CacheName } from './cache-log.service';
+import { type CacheName } from './cache-log.service';
 import { MeasurementCacheService } from './measurement-cache.service';
 import { NewSeriesCacheService } from './new-series-cache.service';
 import { OldSeriesCacheService } from './old-series-cache.service';

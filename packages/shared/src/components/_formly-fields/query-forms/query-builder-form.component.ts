@@ -1,12 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, input, model, OnInit } from '@angular/core';
+import { Component, input, model, type OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CoreModule } from '@c8y/ngx-components';
 import { validateQuery } from '~components/query-display/query-validator';
 import {
-  BuilderKind,
-  BuilderNode,
-  BuilderOp,
+  type BuilderKind,
+  type BuilderNode,
+  type BuilderOp,
   isGroup,
   isParseable,
   makeNode,

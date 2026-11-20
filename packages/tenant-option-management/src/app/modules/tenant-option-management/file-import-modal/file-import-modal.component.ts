@@ -1,13 +1,13 @@
 import { Component, inject } from '@angular/core';
-import { ITenantOption, TenantOptionsService } from '@c8y/client';
+import { type ITenantOption, TenantOptionsService } from '@c8y/client';
 import {
   AlertService,
-  Column,
-  ColumnDataType,
+  type Column,
+  type ColumnDataType,
   CoreModule,
-  DisplayOptions,
+  type DisplayOptions,
   ModalService,
-  Pagination,
+  type Pagination,
   Status,
 } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
@@ -19,7 +19,7 @@ import { isEmpty } from 'lodash';
 import {
   ImportStatusEnum,
   isImportableTenantOption,
-  TenantOptionImportRow,
+  type TenantOptionImportRow,
 } from '../tenant-option-management.model';
 
 @Component({
@@ -70,14 +70,14 @@ export class FileImportModalComponent {
         name: 'category',
         path: 'category',
         filterable: true,
-        dataType: ColumnDataType.TextLong,
+        dataType: 'text-long' as ColumnDataType,
       },
       {
         header: 'Key',
         name: 'key',
         path: 'key',
         filterable: true,
-        dataType: ColumnDataType.TextLong,
+        dataType: 'text-long' as ColumnDataType,
       },
       {
         header: 'Status',
@@ -85,7 +85,7 @@ export class FileImportModalComponent {
         path: 'status',
         filterable: true,
         gridTrackSize: '9em',
-        dataType: ColumnDataType.TextShort,
+        dataType: 'text-short' as ColumnDataType,
       },
     ];
   }
@@ -109,13 +109,17 @@ export class FileImportModalComponent {
           const validRows = parsed.filter(isImportableTenantOption);
 
           if (!validRows.length) {
-            throw new Error('The file contains no entries with a category and a key.');
+            throw new Error(
+              'The file contains no entries with a category, a key and a text value.'
+            );
           }
 
           if (validRows.length < parsed.length) {
             this.alertService.warning(
               this.translateService.instant(
-                gettext('{{count}} entries were skipped because they have no category or key.'),
+                gettext(
+                  '{{count}} entries were skipped because they have no category, key or text value.'
+                ),
                 { count: parsed.length - validRows.length }
               ) as string
             );
@@ -194,18 +198,53 @@ export class FileImportModalComponent {
   reload() {}
 
   async import() {
-    if (this.selectedItems.length > 0) {
-      this.isLoading = true;
-
-      for (const item of this.selectedItems) {
-        await this.importOrUpdateItem(item);
-      }
-      this.isLoading = false;
-      this.alertService.success('Tenant options imported successfully.');
-      this.close();
-    } else {
-      this.alertService.danger('Please select at least one item to import.');
+    if (this.isLoading) {
+      return;
     }
+
+    if (!this.selectedItems.length) {
+      this.alertService.danger(
+        this.translateService.instant(
+          gettext('Please select at least one item to import.')
+        ) as string
+      );
+
+      return;
+    }
+
+    this.isLoading = true;
+    let failed = 0;
+
+    try {
+      // One failing option (permissions, validation) must not stop the others.
+      for (const item of this.selectedItems) {
+        try {
+          await this.importOrUpdateItem(item);
+        } catch {
+          failed++;
+          this.setStatus(item, ImportStatusEnum.FAILED);
+        }
+      }
+    } finally {
+      this.isLoading = false;
+    }
+
+    if (failed) {
+      // Stay open: the rows show which options failed.
+      this.alertService.danger(
+        this.translateService.instant(
+          gettext('{{failed}} of {{total}} tenant options could not be imported.'),
+          { failed, total: this.selectedItems.length }
+        ) as string
+      );
+
+      return;
+    }
+
+    this.alertService.success(
+      this.translateService.instant(gettext('Tenant options imported successfully.')) as string
+    );
+    this.close();
   }
 
   async importOrUpdateItem(item: TenantOptionImportRow) {
@@ -246,5 +285,13 @@ export class FileImportModalComponent {
   close() {
     this.closeSubject.next(null);
     this.modal.hide();
+  }
+
+  private setStatus(item: TenantOptionImportRow, status: TenantOptionImportRow['status']): void {
+    const row = this.rows.find((r) => r.id === item.id);
+
+    if (row) {
+      row.status = status;
+    }
   }
 }

@@ -1,7 +1,7 @@
 import { Component, input } from '@angular/core';
 import { CoreModule } from '@c8y/ngx-components';
 import { CarouselModule } from 'ngx-bootstrap/carousel';
-import { GalleryImages } from './image-gallery.model';
+import { type GalleryImages } from './image-gallery.model';
 import { ViewEncapsulation } from '@angular/core';
 
 @Component({

@@ -1,0 +1,311 @@
+# Shell compatibility: runs every plugin's Cypress suite on the tenant mock inside the latest CD release of
+# the cockpit (github.com/Cumulocity-IoT/cockpit/releases/latest), while the plugins stay built with the
+# workspace's pinned Web SDK version — what a tenant upgrade does to a deployed plugin. A failing run opens
+# an issue (label shell-compat), or comments on the open one for that version; a passing run closes them.
+#
+# Each cockpit version is tested once per commit of main: a passing run leaves a cache marker, so later runs
+# skip until a newer release appears or main changes. Failing runs leave no marker and are retried daily.
+#
+# Uses the 'e2e' environment (windy-dev credentials for pulling the mock's world), like e2e-test.yml.
+name: Shell compatibility
+
+on:
+  schedule:
+    - cron: '0 4 * * *' # daily, 04:00 UTC (cockpit releases usually land in the UTC afternoon)
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Cockpit version to test (e.g. 1024.22.1); default the latest release
+        required: false
+        type: string
+      force:
+        description: Test even if this version already passed at this commit, or equals the pinned version
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: read # @cumulocity-iot/ui-sdk from GitHub Packages
+
+concurrency:
+  group: shell-compat
+  cancel-in-progress: false
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.decide.outputs.run }}
+      version: ${{ steps.version.outputs.version }}
+      pinned: ${{ steps.version.outputs.pinned }}
+      plugins: ${{ steps.plugins.outputs.plugins }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Resolve the cockpit version
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          # releases/latest skips pre-releases: the current CD release (same as the `latest` tag on npm)
+          version="${INPUT_VERSION:-$(gh api repos/Cumulocity-IoT/cockpit/releases/latest --jq '.tag_name')}"
+          version="${version#v}"
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::not a cockpit version: '$version'"
+            exit 1
+          fi
+          # the mock serves cockpit and login of the same version
+          for app in cockpit login; do
+            if ! gh api "repos/Cumulocity-IoT/$app/releases/tags/v$version" --silent; then
+              echo "::error::$app has no release v$version"
+              exit 1
+            fi
+          done
+          pinned=$(jq -r '.dependencies["@c8y/ngx-components"]' package.json)
+          echo "cockpit $version, workspace pinned to $pinned"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "pinned=$pinned" >> "$GITHUB_OUTPUT"
+
+      - name: Look up a passing run of this version at this commit
+        id: marker
+        uses: actions/cache/restore@v4
+        with:
+          path: .shell-compat-ok
+          key: shell-compat-${{ steps.version.outputs.version }}-${{ github.sha }}
+          lookup-only: true
+
+      - name: Decide
+        id: decide
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          PINNED: ${{ steps.version.outputs.pinned }}
+          TESTED: ${{ steps.marker.outputs.cache-hit }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          if [ "$FORCE" = "true" ]; then
+            run=true
+          elif [ "$VERSION" = "$PINNED" ]; then
+            echo "cockpit $VERSION is the pinned version: e2e-test.yml covers it" && run=false
+          elif [ "$TESTED" = "true" ]; then
+            echo "cockpit $VERSION already passed at ${GITHUB_SHA::7}" && run=false
+          else
+            run=true
+          fi
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+
+      - name: Collect plugins with an e2e config
+        id: plugins
+        run: |
+          plugins=$(ls test/config/*.config.ts | xargs -n1 basename | sed 's/\.config\.ts$//' | grep -vx base \
+            | jq -R -s -c 'split("\n") | map(select(. != ""))')
+          echo "plugins=$plugins" >> "$GITHUB_OUTPUT"
+
+  e2e:
+    needs: detect
+    if: needs.detect.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    # windy-dev credentials for pulling the mock's world
+    environment: e2e
+    strategy:
+      fail-fast: false
+      # every job pulls the world from windy-dev: keep the load on the tenant moderate
+      max-parallel: 5
+      matrix:
+        plugin: ${{ fromJson(needs.detect.outputs.plugins) }}
+    name: E2E ${{ matrix.plugin }} in cockpit ${{ needs.detect.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+          # @cumulocity-iot/ui-sdk (the tenant mock) comes from GitHub Packages
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@cumulocity-iot'
+
+      - name: Cache Cumulocity shell builds
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/c8y-ui
+          key: c8y-ui-shells-${{ needs.detect.outputs.version }}
+          restore-keys: |
+            c8y-ui-shells-
+
+      - name: Cache Cypress binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Cypress
+          key: cypress-${{ runner.os }}-${{ hashFiles('test/package.json') }}
+          restore-keys: |
+            cypress-${{ runner.os }}-
+
+      - name: Install root dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install test workspace dependencies
+        run: pnpm -C test install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Cypress binary
+        run: pnpm -C test exec cypress install
+
+      - name: Set up go-c8y-cli
+        uses: reubenmiller/setup-go-c8y-cli@9b6147a9f916607a3c1db392eab6e54e3e8c3f01 # v2
+        with:
+          showTenant: 'false'
+
+      - name: Pull the mock world from windy-dev
+        run: pnpm run e2e:world:pull
+        timeout-minutes: 5
+        env:
+          C8Y_HOST: ${{ vars.WINDY_C8Y_HOST }}
+          C8Y_USER: ${{ vars.WINDY_C8Y_USER }}
+          C8Y_PASSWORD: ${{ secrets.WINDY_C8Y_PASSWORD }}
+
+      - name: Run Cypress tests in cockpit ${{ needs.detect.outputs.version }}
+        id: e2e
+        run: pnpm run e2e:mock ${{ matrix.plugin }}
+        timeout-minutes: 15
+        env:
+          NODE_OPTIONS: --max_old_space_size=4096
+          E2E_SHELL_VERSION: ${{ needs.detect.outputs.version }}
+          E2E_MOCK_GAPS: ${{ runner.temp }}/mock-gaps.txt
+
+      - name: Record the result
+        if: always()
+        env:
+          PLUGIN: ${{ matrix.plugin }}
+          OUTCOME: ${{ steps.e2e.outcome }}
+          GAPS: ${{ runner.temp }}/mock-gaps.txt
+        run: |
+          mkdir -p shell-compat-result
+          [ -f "$GAPS" ] || : > "$GAPS"
+          jq -n --arg plugin "$PLUGIN" --arg outcome "$OUTCOME" --rawfile gaps "$GAPS" \
+            '{plugin: $plugin, outcome: $outcome, gaps: ($gaps | split("\n") | map(select(. != "")))}' \
+            > "shell-compat-result/$PLUGIN.json"
+
+      - name: Upload the result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shell-compat-result-${{ matrix.plugin }}
+          path: shell-compat-result
+          retention-days: 5
+
+      - name: Upload Cypress screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots-${{ matrix.plugin }}
+          path: test/cypress/screenshots
+          if-no-files-found: ignore
+
+  report:
+    needs: [detect, e2e]
+    if: always() && needs.detect.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Download the results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: shell-compat-result-*
+          path: results
+          merge-multiple: true
+
+      - name: Summarize
+        id: summary
+        env:
+          VERSION: ${{ needs.detect.outputs.version }}
+          PINNED: ${{ needs.detect.outputs.pinned }}
+          PLUGINS: ${{ needs.detect.outputs.plugins }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          shopt -s nullglob
+          files=(results/*.json)
+          # a plugin whose job died before recording counts as failed
+          jq -s --argjson plugins "$PLUGINS" \
+            '. as $r | $plugins | map(. as $p | ([$r[] | select(.plugin == $p)][0] // {plugin: $p, outcome: "no result", gaps: []}))' \
+            "${files[@]}" < /dev/null > results.json
+          failed=$(jq -r '[.[] | select(.outcome != "success") | .plugin] | join(", ")' results.json)
+
+          {
+            echo "Cypress e2e of the plugins (built with Web SDK \`$PINNED\`) on the tenant mock inside cockpit [\`$VERSION\`](https://github.com/Cumulocity-IoT/cockpit/releases/tag/v$VERSION)."
+            echo
+            echo "Run: $RUN_URL"
+            echo
+            echo "| Plugin | Result | Requests the mock does not emulate |"
+            echo "|---|---|---|"
+            jq -r '.[] | "| \(.plugin) | \(if .outcome == "success" then "✅" else "❌ \(.outcome)" end) | \(.gaps | length) |"' results.json
+            jq -r '.[] | select(.outcome != "success" and (.gaps | length) > 0)
+              | "\n<details><summary>\(.plugin): requests the mock does not emulate</summary>\n\n```\n\(.gaps | join("\n"))\n```\n</details>"' results.json
+            echo
+            echo "A request the mock does not emulate may be what failed (a mock gap the new cockpit runs into, not a plugin bug) — check those before fixing the plugin."
+            echo "Add the \`agent:fix\` label to hand this issue to the agentic issue loop."
+          } > body.md
+          cat body.md >> "$GITHUB_STEP_SUMMARY"
+          echo "failed=$failed" >> "$GITHUB_OUTPUT"
+
+      - name: Open or update the issue
+        if: steps.summary.outputs.failed != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ needs.detect.outputs.version }}
+          FAILED: ${{ steps.summary.outputs.failed }}
+        run: |
+          gh label create shell-compat --color D93F0B --description 'Plugins fail in a newer cockpit release' --force
+          title="Cockpit $VERSION: e2e failures"
+          issue=$(gh issue list --label shell-compat --state open --json number,title \
+            | jq -r --arg t "$title" '[.[] | select(.title == $t)][0].number // empty')
+          if [ -n "$issue" ]; then
+            gh issue comment "$issue" --body-file body.md
+          else
+            gh issue create --title "$title" --label shell-compat --body-file body.md
+          fi
+          echo "::error::failing in cockpit $VERSION: $FAILED"
+          exit 1
+
+      - name: Close the issues of this version and older ones
+        if: steps.summary.outputs.failed == ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ needs.detect.outputs.version }}
+        run: |
+          gh issue list --label shell-compat --state open --json number,title \
+            | jq -r '.[] | "\(.number) \((.title | capture("^Cockpit (?<v>[0-9.]+):").v) // "")"' |
+          while read -r number version; do
+            [ -n "$version" ] || continue
+            # sort -V: the issue's version is not newer than the passing one
+            if [ "$(printf '%s\n%s\n' "$version" "$VERSION" | sort -V | tail -n1)" = "$VERSION" ]; then
+              gh issue close "$number" --comment "All plugins pass in cockpit $VERSION: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            fi
+          done
+
+      - name: Mark this version as passing at this commit
+        if: steps.summary.outputs.failed == ''
+        env:
+          VERSION: ${{ needs.detect.outputs.version }}
+        run: echo "$VERSION" > .shell-compat-ok
+
+      - name: Save the marker
+        if: steps.summary.outputs.failed == ''
+        uses: actions/cache/save@v4
+        with:
+          path: .shell-compat-ok
+          key: shell-compat-${{ needs.detect.outputs.version }}-${{ github.sha }}

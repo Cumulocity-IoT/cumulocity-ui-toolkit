@@ -1,0 +1,49 @@
+.ps-treefilter {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 1100px;
+}
+
+.ps-treefilter__intro {
+  margin: 0;
+  max-width: 75ch;
+}
+
+.ps-treefilter__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--c8y-root-component-border-color, rgba(0, 0, 0, 0.12));
+  border-radius: 4px;
+
+  // Kept, but not applied: shown faded so it is clear they do nothing right now.
+  &--off {
+    opacity: 0.55;
+  }
+}
+
+// A condition reads as one sentence: "Show Wind farm with a property area is West".
+.ps-treefilter__condition {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+
+  & + & {
+    border-top: 1px solid var(--c8y-root-component-border-color, rgba(0, 0, 0, 0.12));
+  }
+
+  .c8y-select-wrapper {
+    min-width: 140px;
+  }
+}
+
+.ps-treefilter__joiner {
+  min-width: 36px;
+}
+
+.ps-treefilter__value {
+  width: 180px;
+}

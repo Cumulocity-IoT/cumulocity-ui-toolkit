@@ -1,5 +1,5 @@
-import { IEvent, ITenantOption } from '@c8y/client';
-import { AssetFilterConfig } from '~models/asset-access.model';
+import { type IEvent, type ITenantOption } from '@c8y/client';
+import { type AssetFilterConfig } from '~models/asset-access.model';
 
 export const REMINDER__ASSET_CONTEXT_ROOTS = ['group', 'device'];
 export const REMINDER__TYPE = 'c8y_Reminder';
@@ -30,10 +30,19 @@ export const REMINDER__COUNTER_MAX_AGE_MS = 5 * 60 * 1000;
 /** Minimum gap between loads triggered by switching back to the tab. */
 export const REMINDER__REFRESH_MIN_INTERVAL_MS = 5 * 1000;
 export const REMINDER__TENANT_OPTION__CATEGORY: ITenantOption['category'] = 'c8y.reminder';
+export const REMINDER__TENANT_OPTION__TYPE_KEY: ITenantOption['key'] = 'types';
+export const REMINDER__TENANT_OPTION__CONFIG_KEY: ITenantOption['key'] = 'config';
+export const REMINDER__TENANT_OPTION__DEFAULTS_KEY: ITenantOption['key'] = 'defaults';
+export const REMINDER__TENANT_OPTION__ASSET_ACCESS_KEY: ITenantOption['key'] = 'assetFilter';
 export const REMINDER__LOCAL_STORAGE__FILTER = 'c8y_rpFilter';
 export const REMINDER__LOCAL_STORAGE__CONFIG = 'c8y_rpConfig';
 /** Reminders announced recently (`id@time` → due time), shared by all tabs. */
 export const REMINDER__LOCAL_STORAGE__ANNOUNCED = 'c8y_rpAnnounced';
+/**
+ * The notification switches (`browser`, `toast`) the user set themselves. Only these keep
+ * their stored value; the others follow the tenant defaults (`c8y.reminder` / `defaults`).
+ */
+export const REMINDER__LOCAL_STORAGE__NOTIFICATIONS_CHOSEN = 'c8y_rpNotificationsChosen';
 export const REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG: ReminderConfig = {
   toast: false,
   browser: false,
@@ -82,6 +91,9 @@ export interface ReminderTenantConfig {
    */
   linkOverride?: Record<ReminderType['id'], string>;
 }
+
+/** Tenant-wide notification defaults, used until a user stores their own settings. */
+export type ReminderTenantDefaults = Pick<ReminderConfig, 'browser' | 'toast'>;
 
 export interface ReminderGroup {
   status: ReminderGroupStatus;

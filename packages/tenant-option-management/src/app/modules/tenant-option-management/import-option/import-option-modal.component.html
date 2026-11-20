@@ -12,6 +12,7 @@
         type="text"
         class="form-control"
         id="categoryInput"
+        data-cy="import-option--category"
         [(ngModel)]="option.category"
         required
       />
@@ -20,7 +21,14 @@
 
     <c8y-form-group class="m-16">
       <label for="keyInput" translate>Key</label>
-      <input type="text" class="form-control" id="keyInput" [(ngModel)]="option.key" required />
+      <input
+        type="text"
+        class="form-control"
+        id="keyInput"
+        data-cy="import-option--key"
+        [(ngModel)]="option.key"
+        [placeholder]="'Leave empty to import all options of this category' | translate"
+      />
       <c8y-messages> </c8y-messages>
     </c8y-form-group>
   </div>
@@ -30,6 +38,7 @@
       class="btn btn-default"
       type="button"
       (click)="close()"
+      data-cy="import-option--cancel"
     >
       {{ 'Cancel' | translate }}
     </button>
@@ -38,8 +47,9 @@
       class="btn btn-primary"
       type="button"
       (click)="import()"
+      data-cy="import-option--import"
       [class.btn-pending]="isLoading"
-      [disabled]="!option.key.length || !option.category.length"
+      [disabled]="!option.category.trim().length"
     >
       {{ 'Import' | translate }}
     </button>

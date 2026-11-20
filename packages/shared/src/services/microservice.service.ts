@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { FetchClient, IFetchOptions, IFetchResponse } from '@c8y/client';
+import { FetchClient, type IFetchOptions, type IFetchResponse } from '@c8y/client';
 import { cloneDeep } from 'lodash';
 
 @Injectable({
@@ -34,6 +34,8 @@ export class MicroserviceService {
     },
   };
 
+  private fetch = inject(FetchClient);
+
   defaultResponseHandler = async (response: IFetchResponse): Promise<unknown> => {
     if (!response.ok) {
       const errorMessage = await response.text();
@@ -58,8 +60,6 @@ export class MicroserviceService {
       return data;
     }
   };
-
-  private fetch = inject(FetchClient);
 
   async get(
     url: string,

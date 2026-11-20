@@ -1,19 +1,19 @@
 import { Component, inject } from '@angular/core';
-import { ITenantOption } from '@c8y/client';
+import { type ITenantOption } from '@c8y/client';
 import {
   AlertService,
-  Column,
-  ColumnDataType,
+  type Column,
+  type ColumnDataType,
   CoreModule,
-  DisplayOptions,
-  Pagination,
+  type DisplayOptions,
+  type Pagination,
 } from '@c8y/ngx-components';
 import { gettext } from '@c8y/ngx-components/gettext';
 import { TranslateService } from '@ngx-translate/core';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Subject } from 'rxjs';
 import { TenantOptionManagementService } from '../tenant-option-management.service';
-import { TenantOptionConfigurationItem } from '../tenant-option-management.model';
+import { type TenantOptionConfigurationItem } from '../tenant-option-management.model';
 
 @Component({
   templateUrl: './export-modal.component.html',
@@ -63,14 +63,14 @@ export class ExportModalComponent {
         name: 'category',
         path: 'category',
         filterable: true,
-        dataType: ColumnDataType.TextShort,
+        dataType: 'text-short' as ColumnDataType,
       },
       {
         header: 'Key',
         name: 'key',
         path: 'key',
         filterable: true,
-        dataType: ColumnDataType.TextShort,
+        dataType: 'text-short' as ColumnDataType,
       },
     ];
   }

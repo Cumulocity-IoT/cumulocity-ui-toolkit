@@ -1,6 +1,6 @@
 <c8y-list-group>
   @for (layer of layers(); track layer) {
-    <c8y-li>
+    <c8y-li data-cy="layered-map-config--layer" [attr.data-layer-name]="layer.config.name">
       <c8y-li-checkbox
         [selected]="layer.active"
         (onSelect)="layer.active = $event"
@@ -32,13 +32,13 @@
         }
       </c8y-li-collapse>
         <c8y-li-action (click)="onEditLayer(layer)" icon="pencil">
-          {{ "Edit Layer" | translate }}
+          <span data-cy="layered-map-config--layer-edit">{{ "Edit Layer" | translate }}</span>
         </c8y-li-action>
         <c8y-li-action (click)="onEditPopover(layer)" icon="design">
-          {{ "Edit Popover" | translate }}
+          <span data-cy="layered-map-config--layer-popover">{{ "Edit Popover" | translate }}</span>
         </c8y-li-action>
         <c8y-li-action (click)="onDeleteLayer(layer)" icon="trash-o">
-          {{ "Delete" | translate }}
+          <span data-cy="layered-map-config--layer-delete">{{ "Delete" | translate }}</span>
         </c8y-li-action>
       </c8y-li>
     }

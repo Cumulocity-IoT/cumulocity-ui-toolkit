@@ -1,0 +1,130 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: c8yui\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language: en\n"
+"Language-Team: \n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "kpi-trend.no-datapoint"
+msgstr "No data point selected"
+
+msgid "kpi-trend.no-datapoint-hint"
+msgstr "Open the widget configuration and select a data point."
+
+msgid "kpi-trend.stale"
+msgstr "Last measurement is older than 60 seconds — value may be outdated."
+
+msgid "kpi-trend.stale-short"
+msgstr "Stale"
+
+msgid "kpi-trend.received-at"
+msgstr "Received at"
+
+msgid "kpi-trend.window-title"
+msgstr "Trend window:"
+
+
+msgid "KPI Trend"
+msgstr "KPI Trend"
+
+msgid "Layout variant"
+msgstr "Layout variant"
+
+msgid "Radial primary"
+msgstr "Radial primary"
+
+msgid "Compact tile"
+msgstr "Compact tile"
+
+msgid "Dominant arc gauge — best when the ratio to max matters."
+msgstr "Dominant arc gauge — best when the ratio to max matters."
+
+msgid "Value & sparkline lead — best when recent movement matters most."
+msgstr "Value & sparkline lead — best when recent movement matters most."
+
+msgid "Icon"
+msgstr "Icon"
+
+msgid "Trend window"
+msgstr "Trend window"
+
+msgid "Unit"
+msgstr "Unit"
+
+msgid "Minutes"
+msgstr "Minutes"
+
+msgid "Hours"
+msgstr "Hours"
+
+msgid "Days"
+msgstr "Days"
+
+msgid "Sample count"
+msgstr "Sample count"
+
+msgid "Trend direction"
+msgstr "Trend direction"
+
+msgid "Higher value is better (up trend = green)"
+msgstr "Higher value is better (up trend = green)"
+
+msgid "Data point"
+msgstr "Data point"
+
+msgid "Appearance"
+msgstr "Appearance"
+
+msgid "Accent color"
+msgstr "Accent color"
+
+msgid "Min value"
+msgstr "Min value"
+
+msgid "Max value"
+msgstr "Max value"
+
+msgid "kpi-trend.config.layout-help"
+msgstr "Choose how the gauge and the trend are arranged on the card."
+
+msgid "kpi-trend.config.icon-help"
+msgstr "Shown next to the label in the widget header."
+
+msgid "kpi-trend.config.color-help"
+msgstr "Used for both the gauge arc and the sparkline. Starts with the data point's color; pick another color to override it, or select Reset to return to the data point's color."
+
+msgid "kpi-trend.config.window-help"
+msgstr "The period the sparkline and the trend percentage cover, ending at the latest measurement. The trend percentage compares the average at the start of this period with the average at its end."
+
+msgid "kpi-trend.config.points-help"
+msgstr "The number of points the sparkline draws across the trend window, from 2 to 40. Each point is the average of the measurements in its part of the window."
+
+msgid "kpi-trend.config.min-help"
+msgstr "Lower end of the gauge's fill range. Leave blank to use the data point's minimum, or 0 if it has none."
+
+msgid "kpi-trend.config.max-help"
+msgstr "Upper end of the gauge's fill range. Leave blank to use the data point's maximum. Without a maximum, the gauge is hidden."
+
+msgid "kpi-trend.config.direction-help"
+msgstr "Uncheck for KPIs where a lower value is better, for example temperature or vibration."
+
+msgid "kpi-trend.steady"
+msgstr "steady"
+
+msgid "kpi-trend.aria-trend-up"
+msgstr "up {{delta}} percent over {{window}}"
+
+msgid "kpi-trend.aria-trend-down"
+msgstr "down {{delta}} percent over {{window}}"
+
+msgid "From KPI"
+msgstr "From KPI"
+
+msgid "Displays a single measurement value with a radial gauge (value vs. max) and a trend sparkline. Configurable as a radial primary or compact tile layout."
+msgstr "Displays a single measurement value with a radial gauge (value vs. max) and a trend sparkline. Configurable as a radial primary or compact tile layout."

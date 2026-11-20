@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { IManagedObject, InventoryService } from '@c8y/client';
-import { MyLayer, QueryLayerConfig } from '../layered-map-widget.model';
+import { type IManagedObject, InventoryService } from '@c8y/client';
+import { type MyLayer, type QueryLayerConfig } from '../layered-map-widget.model';
 import { SourceIdPollingService } from './source-id-polling.service';
 
 /** Concrete subclass so the shared delta logic can be exercised directly. */

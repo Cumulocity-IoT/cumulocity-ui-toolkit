@@ -1,4 +1,4 @@
-import { effect, input, output, signal, Component, OnInit, ViewChild } from '@angular/core';
+import { effect, input, output, signal, Component, type OnInit, ViewChild } from '@angular/core';
 import { EditorComponent, MonacoEditorMarkerValidatorDirective } from '@c8y/ngx-components/editor';
 import { CoreModule, FormGroupComponent, MessagesComponent } from '@c8y/ngx-components';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';

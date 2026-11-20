@@ -1,3 +1,7 @@
+import { TestBed } from '@angular/core/testing';
+import { NewSeriesCacheService } from './new-series-cache.service';
+import { CacheStateService } from './cache-state.service';
+import { CacheLogService } from './cache-log.service';
 import {
   NewSeriesInterceptorService,
   aggregationIntervalMs,
@@ -33,7 +37,15 @@ describe('NewSeriesInterceptorService.tryParseParams', () => {
   });
 
   beforeEach(() => {
-    service = new NewSeriesInterceptorService(null as any, null as any, null as any);
+    // URL matching and parameter parsing do not touch the injected services: stub them
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: NewSeriesCacheService, useValue: {} },
+        { provide: CacheStateService, useValue: {} },
+        { provide: CacheLogService, useValue: {} },
+      ],
+    });
+    service = TestBed.inject(NewSeriesInterceptorService);
   });
 
   // ─── URL matching ────────────────────────────────────────────────────────────

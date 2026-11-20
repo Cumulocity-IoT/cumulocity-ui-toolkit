@@ -4,7 +4,7 @@
     <div class="form-group">
       <label translate for="layerType">Layer Type</label>
       <div class="c8y-select-wrapper" title="{{ 'Select type' | translate }}">
-        <select id="layerType" #typeSelect class="btn btn-default dropdown-toggle c8y-dropdown" required="true" (change)="changeType(typeSelect.value)">
+        <select id="layerType" data-cy="layered-map-layer--type" #typeSelect class="btn btn-default dropdown-toggle c8y-dropdown" required="true" (change)="changeType(typeSelect.value)">
           <option value="" selected disabled>Select a type</option>
           <option value="QueryLayerConfig" [selected]="type === 'QueryLayerConfig' && !isAssetLayer">
             {{ 'Query' | translate }}
@@ -39,7 +39,7 @@
 
     <div class="form-group">
       <label translate for="layerName">Name</label>
-      <input id="layerName" class="form-control" type="text" name="layerName" [maxlength]="254" [(ngModel)]="layer.name" />
+      <input id="layerName" data-cy="layered-map-layer--name" class="form-control" type="text" name="layerName" [maxlength]="254" [(ngModel)]="layer.name" />
     </div>
 
     <div class="legend form-block center">Marker</div>
@@ -49,7 +49,7 @@
         <div class="input-group-btn">
           <button class="btn btn-primary" (click)="openIconModal()">Pick icon</button>
         </div>
-        <input id="iconInput" class="form-control" type="text" name="iconInput" [(ngModel)]="layer.icon" />
+        <input id="iconInput" data-cy="layered-map-layer--icon" class="form-control" type="text" name="iconInput" [(ngModel)]="layer.icon" />
         @if (layer.icon) {
           <span class="input-group-addon"><i [c8yIcon]="layer.icon"></i></span>
         }
@@ -60,7 +60,7 @@
         <label translate for="iconColorInput">Icon Color</label>
         <div class="form-control" style="width: 36px; cursor: pointer" title="Click to select a marker color.">
           <div class="c8y-colorpicker">
-            <input id="iconColorInput" type="color" [attr.aria-label]="'Color' | translate" [(ngModel)]="layer.color" (click)="$event.stopPropagation()" />
+            <input id="iconColorInput" data-cy="layered-map-layer--color" type="color" [attr.aria-label]="'Color' | translate" [(ngModel)]="layer.color" (click)="$event.stopPropagation()" />
             <span [style.background-color]="layer.color"></span>
           </div>
         </div>
@@ -89,7 +89,7 @@
           <div class="form-group m-b-0 form-group-sm">
             <label for="positionPolling" class="control-label">{{ 'Polling' | translate }}</label>
             <div class="c8y-select-wrapper">
-              <select class="form-control" id="positionPolling" [(ngModel)]="layer.enablePolling">
+              <select class="form-control" id="positionPolling" data-cy="layered-map-layer--polling" [(ngModel)]="layer.enablePolling">
                 <option [ngValue]="false" title="Only refreshing on interaction">No automatic polling</option>
                 <option [ngValue]="true" title="Refreshing after a give interval and on interaction">Activate polling</option>
               </select>

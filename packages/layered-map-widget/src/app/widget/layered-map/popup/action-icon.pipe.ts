@@ -1,5 +1,5 @@
-import { Pipe, PipeTransform } from '@angular/core';
-import { PopoverAction } from '../layered-map-widget.model';
+import { Pipe, type PipeTransform } from '@angular/core';
+import { type PopoverAction } from '../layered-map-widget.model';
 
 @Pipe({
   name: 'actionIcon',

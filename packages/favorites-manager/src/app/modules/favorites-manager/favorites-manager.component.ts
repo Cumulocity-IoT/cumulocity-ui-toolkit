@@ -1,7 +1,7 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, type OnInit } from '@angular/core';
 import { FavoritesManagerService } from './favorites-manager.service';
-import { IManagedObject } from '@c8y/client';
-import { Column, CoreModule, Pagination } from '@c8y/ngx-components';
+import { type IManagedObject } from '@c8y/client';
+import { type Column, CoreModule, type Pagination } from '@c8y/ngx-components';
 import {
   AlarmsDeviceGridColumn,
   NameDeviceGridColumn,

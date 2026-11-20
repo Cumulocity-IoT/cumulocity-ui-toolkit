@@ -1,5 +1,5 @@
 import { QueriesUtil } from '@c8y/client';
-import { QueryJson } from '~components/query-display/reverse-queries-util.model';
+import { type QueryJson } from '~components/query-display/reverse-queries-util.model';
 import { ReverseQueriesUtil } from '~components/query-display/reverse-queries-util';
 
 const queriesUtil = new QueriesUtil();

@@ -104,13 +104,13 @@ describe('<Feature name>', () => {
 
 ### Navigation
 
-Check `cypress/support/commands.ts` for an existing project-local shell-visit command before writing navigation code — plugin repos usually define one. The common pattern is a command like `visitShellAndWaitForSelector(url, language, selector)` that prefixes `/apps/<C8Y_SHELL_TARGET>/index.html#/`, appends the plugin `remotes` query string (often from a `C8Y_SHELL_EXTENSION` env var), calls `cy.setLanguage(language)`, visits, and waits for an anchor selector to be visible. If the project has no such command, add one following that pattern rather than inlining `cy.visit` calls in every test.
+In this repo navigate with `cy.visitApp(path, { language, waitFor })` from `@cumulocity-iot/ui-sdk/cypress`: it opens `/apps/<C8Y_SHELL>/index.html?remotes=<C8Y_REMOTES>#/<path>` (both env values set by `test/config/base.config.ts`), sets the UI language and waits for the anchor selector to be visible. Dashboard page objects (`AddWidgetDialog`, `Dashboard`, `WidgetConfigModal`, `openWidgetForEditing`) come from the same module. Don't inline `cy.visit` calls in tests.
 
 ```typescript
 // Shell root (administration/cockpit):
-cy.visitShellAndWaitForSelector('', 'en', '#navigator');
+cy.visitApp('', { language: 'en', waitFor: '#navigator' });
 // Device context:
-cy.visitShellAndWaitForSelector(`device/${deviceId}`, 'en', 'c8y-tabs-outlet');
+cy.visitApp(`device/${deviceId}`, { language: 'en', waitFor: 'c8y-tabs-outlet' });
 ```
 
 Have **one** test navigate by clicking (navigator entry, tab), so `hookNavigator`/`hookTab` registration is covered:
@@ -123,7 +123,7 @@ cy.get('c8y-tabs-outlet span[title="<Tab label>"]').click();
 The remaining tests may deep-link to the route for speed — pass the plugin component's selector as the anchor:
 
 ```typescript
-cy.visitShellAndWaitForSelector('<feature/route>', 'en', '<plugin-component-selector>');
+cy.visitApp('<feature/route>', { language: 'en', waitFor: '<plugin-component-selector>' });
 ```
 
 ### Intercept and wait — the rules
@@ -195,6 +195,10 @@ All selectors should come from the Phase 1a live-DOM walk (or its fallbacks) —
    | `Intercepted Gainsight API key call, but Gainsight should have been disabled` | A spec intercept on `/tenant/currentTenant*` shadowed the `disableGainsight()` intercept — re-set `gainsightEnabled: false` in your handler (intercept rule 9) |
    | `expected '<c8y-…>' to be 'visible'` with `effective width and height of 0 x 0` | The component uses `display: contents` — assert on rendered content inside it |
    | Tooltip/popover never appears after `.trigger('mouseenter')` | ngx-bootstrap listens to `mouseover` — trigger that instead |
+   | The plugin behaves like an older version (old `data-cy` hooks, missing features) although the dev server compiled the new code | The dev port was already taken by another dev server (e.g. another checkout's Vite on IPv4) and the runner's readiness check answered from it. Check `lsof -nP -iTCP:<port> -sTCP:LISTEN` and pick free ports (`E2E_DEV_PORT` / `E2E_MOCK_PORT` for the tenant mock) |
+   | A CDK drag-and-drop (`cdkDrag`) never moves, no drop event | Cypress `trigger` builds a plain `Event` and CDK ignores mouse events without a pressed button (it takes them for a screen reader's). Pass `eventConstructor: 'MouseEvent', button: 0, buttons: 1, detail: 1` plus `clientX`/`clientY`; `mousedown` on the handle, then several `mousemove`s and the `mouseup` on `cy.document()` |
+   | The app reloads mid-test (`[webpack-dev-server] App updated. Reloading…`), or `ChunkLoadError` right after the run starts | Something edited files of the plugin while the suite ran (another agent, an editor): the e2e dev server rebuilds. Do not edit `packages/` during a run; rerun once the build settled |
+   | `cy.wait('@save')` gets an older body than the step just made | Every matching request queues for `cy.wait`; steps that saved without a wait leave theirs in the queue. Wait after each save, or assert on the last one: `cy.get('@save.all').should((calls) => …calls.at(-1)…)` |
 
 4. Fix, rerun the single spec, repeat. When green, **run the full suite once** (the repo's e2e script, or `npx cypress run --browser chrome`) to catch cross-spec interference (shared `C8Y_SHELL_TARGET`, session state).
 5. Report results with the pass/fail counts from the summary table — never claim success without a green run.

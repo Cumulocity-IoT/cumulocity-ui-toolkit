@@ -1,4 +1,4 @@
-import { Component, effect, inject, OnDestroy, signal } from '@angular/core';
+import { Component, effect, inject, type OnDestroy, type OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { AlertService, CoreModule, HeaderService } from '@c8y/ngx-components';
@@ -9,17 +9,17 @@ import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { MomentModule } from 'ngx-moment';
 import { Subject, Subscription } from 'rxjs';
 import {
-  Reminder,
+  type Reminder,
   REMINDER__ASSET_CONTEXT_ROOTS,
   REMINDER__DRAWER_OPEN_CLASS,
   REMINDER__HIGHLIGHT_DURATION_SECONDS,
   REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG,
   REMINDER__MAIN_HEADER_CLASS,
-  ReminderConfig,
-  ReminderGroup,
+  type ReminderConfig,
+  type ReminderGroup,
   ReminderGroupStatus,
   ReminderStatus,
-  ReminderType,
+  type ReminderType,
 } from '../../models/reminder.model';
 import { ReminderService } from '../../services/reminder.service';
 import { ReminderModalComponent } from '../reminder-modal/reminder-modal.component';
@@ -41,7 +41,7 @@ import { ReminderTypeComponent } from '../reminder-type/reminder-type.component'
     ReminderModalComponent,
   ],
 })
-export class ReminderDrawerComponent implements OnDestroy {
+export class ReminderDrawerComponent implements OnInit, OnDestroy {
   private alertService = inject(AlertService);
   private headerService = inject(HeaderService);
   private modalService = inject(BsModalService);
@@ -75,7 +75,11 @@ export class ReminderDrawerComponent implements OnDestroy {
   set contextFilterEnabled(enabled: boolean) {
     this._contextFilterEnabled = enabled;
     this.setConfig('useContext');
-    this.filterByType();
+    // regroup regardless of reminder types — `filterByType()` bails out without types
+    this.reminderGroups = this.reminderService.groupReminders(
+      this.reminders,
+      enabled ? this.context : undefined
+    );
   }
 
   private context?: string;
@@ -87,6 +91,22 @@ export class ReminderDrawerComponent implements OnDestroy {
   private _contextFilterEnabled = REMINDER__LOCAL_STORAGE__DEFAULT_CONFIG.useContext ?? false;
 
   constructor() {
+    // effect() requires an injection context, available here but not from ngOnInit.
+    // Live updates on reminders and config come from the service signals.
+    effect(() => {
+      const reminders = this.reminderService.reminders();
+      const content = this.contentKey(reminders);
+
+      // `diff` is refreshed by the service without any visible change, unless a reminder became due
+      if (content === this._lastDigestContent) return;
+
+      this._lastDigestContent = content;
+      this.digestReminders(reminders);
+    });
+    effect(() => this.handleConfigChange(this.reminderService.config()));
+  }
+
+  ngOnInit(): void {
     this.getReminderTypes();
     this.initSubscriptions();
   }
@@ -192,6 +212,12 @@ export class ReminderDrawerComponent implements OnDestroy {
       this.reminderService.refreshView();
       this.alertService.danger('Failed to update reminder', `${JSON.stringify(error)}`);
     }
+  }
+
+  /** Sets the drawer state and notifies the service. */
+  private setOpen(open: boolean): void {
+    this.open.set(open);
+    this.openChange.next(open);
   }
 
   /**
@@ -303,19 +329,6 @@ export class ReminderDrawerComponent implements OnDestroy {
       })
     );
 
-    // Live updates on reminders and config come from the service signals.
-    effect(() => {
-      const reminders = this.reminderService.reminders();
-      const content = this.contentKey(reminders);
-
-      // `diff` is refreshed by the service without any visible change, unless a reminder became due
-      if (content === this._lastDigestContent) return;
-
-      this._lastDigestContent = content;
-      this.digestReminders(reminders);
-    });
-    effect(() => this.handleConfigChange(this.reminderService.config()));
-
     // route change for context
     this.subscriptions.add(
       this.router.events.subscribe({
@@ -371,11 +384,5 @@ export class ReminderDrawerComponent implements OnDestroy {
    */
   private sleep(milliseconds: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, milliseconds));
-  }
-
-  /** Sets the drawer state and notifies the service. */
-  private setOpen(open: boolean): void {
-    this.open.set(open);
-    this.openChange.next(open);
   }
 }

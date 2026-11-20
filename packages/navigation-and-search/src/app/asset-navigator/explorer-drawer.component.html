@@ -1,0 +1,168 @@
+<!--
+  Unpinned the drawer overlays page content and a click outside closes it; pinned it
+  pushes content and stays (§5.1). The backdrop only exists in the overlaying case, and
+  it is transparent — this is a navigation surface, not a modal.
+-->
+@if (drawer.overlaying()) {
+  <div class="ps-drawer__backdrop" data-cy="navigation-and-search--backdrop" (click)="onBackdropClick()"></div>
+}
+
+<aside
+  #panel data-cy="navigation-and-search--drawer"
+  class="ps-drawer"
+  [class.ps-drawer--pinned]="drawer.pinned()"
+  [class.ps-drawer--resizing]="drawer.resizing()"
+  [style.width.px]="drawer.width()"
+  [style.left.px]="drawer.anchor()?.left"
+  [style.top.px]="drawer.anchor()?.top"
+  [attr.aria-label]="'Assets' | translate"
+>
+  <header class="ps-drawer__header d-flex a-i-center">
+    <span class="ps-drawer__title">{{ 'Assets' | translate }}</span>
+    @if (settings().showSearch) {
+      <!-- Same platform search primitive as the overlay, in the small variant. -->
+      <div class="ps-drawer__search input-group input-group-search input-group-sm">
+        <input
+          #filterInput data-cy="navigation-and-search--filter"
+          class="form-control"
+          type="text"
+          autocomplete="off"
+          [attr.placeholder]="'Search for groups or assets…' | translate"
+          [attr.aria-label]="'Filter assets' | translate"
+          [value]="searchText()"
+          (input)="onSearch($any($event.target).value)"
+        />
+        <span class="input-group-btn">
+          <button
+            class="btn btn-default"
+            type="button"
+            [attr.title]="(searchText() ? 'Reset' : 'Search') | translate"
+            [attr.aria-label]="(searchText() ? 'Reset' : 'Search') | translate"
+            (click)="onResetSearch()" data-cy="navigation-and-search--filter-reset"
+          >
+            <i [c8yIcon]="searchText() ? 'times' : 'search'"></i>
+          </button>
+        </span>
+      </div>
+    } @else {
+      <span class="ps-drawer__spacer"></span>
+    }
+    <button
+      class="btn-clean ps-drawer__action"
+      type="button"
+      [class.active]="drawer.pinned()"
+      [attr.aria-pressed]="drawer.pinned()"
+      [attr.aria-label]="(drawer.pinned() ? 'Unpin drawer' : 'Pin drawer') | translate"
+      [attr.title]="(drawer.pinned() ? 'Unpin drawer' : 'Pin drawer') | translate"
+      (click)="onTogglePin()" data-cy="navigation-and-search--pin"
+    >
+      <i c8yIcon="pin"></i>
+    </button>
+    <button
+      class="btn-clean ps-drawer__action"
+      type="button"
+      [attr.aria-label]="'Close' | translate"
+      (click)="onRequestClose()" data-cy="navigation-and-search--close"
+    >
+      <i c8yIcon="times"></i>
+    </button>
+  </header>
+
+  <!--
+    The permanent tree filter is on: said right under the header, because a tree that silently
+    lacks assets reads as missing data.
+  -->
+  @if (filterActive()) {
+    <div class="ps-drawer__filterbar d-flex a-i-center" data-cy="navigation-and-search--filter-active">
+      <i c8yIcon="filter" aria-hidden="true"></i>
+      <span class="text-truncate">
+        {{ 'Filter on · {{ hidden }} assets hidden' | translate: { hidden: tree.hiddenByFilter() } }}
+      </span>
+      <button
+        class="btn btn-link btn-xs m-l-auto"
+        type="button"
+        data-cy="navigation-and-search--filter-edit"
+        (click)="onOpenSettings('filter')"
+      >
+        {{ 'Edit' | translate }}
+      </button>
+      <button
+        class="btn-clean"
+        type="button"
+        data-cy="navigation-and-search--filter-off"
+        [attr.aria-label]="'Turn the tree filter off' | translate"
+        [attr.title]="'Turn the tree filter off' | translate"
+        (click)="onFilterOff()"
+      >
+        <i c8yIcon="times"></i>
+      </button>
+    </div>
+  }
+
+  <!-- Sticky path of the selected node (P5). Middle segments collapse, never the last two. -->
+  @if (pathSegments().length) {
+    <nav class="ps-drawer__path text-muted" data-cy="navigation-and-search--path" [attr.title]="pathLabel()">
+      @if (pathSegments().length > 3) {
+        <span>{{ pathSegments()[0] }}</span>
+        <span class="ps-drawer__path-sep">›</span>
+        <span>…</span>
+        <span class="ps-drawer__path-sep">›</span>
+        <span>{{ pathSegments()[pathSegments().length - 2] }}</span>
+        <span class="ps-drawer__path-sep">›</span>
+        <span class="ps-drawer__path-last">{{ pathSegments()[pathSegments().length - 1] }}</span>
+      } @else {
+        @for (segment of pathSegments(); track $index) {
+          @if ($index > 0) {
+            <span class="ps-drawer__path-sep">›</span>
+          }
+          <span [class.ps-drawer__path-last]="$index === pathSegments().length - 1">{{ segment }}</span>
+        }
+      }
+    </nav>
+  }
+
+  <div class="ps-drawer__body">
+    <ps-asset-tree
+      [config]="treeConfig"
+      [autoFocus]="true"
+      [cascadeHost]="panelElement"
+      [cascadeFromLeft]="drawer.width()"
+      [cascadeSuppressed]="drawer.resizing()"
+      (activate)="onActivate($event)"
+      (requestClose)="onRequestClose()"
+      (filterTyped)="onFilterTyped($event)"
+    >
+      <!-- Settings at the bottom right, out of the way of the search, pin and close. -->
+      <button
+        psTreeFooterEnd
+        class="btn-clean ps-drawer__action ps-drawer__settings"
+        type="button"
+        data-cy="navigation-and-search--settings-open"
+        [class.active]="settingsOpen()"
+        [attr.aria-haspopup]="'dialog'"
+        [attr.aria-label]="'Navigation and search settings' | translate"
+        [attr.title]="'Navigation and search settings' | translate"
+        (click)="onOpenSettings('general')"
+      >
+        <i c8yIcon="cog"></i>
+      </button>
+    </ps-asset-tree>
+  </div>
+
+  <!--
+    The resize grip. `separator` role with `aria-valuenow` so it is operable and
+    announced without a pointer.
+  -->
+  <div
+    class="ps-drawer__grip" data-cy="navigation-and-search--grip"
+    role="separator"
+    tabindex="0"
+    aria-orientation="vertical"
+    [attr.aria-label]="'Resize drawer' | translate"
+    [attr.aria-valuenow]="drawer.width()"
+    [attr.aria-valuemin]="minWidth"
+    [attr.aria-valuemax]="maxWidth"
+    (pointerdown)="onResizeStart($event)"
+    (keydown)="onResizeKeydown($event)"
+  ></div>
+</aside>

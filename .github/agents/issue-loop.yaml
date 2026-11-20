@@ -29,7 +29,7 @@
 #                          @cumulocity-iot:registry=https://npm.pkg.github.com
 #                          //npm.pkg.github.com/:_authToken=<token>
 #   C8Y_BASEURL          Cumulocity tenant URL (for `pnpm run serve:<plugin>`)
-#   C8Y_SHELL_TARGET     shell app on the tenant (e.g. cockpit-test-1023)
+#   C8Y_SHELL_TARGET     shell app on the tenant (e.g. cockpit)
 #   /tmp/c8y-playwright-secrets.env
 #                        dotenv file with C8Y_TENANT / C8Y_USERNAME /
 #                        C8Y_PASSWORD, written by CI OUTSIDE the checkout.
@@ -166,7 +166,7 @@ agents:
           GITHUB_PERSONAL_ACCESS_TOKEN: ${GITHUB_PAT}
     instruction: |
       You are the maintainer-orchestrator for the GitHub repository
-      'Cumulocity-IoT/cumulocity-ui-toolkit' — a pnpm monorepo of Angular 20
+      'Cumulocity-IoT/cumulocity-ui-toolkit' — a pnpm monorepo of Angular 21
       Cumulocity UI plugins. The repository is already checked out in the
       current working directory on a dedicated work branch.
 
@@ -347,7 +347,7 @@ agents:
         command: npx
         args: ["-y", "@cumulocity-iot/c8y-web-sdk-knowledge-mcp"]
     instruction: |
-      You are a senior Angular 20 / TypeScript developer working on the
+      You are a senior Angular 21 / TypeScript developer working on the
       Cumulocity UI Toolkit monorepo, already checked out in the current
       working directory on a work branch.
 

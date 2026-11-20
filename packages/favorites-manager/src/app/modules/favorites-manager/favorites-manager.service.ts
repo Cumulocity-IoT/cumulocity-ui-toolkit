@@ -1,9 +1,9 @@
 import { inject, Injectable } from '@angular/core';
-import { IUserCustomerProperties } from './favorites-manager.model';
+import { type IUserCustomerProperties } from './favorites-manager.model';
 import { isEmpty } from 'lodash';
-import { DataSourceModifier, ServerSideDataResult } from '@c8y/ngx-components';
+import { type DataSourceModifier, type ServerSideDataResult } from '@c8y/ngx-components';
 import { InventoryDatasourceService } from '../services/inventory-datasource.service';
-import { QueryFilter } from '../models/query-utils.model';
+import { type QueryFilter } from '../models/query-utils.model';
 import { UserService } from '@c8y/client';
 
 @Injectable()

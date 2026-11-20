@@ -1,6 +1,6 @@
-import { inject, Component, OnInit } from '@angular/core';
+import { inject, Component, type OnInit } from '@angular/core';
 import { CellRendererContext, CoreModule } from '@c8y/ngx-components';
-import { IManagedObjectExtended } from '../favorites-manager.model';
+import { type IManagedObjectExtended } from '../favorites-manager.model';
 
 @Component({
   standalone: true,

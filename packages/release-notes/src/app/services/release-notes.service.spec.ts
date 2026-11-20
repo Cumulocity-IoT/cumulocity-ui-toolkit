@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { EventService, IFetchResponse, InventoryService } from '@c8y/client';
+import { EventService, type IFetchResponse, InventoryService } from '@c8y/client';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { provideMock } from '~helpers/auto-mock.helper';
 import { LocalStorageService } from '~services/local-storage.service';
@@ -7,8 +7,8 @@ import {
   RELEASE_NOTES__EVENT_TYPE,
   RELEASE_NOTES__LAST_CHECKED_KEY,
   RELEASE_NOTES__PUBLISHED_FRAGMENT,
-  ReleaseNote,
-  ReleaseNoteEvent,
+  type ReleaseNote,
+  type ReleaseNoteEvent,
 } from '../models/release-notes.model';
 import { ReleaseNotesService } from './release-notes.service';
 

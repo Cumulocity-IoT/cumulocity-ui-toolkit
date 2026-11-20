@@ -1,12 +1,12 @@
 import { inject, Injectable } from '@angular/core';
 import { AlarmService } from '@c8y/client';
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 import { normalizeQueryFilter } from '~components/_formly-fields/query-forms/formly-query-blocks';
 import {
   isQueryLayerConfig,
-  MyLayer,
-  PollingDelta,
-  QueryLayerConfig,
+  type MyLayer,
+  type PollingDelta,
+  type QueryLayerConfig,
 } from '../layered-map-widget.model';
 import { SourceIdPollingService } from './source-id-polling.service';
 
@@ -16,14 +16,6 @@ const PAGE_SIZE = 100;
 @Injectable()
 export class AlarmPollingService extends SourceIdPollingService {
   private alarm = inject(AlarmService);
-
-  createPolling$(layer: MyLayer, interval = FETCH_INTERVAL): Observable<PollingDelta> {
-    if (!isQueryLayerConfig(layer.config) || layer.config.type !== 'Alarm') {
-      throw new Error('Layer is not alarm layer!');
-    }
-
-    return this.createPollingFor(layer, interval);
-  }
 
   /** The source ids of all alarms matching the layer query. */
   protected async fetchMatchingSourceIds(config: QueryLayerConfig): Promise<Set<string>> {
@@ -47,5 +39,13 @@ export class AlarmPollingService extends SourceIdPollingService {
     }
 
     return result;
+  }
+
+  createPolling$(layer: MyLayer, interval = FETCH_INTERVAL): Observable<PollingDelta> {
+    if (!isQueryLayerConfig(layer.config) || layer.config.type !== 'Alarm') {
+      throw new Error('Layer is not alarm layer!');
+    }
+
+    return this.createPollingFor(layer, interval);
   }
 }

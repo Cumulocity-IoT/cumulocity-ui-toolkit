@@ -1,4 +1,4 @@
-import { FetchClient, IFetchResponse } from '@c8y/client';
+import { FetchClient, type IFetchResponse } from '@c8y/client';
 import { MicroserviceService } from './microservice.service';
 import { createService } from '~helpers/create-service.helper';
 
