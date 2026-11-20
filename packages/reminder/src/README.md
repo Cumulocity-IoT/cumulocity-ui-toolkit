@@ -11,6 +11,7 @@ Adds a personal reminder system to Cumulocity. Users can create time-based remin
 - **Type filter** — Filter reminders by custom reminder types configured by administrators.
 - **Toast and browser notifications** — Configurable notification channels when a reminder becomes due. Only the last focused tab notifies; announced reminders are shared across tabs via local storage, so switching tabs neither repeats nor drops a notification. Reminders that became due more than 2 minutes ago (e.g. while the computer was asleep) are not announced.
 - **Configurable reminder types** — Administrators can define custom types stored as tenant options.
+- **Link override** — Administrators can override the default asset link (`/device/{id}` or `/group/{id}`) per reminder type, via `linkOverride` in the `config` tenant option.
 - **Polling updates** — Reloads reminders every 30 s, when the tab becomes visible, and after creating or updating a reminder. The tenant-wide `/events/*` realtime channel is not used: it cannot be filtered by type, and on busy tenants each message triggers a full change detection cycle.
 
 ## Action bar integration
