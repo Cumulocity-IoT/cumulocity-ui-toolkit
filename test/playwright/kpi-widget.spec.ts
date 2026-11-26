@@ -124,34 +124,34 @@ test.describe('KPI Aggregator Widget', () => {
     const form = page.locator(CONFIG);
 
     // defaults
-    await expect(form.locator('input[id*="_query_"]')).toHaveValue('');
-    await expect(form.locator('input[id*="_pageSize_"]')).toHaveValue('100');
-    await expect(form.locator('input[id*="_pageLimit_"]')).toHaveValue('3');
-    await expect(form.locator('input[id*="_kpiFragment_"]')).toBeAttached();
-    await expect(form.locator('input[id*="_color_"]')).toBeAttached();
-    await expect(form.locator('[id*="_chartLegendPosition_"]')).toHaveCount(0);
+    await expect(form.getByLabel('Query', { exact: true })).toHaveValue('');
+    await expect(form.getByLabel('Page Size', { exact: true })).toHaveValue('100');
+    await expect(form.getByLabel('Page Limit', { exact: true })).toHaveValue('3');
+    await expect(form.getByLabel('KPI Fragment', { exact: true })).toBeAttached();
+    await expect(form.getByLabel('Background Color', { exact: true })).toBeAttached();
+    await expect(form.getByLabel('Chart Legend Position', { exact: true })).toHaveCount(0);
     await reviewScreenshot('kpi-widget/config');
 
     // table: no fragment/group/style fields
-    await form.locator('select[id*="_display_"]').selectOption({ label: 'Table' });
-    await expect(form.locator('input[id*="_kpiFragment_"]')).toHaveCount(0);
-    await expect(form.locator('input[id*="_groupBy_"]')).toHaveCount(0);
-    await expect(form.locator('input[id*="_color_"]')).toHaveCount(0);
-    await expect(form.locator('input[id*="_percent_"]')).toHaveCount(0);
+    await form.getByLabel('Display Mode', { exact: true }).selectOption({ label: 'Table' });
+    await expect(form.getByLabel('KPI Fragment', { exact: true })).toHaveCount(0);
+    await expect(form.getByLabel('Group by', { exact: true })).toHaveCount(0);
+    await expect(form.getByLabel('Background Color', { exact: true })).toHaveCount(0);
+    await expect(form.getByLabel('Show Percent', { exact: true })).toHaveCount(0);
 
     // pie: legend position, no sort/order/color
     await form
-      .locator('select[id*="_display_"]')
+      .getByLabel('Display Mode', { exact: true })
       .selectOption({ label: 'Pie Chart: Count Entries' });
-    await expect(form.locator('select[id*="_chartLegendPosition_"]')).toBeAttached();
-    await expect(form.locator('select[id*="_sort_"]')).toHaveCount(0);
-    await expect(form.locator('input[id*="_color_"]')).toHaveCount(0);
-    await expect(form.locator('input[id*="_label_"]')).toHaveCount(0);
+    await expect(form.getByLabel('Chart Legend Position', { exact: true })).toBeAttached();
+    await expect(form.getByLabel('Sort', { exact: true })).toHaveCount(0);
+    await expect(form.getByLabel('Background Color', { exact: true })).toHaveCount(0);
+    await expect(form.getByLabel('Label', { exact: true })).toHaveCount(0);
 
     await form
-      .locator('select[id*="_display_"]')
+      .getByLabel('Display Mode', { exact: true })
       .selectOption({ label: 'Pie Chart: Aggregate Values' });
-    await expect(form.locator('input[id*="_label_"]')).toBeAttached();
+    await expect(form.getByLabel('Label', { exact: true })).toBeAttached();
   });
 
   test('saves the configuration entered in the config form', async ({ page, api, visitApp }) => {
@@ -162,17 +162,17 @@ test.describe('KPI Aggregator Widget', () => {
 
     const form = page.locator(CONFIG);
 
-    await form.locator('input[id*="_query_"]').fill(QUERY);
-    await form.locator('input[id*="_pageSize_"]').fill('50');
+    await form.getByLabel('Query', { exact: true }).fill(QUERY);
+    await form.getByLabel('Page Size', { exact: true }).fill('50');
     await form
-      .locator('select[id*="_display_"]')
+      .getByLabel('Display Mode', { exact: true })
       .selectOption({ label: 'Bar Chart: Count Entries' });
-    await form.locator('input[id*="_kpiFragment_"]').fill('kpiE2e.lbl');
-    await form.locator('input[id*="_groupBy_"]').fill('kpiE2e.grp');
-    await form.locator('select[id*="_sort_"]').selectOption({ label: 'by Label' });
-    await form.locator('select[id*="_order_"]').selectOption({ label: '↗️ Ascending' });
-    await form.locator('input[id*="_percent_"]').check({ force: true });
-    await form.locator('input[id*="_runOnLoad_"]').check({ force: true });
+    await form.getByLabel('KPI Fragment', { exact: true }).fill('kpiE2e.lbl');
+    await form.getByLabel('Group by', { exact: true }).fill('kpiE2e.grp');
+    await form.getByLabel('Sort', { exact: true }).selectOption({ label: 'by Label' });
+    await form.getByLabel('Order', { exact: true }).selectOption({ label: '↗️ Ascending' });
+    await form.getByLabel('Show Percent', { exact: true }).check({ force: true });
+    await form.getByLabel('Run on Load', { exact: true }).check({ force: true });
 
     const saved = page.waitForRequest(
       (req) =>

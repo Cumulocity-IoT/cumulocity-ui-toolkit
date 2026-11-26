@@ -12,7 +12,9 @@ if (plugin && !process.env.C8Y_REMOTES) {
 
 export default defineConfig({
   testDir: './playwright',
-  testMatch: plugin ? `${plugin}*.spec.ts` : '*.spec.ts',
+  // `<plugin>.spec.ts` and `<plugin>-<area>.spec.ts`, not `<plugin>*`: a package whose name is a prefix of another's
+  // (kpi, kpi-widget) must not run the other's specs against its own remotes.
+  testMatch: plugin ? [`${plugin}.spec.ts`, `${plugin}-*.spec.ts`] : '*.spec.ts',
   // One mock, shared state: tests that write to it must not run side by side.
   workers: 1,
   fullyParallel: false,
@@ -29,6 +31,10 @@ export default defineConfig({
     viewport: { width: 1920, height: 1080 },
     timezoneId: 'Etc/UTC',
     navigationTimeout: 300_000,
+    // The ui-sdk docs (docs/playwright.md) advise against `trace`: with Playwright 1.65 and the cockpit 1025 build,
+    // recording one stalls the shell's page load. On this workspace's Playwright 1.64 and cockpit 1024.21 the suite
+    // runs green with it (CI), and a trace of a failed test is what makes a CI failure debuggable (`playwright
+    // show-trace`). Re-check this after a Playwright or Web SDK bump: if `page.goto` starts timing out, drop it.
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },

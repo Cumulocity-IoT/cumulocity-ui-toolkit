@@ -51,7 +51,7 @@ Do **not** discover widget internals by grepping minified `@c8y/ngx-components` 
 
 ### File location and naming
 
-- `test/playwright/<plugin>[-<area>].spec.ts`. The name starts with the package folder name: the config runs `<plugin>*.spec.ts` for one plugin and CI derives the plugin list from the names.
+- `test/playwright/<plugin>[-<area>].spec.ts`. The name starts with the package folder name: the config runs `<plugin>.spec.ts` and `<plugin>-*.spec.ts` for one plugin and CI derives the plugin list from the names.
 - One `test.describe` per feature area; test names state observable behavior ("shows an error alert when saving fails").
 
 ### Suite skeleton

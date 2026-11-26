@@ -46,6 +46,7 @@ interface MO {
   c8y_IsAsset?: object;
   c8y_IsDevice?: object;
   childAssets?: { references: { managedObject: { id: string } }[] };
+  c8y_Availability?: { status?: string };
 }
 
 interface World {
@@ -62,9 +63,7 @@ interface World {
 /** The root asset, its assets and the devices below them — what the tree sweeps and counts. */
 async function loadWorld(api: APIRequestContext): Promise<World> {
   const res = await api.get('/inventory/managedObjects?pageSize=2000&withChildren=true');
-  const all = (await res.json()).managedObjects as (MO & {
-    c8y_Availability?: { status?: string };
-  })[];
+  const all = (await res.json()).managedObjects as MO[];
   const byId = new Map(all.map((mo) => [mo.id, mo]));
   const childrenOf = (mo: MO) =>
     (mo.childAssets?.references ?? [])
@@ -208,7 +207,9 @@ test.describe('Navigation and search — counts, availability and detail fields'
     const device = world.leafDevices[0];
 
     await makeUnavailable(api, mock, device.id);
-    const wasAvailable = world.availableCount - (world.leafDevices[0] ? 1 : 0);
+    // the available count after the change: one less if that device counted as available in the world
+    const wasAvailable =
+      world.availableCount - (device.c8y_Availability?.status === 'AVAILABLE' ? 1 : 0);
 
     await openDrawer(page, visitApp);
     const unavailable = page.locator(cy('footer-unavailable'));
@@ -226,9 +227,8 @@ test.describe('Navigation and search — counts, availability and detail fields'
     await hover(page, world.site.name);
     expect(await fieldLabels(page)).toEqual(['Devices', 'Available', 'Unavailable', 'Alarms']);
     await expect(fieldValue(page, 'Devices')).toHaveText(exact(String(world.deviceCount)));
-    // the controller was available in the world unless it had no status at all
     await expect(fieldValue(page, 'Available')).toHaveText(
-      new RegExp(`^\\s*(${wasAvailable}|${world.availableCount}) of ${world.deviceCount}\\s*$`)
+      exact(`${wasAvailable} of ${world.deviceCount}`)
     );
     await expect(fieldValue(page, 'Unavailable')).toHaveText(exact('1'));
 

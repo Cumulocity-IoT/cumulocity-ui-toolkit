@@ -21,7 +21,7 @@ server (`ng serve -u <mock>`). No real tenant, no credentials, no cleanup.
 test/
 ├── package.json                  # Member of the root pnpm workspace (root `pnpm install` covers it)
 ├── tsconfig.json                 # Specs, config and scripts (es2022, bundler resolution)
-├── playwright.config.ts          # One config: E2E_PLUGIN picks `<plugin>*.spec.ts` and the plugin's remotes
+├── playwright.config.ts          # One config: E2E_PLUGIN picks `<plugin>.spec.ts` + `<plugin>-*.spec.ts` and the plugin's remotes
 ├── c8y-ui.json                   # Mock config: shell, world file, ports, auth mode, shell checksums
 ├── mock/windy-dev.json           # The world (git-ignored, pulled at runtime)
 ├── scripts/
@@ -86,7 +86,7 @@ the plugin's specs. After a Web SDK bump it downloads the new cockpit on the nex
 - Microservices, smart rules and Notifications 2.0 are not emulated — see the ui-sdk's `docs/mock.md` for what the
   mock answers, and `docs/playwright.md` for the fixtures and a Cypress-to-Playwright mapping.
 - CI: `e2e-test.yml` runs the suites of the plugins a PR changes; `shell-compat.yml` runs every plugin that has a
-  spec (`playwright/<plugin>*.spec.ts`) inside the latest cockpit release.
+  spec (`playwright/<plugin>.spec.ts`, `<plugin>-*.spec.ts`) inside the latest cockpit release.
 
 ---
 
@@ -96,7 +96,7 @@ the plugin's specs. After a Web SDK bump it downloads the new cockpit on the nex
 
 | Variable | Meaning |
 |---|---|
-| `E2E_PLUGIN` | The package folder: `testMatch` becomes `<plugin>*.spec.ts`, `C8Y_REMOTES` is derived from its `cumulocity.config.ts` (`support/remotes.ts`) |
+| `E2E_PLUGIN` | The package folder: `testMatch` becomes `<plugin>.spec.ts` and `<plugin>-*.spec.ts`, `C8Y_REMOTES` is derived from its `cumulocity.config.ts` (`support/remotes.ts`) |
 | `C8Y_BASEURL` | The dev server (proxies everything it does not build to the mock, `/_mock/*` included) |
 | `C8Y_SHELL` | `cockpit` |
 | `C8Y_REMOTES` | The `?remotes=` value: `runTime.remotes` of the plugin, or `{ <name-derived context path>: exports }` for plugins without `contextPath` |

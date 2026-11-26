@@ -10,6 +10,8 @@ import { shell } from './support/dashboard';
 
 const WIDGET_ID = 'windy.kpi-trend';
 const WIDGET = 'ps-kpi-trend-widget';
+/** The widget's own hooks: `data-cy="kpi-trend--<name>"`; state is exposed as `data-variant`, `data-state`, `data-trend`. */
+const cy = (name: string) => `[data-cy="kpi-trend--${name}"]`;
 const FRAGMENT = 'e2e_Temperature';
 const SERIES = 'T';
 const UNIT = '°C';
@@ -140,19 +142,16 @@ test.describe('KPI Trend Widget', () => {
 
     const widget = page.locator(WIDGET);
 
-    await expect(widget.locator('.kpi-trend--radial')).toBeAttached();
-    await expect(widget.locator('.kpi-trend__label')).toContainText('Generator temperature');
-    await expect(widget.locator('.kpi-trend__window-badge')).toHaveText('(1h)');
-    await expect(widget.locator('ps-kpi-trend-gauge-arc')).toBeAttached();
-    await expect(widget.locator('ps-kpi-trend-gauge-arc')).not.toHaveClass(
-      /kt-gauge-arc--critical/
-    );
-    await expect(widget.locator('.kt-gauge-arc__value')).toContainText(String(CURRENT));
-    await expect(widget.locator('.kt-gauge-arc__sub')).toContainText(UNIT);
+    await expect(widget.locator(cy('widget'))).toHaveAttribute('data-variant', 'radial');
+    await expect(widget.locator(cy('label'))).toContainText('Generator temperature');
+    await expect(widget.locator(cy('window'))).toHaveText('(1h)');
+    await expect(widget.locator(cy('gauge'))).toHaveAttribute('data-state', 'default');
+    await expect(widget.locator(cy('value'))).toContainText(String(CURRENT));
+    await expect(widget.locator(cy('unit'))).toContainText(UNIT);
     // The history is rising, and a higher value is better by default.
-    await expect(widget.locator('.kpi-trend__spark-line')).toHaveAttribute('d', /^M /);
-    await expect(widget.locator('.kpi-trend__trend')).toHaveClass(/kpi-trend__trend--good/);
-    await expect(widget.locator('.kpi-trend__trend')).toContainText('▲');
+    await expect(widget.locator(cy('sparkline'))).toHaveAttribute('d', /^M /);
+    await expect(widget.locator(cy('trend'))).toHaveAttribute('data-trend', 'good');
+    await expect(widget.locator(cy('trend'))).toContainText('▲');
     await reviewScreenshot('kpi-trend-widget/radial');
   });
 
@@ -169,10 +168,10 @@ test.describe('KPI Trend Widget', () => {
 
     const widget = page.locator(WIDGET);
 
-    await expect(widget.locator('.kpi-trend--compact')).toBeAttached();
-    await expect(widget.locator('.kpi-trend__compact-value')).toHaveText(String(CURRENT));
-    await expect(widget.locator('.kpi-trend__compact-unit')).toHaveText(UNIT);
-    await expect(widget.locator('.kpi-trend__ring-pct')).toHaveText('36%');
+    await expect(widget.locator(cy('widget'))).toHaveAttribute('data-variant', 'compact');
+    await expect(widget.locator(cy('value'))).toHaveText(String(CURRENT));
+    await expect(widget.locator(cy('unit'))).toHaveText(UNIT);
+    await expect(widget.locator(cy('ring-percent'))).toHaveText('36%');
     await reviewScreenshot('kpi-trend-widget/compact');
   });
 
@@ -182,8 +181,9 @@ test.describe('KPI Trend Widget', () => {
       variant: 'compact',
     });
 
-    await expect(page.locator(`${WIDGET} .kpi-trend__compact-ring`)).toHaveClass(
-      /kpi-trend__compact-ring--critical/
+    await expect(page.locator(WIDGET).locator(cy('ring'))).toHaveAttribute(
+      'data-state',
+      'critical'
     );
   });
 
@@ -193,8 +193,8 @@ test.describe('KPI Trend Widget', () => {
       variant: 'radial',
     });
 
-    await expect(page.locator(`${WIDGET} ps-kpi-trend-gauge-arc`)).toHaveCount(0);
-    await expect(page.locator(`${WIDGET} .kpi-trend__value-large`)).toHaveText(String(CURRENT));
+    await expect(page.locator(WIDGET).locator(cy('gauge'))).toHaveCount(0);
+    await expect(page.locator(WIDGET).locator(cy('value'))).toHaveText(String(CURRENT));
   });
 
   test('asks for a data point when none is configured', async ({ page, api, visitApp }) => {
@@ -214,19 +214,16 @@ test.describe('KPI Trend Widget', () => {
 
     await page.getByRole('button', { name: 'Appearance' }).click();
     // The radio is visually hidden (sr-only): its preview card label takes the click.
-    const compact = page.locator(
-      'ps-kpi-trend-widget-config input[name="kpiVariant"][value="compact"]'
+    const compactCard = page.locator(
+      '[data-cy="kpi-trend-config--variant"][data-variant="compact"]'
     );
 
-    await page
-      .locator('ps-kpi-trend-widget-config label.kpi-config__variant-card')
-      .filter({ has: page.locator('input[name="kpiVariant"][value="compact"]') })
-      .click();
-    await expect(compact).toBeChecked();
+    await compactCard.click();
+    await expect(compactCard.locator('[data-cy="kpi-trend-config--variant-radio"]')).toBeChecked();
     // Only the dialog's preview can be compact before the save: it follows the form.
     await expect(
-      shell(page).widgetConfig.root.locator(`${WIDGET} .kpi-trend--compact`)
-    ).toBeAttached();
+      shell(page).widgetConfig.root.locator(WIDGET).locator(cy('widget'))
+    ).toHaveAttribute('data-variant', 'compact');
     await reviewScreenshot('kpi-trend-widget/config');
 
     const saved = page.waitForRequest(
@@ -244,7 +241,7 @@ test.describe('KPI Trend Widget', () => {
     expect(Object.values(children)[0].config).toHaveProperty('variant', 'compact');
     // The widget on the dashboard, not the preview of the config modal (which lingers while the modal closes).
     await expect(
-      shell(page).dashboard.widgets.locator(`${WIDGET} .kpi-trend--compact`)
-    ).toBeAttached();
+      shell(page).dashboard.widgets.locator(WIDGET).locator(cy('widget'))
+    ).toHaveAttribute('data-variant', 'compact');
   });
 });

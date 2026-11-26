@@ -522,7 +522,7 @@ agents:
            under "Browser rules" below. What you observe there is
            diagnosis, never a verdict: only a headless Playwright run on
            the mock counts.
-         - Specs live in test/playwright/<plugin>*.spec.ts (fixtures from
+         - Specs live in test/playwright/<plugin>[-<area>].spec.ts (fixtures from
            @cumulocity-iot/ui-sdk/playwright, see test/AGENTS.md).
          - If no existing test covers the issue's acceptance criteria, extend
            the plugin's spec with one that does, following the skill.

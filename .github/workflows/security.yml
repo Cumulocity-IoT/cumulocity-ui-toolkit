@@ -1,0 +1,115 @@
+# Known advisories, dependency exceptions, secret and workflow checks, adapted from the @cumulocity-iot/ui-sdk app
+# template (templates/app/_github/workflows/security.yml): on every pull request and push to main, and daily, because
+# advisories are published after a merge too. The template's license step (`c8y-ui licenses`) is left out: it cannot
+# run in this repository (AGENTS.md → Dependency Audit), and `pnpm audit signatures` is not a command of pnpm 10.6.
+name: Security
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '23 5 * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  dependencies:
+    name: Advisories and exceptions
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read # @cumulocity-iot/ui-sdk from GitHub Packages
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # origin/main: which packages a pull request touches
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@cumulocity-iot'
+
+      # What ships to the browser, from the lockfile alone, before anything is downloaded. The accepted advisories
+      # are in package.json → pnpm.auditConfig.ignoreGhsas, justified in AGENTS.md → Dependency Audit.
+      - name: Advisories in production dependencies (high+)
+        run: pnpm audit --prod --audit-level high
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Release-age excludes that are due and ignored advisories with an installable fix. On a pull request only the
+      # findings about packages it touches; the daily run and a push to main check every exception.
+      - name: Exceptions that are due
+        run: pnpm exec c8y-ui audit --allow shared ${BASE:+--base "$BASE"}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # the GitHub advisory database (rate limit)
+          BASE: ${{ github.event_name == 'pull_request' && 'origin/main' || '' }}
+
+      # Build and test tools (the devkit and the Angular toolchain): a report, not a gate.
+      - name: Advisories in all dependencies (report)
+        run: pnpm audit
+        continue-on-error: true
+
+  secrets:
+    name: Secrets in the history
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # every commit: a secret that was committed once is compromised
+          persist-credentials: false
+
+      # Tokens, keys and passwords in any commit; the log shows each finding redacted, with its fingerprint. A finding
+      # means: rotate the credential, then list the fingerprint in .gitleaksignore (removing the line from the code
+      # does not remove it from the history).
+      - name: gitleaks
+        env:
+          VERSION: 8.30.1
+          SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+        run: |
+          curl -sSfL -o "$RUNNER_TEMP/gitleaks.tar.gz" "https://github.com/gitleaks/gitleaks/releases/download/v$VERSION/gitleaks_${VERSION}_linux_x64.tar.gz"
+          echo "$SHA256  $RUNNER_TEMP/gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/gitleaks.tar.gz" -C "$RUNNER_TEMP" gitleaks
+          "$RUNNER_TEMP/gitleaks" git --redact --verbose --no-banner
+
+  workflows:
+    name: Workflow checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # Template injection, unpinned actions, excessive permissions, credential persistence, … in .github/workflows.
+      - uses: zizmorcore/zizmor-action@85b2b9fb8e3325e7a23d7d0a9d7ba5ae0f999e3e # v0.7.1
+        with:
+          version: 1.31.1
+          advanced-security: false # results in the log; uploading them needs GitHub Code Security
+
+      - name: actionlint
+        env:
+          VERSION: 1.7.12
+          SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+        run: |
+          curl -sSfL -o "$RUNNER_TEMP/actionlint.tar.gz" "https://github.com/rhysd/actionlint/releases/download/v$VERSION/actionlint_${VERSION}_linux_amd64.tar.gz"
+          echo "$SHA256  $RUNNER_TEMP/actionlint.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP" actionlint
+          "$RUNNER_TEMP/actionlint" -color

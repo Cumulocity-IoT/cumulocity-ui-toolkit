@@ -127,6 +127,18 @@ jobs:
             if [ -s "$RUNNER_TEMP/mock-gaps.txt" ]; then sed 's/^/- `/; s/$/`/' "$RUNNER_TEMP/mock-gaps.txt"; else echo "none"; fi
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # Traces and screenshots of failed tests (playwright show-trace <zip>) and the HTML report. Before the review
+      # screenshots: their frozen rerun lets Playwright wipe test/playwright-results/<plugin> and write a new report.
+      - name: Upload Playwright results
+        if: ${{ !cancelled() && steps.e2e.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results-${{ matrix.component }}
+          path: |
+            test/playwright-results
+            test/playwright-report
+          if-no-files-found: ignore
+
       # What the change looks like: the specs' review screenshots (reviewScreenshot), taken on the change and on the
       # base branch with the mock's clock and the browser's Date frozen (the same data, the same time, the same
       # machine), then compared. The summary names the views that differ; the report page with before, after and
@@ -137,7 +149,7 @@ jobs:
         continue-on-error: true
         timeout-minutes: 30
         run: |
-          grep -qs reviewScreenshot test/playwright/${{ matrix.component }}*.spec.ts || { echo "no reviewScreenshot() in the specs"; exit 0; }
+          grep -qs reviewScreenshot test/playwright/"$PLUGIN".spec.ts test/playwright/"$PLUGIN"-*.spec.ts || { echo "no reviewScreenshot() in the specs"; exit 0; }
           rm -rf test/review-screenshots
           pnpm run e2e:mock ${{ matrix.component }} --frozen || true
           git worktree add --detach "$RUNNER_TEMP/base" origin/main
@@ -152,6 +164,7 @@ jobs:
         env:
           NODE_OPTIONS: --max_old_space_size=4096
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PLUGIN: ${{ matrix.component }}
 
       - name: Upload the review screenshots report
         if: ${{ steps.screenshots.outputs.report == 'true' }}
@@ -161,13 +174,3 @@ jobs:
           path: ${{ runner.temp }}/review-screenshots
           retention-days: 7
 
-      # Traces and screenshots of failed tests (playwright show-trace <zip>) and the HTML report
-      - name: Upload Playwright results
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-results-${{ matrix.component }}
-          path: |
-            test/playwright-results
-            test/playwright-report
-          if-no-files-found: ignore

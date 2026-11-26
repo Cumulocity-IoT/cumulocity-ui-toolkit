@@ -149,21 +149,23 @@ test.describe('Energy Consumption Widget', () => {
 
     const form = page.locator(CONFIG);
 
-    await expect(form.locator('select[id*="_rangeType_"] option:checked')).toContainText(
-      'By Date Range'
-    );
-    await expect(form.locator('select[id*="_displayMode_"] option:checked')).toContainText('Total');
-    await expect(form.locator('select[id*="_defaultRange_"] option:checked')).toContainText(
-      'Last 7 Days'
-    );
-    await expect(form.locator('input[id*="_digits_"]')).toHaveValue('2');
-    await expect(form.locator('input[id*="_exposeRangeSelect_"]')).not.toBeChecked();
+    await expect(
+      form.getByLabel('Range Type', { exact: true }).locator('option:checked')
+    ).toContainText('By Date Range');
+    await expect(
+      form.getByLabel('Display Mode', { exact: true }).locator('option:checked')
+    ).toContainText('Total');
+    await expect(
+      form.getByLabel('Default Range', { exact: true }).locator('option:checked')
+    ).toContainText('Last 7 Days');
+    await expect(form.getByLabel('Rounding Digits', { exact: true })).toHaveValue('2');
+    await expect(form.getByLabel('Expose Range Select', { exact: true })).not.toBeChecked();
     // "Begin Scale at Zero" is only offered in total mode
-    await expect(form.locator('input[id*="_beginAtZero_"]')).toBeAttached();
-    await form.locator('select[id*="_displayMode_"]').selectOption({ label: '📊 Delta' });
-    await expect(form.locator('input[id*="_beginAtZero_"]')).toHaveCount(0);
+    await expect(form.getByLabel('Begin Scale at Zero', { exact: true })).toBeAttached();
+    await form.getByLabel('Display Mode', { exact: true }).selectOption({ label: '📊 Delta' });
+    await expect(form.getByLabel('Begin Scale at Zero', { exact: true })).toHaveCount(0);
     // event range type is not offered (not supported yet)
-    await expect(form.locator('input[id*="_eventType_"]')).toHaveCount(0);
+    await expect(form.getByLabel('Event Type', { exact: true })).toHaveCount(0);
     await reviewScreenshot('energy-consumption-widget/config');
   });
 
@@ -175,16 +177,18 @@ test.describe('Energy Consumption Widget', () => {
 
     const form = page.locator(CONFIG);
 
-    await form.locator('select[id*="_displayMode_"]').selectOption({ label: '📊 Delta' });
-    await form.locator('select[id*="_defaultRange_"]').selectOption({ label: 'Last 12 Hours' });
+    await form.getByLabel('Display Mode', { exact: true }).selectOption({ label: '📊 Delta' });
+    await form
+      .getByLabel('Default Range', { exact: true })
+      .selectOption({ label: 'Last 12 Hours' });
     // styled checkbox: the input has no box, so a real click lands nowhere
-    await form.locator('input[id*="_exposeRangeSelect_"]').dispatchEvent('click');
-    await expect(form.locator('input[id*="_exposeRangeSelect_"]')).toBeChecked();
-    await form.locator('input[id*="_type_"]').fill(TYPE);
-    await form.locator('input[id*="_fragment_"]').fill('e2e_EnergyMeter');
-    await form.locator('input[id*="_series_"]').fill('E');
-    await form.locator('input[id*="_digits_"]').fill('1');
-    await form.locator('input[id*="_barColor_"]').fill('#00ff00');
+    await form.getByLabel('Expose Range Select', { exact: true }).dispatchEvent('click');
+    await expect(form.getByLabel('Expose Range Select', { exact: true })).toBeChecked();
+    await form.getByLabel('Measurement Type', { exact: true }).fill(TYPE);
+    await form.getByLabel('Fragment', { exact: true }).fill('e2e_EnergyMeter');
+    await form.getByLabel('Series', { exact: true }).fill('E');
+    await form.getByLabel('Rounding Digits', { exact: true }).fill('1');
+    await form.getByLabel('Bar Color', { exact: true }).fill('#00ff00');
 
     const saved = page.waitForRequest(
       (req) =>

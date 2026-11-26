@@ -75,6 +75,8 @@ const NO_PREVIEW = null as unknown as TemplateRef<unknown>;
         <label
           class="kpi-config__variant-card"
           [class.kpi-config__variant-card--selected]="config.variant === 'radial'"
+          data-cy="kpi-trend-config--variant"
+          data-variant="radial"
         >
           <input
             class="sr-only"
@@ -83,6 +85,7 @@ const NO_PREVIEW = null as unknown as TemplateRef<unknown>;
             type="radio"
             name="kpiVariant"
             value="radial"
+            data-cy="kpi-trend-config--variant-radio"
           />
           <!-- Static SVG sketch of Variant A -->
           <svg
@@ -161,6 +164,8 @@ const NO_PREVIEW = null as unknown as TemplateRef<unknown>;
         <label
           class="kpi-config__variant-card"
           [class.kpi-config__variant-card--selected]="config.variant === 'compact'"
+          data-cy="kpi-trend-config--variant"
+          data-variant="compact"
         >
           <input
             class="sr-only"
@@ -169,6 +174,7 @@ const NO_PREVIEW = null as unknown as TemplateRef<unknown>;
             type="radio"
             name="kpiVariant"
             value="compact"
+            data-cy="kpi-trend-config--variant-radio"
           />
           <!-- Static SVG sketch of Variant B (dark chrome) -->
           <svg

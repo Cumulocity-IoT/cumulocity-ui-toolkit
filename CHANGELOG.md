@@ -1,5 +1,13 @@
 # UI Toolkit Changelog
 
+## 2026.11.26 — security workflow, PR template, SDK skills, e2e fixes
+
+**CI**: `security.yml` (from the ui-sdk app template, without the license step that cannot run here) checks the production advisories from the lockfile, the dependency exceptions, secrets in the whole history (gitleaks) and the workflow files (zizmor, actionlint) on every pull request, push to `main` and daily. `pr-description.yml` warns when a pull request's description lacks a section of the new `.github/pull_request_template.md` (what and why, risk, read first, evidence, not verified, responsible). `e2e-test.yml` uploads the traces of a failed run before the frozen screenshot rerun, which used to wipe them. A plugin's specs are `<plugin>.spec.ts` and `<plugin>-*.spec.ts` (config and workflows), so a package name that is a prefix of another's no longer runs the other's specs.
+
+**Skills**: the ui-sdk's `reviewing-code-quality`, `developing-ui`, `building-mock-worlds` (with the `world-builder` agent), `migrating-apps` and `ponytail` skills are copied into `.claude/skills/` (`pnpm exec c8y-ui skills .`); see `AGENTS.md` → Static Analysis.
+
+**E2E**: the kpi-trend-widget and operations-widget templates carry `data-cy` hooks and state attributes, and the config specs locate Formly fields by label, so the specs no longer depend on internal CSS classes, generated ids or positions. `e2e-mock.mts`: a `--spec=` filter may contain `=`; a failed full run keeps the previous review screenshots; the file says why it exists next to `c8y-ui e2e`. The layered-map spec seeds its data on the page's clock (frozen runs), and the navigation-and-search detail spec asserts the exact available count.
+
 ## 2026.11.26 — ui-sdk 4.0.0: generated selectors and component drivers
 
 **`@cumulocity-iot/ui-sdk` 3.0.0 → 4.0.0** (root and `test/`). `test/playwright/selectors.ts` is generated from the installed Web SDK (`pnpm run e2e:selectors`, committed, collapsed in PRs by `.gitattributes`); the specs use its keys instead of hard-coded Web SDK `data-cy` strings, so a selector the Web SDK renames is a type error. The shell's dashboard, widget configuration, data grid, confirm modal and alerts are driven by the ui-sdk's Playwright drivers (`shell(page)` in `test/playwright/support/dashboard.ts`); the hand-written dashboard helpers and their dispatched clicks are gone. `visitApp` now returns once the shell's header is up. CI checks that the selectors file matches the installed Web SDK (`c8y-ui selectors --check`).

@@ -1,0 +1,48 @@
+# The pull request's description against .github/pull_request_template.md, from @cumulocity-iot/ui-sdk: every `## `
+# heading of the template is in the description, so every pull request reads the same way and a reviewer finds the
+# risk, what to read first and what was not verified in the same place. A missing heading is a warning on the run and
+# a line on its summary page, never a failure. It runs again when the description is edited, without the CI checks.
+name: PR description
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions: {}
+
+jobs:
+  description:
+    name: Sections of the template
+    if: ${{ github.event.pull_request.user.type != 'Bot' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout the template
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/pull_request_template.md
+          sparse-checkout-cone-mode: false
+
+      # The description reaches the script through the environment, never through an expression in it: nothing in
+      # it runs as shell.
+      - name: Compare the headings
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          node -e '
+            const fs = require("node:fs")
+            const file = ".github/pull_request_template.md"
+            if (!fs.existsSync(file)) process.exit(0)
+            const norm = s => s.trim().toLowerCase()
+            const wanted = fs.readFileSync(file, "utf8").split("\n").filter(l => l.startsWith("## ")).map(l => l.slice(3).trim())
+            const present = new Set((process.env.BODY ?? "").split(/\r?\n/).filter(l => /^##\s/.test(l)).map(l => norm(l.replace(/^##\s+/, ""))))
+            const missing = wanted.filter(h => !present.has(norm(h)))
+            const text = missing.length
+              ? `The description lacks sections of ${file}: ${missing.join(", ")}. A section that does not apply can say so in one line.`
+              : "The description has every section of the template."
+            if (missing.length) console.log(`::warning title=PR description::${text}`)
+            else console.log(text)
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### PR description\n\n${text}\n`)
+          '

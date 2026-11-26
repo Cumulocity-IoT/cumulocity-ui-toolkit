@@ -3,7 +3,11 @@
   @if (config.device) {
     @if (config?.buttons?.length) {
       @for (item of config.buttons; let buttonIndex = $index; track $index) {
-        <div class="row button-config">
+        <div
+          class="row button-config"
+          data-cy="operations-config--button"
+          [attr.data-index]="buttonIndex"
+        >
           @if (config.buttons.length >= 2) {
             <h5 class="col-sm-12 m-b-4">{{ buttonIndex + 1 }}. Button</h5>
           }
@@ -17,6 +21,7 @@
                   <select
                     class="form-control"
                     id="operation_{{ $index }}"
+                    data-cy="operations-config--operation"
                     [(ngModel)]="item.operationFragment"
                     name="operation"
                   >
@@ -64,6 +69,7 @@
               <input
                 class="form-control"
                 id="label_{{ $index }}"
+                data-cy="operations-config--label"
                 [(ngModel)]="item.label"
                 [maxlength]="254"
                 type="text"
@@ -120,6 +126,7 @@
                   "
                   type="button"
                   title="Color of the button"
+                  data-cy="operations-config--color"
                   style="width: 100%"
                   dropdownToggle
                 >
@@ -130,7 +137,7 @@
                 <ul class="dropdown-menu" *dropdownMenu>
                   @for (class of buttonClasses; track class) {
                     <li (click)="item.buttonClasses = class">
-                      <button type="button">
+                      <button type="button" data-cy="operations-config--color-option">
                         {{ class }}
                       </button>
                     </li>
@@ -147,6 +154,7 @@
               <input
                 class="form-control"
                 id="description_{{ $index }}"
+                data-cy="operations-config--description"
                 [(ngModel)]="item.description"
                 [maxlength]="254"
                 type="text"
@@ -169,6 +177,7 @@
               "
             >
               <operations-editor
+                data-cy="operations-config--editor"
                 [value]="item.operationValue"
                 [supportedOperation]="item.operationFragment"
                 (valueChange)="onOperationBodyChanged($event, buttonIndex)"
@@ -186,9 +195,15 @@
                       class="form-control"
                       [(ngModel)]="field.key"
                       placeholder="Key"
+                      data-cy="operations-config--placeholder-key"
                       disabled
                     />
-                    <input class="form-control" [(ngModel)]="field.label" placeholder="Label" />
+                    <input
+                      class="form-control"
+                      [(ngModel)]="field.label"
+                      placeholder="Label"
+                      data-cy="operations-config--placeholder-label"
+                    />
 
                     <div class="c8y-select-wrapper">
                       <select class="form-control" [(ngModel)]="field.type" style="width: 120px">
@@ -235,7 +250,7 @@
           @if (config.buttons[buttonIndex].fields?.length === 0) {
             <div class="col-sm-12">
               <c8y-form-group>
-                <label translate for="confirmation_{{ $index }}">Requires confirmation</label>
+                <label translate for="confirmation_{{ $index }}" data-cy="operations-config--confirmation">Requires confirmation</label>
                 <label class="c8y-switch" title="{{ 'Active' | translate }}">
                   <input [(ngModel)]="item.showModal" type="checkbox" />
                   <span></span>
@@ -261,7 +276,11 @@
 
           <!-- admin -->
           <div class="col-sm-12">
-            <button class="btn btn-danger" (click)="removeButton(buttonIndex)">
+            <button
+              class="btn btn-danger"
+              data-cy="operations-config--delete"
+              (click)="removeButton(buttonIndex)"
+            >
               <i c8yIcon="delete"></i>Delete Button
             </button>
             <hr />
@@ -269,7 +288,11 @@
         </div>
       }
     } @else {
-      <button class="m-t-16 btn btn-primary" (click)="addNewButton()">
+      <button
+        class="m-t-16 btn btn-primary"
+        data-cy="operations-config--add-first"
+        (click)="addNewButton()"
+      >
         <i c8yIcon="plus"></i>
         {{ 'Add First Button' | translate }}
       </button>
@@ -280,7 +303,11 @@
   }
 
   @if (config?.buttons?.length > 0) {
-    <button class="m-t-8 m-b-8 btn btn-primary" (click)="addNewButton()">
+    <button
+      class="m-t-8 m-b-8 btn btn-primary"
+      data-cy="operations-config--add"
+      (click)="addNewButton()"
+    >
       <i c8yIcon="plus"></i>
       {{ 'Add Button' | translate }}
     </button>

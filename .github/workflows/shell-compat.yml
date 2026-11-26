@@ -99,8 +99,8 @@ jobs:
       - name: Collect plugins with a Playwright spec
         id: plugins
         run: |
-          # a plugin's specs are test/playwright/<plugin>*.spec.ts (what playwright.config.ts runs for E2E_PLUGIN)
-          plugins=$(for dir in packages/*/; do p=$(basename "$dir"); ls test/playwright/"$p"*.spec.ts >/dev/null 2>&1 && echo "$p"; done \
+          # a plugin's specs are test/playwright/<plugin>.spec.ts and <plugin>-<area>.spec.ts (what playwright.config.ts runs for E2E_PLUGIN)
+          plugins=$(for dir in packages/*/; do p=$(basename "$dir"); ls test/playwright/"$p".spec.ts test/playwright/"$p"-*.spec.ts >/dev/null 2>&1 && echo "$p"; done \
             | jq -R -s -c 'split("\n") | map(select(. != ""))')
           echo "plugins=$plugins" >> "$GITHUB_OUTPUT"
 

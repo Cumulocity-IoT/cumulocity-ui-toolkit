@@ -12,6 +12,12 @@
 // E2E_MOCK_PORT / E2E_DEV_PORT override the ports from c8y-ui.json (parallel runs).
 // E2E_SHELL_VERSION runs the plugin in another cockpit release (shell-compat.yml: the latest CD release),
 // E2E_MOCK_GAPS=<file> lists the requests the mock does not emulate (endpoints or parameters it lacks).
+//
+// Why not `c8y-ui e2e` (the ui-sdk's runner, which also has --frozen, --gaps, --project and --dev-port): this
+// workspace serves a plugin from the shared angular.json through the devkit (`ng serve plugin.<name> -u <mock>`),
+// runs it in another cockpit release on demand (E2E_SHELL_VERSION, written into c8y-ui.json before the mock
+// starts), waits for the ports of a run that is still closing (CI runs the change and the base branch back to
+// back) and keeps the review screenshots per plugin. When `c8y-ui e2e` covers those, this script goes.
 import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
 import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
@@ -26,7 +32,8 @@ const [plugin, ...rest] = process.argv.slice(2);
 const open = rest.includes('--open');
 const headed = rest.includes('--headed');
 const frozen = rest.includes('--frozen');
-const spec = rest.find((a) => a.startsWith('--spec='))?.split('=')[1];
+// slice, not split("="): the filter is a regex and may contain "=" itself
+const spec = rest.find((a) => a.startsWith('--spec='))?.slice('--spec='.length);
 const own = new Set(['--', '--open', '--headed', '--frozen']);
 const passThrough = rest.filter((a) => !own.has(a) && !a.startsWith('--spec='));
 if (!plugin || !existsSync(resolve(rootDir, 'packages', plugin))) {
@@ -134,7 +141,8 @@ try {
   serve.kill();
   await project.close();
   if (process.env.E2E_MOCK_GAPS) writeFileSync(process.env.E2E_MOCK_GAPS, [...gaps].map((g) => `${g}\n`).join(''));
-  if (!open && !spec && (code === 0 || existsSync(shots))) rmSync(join(reviewDir, plugin), { recursive: true, force: true });
+  // A full run that passed replaces the plugin's folder; a failed one keeps the last complete set and adds what it took.
+  if (!open && !spec && code === 0) rmSync(join(reviewDir, plugin), { recursive: true, force: true });
   if (existsSync(shots)) cpSync(shots, reviewDir, { recursive: true });
   rmSync(shots, { recursive: true, force: true });
 }

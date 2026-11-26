@@ -22,6 +22,13 @@ const DEVICE_TYPE = 'lm_e2e_tracker';
 const ALARM_TYPE = 'lm_e2e_alarm';
 const EVENT_TYPE = 'lm_e2e_event';
 const WIDGET = 'layered-map-widget';
+/**
+ * "Now" for the seeded data: the page's clock. In a frozen run (`--frozen`) the page's `Date` stands a minute after
+ * the world's `now`, so data created from Node's real clock would lie in the page's future.
+ */
+const NOW = process.env.C8Y_FROZEN_NOW
+  ? new Date(process.env.C8Y_FROZEN_NOW).getTime() + 60_000
+  : Date.now();
 const MARKER = `${WIDGET} .leaflet-marker-pane .c8y-map-marker-icon`;
 const TRANSPARENT_PNG = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
@@ -208,7 +215,7 @@ test.describe('Layered Map Widget', () => {
                 c8y_ActiveAlarmsStatus: { critical: 1 },
                 c8y_LatestMeasurements: {
                   c8y_Temperature: {
-                    T: { value: 21.5, unit: 'C', time: new Date().toISOString() },
+                    T: { value: 21.5, unit: 'C', time: new Date(NOW).toISOString() },
                   },
                 },
               }
@@ -226,7 +233,7 @@ test.describe('Layered Map Widget', () => {
         type: ALARM_TYPE,
         text: 'LM e2e alarm',
         severity: 'CRITICAL',
-        time: new Date().toISOString(),
+        time: new Date(NOW).toISOString(),
       },
     });
 
@@ -236,7 +243,7 @@ test.describe('Layered Map Widget', () => {
         source: { id: devices[1].id },
         type: EVENT_TYPE,
         text: 'LM e2e event',
-        time: new Date().toISOString(),
+        time: new Date(NOW).toISOString(),
       },
     });
 

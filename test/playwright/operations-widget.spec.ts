@@ -348,38 +348,29 @@ test.describe('Operations Widget', () => {
     await shell(page).dashboard.editWidget(0);
 
     const config = page.locator('app-operations-widget-config');
+    const hook = (name: string) => `[data-cy="operations-config--${name}"]`;
+    const cfg = (name: string) => config.locator(hook(name));
+    const button = (index: number) => cfg('button').and(page.locator(`[data-index="${index}"]`));
 
-    await config.locator('button').filter({ hasText: 'Add First Button' }).click();
+    await cfg('add-first').click();
     // supported operations come from the device and are offered in a select
-    await expect(config.locator('select#operation_0')).toHaveValue('c8y_Command');
-    await config.locator('select#operation_0').selectOption('c8y_Restart');
-    await config.locator('input#label_0').fill('Reboot');
-    await config.locator('input#description_0').fill('Reboot it');
-    await config.locator('button[title="Color of the button"]').click();
-    await config.locator('.dropdown-menu button').filter({ hasText: 'btn-success' }).click();
-    await expect(config.locator('button[title="Color of the button"]')).toContainText(
-      'btn-success'
-    );
+    await expect(cfg('operation')).toHaveValue('c8y_Command');
+    await cfg('operation').selectOption('c8y_Restart');
+    await cfg('label').fill('Reboot');
+    await cfg('description').fill('Reboot it');
+    await cfg('color').click();
+    await cfg('color-option').filter({ hasText: 'btn-success' }).click();
+    await expect(cfg('color')).toContainText('btn-success');
     // the operation body editor seeds an `{{test}}` placeholder, which becomes a form field
-    await expect(config.locator('operations-editor')).toBeAttached();
-    await expect(config.locator('input[placeholder="Key"]')).toHaveValue('test');
-    await config.locator('input[placeholder="Label"]').first().fill('Test value');
+    await expect(cfg('editor')).toBeAttached();
+    await expect(cfg('placeholder-key')).toHaveValue('test');
+    await cfg('placeholder-label').fill('Test value');
     // confirmation is only offered for buttons without placeholders
-    await expect(config.locator('label').filter({ hasText: 'Requires confirmation' })).toHaveCount(
-      0
-    );
-    await config
-      .locator('button')
-      .filter({ hasText: /^\s*Add Button\s*$/ })
-      .click();
-    await expect(config.locator('.button-config')).toHaveCount(2);
-    await config
-      .locator('.button-config')
-      .filter({ hasText: '2. Button' })
-      .locator('button')
-      .filter({ hasText: 'Delete Button' })
-      .click();
-    await expect(config.locator('.button-config')).toHaveCount(1);
+    await expect(cfg('confirmation')).toHaveCount(0);
+    await cfg('add').click();
+    await expect(cfg('button')).toHaveCount(2);
+    await button(1).locator(hook('delete')).click();
+    await expect(cfg('button')).toHaveCount(1);
     await reviewScreenshot('operations-widget/config');
 
     const save = page.waitForRequest(
