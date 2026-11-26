@@ -116,6 +116,6 @@ jobs:
           curl -sSfL -o "$RUNNER_TEMP/actionlint.tar.gz" "https://github.com/rhysd/actionlint/releases/download/v$VERSION/actionlint_${VERSION}_linux_amd64.tar.gz"
           echo "$SHA256  $RUNNER_TEMP/actionlint.tar.gz" | sha256sum -c -
           tar -xzf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP" actionlint
-          # shellcheck through actionlint; SC2016 is the `node -e '…'` scripts (the ${…} inside is JavaScript),
-          # SC2012 an `ls` in the agent workflow whose file names are its own.
+          # actionlint runs the scripts through its shell checker. Ignored: SC2016, the `node -e '…'` scripts (the ${…}
+          # inside is JavaScript), and SC2012, an `ls` in the agent workflow whose file names are its own.
           "$RUNNER_TEMP/actionlint" -color -ignore 'SC2016:' -ignore 'SC2012:'
