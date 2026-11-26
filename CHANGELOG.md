@@ -4,6 +4,8 @@
 
 **`@cumulocity-iot/ui-sdk` 3.0.0 → 4.0.0** (root and `test/`). `test/playwright/selectors.ts` is generated from the installed Web SDK (`pnpm run e2e:selectors`, committed, collapsed in PRs by `.gitattributes`); the specs use its keys instead of hard-coded Web SDK `data-cy` strings, so a selector the Web SDK renames is a type error. The shell's dashboard, widget configuration, data grid, confirm modal and alerts are driven by the ui-sdk's Playwright drivers (`shell(page)` in `test/playwright/support/dashboard.ts`); the hand-written dashboard helpers and their dispatched clicks are gone. `visitApp` now returns once the shell's header is up. CI checks that the selectors file matches the installed Web SDK (`c8y-ui selectors --check`).
 
+**Build fix**: `packages/shared` imported `json-schema` with `import { type JSONSchema7 }`, which under `verbatimModuleSyntax` still loads the package at runtime; it was only installed as a transitive dependency of Cypress, so the plugin builds failed once Cypress was gone. The import is now `import type` (erased) and `@types/json-schema` is declared. ESLint warns on that import form from now on (`@typescript-eslint/no-import-type-side-effects`); the other occurrences in the plugins are a cleanup for a separate PR.
+
 **Licenses**: the ui-sdk's `.pnpmfile.cjs` hook stops an install that adds a direct dependency with a license outside the allowed list (pnpm records its checksum in the lockfile). Its after-install check (`c8y-ui licenses`) cannot run here: `pnpm licenses list` fails on a git tarball dependency of the Web SDK (see `AGENTS.md` → Dependency Audit).
 
 ## 2026.11.24 — ui-sdk 3.0.0, review tools in CI

@@ -107,6 +107,9 @@ export default [
         'error',
         { fixMixedExportsWithInlineTypeSpecifier: true },
       ],
+      // `import { type X } from 'm'` still loads `m` at runtime under verbatimModuleSyntax: a package that is only
+      // a type source (json-schema) then has to be installed. `import type { X }` is erased.
+      '@typescript-eslint/no-import-type-side-effects': 'warn',
 
       'no-unused-vars': 'off',
       'no-prototype-builtins': 'off',

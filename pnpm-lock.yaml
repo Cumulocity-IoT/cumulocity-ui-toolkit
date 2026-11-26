@@ -135,6 +135,9 @@ importers:
       '@types/jasmine':
         specifier: ~5.1.15
         version: 5.1.15
+      '@types/json-schema':
+        specifier: 7.0.15
+        version: 7.0.15
       '@types/jsoneditor':
         specifier: ^9.9.6
         version: 9.9.6
@@ -1417,16 +1420,6 @@ packages:
       '@module-federation/vite': ^1.23.0
       '@oxc-angular/vite': '>=0.0.41 <0.1.0'
       '@playwright/test': ^1.64.1
-      cypress: '*'
-    peerDependenciesMeta:
-      '@module-federation/vite':
-        optional: true
-      '@oxc-angular/vite':
-        optional: true
-      '@playwright/test':
-        optional: true
-      cypress:
-        optional: true
 
   '@discoveryjs/json-ext@0.6.3':
     resolution: {integrity: sha512-4B4OijXeVNOPZlYA2oEwWOTkzyltLao+xbotHQeqN++Rv27Y6s818+n2Qkp8q+Fxhn0t/5lA5X1Mxktud8eayQ==}
@@ -9698,25 +9691,23 @@ snapshots:
 
   '@cumulocity-iot/ui-sdk@4.0.0(@module-federation/vite@1.23.11(typescript@5.9.3)(vite@8.3.8(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass@1.97.3)(terser@5.46.0)(tsx@4.23.15)(yaml@2.9.1)))(@oxc-angular/vite@0.0.41(vite@8.3.8(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass@1.97.3)(terser@5.46.0)(tsx@4.23.15)(yaml@2.9.1)))(@playwright/test@1.64.1)':
     dependencies:
-      citty: 0.2.2
-      fflate: 0.8.3
-      pixelmatch: 7.2.0
-      pngjs: 7.0.0
-    optionalDependencies:
       '@module-federation/vite': 1.23.11(typescript@5.9.3)(vite@8.3.8(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass@1.97.3)(terser@5.46.0)(tsx@4.23.15)(yaml@2.9.1))
       '@oxc-angular/vite': 0.0.41(vite@8.3.8(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass@1.97.3)(terser@5.46.0)(tsx@4.23.15)(yaml@2.9.1))
       '@playwright/test': 1.64.1
-
-  '@cumulocity-iot/ui-sdk@4.0.0(@module-federation/vite@1.23.11(typescript@5.9.3)(vite@8.3.8(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass@1.97.3)(terser@5.46.0)(tsx@4.23.15)(yaml@2.9.1)))(@oxc-angular/vite@0.0.42(vite@8.3.8(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass@1.97.3)(terser@5.46.0)(tsx@4.23.15)(yaml@2.9.1)))(@playwright/test@1.64.1)':
-    dependencies:
       citty: 0.2.2
       fflate: 0.8.3
       pixelmatch: 7.2.0
       pngjs: 7.0.0
-    optionalDependencies:
+
+  '@cumulocity-iot/ui-sdk@4.0.0(@module-federation/vite@1.23.11(typescript@5.9.3)(vite@8.3.8(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass@1.97.3)(terser@5.46.0)(tsx@4.23.15)(yaml@2.9.1)))(@oxc-angular/vite@0.0.42(vite@8.3.8(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass@1.97.3)(terser@5.46.0)(tsx@4.23.15)(yaml@2.9.1)))(@playwright/test@1.64.1)':
+    dependencies:
       '@module-federation/vite': 1.23.11(typescript@5.9.3)(vite@8.3.8(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass@1.97.3)(terser@5.46.0)(tsx@4.23.15)(yaml@2.9.1))
       '@oxc-angular/vite': 0.0.42(vite@8.3.8(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass@1.97.3)(terser@5.46.0)(tsx@4.23.15)(yaml@2.9.1))
       '@playwright/test': 1.64.1
+      citty: 0.2.2
+      fflate: 0.8.3
+      pixelmatch: 7.2.0
+      pngjs: 7.0.0
 
   '@discoveryjs/json-ext@0.6.3': {}
 
@@ -10686,7 +10677,6 @@ snapshots:
       '@oxc-angular/binding-linux-x64-musl': 0.0.42
       '@oxc-angular/binding-win32-arm64-msvc': 0.0.42
       '@oxc-angular/binding-win32-x64-msvc': 0.0.42
-    optional: true
 
   '@oxc-project/types@0.113.0': {}
 
