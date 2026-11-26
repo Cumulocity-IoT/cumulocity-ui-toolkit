@@ -23,6 +23,8 @@ const TOGGLE = '[data-cy="index-db-cache--toggle"]';
 const DRAWER = '#collapseCache';
 const ACTIVE_TOGGLE = '[data-cy="index-db-cache--active-toggle"]';
 const ABORT_TOGGLE = '[data-cy="index-db-cache--abort-toggle"]';
+// The switches are styled checkboxes: the input has no box of its own, so a pointer click (also a forced one) lands
+// nowhere on CI; a dispatched click toggles it.
 const ACTIVE_STATE = '[data-cy="index-db-cache--active-state"]';
 const NAVIGATOR_BUTTON = selectors.headerBar.mainHeaderButton;
 const NAVIGATOR = '.app-main-navigator, c8y-navigator, .navigator';
@@ -103,8 +105,10 @@ test.describe('Index DB Cache Plugin', () => {
   }) => {
     await page.setViewportSize({ width: 1400, height: 900 });
     await visitApp('', VISIT);
-    // the shell may start with the navigator closed; open it so there is an edge to follow
-    if ((await navigatorRight(page)) < 100) await page.locator(NAVIGATOR_BUTTON).click();
+    // the shell may start with the navigator closed; open it so there is an edge to follow. A dispatched click: on CI
+    // the shell opens its right drawer (user menu) on this view, and its backdrop takes a pointer click.
+    if ((await navigatorRight(page)) < 100)
+      await page.locator(NAVIGATOR_BUTTON).dispatchEvent('click');
     await expect.poll(() => navigatorRight(page)).toBeGreaterThan(100);
     await page.locator(TOGGLE).click();
 
@@ -132,7 +136,7 @@ test.describe('Index DB Cache Plugin', () => {
       .evaluate((el) => ((el as HTMLElement).style.width = ''));
 
     // closed with the shell's own toggle: the drawer moves to the page's left edge
-    await page.locator(NAVIGATOR_BUTTON).click();
+    await page.locator(NAVIGATOR_BUTTON).dispatchEvent('click');
     await expect.poll(() => navigatorRight(page)).toBe(0);
     await expect
       .poll(async () => Math.abs((await drawerBox(page)).left - (await navigatorRight(page))))
@@ -153,7 +157,7 @@ test.describe('Index DB Cache Plugin', () => {
     await expect(page.locator(ACTIVE_TOGGLE)).toBeChecked();
     await expect(page.locator(ACTIVE_STATE)).toContainText('Caching active');
 
-    await page.locator(ACTIVE_TOGGLE).click({ force: true });
+    await page.locator(ACTIVE_TOGGLE).dispatchEvent('click');
     await expect(page.locator(ACTIVE_STATE)).toContainText('Caching disabled');
     expect(await localStorageItem(page, 'c8y-idb-cache-active')).toBe('false');
 
@@ -162,7 +166,7 @@ test.describe('Index DB Cache Plugin', () => {
     await expect(page.locator(ACTIVE_TOGGLE)).not.toBeChecked();
     await expect(page.locator(ACTIVE_STATE)).toContainText('Caching disabled');
 
-    await page.locator(ACTIVE_TOGGLE).click({ force: true });
+    await page.locator(ACTIVE_TOGGLE).dispatchEvent('click');
     await expect(page.locator(ACTIVE_STATE)).toContainText('Caching active');
     expect(await localStorageItem(page, 'c8y-idb-cache-active')).toBe('true');
   });
@@ -172,13 +176,13 @@ test.describe('Index DB Cache Plugin', () => {
 
     // default: disabled
     await expect(page.locator(ABORT_TOGGLE)).not.toBeChecked();
-    await page.locator(ABORT_TOGGLE).click({ force: true });
+    await page.locator(ABORT_TOGGLE).dispatchEvent('click');
     await expect(page.locator(ABORT_TOGGLE)).toBeChecked();
     expect(await localStorageItem(page, 'c8y-idb-abort-on-navigation')).toBe('true');
 
     await reloadAndOpen(page);
     await expect(page.locator(ABORT_TOGGLE)).toBeChecked();
-    await page.locator(ABORT_TOGGLE).click({ force: true });
+    await page.locator(ABORT_TOGGLE).dispatchEvent('click');
     await expect(page.locator(ABORT_TOGGLE)).not.toBeChecked();
     expect(await localStorageItem(page, 'c8y-idb-abort-on-navigation')).toBe('false');
   });
