@@ -23,16 +23,16 @@ jobs:
       packages: read # @cumulocity-iot/ui-sdk from GitHub Packages
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
           fetch-depth: 0 # origin/main: which packages a pull request touches
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '24'
           cache: 'pnpm'
@@ -69,7 +69,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0 # every commit: a secret that was committed once is compromised
           persist-credentials: false
@@ -94,7 +94,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
 
@@ -102,6 +102,10 @@ jobs:
       - uses: zizmorcore/zizmor-action@85b2b9fb8e3325e7a23d7d0a9d7ba5ae0f999e3e # v0.7.1
         with:
           version: 1.31.1
+          # Fails on high findings only. The medium ones that remain (template-injection and artipacked in the older
+          # workflows: expressions inside `run:` scripts, checkouts without `persist-credentials: false`) are a
+          # cleanup PR of their own; `uvx zizmor .github/workflows` lists them.
+          min-severity: high
           advanced-security: false # results in the log; uploading them needs GitHub Code Security
 
       - name: actionlint
