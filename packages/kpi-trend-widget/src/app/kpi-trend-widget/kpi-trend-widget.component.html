@@ -6,6 +6,8 @@
 <div
   class="kpi-trend inner-scroll"
   role="group"
+  data-cy="kpi-trend--widget"
+  [attr.data-variant]="variant()"
   [class.kpi-trend--radial]="variant() === 'radial'"
   [class.kpi-trend--compact]="variant() === 'compact'"
   [attr.aria-label]="a11yLabel"
@@ -43,7 +45,7 @@
         ></i>
         <!-- The pipe, not the translate attribute: with child elements the attribute directive
              replaces the span's content once, and the label and window then never update. -->
-        <span class="kpi-trend__label">{{ label() | translate }} <span class="kpi-trend__window-badge" [title]="('kpi-trend.window-title' | translate) + ' ' + trendWindowLabel()">({{ trendWindowLabel() }})</span></span>
+        <span class="kpi-trend__label" data-cy="kpi-trend--label">{{ label() | translate }} <span class="kpi-trend__window-badge" data-cy="kpi-trend--window" [title]="('kpi-trend.window-title' | translate) + ' ' + trendWindowLabel()">({{ trendWindowLabel() }})</span></span>
         @if (isStale()) {
           <span
             class="kpi-trend__stale-badge label label-warning m-l-4"
@@ -60,6 +62,8 @@
         <div class="kpi-trend__gauge-box">
           <ps-kpi-trend-gauge-arc
             mode="magnitude"
+            data-cy="kpi-trend--gauge"
+            [attr.data-state]="thresholdState()"
             [value]="currentValue()"
             [min]="minValue() ?? 0"
             [max]="maxValue()!"
@@ -77,10 +81,11 @@
           >
             <span
               class="kt-gauge-arc__value"
+              data-cy="kpi-trend--value"
               [class.text-muted]="isMissing() || isStale()"
               >{{ formattedValue() }}</span
             >
-            <span class="kt-gauge-arc__sub">
+            <span class="kt-gauge-arc__sub" data-cy="kpi-trend--unit">
               {{ unit() }}
               @if (maxValue() !== undefined) {
                 / {{ maxValue() | number }}
@@ -102,10 +107,11 @@
         >
           <span
             class="kpi-trend__value-large"
+            data-cy="kpi-trend--value"
             [class.text-muted]="isMissing() || isStale()"
             >{{ formattedValue() }}</span
           >
-          <span class="kpi-trend__unit-large">{{ unit() }}</span>
+          <span class="kpi-trend__unit-large" data-cy="kpi-trend--unit">{{ unit() }}</span>
         </div>
       }
 
@@ -115,6 +121,8 @@
         @if (hasSufficientHistory()) {
           <span
             class="kpi-trend__trend"
+            data-cy="kpi-trend--trend"
+            [attr.data-trend]="trendIsGood() ? 'good' : trendIsBad() ? 'bad' : 'flat'"
             [class.kpi-trend__trend--good]="trendIsGood()"
             [class.kpi-trend__trend--bad]="trendIsBad()"
             [class.kpi-trend__trend--flat]="trendDirection() === 'flat'"
@@ -141,6 +149,7 @@
             />
             <path
               class="kpi-trend__spark-line"
+              data-cy="kpi-trend--sparkline"
               [class.kpi-trend__spark--warning]="thresholdState() === 'warning'"
               [class.kpi-trend__spark--critical]="
                 thresholdState() === 'critical'
@@ -187,10 +196,11 @@
           >
             <span
               class="kpi-trend__compact-value"
+              data-cy="kpi-trend--value"
               [class.text-muted]="isMissing() || isStale()"
               >{{ formattedValue() }}</span
             >
-            <span class="kpi-trend__compact-unit">{{ unit() }}</span>
+            <span class="kpi-trend__compact-unit" data-cy="kpi-trend--unit">{{ unit() }}</span>
             @if (isStale()) {
               <span
                 class="label label-warning m-l-4"
@@ -206,6 +216,8 @@
         @if (showArc()) {
           <div
             class="kpi-trend__compact-ring"
+            data-cy="kpi-trend--ring"
+            [attr.data-state]="thresholdState()"
             [class.kpi-trend__compact-ring--warning]="thresholdState() === 'warning'"
             [class.kpi-trend__compact-ring--critical]="thresholdState() === 'critical'"
             aria-hidden="true"
@@ -236,7 +248,7 @@
               />
             </svg>
             @if (ringPercent()) {
-              <span class="kpi-trend__ring-pct">{{ ringPercent() }}</span>
+              <span class="kpi-trend__ring-pct" data-cy="kpi-trend--ring-percent">{{ ringPercent() }}</span>
             }
           </div>
         }
@@ -275,6 +287,8 @@
         @if (hasSufficientHistory()) {
           <span
             class="kpi-trend__trend"
+            data-cy="kpi-trend--trend"
+            [attr.data-trend]="trendIsGood() ? 'good' : trendIsBad() ? 'bad' : 'flat'"
             [class.kpi-trend__trend--good]="trendIsGood()"
             [class.kpi-trend__trend--bad]="trendIsBad()"
             [class.kpi-trend__trend--flat]="trendDirection() === 'flat'"

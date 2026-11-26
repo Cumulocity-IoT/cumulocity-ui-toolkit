@@ -1,0 +1,4 @@
+# Findings of gitleaks (security.yml) that are not secrets, by fingerprint (commit:file:rule:line).
+# A real finding is never listed here: rotate the credential first.
+# A localStorage key name, not a credential:
+1f548ba15391e03de23f7538d17748ac26eb957e:packages/index-db-cache/src/app/index-db-cache-action/services/navigation-abort-state.service.ts:generic-api-key:4

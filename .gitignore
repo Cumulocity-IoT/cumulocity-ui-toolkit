@@ -64,12 +64,13 @@ testem.log
 .DS_Store
 Thumbs.db
 
-# Cypress
-test/node_modules
-test/cypress/videos
-test/cypress/screenshots
-test/cypress/downloads
-test/cypress/logs
+# Playwright (test/playwright.config.ts → outputDir, html reporter)
+test/playwright-results
+test/playwright-report
+# review screenshots of the specs (reviewScreenshot), compared by CI between base branch and change
+test/review-screenshots
+# plugins c8y-ui fallow writes before every run
+.fallow/
 # Claude Code local (per-machine) settings
 .claude/settings.local.json
 

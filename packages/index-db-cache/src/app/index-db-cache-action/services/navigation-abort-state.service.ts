@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
-const LS_KEY = 'c8y-idb-abort-on-navigation';
+const LS_KEY = 'c8y-idb-abort-on-navigation'; // gitleaks:allow -- a localStorage key, not a credential
 
 /**
  * Persists the "cancel requests on navigation" toggle in `localStorage`, in the

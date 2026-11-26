@@ -1,9 +1,16 @@
 {
-    "compilerOptions": {
-      "target": "es5",
-      "lib": ["es5", "dom"],
-      "types": ["cypress", "node"],
-      "esModuleInterop": true
-    },
-    "include": ["**/*.ts"]
+  "compilerOptions": {
+    "target": "es2022",
+    "lib": ["es2022", "dom"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": ["node"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "noEmit": true
+  },
+  "include": ["playwright/**/*.ts", "playwright.config.ts", "scripts/**/*.mts"],
+  "exclude": ["node_modules"]
 }

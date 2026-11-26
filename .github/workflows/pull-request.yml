@@ -6,7 +6,6 @@ on:
 permissions:
   contents: read
   packages: read # @cumulocity-iot/ui-sdk from GitHub Packages
-  pull-requests: write
 
 jobs:
   detect-changes:
@@ -16,7 +15,7 @@ jobs:
       root-config: ${{ steps.set-matrix.outputs.root-config }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0  # Needed for git diff
 
@@ -29,19 +28,19 @@ jobs:
           components=$(echo "$changed" | grep '^packages/' | cut -d '/' -f2 | sort -u \
             | while read -r c; do [ -d "packages/$c" ] && echo "$c"; done || true)
           if [ -z "$components" ]; then
-            echo "matrix={\"component\": []}" >> $GITHUB_OUTPUT
+            echo "matrix={\"component\": []}" >> "$GITHUB_OUTPUT"
           else
             components_json=$(echo "$components" | jq -R -s -c 'split("\n") | map(select(. != ""))')
-            echo "matrix={\"component\": $components_json}" >> $GITHUB_OUTPUT
+            echo "matrix={\"component\": $components_json}" >> "$GITHUB_OUTPUT"
           fi
 
           # A change to shared build/lint/test configuration affects every package,
           # but matches no package directory — without this the whole workflow
           # would be skipped for such a PR.
           if echo "$changed" | grep -qE '^(angular\.json|tsconfig\.json|eslint\.config\.mjs|karma\.conf\.js|package\.json|pnpm-workspace\.yaml|pnpm-lock\.yaml|\.npmrc|\.prettierrc|tools/)'; then
-            echo "root-config=true" >> $GITHUB_OUTPUT
+            echo "root-config=true" >> "$GITHUB_OUTPUT"
           else
-            echo "root-config=false" >> $GITHUB_OUTPUT
+            echo "root-config=false" >> "$GITHUB_OUTPUT"
           fi
         shell: bash
 
@@ -54,13 +53,13 @@ jobs:
     name: Test ${{ matrix.component }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '24'
           cache: 'pnpm'
@@ -112,7 +111,7 @@ jobs:
           # when a package has no build script.
           if ! jq -e --arg s "build:${{ matrix.component }}" '.scripts[$s]' package.json >/dev/null; then
             echo "No build:${{ matrix.component }} script — skipping build."
-            echo "artifact-path=" >> $GITHUB_OUTPUT
+            echo "artifact-path=" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -129,17 +128,74 @@ jobs:
             out="packages/${{ matrix.component }}/dist"
           fi
 
-          echo "artifact-path=$out" >> $GITHUB_OUTPUT
+          echo "artifact-path=$out" >> "$GITHUB_OUTPUT"
         shell: bash
 
       - name: Upload build artifact
         if: steps.build.outputs.artifact-path != ''
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ${{ matrix.component }}-build
           path: ${{ steps.build.outputs.artifact-path }}
           if-no-files-found: error
           retention-days: 5
+
+  # Static analysis of the change as a whole, from @cumulocity-iot/ui-sdk: how much attention the pull request needs
+  # (risk and size, on the run's summary page), the exceptions in pnpm-workspace.yaml and ignored advisories that have
+  # become fixable, and the dead code, complexity and duplication the change introduces (fallow, gated on findings
+  # that are new in the changed files; what the base branch already had is reported, not blocking).
+  review:
+    runs-on: ubuntu-latest
+    name: Review the change
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0 # the diff against origin/main
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@cumulocity-iot'
+
+      - name: Audit dependencies (high+)
+        run: pnpm audit --audit-level high
+
+      - name: Install root dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Risk and size of the change
+        run: pnpm exec c8y-ui review risk --base origin/main >> "$GITHUB_STEP_SUMMARY"
+
+      # test/playwright/selectors.ts holds the data-cy selectors of the installed Web SDK: after a Web SDK bump it is
+      # written again (pnpm run e2e:selectors) and committed, or the specs type-check against stale keys.
+      - name: Generated selectors are current
+        run: pnpm -C test exec c8y-ui selectors --check
+
+      # Lint for the reviewer: fails on what `pnpm lint` fails on, and lists the warnings on the lines the change adds
+      # (not the older ones in the same files) and the suppressions it adds, on the summary page and as annotations.
+      - name: Lint (new findings and warnings of the change)
+        run: pnpm exec c8y-ui review lint --base origin/main
+
+      # Release-age excludes that are due, ignored advisories with an installable fix (AGENTS.md → Dependency Audit),
+      # for the packages this change touches; `shared` is the workspace library, not a registry package.
+      - name: Dependency exceptions
+        run: pnpm exec c8y-ui audit --base origin/main --allow shared
+
+      # The orientation brief for the reviewer (never fails), then the gate: exit 1 on dead code, complexity or
+      # duplication the change introduces. Repository-specific exclusions live in .fallowrc.json.
+      - name: Dead code, complexity and duplication (fallow)
+        run: |
+          pnpm exec c8y-ui fallow review --brief --base origin/main >> "$GITHUB_STEP_SUMMARY"
+          pnpm exec c8y-ui fallow audit --base origin/main
 
   verify-root-config:
     needs: detect-changes
@@ -148,13 +204,13 @@ jobs:
     name: Verify workspace configuration
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '24'
           cache: 'pnpm'

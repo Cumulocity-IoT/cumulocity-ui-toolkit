@@ -1,0 +1,29 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  "entry": ["packages/shared/src/**/*.ts"],
+  "overrides": [
+    {
+      "files": ["packages/shared/**"],
+      "rules": {
+        "unused-class-members": "off",
+        "unused-component-inputs": "off",
+        "unused-component-outputs": "off"
+      }
+    }
+  ],
+  "dynamicallyLoaded": ["tools/*.js", "tools/*.mts", "test/scripts/*.mts"],
+  "ignoreDependencies": [
+    "fallow",
+    "shared",
+    "@c8y/html-repo",
+    "@c8y/ng1-modules",
+    "@c8y/style",
+    "@c8y/options",
+    "angular",
+    "@angular-eslint/eslint-plugin-template",
+    "@angular-eslint/template-parser",
+    "@typescript-eslint/eslint-plugin",
+    "eslint-plugin-prettier",
+    "prettier-plugin-organize-attributes"
+  ]
+}

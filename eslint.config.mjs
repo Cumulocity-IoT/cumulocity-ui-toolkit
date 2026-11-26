@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url';
 import js from '@eslint/js';
 import { FlatCompat } from '@eslint/eslintrc';
 import eslintConfigPrettier from 'eslint-config-prettier';
+// The ui-sdk's rules for Web SDK apps (c8y/no-unmanaged-subscribe); the deprecated HOOK_* tokens are blocked below.
+import c8y from '@cumulocity-iot/ui-sdk/eslint';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,7 +33,8 @@ export default [
       '**/polyfills.ts',
       '**/i18n.ts',
       '**/src/index.html',
-      '**/test/cypress',
+      '**/test/playwright-results',
+      '**/test/playwright-report',
       '**/*.html',
       'karma.conf.js',
     ],
@@ -65,9 +68,27 @@ export default [
     })),
   {
     files: ['**/*.ts'],
+    plugins: { c8y },
 
     rules: {
       'prettier/prettier': ['error'],
+
+      // AP-09 of the ui-sdk's reviewing-code-quality skill: a subscribe() in a component, directive or pipe
+      // without takeUntilDestroyed / takeUntil / take / first leaks when the view goes.
+      'c8y/no-unmanaged-subscribe': 'warn',
+      // AP-20: the HOOK_* tokens are deprecated; use hookTab, hookRoute, hookActionBar, hookWidget.
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@c8y/ngx-components',
+              importNames: ['HOOK_TABS', 'HOOK_ROUTE', 'HOOK_ACTION_BAR', 'HOOK_COMPONENTS'],
+              message: 'The HOOK_* tokens are deprecated: use hookTab, hookRoute, hookActionBar, hookWidget (AP-20).',
+            },
+          ],
+        },
+      ],
 
       'no-console': [
         'error',
@@ -86,6 +107,9 @@ export default [
         'error',
         { fixMixedExportsWithInlineTypeSpecifier: true },
       ],
+      // `import { type X } from 'm'` still loads `m` at runtime under verbatimModuleSyntax: a package that is only
+      // a type source (json-schema) then has to be installed. `import type { X }` is erased.
+      '@typescript-eslint/no-import-type-side-effects': 'warn',
 
       'no-unused-vars': 'off',
       'no-prototype-builtins': 'off',

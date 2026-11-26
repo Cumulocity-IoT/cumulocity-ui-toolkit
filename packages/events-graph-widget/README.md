@@ -59,7 +59,7 @@ From the repository root:
 pnpm run serve:events-graph-widget   # needs C8Y_BASEURL and C8Y_SHELL_TARGET
 pnpm run build:events-graph-widget
 pnpm run test:events-graph-widget    # Karma unit tests
-pnpm run e2e:mock events-graph-widget --browser=chrome   # Cypress against the tenant mock
+pnpm run e2e:mock events-graph-widget   # Playwright against the tenant mock
 ```
 
 Built on Cumulocity Web SDK 1024.21.x and Angular 21. The plugin exports

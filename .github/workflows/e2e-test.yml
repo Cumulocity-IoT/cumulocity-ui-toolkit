@@ -7,7 +7,6 @@ on:
 permissions:
   contents: read
   packages: read # @cumulocity-iot/ui-sdk from GitHub Packages
-  pull-requests: write
 
 jobs:
   detect-changes:
@@ -16,7 +15,7 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0  # Needed for git diff
 
@@ -28,10 +27,10 @@ jobs:
           components=$(git diff --name-only origin/main...HEAD | grep '^packages/' | cut -d '/' -f2 | sort -u | grep -v '^shared$' \
             | while read -r c; do [ -d "packages/$c" ] && echo "$c"; done || true)
           if [ -z "$components" ]; then
-            echo "matrix={\"component\": []}" >> $GITHUB_OUTPUT
+            echo "matrix={\"component\": []}" >> "$GITHUB_OUTPUT"
           else
             components_json=$(echo "$components" | jq -R -s -c 'split("\n") | map(select(. != ""))')
-            echo "matrix={\"component\": $components_json}" >> $GITHUB_OUTPUT
+            echo "matrix={\"component\": $components_json}" >> "$GITHUB_OUTPUT"
           fi
         shell: bash
 
@@ -47,13 +46,15 @@ jobs:
     name: E2E Test ${{ matrix.component }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0 # origin/main, for the review screenshots of the base branch
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '24'
           cache: 'pnpm'
@@ -62,33 +63,30 @@ jobs:
           scope: '@cumulocity-iot'
 
       - name: Cache Cumulocity shell builds
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.cache/c8y-ui
           key: c8y-ui-shells-${{ hashFiles('test/c8y-ui.json', 'package.json') }}
           restore-keys: |
             c8y-ui-shells-
 
-      - name: Cache Cypress binary
-        uses: actions/cache@v4
+      - name: Cache the Playwright browser
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
-          path: ~/.cache/Cypress
-          key: cypress-${{ runner.os }}-${{ hashFiles('test/package.json') }}
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
-            cypress-${{ runner.os }}-
+            playwright-${{ runner.os }}-
 
-      - name: Install root dependencies
+      # test/ is a member of the root workspace: one install covers it
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install test workspace dependencies
-        run: pnpm -C test install --frozen-lockfile
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install Cypress binary
-        run: pnpm -C test exec cypress install
+      # ignore-scripts keeps Playwright from fetching Chromium on install; --with-deps adds its system libraries
+      - name: Install the Playwright browser
+        run: pnpm -C test exec playwright install --with-deps chromium
 
       - name: Set up go-c8y-cli
         uses: reubenmiller/setup-go-c8y-cli@9b6147a9f916607a3c1db392eab6e54e3e8c3f01 # v2
@@ -104,17 +102,74 @@ jobs:
           C8Y_USER: ${{ vars.WINDY_C8Y_USER }}
           C8Y_PASSWORD: ${{ secrets.WINDY_C8Y_PASSWORD }}
 
+      # The pulled world loads the way the mock loads it: data a tenant refuses fails here, not in a test.
+      - name: World check
+        run: pnpm -C test exec c8y-ui world check
+
       # Mocked tenant (windy-dev world) with the cockpit release of the workspace's Web SDK version;
-      # starts the plugin's dev server against it and runs its Cypress suite.
-      - name: Run Cypress Tests against the tenant mock (package ${{ matrix.component }})
+      # starts the plugin's dev server against it and runs its Playwright suite.
+      - name: Run Playwright tests against the tenant mock (package ${{ matrix.component }})
+        id: e2e
         run: pnpm run e2e:mock ${{ matrix.component }}
         timeout-minutes: 15
         env:
           NODE_OPTIONS: --max_old_space_size=4096
+          E2E_MOCK_GAPS: ${{ runner.temp }}/mock-gaps.txt
 
-      - name: Upload Cypress Screenshots
-        if: always()
-        uses: actions/upload-artifact@v4
+      # Evidence for the reviewer on the run's summary page: what the tests asked the mock that it could not answer
+      # (behaviour these tests did not verify).
+      - name: Mock gaps
+        if: ${{ !cancelled() && steps.e2e.conclusion != 'skipped' }}
+        run: |
+          {
+            echo "### ${{ matrix.component }}: requests the mock could not answer"
+            if [ -s "$RUNNER_TEMP/mock-gaps.txt" ]; then sed 's/^/- `/; s/$/`/' "$RUNNER_TEMP/mock-gaps.txt"; else echo "none"; fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Traces and screenshots of failed tests (playwright show-trace <zip>) and the HTML report. Before the review
+      # screenshots: their frozen rerun lets Playwright wipe test/playwright-results/<plugin> and write a new report.
+      - name: Upload Playwright results
+        if: ${{ !cancelled() && steps.e2e.outcome == 'failure' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: cypress-screenshots-${{ matrix.component }}
-          path: test/cypress/screenshots
+          name: playwright-results-${{ matrix.component }}
+          path: |
+            test/playwright-results
+            test/playwright-report
+          if-no-files-found: ignore
+
+      # What the change looks like: the specs' review screenshots (reviewScreenshot), taken on the change and on the
+      # base branch with the mock's clock and the browser's Date frozen (the same data, the same time, the same
+      # machine), then compared. The summary names the views that differ; the report page with before, after and
+      # difference is an artifact. Never fails the run: a base branch that cannot take screenshots makes every view new.
+      - name: Review screenshots
+        id: screenshots
+        if: ${{ !cancelled() && steps.e2e.conclusion != 'skipped' }}
+        continue-on-error: true
+        timeout-minutes: 30
+        run: |
+          grep -qs reviewScreenshot test/playwright/"$PLUGIN".spec.ts test/playwright/"$PLUGIN"-*.spec.ts || { echo "no reviewScreenshot() in the specs"; exit 0; }
+          rm -rf test/review-screenshots
+          pnpm run e2e:mock ${{ matrix.component }} --frozen || true
+          git worktree add --detach "$RUNNER_TEMP/base" origin/main
+          mkdir -p "$RUNNER_TEMP/base/test/mock" && cp test/mock/*.json "$RUNNER_TEMP/base/test/mock/"
+          (cd "$RUNNER_TEMP/base" && pnpm install --frozen-lockfile && pnpm run e2e:mock ${{ matrix.component }} --frozen) || true
+          {
+            echo "### ${{ matrix.component }}: views that look different from main"
+            # --ignore: up to ~100 px of glyph antialiasing differ between two runs of the same code; a changed word is more
+            pnpm exec c8y-ui review screenshots "$RUNNER_TEMP/base/test/review-screenshots" test/review-screenshots --ignore 120 --out "$RUNNER_TEMP/review-screenshots"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "report=true" >> "$GITHUB_OUTPUT"
+        env:
+          NODE_OPTIONS: --max_old_space_size=4096
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PLUGIN: ${{ matrix.component }}
+
+      - name: Upload the review screenshots report
+        if: ${{ steps.screenshots.outputs.report == 'true' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: review-screenshots-${{ matrix.component }}
+          path: ${{ runner.temp }}/review-screenshots
+          retention-days: 7
+

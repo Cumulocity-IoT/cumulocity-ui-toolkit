@@ -1,0 +1,4 @@
+# GitHub collapses generated files in a pull request, so the review shows what someone wrote.
+pnpm-lock.yaml linguist-generated=true
+# The data-cy selectors of the installed Web SDK (pnpm -C test exec c8y-ui selectors): reviewed by the specs that use them.
+test/playwright/selectors.ts linguist-generated=true

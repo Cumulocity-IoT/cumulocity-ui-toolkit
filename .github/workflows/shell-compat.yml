@@ -1,4 +1,4 @@
-# Shell compatibility: runs every plugin's Cypress suite on the tenant mock inside the latest CD release of
+# Shell compatibility: runs every plugin's Playwright suite on the tenant mock inside the latest CD release of
 # the cockpit (github.com/Cumulocity-IoT/cockpit/releases/latest), while the plugins stay built with the
 # workspace's pinned Web SDK version — what a tenant upgrade does to a deployed plugin. A failing run opens
 # an issue (label shell-compat), or comments on the open one for that version; a passing run closes them.
@@ -42,7 +42,7 @@ jobs:
       plugins: ${{ steps.plugins.outputs.plugins }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Resolve the cockpit version
         id: version
@@ -71,7 +71,7 @@ jobs:
 
       - name: Look up a passing run of this version at this commit
         id: marker
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: .shell-compat-ok
           key: shell-compat-${{ steps.version.outputs.version }}-${{ github.sha }}
@@ -96,10 +96,11 @@ jobs:
           fi
           echo "run=$run" >> "$GITHUB_OUTPUT"
 
-      - name: Collect plugins with an e2e config
+      - name: Collect plugins with a Playwright spec
         id: plugins
         run: |
-          plugins=$(ls test/config/*.config.ts | xargs -n1 basename | sed 's/\.config\.ts$//' | grep -vx base \
+          # a plugin's specs are test/playwright/<plugin>.spec.ts and <plugin>-<area>.spec.ts (what playwright.config.ts runs for E2E_PLUGIN)
+          plugins=$(for dir in packages/*/; do p=$(basename "$dir"); ls test/playwright/"$p".spec.ts test/playwright/"$p"-*.spec.ts >/dev/null 2>&1 && echo "$p"; done \
             | jq -R -s -c 'split("\n") | map(select(. != ""))')
           echo "plugins=$plugins" >> "$GITHUB_OUTPUT"
 
@@ -118,13 +119,13 @@ jobs:
     name: E2E ${{ matrix.plugin }} in cockpit ${{ needs.detect.outputs.version }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '24'
           cache: 'pnpm'
@@ -133,33 +134,29 @@ jobs:
           scope: '@cumulocity-iot'
 
       - name: Cache Cumulocity shell builds
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.cache/c8y-ui
           key: c8y-ui-shells-${{ needs.detect.outputs.version }}
           restore-keys: |
             c8y-ui-shells-
 
-      - name: Cache Cypress binary
-        uses: actions/cache@v4
+      - name: Cache the Playwright browser
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
-          path: ~/.cache/Cypress
-          key: cypress-${{ runner.os }}-${{ hashFiles('test/package.json') }}
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
-            cypress-${{ runner.os }}-
+            playwright-${{ runner.os }}-
 
       - name: Install root dependencies
         run: pnpm install --frozen-lockfile
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install test workspace dependencies
-        run: pnpm -C test install --frozen-lockfile
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install Cypress binary
-        run: pnpm -C test exec cypress install
+      # ignore-scripts keeps Playwright from fetching Chromium on install; --with-deps adds its system libraries
+      - name: Install the Playwright browser
+        run: pnpm -C test exec playwright install --with-deps chromium
 
       - name: Set up go-c8y-cli
         uses: reubenmiller/setup-go-c8y-cli@9b6147a9f916607a3c1db392eab6e54e3e8c3f01 # v2
@@ -174,7 +171,7 @@ jobs:
           C8Y_USER: ${{ vars.WINDY_C8Y_USER }}
           C8Y_PASSWORD: ${{ secrets.WINDY_C8Y_PASSWORD }}
 
-      - name: Run Cypress tests in cockpit ${{ needs.detect.outputs.version }}
+      - name: Run Playwright tests in cockpit ${{ needs.detect.outputs.version }}
         id: e2e
         run: pnpm run e2e:mock ${{ matrix.plugin }}
         timeout-minutes: 15
@@ -198,18 +195,20 @@ jobs:
 
       - name: Upload the result
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: shell-compat-result-${{ matrix.plugin }}
           path: shell-compat-result
           retention-days: 5
 
-      - name: Upload Cypress screenshots
+      - name: Upload Playwright results
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: cypress-screenshots-${{ matrix.plugin }}
-          path: test/cypress/screenshots
+          name: playwright-results-${{ matrix.plugin }}
+          path: |
+            test/playwright-results
+            test/playwright-report
           if-no-files-found: ignore
 
   report:
@@ -221,7 +220,7 @@ jobs:
       issues: write
     steps:
       - name: Download the results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: shell-compat-result-*
           path: results
@@ -244,7 +243,7 @@ jobs:
           failed=$(jq -r '[.[] | select(.outcome != "success") | .plugin] | join(", ")' results.json)
 
           {
-            echo "Cypress e2e of the plugins (built with Web SDK \`$PINNED\`) on the tenant mock inside cockpit [\`$VERSION\`](https://github.com/Cumulocity-IoT/cockpit/releases/tag/v$VERSION)."
+            echo "Playwright e2e of the plugins (built with Web SDK \`$PINNED\`) on the tenant mock inside cockpit [\`$VERSION\`](https://github.com/Cumulocity-IoT/cockpit/releases/tag/v$VERSION)."
             echo
             echo "Run: $RUN_URL"
             echo
@@ -305,7 +304,7 @@ jobs:
 
       - name: Save the marker
         if: steps.summary.outputs.failed == ''
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: .shell-compat-ok
           key: shell-compat-${{ needs.detect.outputs.version }}-${{ github.sha }}
