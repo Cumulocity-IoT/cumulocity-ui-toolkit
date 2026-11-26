@@ -24,6 +24,33 @@ world.events = (world.events ?? [])
     return count <= MAX_EVENTS_PER_SOURCE;
   });
 
+// A dashboard of a pulled asset can show a device outside the pulled subtree (or one deleted on the tenant):
+// `world check` refuses the dangling reference. Drop those widgets; the dashboard itself stays.
+const ids = new Set((world.managedObjects ?? []).map((mo) => String(mo.id)));
+const refId = (ref: unknown) =>
+  ref && typeof ref === 'object' && 'id' in ref ? String((ref as { id: unknown }).id) : undefined;
+const dangling = (config: Record<string, unknown> | undefined) => {
+  const device = refId(config?.device);
+  const targets = Array.isArray(config?.datapoints)
+    ? (config.datapoints as { __target?: unknown }[]).map((dp) => refId(dp.__target))
+    : [];
+
+  return [device, ...targets].some((id) => id !== undefined && !ids.has(id));
+};
+let dropped = 0;
+
+for (const mo of world.managedObjects ?? []) {
+  const dashboard = mo.c8y_Dashboard as { children?: Record<string, { config?: Record<string, unknown> }> } | undefined;
+
+  for (const [key, widget] of Object.entries(dashboard?.children ?? {})) {
+    if (dangling(widget.config)) {
+      delete dashboard!.children![key];
+      dropped += 1;
+    }
+  }
+}
+if (dropped) console.log(`dropped ${dropped} dashboard widgets that refer to objects outside the world`);
+
 mkdirSync(dirname(out), { recursive: true });
 writeFileSync(out, `${JSON.stringify(world, null, 2)}\n`);
 console.log(`wrote ${out}: ${world.managedObjects?.length} objects, ${world.events.length} events`);

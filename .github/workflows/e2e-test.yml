@@ -110,6 +110,7 @@ jobs:
       # Mocked tenant (windy-dev world) with the cockpit release of the workspace's Web SDK version;
       # starts the plugin's dev server against it and runs its Playwright suite.
       - name: Run Playwright tests against the tenant mock (package ${{ matrix.component }})
+        id: e2e
         run: pnpm run e2e:mock ${{ matrix.component }}
         timeout-minutes: 15
         env:
@@ -119,7 +120,7 @@ jobs:
       # Evidence for the reviewer on the run's summary page: what the tests asked the mock that it could not answer
       # (behaviour these tests did not verify).
       - name: Mock gaps
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.e2e.conclusion != 'skipped' }}
         run: |
           {
             echo "### ${{ matrix.component }}: requests the mock could not answer"
@@ -132,7 +133,7 @@ jobs:
       # difference is an artifact. Never fails the run: a base branch that cannot take screenshots makes every view new.
       - name: Review screenshots
         id: screenshots
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.e2e.conclusion != 'skipped' }}
         continue-on-error: true
         timeout-minutes: 30
         run: |
