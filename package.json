@@ -36,6 +36,7 @@
     "e2e:mock": "node test/scripts/e2e-mock.mts",
     "e2e:install": "pnpm -C test exec playwright install chromium",
     "e2e:world:pull": "node test/scripts/pull-world.mts",
+    "e2e:selectors": "pnpm -C test exec c8y-ui selectors",
     "--generated----------": "--------------------",
     "build:shared": "ng build shared",
     "serve:energy-consumption-widget": "pnpm run _serve plugin.energy-consumption-widget",
@@ -91,8 +92,7 @@
     "test:smart-views": "ng test plugin.smart-views --watch=false --browsers=ChromeHeadlessCI",
     "test:watch:smart-views": "ng test plugin.smart-views --browsers=ChromeHeadless",
     "test:tenant-option-management": "ng test plugin.tenant-option-management --watch=false --browsers=ChromeHeadlessCI",
-    "test:watch:tenant-option-management": "ng test plugin.tenant-option-management --browsers=ChromeHeadless",
-    "e2e:selectors": "pnpm -C test exec c8y-ui selectors"
+    "test:watch:tenant-option-management": "ng test plugin.tenant-option-management --browsers=ChromeHeadless"
   },
   "dependencies": {
     "@angular/animations": "^21.2.25",
