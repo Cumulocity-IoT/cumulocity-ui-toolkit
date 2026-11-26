@@ -1,5 +1,31 @@
 # UI Toolkit Changelog
 
+## 2026.11.26 — ui-sdk 4.0.0: generated selectors and component drivers
+
+**`@cumulocity-iot/ui-sdk` 3.0.0 → 4.0.0** (root and `test/`). `test/playwright/selectors.ts` is generated from the installed Web SDK (`pnpm run e2e:selectors`, committed, collapsed in PRs by `.gitattributes`); the specs use its keys instead of hard-coded Web SDK `data-cy` strings, so a selector the Web SDK renames is a type error. The shell's dashboard, widget configuration, data grid, confirm modal and alerts are driven by the ui-sdk's Playwright drivers (`shell(page)` in `test/playwright/support/dashboard.ts`); the hand-written dashboard helpers and their dispatched clicks are gone. `visitApp` now returns once the shell's header is up. CI checks that the selectors file matches the installed Web SDK (`c8y-ui selectors --check`).
+
+**Licenses**: the ui-sdk's `.pnpmfile.cjs` hook stops an install that adds a direct dependency with a license outside the allowed list (pnpm records its checksum in the lockfile). Its after-install check (`c8y-ui licenses`) cannot run here: `pnpm licenses list` fails on a git tarball dependency of the Web SDK (see `AGENTS.md` → Dependency Audit).
+
+## 2026.11.24 — ui-sdk 3.0.0, review tools in CI
+
+**`@cumulocity-iot/ui-sdk` 2.6.0 → 3.0.0** (root and `test/`). In 3.0.0 the `api` and `mock` fixtures talk to the mock directly (`C8Y_MOCK_URL`) instead of through the dev server's proxy, which dropped connections now and then; no spec fetched the app's own files through `api`, so the breaking part does not apply here. `pnpm exec c8y-ui review lint --base` (new errors, and warnings on the changed lines only) and `c8y-ui audit --base` (exceptions of the packages a change touches) replace the whole-repo variants in the PR review job. The mock answers the REST API with fake-c8y (ids in the platform's format, worlds validated like a tenant does, availability and user roles emulated); the suite needed no change for that. The SDK's optional Cypress peer is removed with an override (`"cypress": "-"`), so the audit stays at the two accepted AngularJS advisories.
+
+**Review screenshots**: specs photograph their views with the `reviewScreenshot('<plugin>/<view>')` fixture; `pnpm run e2e:mock <plugin> --frozen` runs with the mock's clock at the world's `now` and the browser's `Date` standing still, so two runs render the same. `e2e-test.yml` takes them on the change and on `main` and lists the views that differ on the run's summary page, with a before/after/difference report as an artifact; nothing is committed. Debounced fields get `advanceClock(ms)` after typing. The e2e summary also lists the requests the mock could not answer, and the pulled world is validated (`c8y-ui world check`) before the run.
+
+**Static analysis on every pull request** (`pull-request.yml` → `review`): risk and size of the change (`c8y-ui review risk`), the dependency exceptions and ignored advisories that became fixable (`c8y-ui audit`), and fallow (`c8y-ui fallow audit`): dead code, complexity and duplication, gated on what the change introduces, with the repository's exclusions in `.fallowrc.json`. ESLint gets the SDK's `c8y/no-unmanaged-subscribe` rule (warning) and blocks the deprecated `HOOK_*` tokens.
+
+**Workspace**: `test/` is installed by the root `pnpm install` (its own `packageManager` and the separate install step in the workflows are gone); the unused `dotenv`, `wait-on` and `@c8y/client` (test) dependencies are removed, the ESLint config's `@eslint/js`, `@eslint/eslintrc` and `globals` are declared, and the `globals` override moved from `pnpm-workspace.yaml` (ignored by pnpm 10 next to `package.json` overrides) into `package.json`.
+
+## 2026.11.19 — Playwright e2e
+
+**E2E suite rewritten in Playwright** on `@cumulocity-iot/ui-sdk` 2.6.0 (its new `@cumulocity-iot/ui-sdk/playwright` fixtures: `visitApp`, `mock`, `api`). Cypress, `cumulocity-cypress`, `cypress-terminal-report` and the per-plugin Cypress configs are gone; every plugin's specs live in `test/playwright/<plugin>*.spec.ts` and run only against the tenant mock. Commands: `pnpm run e2e:install` (once, the Chromium build), `pnpm run e2e:mock <plugin>` (`--open`, `--headed`, `--spec=<filter>`); the real-tenant scripts (`e2e:run:*`, `e2e:open:*`, the root `.env`) are removed.
+
+**CI**: `e2e-test.yml`, `shell-compat.yml` and the agentic issue loop install the Playwright browser instead of the Cypress binary and upload `test/playwright-results` (traces, screenshots) on failure; `shell-compat.yml` derives the plugin list from the spec names. The issue loop's validator runs `pnpm run e2e:mock <plugin>` on the mock, so the workflow pulls the world from windy-dev instead of writing a Cypress `.env`.
+
+**Dependencies**: the Cypress-only pins went with it — `systeminformation` override, `extract-zip` advisory ignores, the Cypress peer rules.
+
+**Docs**: `test/AGENTS.md`, `test/README.md`, the root `AGENTS.md` and the skill, renamed to `write-e2e-cumulocity-playwright-test`.
+
 ## 2026.11.13 — kpi-trend-widget
 
 **New plugin**: `packages/kpi-trend-widget`, one measurement as a radial gauge or compact tile with its trend over a time window as a sparkline. Moved from the DER Add-on (c8y-windy-solution), where it was built on the same Web SDK line. The widget id stays `windy.kpi-trend`, so dashboards created there keep working. Registered in `angular.json` with build, serve and test targets, covered by unit tests (gauge geometry) and an e2e suite on the tenant mock. See `packages/kpi-trend-widget/CHANGELOG.md`.

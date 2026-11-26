@@ -1,4 +1,4 @@
-# Agentic issue loop: triage -> develop -> validate (Cypress e2e) -> update issue.
+# Agentic issue loop: triage -> develop -> validate (Playwright e2e on the tenant mock) -> update issue.
 # Driven by docker-agent (https://github.com/docker/docker-agent) running the
 # three-agent config in .github/agents/issue-loop.yaml.
 #
@@ -11,11 +11,13 @@
 #                       registry, used solely to install
 #                       @cumulocity-iot/c8y-web-sdk-knowledge-mcp
 #                       (classic PAT with read:packages and nothing else)
-# Required 'e2e' ENVIRONMENT secret (the job declares `environment: e2e` —
+# Required 'e2e' ENVIRONMENT secrets (the job declares `environment: e2e` —
 # without that declaration these resolve to empty strings):
-#   C8Y_PASSWORD        password of the Cumulocity test tenant user
+#   C8Y_PASSWORD        password of the Cumulocity test tenant user (the agents' browser)
+#   WINDY_C8Y_PASSWORD  windy-dev, for pulling the tenant mock's world (the validator's e2e run)
 # Required 'e2e' environment variables:
 #   C8Y_BASEURL / C8Y_TENANT / C8Y_USERNAME   Cumulocity test tenant (non-sensitive)
+#   WINDY_C8Y_HOST / WINDY_C8Y_USER           windy-dev (non-sensitive)
 # Optional repository variable:
 #   C8Y_SHELL_TARGET    shell app on the tenant (default: cockpit)
 name: Agentic issue loop
@@ -72,9 +74,7 @@ jobs:
           # (@cumulocity-iot/c8y-web-sdk-knowledge-mcp) requires node >= 24.
           node-version: 24
           cache: pnpm
-          cache-dependency-path: |
-            toolkit/pnpm-lock.yaml
-            toolkit/test/pnpm-lock.yaml
+          cache-dependency-path: toolkit/pnpm-lock.yaml
 
       # The test workspace's @cumulocity-iot/ui-sdk (tenant mock) and the c8y_sdk MCP server are
       # GitHub packages; install needs them, and the agent config starts the MCP server
@@ -93,18 +93,25 @@ jobs:
         working-directory: toolkit
         run: |
           pnpm install --frozen-lockfile
-          pnpm -C test install --frozen-lockfile
 
-      - name: Write .env for Cypress
+      # The validator's verdict is a Playwright run on the tenant mock: its browser and world.
+      - name: Install the Playwright browser
         working-directory: toolkit
-        run: |
-          {
-            echo "C8Y_USERNAME=${{ vars.C8Y_USERNAME }}"
-            echo "C8Y_PASSWORD=${{ secrets.C8Y_PASSWORD }}"
-            echo "C8Y_TENANT=${{ vars.C8Y_TENANT }}"
-            echo "C8Y_CYPRESS_URL=http://localhost:9001/"
-            echo "C8Y_SHELL_TARGET=${{ vars.C8Y_SHELL_TARGET || 'cockpit' }}"
-          } > .env
+        run: pnpm -C test exec playwright install --with-deps chromium
+
+      - name: Set up go-c8y-cli
+        uses: reubenmiller/setup-go-c8y-cli@9b6147a9f916607a3c1db392eab6e54e3e8c3f01 # v2
+        with:
+          showTenant: 'false'
+
+      - name: Pull the mock world from windy-dev
+        working-directory: toolkit
+        run: pnpm run e2e:world:pull
+        timeout-minutes: 5
+        env:
+          C8Y_HOST: ${{ vars.WINDY_C8Y_HOST }}
+          C8Y_USER: ${{ vars.WINDY_C8Y_USER }}
+          C8Y_PASSWORD: ${{ secrets.WINDY_C8Y_PASSWORD }}
 
       # Tenant credentials for the agents' playwright-cli browser login. The
       # CLI's browser daemon loads this file via the PLAYWRIGHT_MCP_SECRETS_FILE
@@ -132,8 +139,7 @@ jobs:
         run: |
           npm install -g @playwright/cli@0.1.18
           playwright-cli install-browser chromium --with-deps
-          # Expose the same browser to Cypress: the e2e scripts run with
-          # `--browser chromium`, and the runner image has no chromium on PATH.
+          # Expose the same browser to Karma: the runner image has no chromium on PATH.
           CHROME_BIN="$(ls -d "$HOME"/.cache/ms-playwright/chromium-*/chrome-linux*/chrome | head -1)"
           sudo ln -sf "$CHROME_BIN" /usr/local/bin/chromium
           chromium --version
@@ -172,7 +178,7 @@ jobs:
           PLAYWRIGHT_MCP_SECRETS_FILE: /tmp/c8y-playwright-secrets.env
           # Tenant credentials are deliberately NOT in this environment: the
           # agents' playwright-cli browsers read them from the secrets file
-          # above and Cypress reads them from the repo-root .env — the agent
+          # above; the validator's e2e run is on the tenant mock — the agent
           # processes never need them.
         run: |
           # pipefail: without it the step's exit code is tee's (always 0) and a
@@ -186,8 +192,7 @@ jobs:
       # GitHub masks secrets in step logs, but NOT inside artifact files.
       # With the playwright-cli secrets hardening the transcript should no
       # longer contain the tenant password (agents only ever handle secret
-      # NAMES) — but a failed Cypress login can still dump the .env values
-      # into the request trace, so keep scrubbing as defense in depth.
+      # NAMES), but keep scrubbing as defense in depth.
       # Only the password is scrubbed: tenant/username are plain repository
       # variables and not treated as sensitive.
       - name: Scrub credentials from transcript
@@ -240,13 +245,13 @@ jobs:
           gh issue edit "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" \
             --add-label 'agent:failed' --remove-label 'agent:fix' || true
 
-      - name: Upload transcript and Cypress screenshots
+      - name: Upload transcript and Playwright results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: agent-run-issue-${{ env.ISSUE_NUMBER }}
           path: |
             ${{ runner.temp }}/agent-events.ndjson
-            toolkit/test/cypress/screenshots/
+            toolkit/test/playwright-results/
           if-no-files-found: ignore
           retention-days: 14

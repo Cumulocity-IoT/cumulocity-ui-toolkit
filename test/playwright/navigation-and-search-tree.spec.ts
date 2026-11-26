@@ -1,4 +1,16 @@
-import { expect, test } from '@cumulocity-iot/ui-sdk/playwright';
+import { expect, test } from './support/fixtures';
+import {
+  cy,
+  NAV_NODE,
+  DRAWER,
+  BACKDROP,
+  ROW,
+  FILTER,
+  PIN,
+  GRIP,
+  rowNamed,
+  openDrawer,
+} from './support/navigation-and-search';
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
 
 /**
@@ -7,15 +19,6 @@ import type { APIRequestContext, Locator, Page } from '@playwright/test';
  * a site → subsystems → leaf assets → devices); names and ids are read from the inventory at runtime.
  * The mock is reset before every test, so preferences (pin, width, recent assets) start from the world.
  */
-
-const NAV_NODE = 'c8y-navigator-node button[data-cy="Tree"]';
-const DRAWER = '[data-cy="navigation-and-search--drawer"]';
-const BACKDROP = '[data-cy="navigation-and-search--backdrop"]';
-const ROW = '[data-cy="navigation-and-search--row"]';
-const FILTER = '[data-cy="navigation-and-search--filter"]';
-const PIN = '[data-cy="navigation-and-search--pin"]';
-const GRIP = '[data-cy="navigation-and-search--grip"]';
-const cy = (name: string) => `[data-cy="navigation-and-search--${name}"]`;
 
 interface MO {
   id: string;
@@ -62,21 +65,6 @@ async function readWorld(api: APIRequestContext): Promise<World> {
   }).length;
 
   return { site, subsystem, leaf, leafCount, deviceCount, assetCount };
-}
-
-const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-function rowNamed(page: Page, name: string): Locator {
-  return page.locator(ROW).filter({
-    has: page.locator(cy('row-name'), { hasText: new RegExp(`^\\s*${escape(name)}\\s*$`) }),
-  });
-}
-
-async function openDrawer(page: Page, visitApp: (path?: string, o?: object) => Promise<void>) {
-  await visitApp('', { language: 'en', waitFor: NAV_NODE });
-  await page.locator(NAV_NODE).click();
-  await expect(page.locator(DRAWER)).toBeVisible();
-  await expect(page.locator(ROW).first()).toBeVisible({ timeout: 30_000 });
 }
 
 /** Counts the PUTs of user preferences (UserPreferencesService stores them on the current user). */
@@ -199,6 +187,7 @@ test.describe('Navigation and search — tree drawer', () => {
   test('renders the hierarchy site → subsystem → leaf and expands / collapses all', async ({
     page,
     visitApp,
+    reviewScreenshot,
   }) => {
     await openDrawer(page, visitApp);
     const rows = page.locator(ROW);
@@ -227,6 +216,7 @@ test.describe('Navigation and search — tree drawer', () => {
       `Hierarchy · ${world.assetCount} nodes`
     );
     await expect(page.locator(cy('expand-all'))).toBeDisabled();
+    await reviewScreenshot('navigation-and-search/tree-drawer');
 
     await expect(page.locator(cy('collapse-all'))).toBeEnabled();
     await page.locator(cy('collapse-all')).click();
@@ -376,11 +366,18 @@ test.describe('Navigation and search — tree drawer', () => {
     await expect(page).toHaveURL(new RegExp(`#/group/${id}`));
     await expect(page.locator(DRAWER)).toBeVisible();
 
-    // keyboard focus opens the row's detail panel; Escape closes the innermost level first
+    // keyboard focus opens the row's detail panel; Escape closes the innermost level first. The pointer is parked
+    // outside the drawer first: left on a row, a layout shift under it re-arms the hover cascade after Escape.
+    await page.mouse.move(1900, 1000);
+    const activeName = (await page.locator(`#${active}`).locator(cy('row-name')).textContent())!;
+
     await tree.focus();
     await tree.press('ArrowUp');
     await tree.press('ArrowDown');
     await expect(page.locator(cy('detail'))).toBeVisible();
+    // every focus move arms its own open timer: wait for the last one (the panel shows the focused row) before
+    // Escape, or the pending open re-shows the panel after it
+    await expect(page.locator(cy('detail-title'))).toContainText(activeName.trim());
     await tree.press('Escape');
     await expect(page.locator(cy('detail'))).toHaveCount(0);
     await expect(page.locator(DRAWER)).toBeVisible();

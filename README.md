@@ -8,7 +8,7 @@
 
 ---
 
-This is a **pnpm monorepo** of Cumulocity IoT UI plugins built with **Angular 21** and the **Cumulocity Web SDK 1024.21.x** (TypeScript 5.9, Node 24 in CI). All plugin projects are registered in a single root `angular.json` and share dependencies via pnpm workspaces. Shared logic lives in `packages/shared/`; the 13 individually deployable plugin packages live alongside it under `packages/`. Unit tests run with **Karma + Jasmine** via `@angular/build:karma`. End-to-end tests use **Cypress** with `cumulocity-cypress`, from the separate `test/` workspace.
+This is a **pnpm monorepo** of Cumulocity IoT UI plugins built with **Angular 21** and the **Cumulocity Web SDK 1024.21.x** (TypeScript 5.9, Node 24 in CI). All plugin projects are registered in a single root `angular.json` and share dependencies via pnpm workspaces. Shared logic lives in `packages/shared/`; the 13 individually deployable plugin packages live alongside it under `packages/`. Unit tests run with **Karma + Jasmine** via `@angular/build:karma`. End-to-end tests use **Playwright** on the ui-sdk tenant mock, from the `test/` workspace; the ui-sdk's review tools (risk, dead code, review screenshots) run on every pull request.
 
 The plugins currently in the workspace:
 
@@ -70,11 +70,11 @@ cumulocity-ui-toolkit/
 │   ├── smart-views/
 │   └── tenant-option-management/
 │
-├── test/                     # Cypress E2E suite (separate pnpm workspace)
-│   ├── cypress/e2e/          # One spec file per plugin
-│   ├── cypress/support/      # Custom commands, page objects, intercepts, factories
-│   ├── config/               # Per-plugin Cypress configs + base.config.ts
-│   └── tsconfig.json
+├── test/                     # Playwright E2E suite on the tenant mock (separate pnpm workspace)
+│   ├── playwright/           # <plugin>[-<area>].spec.ts, support/ (repo-specific helpers)
+│   ├── playwright.config.ts  # One config for every plugin
+│   ├── scripts/              # e2e-mock.mts (mock + dev server + Playwright), pull-world.mts
+│   └── c8y-ui.json           # Tenant-mock config
 │
 └── tools/                    # Node.js build utilities
     ├── generate-scripts.mts  # Auto-generates package.json scripts from angular.json
@@ -97,7 +97,7 @@ packages:
 ```
 
 - Every directory under `packages/` is a workspace package, including `shared`.
-- `test/` is a workspace member but has its **own lockfile and `node_modules`** — install it with `pnpm -C test install`. The `e2e:*` root scripts all delegate via `pnpm -C test exec`.
+- `test/` is a workspace member: the root `pnpm install` installs it. The `e2e:*` root scripts delegate via `pnpm -C test exec` or run `test/scripts/*.mts`.
 - `pnpm-workspace.yaml` also sets `minimumReleaseAge: 10080` (7 days), so freshly published versions are not picked up immediately. `shared` is exempt via `minimumReleaseAgeExclude`.
 - `.npmrc` sets `shamefully-hoist=true`, which hoists all packages to the root `node_modules/`. This is required for Angular's build tooling and the Cumulocity devkit to resolve peer dependencies. It also enables `auto-install-peers`, `strict-peer-dependencies`, and `ignore-scripts`.
 
@@ -231,7 +231,6 @@ All commands run from the **repository root** unless noted.
 | Purpose | Command |
 |---|---|
 | Install dependencies | `pnpm install` |
-| Install e2e dependencies | `pnpm -C test install` |
 | Build all plugins | `pnpm run build` |
 | Build a single plugin | `pnpm run build:<name>` (e.g. `build:kpi-widget`) |
 | Serve a plugin locally | `pnpm run serve:<name>` (requires `C8Y_BASEURL` + `C8Y_SHELL_TARGET` env vars) |
@@ -240,14 +239,17 @@ All commands run from the **repository root** unless noted.
 | Run tests for one plugin (watch) | `pnpm run test:watch:<name>` |
 | Lint | `pnpm run lint` |
 | Lint with auto-fix | `pnpm run lint:fix` |
-| Run Cypress e2e (one plugin) | `pnpm run e2e:run:<name>` |
-| Open Cypress UI (one plugin) | `pnpm run e2e:open:<name>` |
+| Install the e2e browser (once) | `pnpm run e2e:install` |
+| Run Playwright e2e on the tenant mock (one plugin) | `pnpm run e2e:mock <name>` (`--open` for UI mode, `--frozen` for reproducible review screenshots) |
+| Dead code, duplication, complexity | `pnpm exec c8y-ui fallow` (all) or `pnpm exec c8y-ui fallow audit --base origin/main` (what a change introduces, the PR gate) |
+| Risk and size of a change | `pnpm exec c8y-ui review risk --base origin/main` |
+| Regenerate the Web SDK selectors for the e2e specs | `pnpm run e2e:selectors` (after a Web SDK bump; commit `test/playwright/selectors.ts`) |
 | Regenerate package.json scripts | `pnpm run generate:scripts` |
 | Clean dist/ | `pnpm run clean` |
 
 The `<name>` in every script is the **package directory name**, e.g. `favorites-manager`, `index-db-cache`, `smart-views`.
 
-Env vars come from a root `.env` file (loaded by `from-env` for `serve:*` and by `dotenv` in `test/config/base.config.ts` for e2e).
+Env vars for `serve:*` come from a root `.env` file (loaded by `from-env`). The e2e suite needs none: it runs on the tenant mock only.
 
 ---
 
@@ -351,51 +353,18 @@ Use `--browsers=ChromeHeadlessCI` in CI environments and `--browsers=ChromeHeadl
 
 ### End-to-End Tests
 
-E2E tests live in the `test/` pnpm workspace and use **Cypress** with the `cumulocity-cypress` library.
-
-Required environment variables:
+E2E tests live in the `test/` pnpm workspace and use **Playwright** with the fixtures of `@cumulocity-iot/ui-sdk/playwright`. They run only against the **tenant mock** of the ui-sdk: an emulated tenant with the windy-dev world and the real cockpit build, with the plugin served by the Angular dev server. No tenant, no credentials.
 
 ```bash
-export C8Y_BASEURL=https://<your-tenant>.cumulocity.com
-export C8Y_SHELL_TARGET=<app-name>         # e.g. cockpit2025
-export C8Y_USERNAME=<username>
-export C8Y_PASSWORD=<password>
-export C8Y_TENANT=<tenant-id>              # optional for single-tenant
+pnpm install                         # once (root: the plugins and the test workspace)
+pnpm run e2e:install                 # once: the Chromium build
+pnpm run e2e:mock smart-views        # one plugin's specs, headless
+pnpm run e2e:mock smart-views --open # Playwright UI mode
+pnpm run e2e:mock smart-views --headed --spec=<filter>
+pnpm run e2e:mock smart-views --frozen # mock clock and browser Date frozen: the review screenshots in test/review-screenshots/
 ```
 
-E2E runs are always **per plugin** — each plugin has its own Cypress config, because each needs its own Module Federation remote loaded into the shell:
-
-```bash
-pnpm run e2e:run:energy-consumption-widget
-pnpm run e2e:run:favorites-manager
-pnpm run e2e:run:index-db-cache
-pnpm run e2e:run:kpi-widget
-pnpm run e2e:run:layered-map-widget
-pnpm run e2e:run:operations-widget
-pnpm run e2e:run:release-notes
-pnpm run e2e:run:reminder
-pnpm run e2e:run:smart-views
-pnpm run e2e:run:tenant-option-management
-
-# Interactive runner (available for a subset of plugins):
-pnpm run e2e:open:favorites-manager
-pnpm run e2e:open:smart-views
-```
-
-The plugin must be served first — the specs load `http://localhost:9001` by default:
-
-```bash
-pnpm run serve:smart-views          # in one terminal
-pnpm run e2e:run:smart-views        # in another
-```
-
-Cypress configs in `test/config/` import the corresponding `cumulocity.config.ts` from each package and pass the remotes as the `C8Y_REMOTES` env (read by `cy.visitApp` from `@cumulocity-iot/ui-sdk/cypress`), so the correct Module Federation remotes are loaded automatically. They also pin an explicit `specPattern` so a config only ever runs its own plugin's spec.
-
-The two commands used by nearly every spec are `cy.getAuth().login()` (cumulocity-cypress) and `cy.visitApp(url, { language, waitFor })` (ui-sdk) — the latter loads `/apps/<C8Y_SHELL>/index.html#/<url>` with the remotes query parameter and waits for the given selector.
-
-`testIsolation` is at the Cypress default (`true`), so cookies and local storage are cleared between tests. Log in from `beforeEach`, not `before`, in any spec with more than one `it`.
-
-There is intentionally no "run every spec" script: the bare `e2e:run` / `e2e:open` scripts pass no `--config-file` and there is no default `cypress.config.ts` in `test/`, so they do not work as-is.
+E2E runs are always **per plugin** — each needs its own Module Federation remote loaded into the shell. `test/playwright.config.ts` runs `test/playwright/<plugin>*.spec.ts` and derives the remotes from the plugin's `cumulocity.config.ts`; `visitApp(path, { language, waitFor })` opens `/apps/cockpit/index.html?remotes=…#/<path>` and waits for the given selector. The mock is reset before every test (`mock.reset()`), so specs arrange their state with the `api` fixture and leave nothing behind. The first run pulls the world (`test/mock/windy-dev.json`, git-ignored) from windy-dev through go-c8y-cli. Details in `test/AGENTS.md`.
 
 ---
 
@@ -403,15 +372,15 @@ There is intentionally no "run every spec" script: the bare `e2e:run` / `e2e:ope
 
 | Workflow | Trigger | What it does |
 |---|---|---|
-| `.github/workflows/pull-request.yml` | Pull request | Detects changed packages via `git diff` against `main` and runs lint → unit tests → build per changed package in a matrix. If root config files changed, an additional `verify-root-config` job runs `lint`, `pnpm test`, `pnpm run build` for the **whole** workspace and checks that the generated `package.json` scripts are up to date. |
-| `.github/workflows/e2e-test.yml` | Pull request | Same change detection, then per changed package: `serve:<name>` on port 9001, `wait-on`, `e2e:run:<name>`. Screenshots are uploaded on failure. Requires the `e2e` GitHub environment for tenant credentials. |
+| `.github/workflows/pull-request.yml` | Pull request | Detects changed packages via `git diff` against `main` and runs lint → unit tests → build per changed package in a matrix. If root config files changed, an additional `verify-root-config` job runs `lint`, `pnpm test`, `pnpm run build` for the **whole** workspace and checks that the generated `package.json` scripts are up to date. A `review` job runs on every PR: risk and size of the change on the summary page (`c8y-ui review risk`), the dependency exceptions (`c8y-ui audit`), and fallow's dead code, complexity and duplication gate on what the change introduces (`c8y-ui fallow audit`, exclusions in `.fallowrc.json`). |
+| `.github/workflows/e2e-test.yml` | Pull request | Same change detection, then per changed package `pnpm run e2e:mock <name>`: the tenant mock, the plugin's dev server and its Playwright specs. Traces and screenshots are uploaded on failure. The summary lists the requests the mock could not answer, and the views that look different from `main`: the specs' `reviewScreenshot` views are taken on the change and on `main` with the clock frozen (`--frozen`) and compared (`c8y-ui review screenshots`); the report page is an artifact. Requires the `e2e` GitHub environment for the windy-dev world. |
 | `.github/workflows/shell-compat.yml` | Daily, manual dispatch | When a newer cockpit CD release is out (GitHub `releases/latest`, newer than the pinned Web SDK version), runs every plugin's e2e suite on the tenant mock inside that cockpit (`E2E_SHELL_VERSION`). A failure opens an issue labelled `shell-compat` (or comments on the open one for that version); a pass closes the issues of that version and older ones. Each version is tested once per commit on `main`. Requires the `e2e` GitHub environment for the windy-dev world. |
 | `.github/workflows/relase-after-tag.yml` | Tag push | Reads all projects from `angular.json`, builds each, and attaches versioned ZIPs to the release. |
 | `.github/workflows/clank8y.yml` | Manual dispatch | Runs an AI review pass. |
 
 Two consequences worth remembering, both because the matrix is derived from **directory names** under `packages/`:
 
-- A package needs `serve:<dir>` and `e2e:run:<dir>` scripts, or its e2e job fails with a missing script.
+- A package needs a `serve:<dir>` script and at least one `test/playwright/<dir>*.spec.ts`, or its e2e job fails.
 - Never hand-edit the generated `package.json` scripts — `verify-root-config` re-runs the generator and fails on any diff.
 
 Note that `shared` is explicitly excluded from the change-detection matrix (`grep -v '^shared$'`), so changes to it are only covered by the whole-workspace job.
@@ -469,7 +438,7 @@ pnpm run locales:convert
 3. Add `tsconfig.spec.json` — extend root `tsconfig.json`, set `types: ["jasmine", "node"]`.
 4. Add at least one `*.spec.ts` under `src/`, otherwise `pnpm test` fails on the empty spec config (see [Unit Tests](#unit-tests)).
 5. Run `pnpm run generate:scripts` to regenerate `build:*`, `serve:*`, `test:*`, `test:watch:*`, and the root `test` chain.
-6. Add a Cypress config at `test/config/<name>.config.ts`, a spec at `test/cypress/e2e/<name>-plugin.cy.ts`, and `e2e:run:<name>` / `e2e:open:<name>` scripts (these are **not** generated). Without `e2e:run:<name>` the e2e workflow fails for any PR touching the package.
+6. Add a Playwright spec at `test/playwright/<name>.spec.ts` (the file name starts with the directory name; nothing else to register). Without one the e2e workflow fails for any PR touching the package.
 
 ---
 
@@ -502,10 +471,10 @@ If you find a bug, please create an [issue](./issues). For ideas or feedback, po
 `.github/workflows/shell-compat.yml` finds out whether the plugins still work in a newer cockpit before tenants are upgraded to it. It runs daily at 04:00 UTC (or manually, with an optional `version`):
 
 1. **Detect** — reads the latest CD release of [Cumulocity-IoT/cockpit](https://github.com/Cumulocity-IoT/cockpit/releases) (pre-releases are skipped). It stops if that is the Web SDK version the workspace is pinned to, or if that version already passed at the current `main` commit.
-2. **Test** — runs every plugin's Cypress suite on the tenant mock inside that cockpit (`E2E_SHELL_VERSION=<version> pnpm run e2e:mock <plugin>`). The plugins stay built with the pinned Web SDK, just as a deployed plugin does when its tenant is upgraded.
+2. **Test** — runs every plugin's Playwright suite on the tenant mock inside that cockpit (`E2E_SHELL_VERSION=<version> pnpm run e2e:mock <plugin>`). The plugins stay built with the pinned Web SDK, just as a deployed plugin does when its tenant is upgraded.
 3. **Report** — if a plugin fails, it opens an issue `Cockpit <version>: e2e failures` (label `shell-compat`), or comments on the open one for that version. The issue lists the failing plugins, the run, and the requests the mock does not emulate, since a failure can be a gap in the mock rather than a plugin bug. When everything passes, it closes the open issues of that version and older ones.
 
-To reproduce a failure locally: `E2E_SHELL_VERSION=<version> pnpm run e2e:mock <plugin> --browser=chrome` (this rewrites `test/c8y-ui.json` — don't commit that). To let the agentic issue loop attempt a fix, add the `agent:fix` label to the issue.
+To reproduce a failure locally: `E2E_SHELL_VERSION=<version> pnpm run e2e:mock <plugin> --headed` (this rewrites `test/c8y-ui.json` — don't commit that). To let the agentic issue loop attempt a fix, add the `agent:fix` label to the issue.
 
 ---
 

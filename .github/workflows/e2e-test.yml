@@ -48,6 +48,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # origin/main, for the review screenshots of the base branch
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -69,26 +71,23 @@ jobs:
           restore-keys: |
             c8y-ui-shells-
 
-      - name: Cache Cypress binary
+      - name: Cache the Playwright browser
         uses: actions/cache@v4
         with:
-          path: ~/.cache/Cypress
-          key: cypress-${{ runner.os }}-${{ hashFiles('test/package.json') }}
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
-            cypress-${{ runner.os }}-
+            playwright-${{ runner.os }}-
 
-      - name: Install root dependencies
+      # test/ is a member of the root workspace: one install covers it
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install test workspace dependencies
-        run: pnpm -C test install --frozen-lockfile
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install Cypress binary
-        run: pnpm -C test exec cypress install
+      # ignore-scripts keeps Playwright from fetching Chromium on install; --with-deps adds its system libraries
+      - name: Install the Playwright browser
+        run: pnpm -C test exec playwright install --with-deps chromium
 
       - name: Set up go-c8y-cli
         uses: reubenmiller/setup-go-c8y-cli@9b6147a9f916607a3c1db392eab6e54e3e8c3f01 # v2
@@ -104,17 +103,70 @@ jobs:
           C8Y_USER: ${{ vars.WINDY_C8Y_USER }}
           C8Y_PASSWORD: ${{ secrets.WINDY_C8Y_PASSWORD }}
 
+      # The pulled world loads the way the mock loads it: data a tenant refuses fails here, not in a test.
+      - name: World check
+        run: pnpm -C test exec c8y-ui world check
+
       # Mocked tenant (windy-dev world) with the cockpit release of the workspace's Web SDK version;
-      # starts the plugin's dev server against it and runs its Cypress suite.
-      - name: Run Cypress Tests against the tenant mock (package ${{ matrix.component }})
+      # starts the plugin's dev server against it and runs its Playwright suite.
+      - name: Run Playwright tests against the tenant mock (package ${{ matrix.component }})
         run: pnpm run e2e:mock ${{ matrix.component }}
         timeout-minutes: 15
         env:
           NODE_OPTIONS: --max_old_space_size=4096
+          E2E_MOCK_GAPS: ${{ runner.temp }}/mock-gaps.txt
 
-      - name: Upload Cypress Screenshots
-        if: always()
+      # Evidence for the reviewer on the run's summary page: what the tests asked the mock that it could not answer
+      # (behaviour these tests did not verify).
+      - name: Mock gaps
+        if: ${{ !cancelled() }}
+        run: |
+          {
+            echo "### ${{ matrix.component }}: requests the mock could not answer"
+            if [ -s "$RUNNER_TEMP/mock-gaps.txt" ]; then sed 's/^/- `/; s/$/`/' "$RUNNER_TEMP/mock-gaps.txt"; else echo "none"; fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # What the change looks like: the specs' review screenshots (reviewScreenshot), taken on the change and on the
+      # base branch with the mock's clock and the browser's Date frozen (the same data, the same time, the same
+      # machine), then compared. The summary names the views that differ; the report page with before, after and
+      # difference is an artifact. Never fails the run: a base branch that cannot take screenshots makes every view new.
+      - name: Review screenshots
+        id: screenshots
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        timeout-minutes: 30
+        run: |
+          grep -qs reviewScreenshot test/playwright/${{ matrix.component }}*.spec.ts || { echo "no reviewScreenshot() in the specs"; exit 0; }
+          rm -rf test/review-screenshots
+          pnpm run e2e:mock ${{ matrix.component }} --frozen || true
+          git worktree add --detach "$RUNNER_TEMP/base" origin/main
+          mkdir -p "$RUNNER_TEMP/base/test/mock" && cp test/mock/*.json "$RUNNER_TEMP/base/test/mock/"
+          (cd "$RUNNER_TEMP/base" && pnpm install --frozen-lockfile && pnpm run e2e:mock ${{ matrix.component }} --frozen) || true
+          {
+            echo "### ${{ matrix.component }}: views that look different from main"
+            # --ignore: up to ~100 px of glyph antialiasing differ between two runs of the same code; a changed word is more
+            pnpm exec c8y-ui review screenshots "$RUNNER_TEMP/base/test/review-screenshots" test/review-screenshots --ignore 120 --out "$RUNNER_TEMP/review-screenshots"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "report=true" >> "$GITHUB_OUTPUT"
+        env:
+          NODE_OPTIONS: --max_old_space_size=4096
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload the review screenshots report
+        if: ${{ steps.screenshots.outputs.report == 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          name: cypress-screenshots-${{ matrix.component }}
-          path: test/cypress/screenshots
+          name: review-screenshots-${{ matrix.component }}
+          path: ${{ runner.temp }}/review-screenshots
+          retention-days: 7
+
+      # Traces and screenshots of failed tests (playwright show-trace <zip>) and the HTML report
+      - name: Upload Playwright results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results-${{ matrix.component }}
+          path: |
+            test/playwright-results
+            test/playwright-report
+          if-no-files-found: ignore

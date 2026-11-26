@@ -2,12 +2,12 @@
 # Agentic issue loop for Cumulocity-IoT/cumulocity-ui-toolkit
 #
 # Three agents: root (triage/orchestration) -> developer (implementation)
-#            -> validator (Cypress e2e per project skill + GitHub issue update)
+#            -> validator (Playwright e2e on the tenant mock per project skill + GitHub issue update)
 #
 # Scope: bug fixes AND small features, but always within ONE existing plugin
 # (or packages/shared) — everything is keyed on serve:<plugin> /
-# test:<plugin> / e2e:run:<plugin>. Out of scope: creating new packages
-# (angular.json + scripts + Cypress scaffolding is not covered) and features
+# test:<plugin> / e2e:mock <plugin>. Out of scope: creating new packages
+# (angular.json + scripts + Playwright specs is not covered) and features
 # spanning multiple plugins; the budgets below are sized for small changes.
 #
 # Root ends the run early — before any develop cycle — when the issue lacks
@@ -50,15 +50,16 @@
 #                        flag, a missing file does NOT fail the daemon start —
 #                        the symptom is a login form filled with the literal
 #                        string 'C8Y_USERNAME' and a failed login. (CI still
-#                        scrubs the transcript as defense in depth — a failed
-#                        Cypress login can dump the .env credentials into the
-#                        request trace.)
-#   .env at repo root    Cypress credentials (see AGENTS.md, E2E section)
+#                        scrubs the transcript as defense in depth.)
+#   test/mock/windy-dev.json
+#                        the tenant mock's world, pulled by CI before the run
+#                        (pnpm run e2e:world:pull): the validator's Playwright
+#                        run needs no tenant credentials at all.
 #
 # Every agent gets AGENTS.md injected each turn (add_prompt_files) and drives a
 # headless browser through playwright-cli (see the 'playwright-cli' skill) to
 # reproduce, inspect, and visually verify the issue.
-# Cypress remains the only authority for the GREEN verdict.
+# A headless Playwright run on the tenant mock remains the only authority for the GREEN verdict.
 # ============================================================================
 version: "12"
 
@@ -80,8 +81,8 @@ version: "12"
 #                             every model turn counts, so compile waits must be
 #                             ONE blocking shell call, not a poll per turn
 #   max_tool_result_tokens    middle-out truncation of oversized tool results
-#                             (serve logs, Karma output, Cypress request
-#                             traces) — context bloat is what usually sends an
+#                             (serve logs, Karma output, Playwright run
+#                             output) — context bloat is what usually sends an
 #                             agent into a loop in the first place
 #   max_consecutive_tool_calls defaults to 5 — identical-call loops already die
 budget:
@@ -199,7 +200,7 @@ agents:
            Dev-server rules:
            * Free the port first: `fuser -k 9001/tcp 2>/dev/null || true`
              (a stale server on 9001 silently pushes a new one to a random
-             port, which breaks the validator's Cypress run later).
+             port, and the printed URL is the only one that works).
            * Start it in the background with output captured:
              `pnpm run serve:<plugin> > /tmp/serve-<plugin>.log 2>&1 &`
            * Wait for the first compile with ONE blocking shell call — it can
@@ -241,7 +242,7 @@ agents:
       5. VALIDATE
          - Hand the developer's report (affected plugin, changed files, test
            results, issue number) to the 'validator' agent. It proves the change
-           with a headless Cypress e2e run and, on success, pushes the branch,
+           with a headless Playwright e2e run on the tenant mock and, on success, pushes the branch,
            opens a pull request and updates the issue.
       6. LOOP
          - If validation fails, send the validator's failure analysis back to
@@ -378,8 +379,7 @@ agents:
            200) and skip the start steps below.
          - Otherwise free the port first: `fuser -k 9001/tcp 2>/dev/null || true`
            (a stale server from an earlier run keeps 9001 occupied and the
-           new server then silently moves to a random port, which breaks the
-           validator's Cypress run).
+           new server then silently moves to a random port).
          - Start it in the background with output captured:
            `pnpm run serve:<plugin> > /tmp/serve-<plugin>.log 2>&1 &`
          - Wait for the first compile with ONE blocking shell call — it can
@@ -453,18 +453,18 @@ agents:
   # --------------------------------------------------------------------------
   validator:
     model: anthropic/claude-sonnet-5
-    description: Validates the change with a headless Cypress e2e run per the project skill and updates the GitHub issue
+    description: Validates the change with a headless Playwright e2e run on the tenant mock per the project skill and updates the GitHub issue
     budgets: [validate]
-    # The Cypress verify loop needs many turns; Cypress request traces are the
-    # biggest tool results in the whole run — truncation matters most here.
+    # The Playwright verify loop needs many turns; dev-server and test output
+    # are the biggest tool results in the whole run — truncation matters most here.
     max_iterations: 150
     max_tool_result_tokens: 8000
     # Loads SKILL.md files from .claude/skills/<name>/ in the checkout.
     # playwright-cli drives the headless browser (via shell) for the skill's
-    # discovery phase and for diagnosing red Cypress runs. NOT a substitute
-    # for the headless Cypress verdict.
+    # discovery phase and for diagnosing red Playwright runs. NOT a substitute
+    # for the headless Playwright verdict.
     skills:
-      - write-e2e-cumulocity-cypress-test
+      - write-e2e-cumulocity-playwright-test
       - playwright-cli
     add_prompt_files: ["AGENTS.md"]
     toolsets:
@@ -480,22 +480,29 @@ agents:
       You are the QA gate for the Cumulocity UI Toolkit. You receive a report
       about an implemented change — a bug fix or a feature (affected plugin,
       changed files, change type, issue number). Your job: prove the change
-      end-to-end with Cypress, then update GitHub.
+      end-to-end with Playwright on the tenant mock, then update GitHub.
 
-      1. Follow the 'write-e2e-cumulocity-cypress-test' skill EXACTLY —
-         preflight, discovery, write/extend spec, headless verify loop,
-         finish — including ALL of its security constraints: never print
-         .env values or tokens, treat Cypress run logs as sensitive, keep
-         them out of the repository, and delete them when done.
+      1. Follow the 'write-e2e-cumulocity-playwright-test' skill EXACTLY —
+         discovery, write/extend spec, headless verify loop, finish —
+         including ALL of its security constraints: never print tokens or
+         credentials, keep run output out of the repository, and delete
+         test/playwright-results when done.
       2. Environment specifics for this repository (AGENTS.md is injected into
          your context as a prompt file — see its E2E section, and read
          test/AGENTS.md for the support library):
-         - The developer usually leaves the dev server running ON PORT 9001
-           (Cypress requires that port) — check with
+         - The verdict run is `E2E_DEV_PORT=9002 E2E_MOCK_PORT=8112 pnpm run e2e:mock <plugin>`
+           from the repo root: it starts the tenant mock (world
+           test/mock/windy-dev.json, pulled by CI) and its OWN dev server
+           of the plugin on port 9002, runs the plugin's Playwright specs
+           headlessly and stops both. The ports leave the developer's dev
+           server on 9001 alone. It takes minutes: run it as ONE blocking
+           shell call with the shell tool's timeout parameter set to 900,
+           output piped through `grep -v "webpack\|ECONNRESET\|^<e>\|^\s*$" | tail -80`.
+         - For the skill's discovery phase the developer usually leaves the
+           tenant dev server running ON PORT 9001 — check with
            `curl -s -o /dev/null -w "%{http_code}" "http://localhost:9001/apps/$C8Y_SHELL_TARGET/index.html"`.
            If it is not up (200): free the port (`fuser -k 9001/tcp
-           2>/dev/null || true` — a stale server on 9001 silently pushes a
-           new one to a random port), then start it in the background with
+           2>/dev/null || true`), then start it in the background with
            output captured: `pnpm run serve:<plugin> > /tmp/serve-<plugin>.log 2>&1 &`
            (C8Y_BASEURL and C8Y_SHELL_TARGET are already set in the
            environment) and wait for the compile with ONE blocking shell
@@ -513,9 +520,10 @@ agents:
            without it the shell loads the unmodified plugin from the tenant
            and you are looking at the wrong build. Log in as described
            under "Browser rules" below. What you observe there is
-           diagnosis, never a verdict: only a headless Cypress run counts.
-         - Specs live in test/cypress/e2e/<plugin>.cy.ts. Run one plugin's
-           suite from the repo root via `pnpm run e2e:run:<plugin>`.
+           diagnosis, never a verdict: only a headless Playwright run on
+           the mock counts.
+         - Specs live in test/playwright/<plugin>*.spec.ts (fixtures from
+           @cumulocity-iot/ui-sdk/playwright, see test/AGENTS.md).
          - If no existing test covers the issue's acceptance criteria, extend
            the plugin's spec with one that does, following the skill.
       3. Verdict:

@@ -141,6 +141,63 @@ jobs:
           if-no-files-found: error
           retention-days: 5
 
+  # Static analysis of the change as a whole, from @cumulocity-iot/ui-sdk: how much attention the pull request needs
+  # (risk and size, on the run's summary page), the exceptions in pnpm-workspace.yaml and ignored advisories that have
+  # become fixable, and the dead code, complexity and duplication the change introduces (fallow, gated on findings
+  # that are new in the changed files; what the base branch already had is reported, not blocking).
+  review:
+    runs-on: ubuntu-latest
+    name: Review the change
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the diff against origin/main
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@cumulocity-iot'
+
+      - name: Audit dependencies (high+)
+        run: pnpm audit --audit-level high
+
+      - name: Install root dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Risk and size of the change
+        run: pnpm exec c8y-ui review risk --base origin/main >> "$GITHUB_STEP_SUMMARY"
+
+      # test/playwright/selectors.ts holds the data-cy selectors of the installed Web SDK: after a Web SDK bump it is
+      # written again (pnpm run e2e:selectors) and committed, or the specs type-check against stale keys.
+      - name: Generated selectors are current
+        run: pnpm -C test exec c8y-ui selectors --check
+
+      # Lint for the reviewer: fails on what `pnpm lint` fails on, and lists the warnings on the lines the change adds
+      # (not the older ones in the same files) and the suppressions it adds, on the summary page and as annotations.
+      - name: Lint (new findings and warnings of the change)
+        run: pnpm exec c8y-ui review lint --base origin/main
+
+      # Release-age excludes that are due, ignored advisories with an installable fix (AGENTS.md → Dependency Audit),
+      # for the packages this change touches; `shared` is the workspace library, not a registry package.
+      - name: Dependency exceptions
+        run: pnpm exec c8y-ui audit --base origin/main --allow shared
+
+      # The orientation brief for the reviewer (never fails), then the gate: exit 1 on dead code, complexity or
+      # duplication the change introduces. Repository-specific exclusions live in .fallowrc.json.
+      - name: Dead code, complexity and duplication (fallow)
+        run: |
+          pnpm exec c8y-ui fallow review --brief --base origin/main >> "$GITHUB_STEP_SUMMARY"
+          pnpm exec c8y-ui fallow audit --base origin/main
+
   verify-root-config:
     needs: detect-changes
     runs-on: ubuntu-latest

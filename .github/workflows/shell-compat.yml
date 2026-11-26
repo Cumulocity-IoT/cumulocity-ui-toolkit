@@ -1,4 +1,4 @@
-# Shell compatibility: runs every plugin's Cypress suite on the tenant mock inside the latest CD release of
+# Shell compatibility: runs every plugin's Playwright suite on the tenant mock inside the latest CD release of
 # the cockpit (github.com/Cumulocity-IoT/cockpit/releases/latest), while the plugins stay built with the
 # workspace's pinned Web SDK version — what a tenant upgrade does to a deployed plugin. A failing run opens
 # an issue (label shell-compat), or comments on the open one for that version; a passing run closes them.
@@ -96,10 +96,11 @@ jobs:
           fi
           echo "run=$run" >> "$GITHUB_OUTPUT"
 
-      - name: Collect plugins with an e2e config
+      - name: Collect plugins with a Playwright spec
         id: plugins
         run: |
-          plugins=$(ls test/config/*.config.ts | xargs -n1 basename | sed 's/\.config\.ts$//' | grep -vx base \
+          # a plugin's specs are test/playwright/<plugin>*.spec.ts (what playwright.config.ts runs for E2E_PLUGIN)
+          plugins=$(for dir in packages/*/; do p=$(basename "$dir"); ls test/playwright/"$p"*.spec.ts >/dev/null 2>&1 && echo "$p"; done \
             | jq -R -s -c 'split("\n") | map(select(. != ""))')
           echo "plugins=$plugins" >> "$GITHUB_OUTPUT"
 
@@ -140,26 +141,22 @@ jobs:
           restore-keys: |
             c8y-ui-shells-
 
-      - name: Cache Cypress binary
+      - name: Cache the Playwright browser
         uses: actions/cache@v4
         with:
-          path: ~/.cache/Cypress
-          key: cypress-${{ runner.os }}-${{ hashFiles('test/package.json') }}
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
-            cypress-${{ runner.os }}-
+            playwright-${{ runner.os }}-
 
       - name: Install root dependencies
         run: pnpm install --frozen-lockfile
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install test workspace dependencies
-        run: pnpm -C test install --frozen-lockfile
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install Cypress binary
-        run: pnpm -C test exec cypress install
+      # ignore-scripts keeps Playwright from fetching Chromium on install; --with-deps adds its system libraries
+      - name: Install the Playwright browser
+        run: pnpm -C test exec playwright install --with-deps chromium
 
       - name: Set up go-c8y-cli
         uses: reubenmiller/setup-go-c8y-cli@9b6147a9f916607a3c1db392eab6e54e3e8c3f01 # v2
@@ -174,7 +171,7 @@ jobs:
           C8Y_USER: ${{ vars.WINDY_C8Y_USER }}
           C8Y_PASSWORD: ${{ secrets.WINDY_C8Y_PASSWORD }}
 
-      - name: Run Cypress tests in cockpit ${{ needs.detect.outputs.version }}
+      - name: Run Playwright tests in cockpit ${{ needs.detect.outputs.version }}
         id: e2e
         run: pnpm run e2e:mock ${{ matrix.plugin }}
         timeout-minutes: 15
@@ -204,12 +201,14 @@ jobs:
           path: shell-compat-result
           retention-days: 5
 
-      - name: Upload Cypress screenshots
+      - name: Upload Playwright results
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: cypress-screenshots-${{ matrix.plugin }}
-          path: test/cypress/screenshots
+          name: playwright-results-${{ matrix.plugin }}
+          path: |
+            test/playwright-results
+            test/playwright-report
           if-no-files-found: ignore
 
   report:
@@ -244,7 +243,7 @@ jobs:
           failed=$(jq -r '[.[] | select(.outcome != "success") | .plugin] | join(", ")' results.json)
 
           {
-            echo "Cypress e2e of the plugins (built with Web SDK \`$PINNED\`) on the tenant mock inside cockpit [\`$VERSION\`](https://github.com/Cumulocity-IoT/cockpit/releases/tag/v$VERSION)."
+            echo "Playwright e2e of the plugins (built with Web SDK \`$PINNED\`) on the tenant mock inside cockpit [\`$VERSION\`](https://github.com/Cumulocity-IoT/cockpit/releases/tag/v$VERSION)."
             echo
             echo "Run: $RUN_URL"
             echo

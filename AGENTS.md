@@ -8,7 +8,7 @@ Guidance for AI agents working in this repository.
 
 This is a **pnpm monorepo** of Angular 21 UI plugins (widgets) for the Cumulocity IoT platform, maintained by the Cumulocity UI Guild. Each plugin is a self-contained Cumulocity package that can be built and deployed independently.
 
-**Tech stack:** Angular 21 · TypeScript 5.9 · pnpm 10 workspaces · Karma + Jasmine (unit) · Cypress (e2e) · ESLint · ng-packagr (shared library build) · `@c8y/devkit` (plugin build) · Cumulocity Web SDK 1024.21.x
+**Tech stack:** Angular 21 · TypeScript 5.9 · pnpm 10 workspaces · Karma + Jasmine (unit) · Playwright (e2e, on the ui-sdk tenant mock) · ESLint · ng-packagr (shared library build) · `@c8y/devkit` (plugin build) · Cumulocity Web SDK 1024.21.x
 
 ---
 
@@ -44,10 +44,11 @@ cumulocity-ui-toolkit/
 │   ├── smart-views/
 │   └── tenant-option-management/
 │
-├── test/                     # Cypress e2e suite (own pnpm workspace)
-│   ├── cypress/e2e/          # One spec file per plugin
-│   ├── config/               # Per-plugin Cypress configs + base.config.ts
-│   └── tsconfig.json         # resolveJsonModule + skipLibCheck enabled
+├── test/                     # Playwright e2e suite (own pnpm workspace)
+│   ├── playwright/           # Specs: <plugin>[-<area>].spec.ts, plus support/ (repo-specific helpers)
+│   ├── playwright.config.ts  # One config for every plugin (E2E_PLUGIN picks the specs and the remotes)
+│   ├── scripts/              # e2e-mock.mts (mock + dev server + Playwright), pull-world.mts
+│   └── c8y-ui.json           # Tenant-mock config (shell, world, ports)
 │
 └── tools/                    # Node.js build utilities
     ├── generate-scripts.mts  # Auto-generates package.json scripts from angular.json (ESM TS)
@@ -75,10 +76,11 @@ All commands run from the **repository root** unless noted.
 | Run unit tests for one plugin (watch) | `pnpm run test:watch:<name>` |
 | Lint | `pnpm run lint` |
 | Lint with auto-fix | `pnpm run lint:fix` |
-| Run Cypress e2e (all) | `pnpm run e2e:run` |
-| Run Cypress e2e on the tenant mock (one plugin) | `pnpm run e2e:mock <name>` |
-| Run Cypress e2e on a real tenant (one plugin) | `pnpm run e2e:run:<name>` |
-| Open Cypress UI | `pnpm run e2e:open` |
+| Install the e2e browser (once) | `pnpm run e2e:install` |
+| Run Playwright e2e on the tenant mock (one plugin) | `pnpm run e2e:mock <name>` (`--open` for Playwright's UI mode, `--headed`, `--spec=<filter>`, `--frozen` for reproducible review screenshots) |
+| Dead code, duplication, complexity (fallow) | `pnpm exec c8y-ui fallow` (everything) · `pnpm exec c8y-ui fallow audit --base origin/main` (what a change introduces: the PR gate) |
+| Regenerate the Web SDK selectors for the specs | `pnpm run e2e:selectors` (after a Web SDK bump; commit `test/playwright/selectors.ts`) |
+| Risk and size of a change | `pnpm exec c8y-ui review risk --base origin/main` |
 | Regenerate package.json scripts | `pnpm run generate:scripts` |
 | Clean dist/ | `pnpm run clean` |
 
@@ -117,17 +119,36 @@ All commands run from the **repository root** unless noted.
 
 ---
 
-## E2E Testing (Cypress)
+## E2E Testing (Playwright)
 
-- **When writing, fixing, or verifying e2e tests, follow the project skill `.claude/skills/write-e2e-cumulocity-cypress-test/SKILL.md`** — it defines the mandatory workflow (preflight → discover → write → verify-in-a-loop → finish). A test is not done until it has passed a headless run.
-- Detailed suite documentation lives in **`test/AGENTS.md`** (support library, factories, intercepts, page objects, selectors, cleanup pattern). Read it before writing any spec.
-- Located in `test/` (separate pnpm workspace — run `pnpm install` inside `test/` if needed).
-- One spec file per plugin: `test/cypress/e2e/<plugin-name>.cy.ts`.
-- Per-plugin configs in `test/config/<plugin-name>.config.ts` import `cumulocity.config.ts` from the plugin and derive the Module Federation remotes (exposed to specs as `C8Y_REMOTES`, with the shell as `C8Y_SHELL`) from the plugin's runtime config. All delegate to `test/config/base.config.ts`.
-- Generic helpers come from `@cumulocity-iot/ui-sdk`: `cy.visitApp` and the dashboard page objects (`@cumulocity-iot/ui-sdk/cypress`), data factories (`@cumulocity-iot/ui-sdk/factories`). `test/cypress/support/` keeps only repo-specific bits (`cy.createDevice`, an asset-navigator intercept). `cypress-terminal-report` is installed — failed runs print the full request trace.
-- `test/tsconfig.json` has `resolveJsonModule: true` and `skipLibCheck: true`.
-- **Default: the tenant mock.** `pnpm run e2e:mock <plugin>` runs the suite against the `@cumulocity-iot/ui-sdk` mock — windy-dev world (pulled at runtime into the git-ignored `test/mock/windy-dev.json` via go-c8y-cli) plus the cockpit release of the workspace's current Web SDK version, picked up from the root `package.json` automatically. CI (`e2e-test.yml`) runs this. `shell-compat.yml` runs it daily for every plugin inside the latest cockpit CD release (`E2E_SHELL_VERSION`) and opens a `shell-compat` issue when it fails. Details in `test/AGENTS.md` → Running Tests.
-- Against a real tenant: requires a live Cumulocity tenant plus the plugin served locally (`pnpm run serve:<plugin>`). Environment comes from a **`.env` file at the repository root**, loaded by `base.config.ts` via `dotenv`. Keys (the config file is the authority on the mapping): required `C8Y_USERNAME`, `C8Y_PASSWORD`, `C8Y_TENANT`; optional `C8Y_CYPRESS_URL` (dev-server URL, default `http://localhost:9001/`, exposed to specs as `C8Y_BASEURL`) and `C8Y_SHELL_TARGET` (default `cockpit`). `C8Y_TOKEN` is populated automatically via `oauthLogin` at startup.
+- **When writing, fixing, or verifying e2e tests, follow the project skill `.claude/skills/write-e2e-cumulocity-playwright-test/SKILL.md`** — it defines the mandatory workflow (discover → write → verify-in-a-loop → finish). A test is not done until it has passed a headless run on the mock.
+- Detailed suite documentation lives in **`test/AGENTS.md`** (fixtures, support helpers, dashboard helpers, selectors, state on the mock). Read it before writing any spec.
+- Located in `test/` (a member of the root pnpm workspace: the root `pnpm install` covers it; `pnpm run e2e:install` once for the Chromium build).
+- Specs: `test/playwright/<plugin>[-<area>].spec.ts`. The file name starts with the package folder name: `playwright.config.ts` runs `<plugin>*.spec.ts` for `E2E_PLUGIN`, and the CI workflows derive the plugin list from the spec names.
+- One config for all plugins: `test/playwright.config.ts` derives the Module Federation remotes (`C8Y_REMOTES`, shell `C8Y_SHELL`) from the plugin's `cumulocity.config.ts` (`test/playwright/support/remotes.ts`).
+- Fixtures come from `@cumulocity-iot/ui-sdk/playwright`: `test` / `expect`, `visitApp`, `mock` (reset, loadWorld, requests), `api` (REST calls straight to the mock as the world's user; the app's own files under `/apps/…` come from the dev server through `page.request`), `reviewScreenshot` and `advanceClock`. Data factories: `@cumulocity-iot/ui-sdk/factories`. `test/playwright/support/` keeps only repo-specific bits (`remotes.ts`, `availability.ts`, `dashboard.ts`, `navigation-and-search.ts`).
+- **Web SDK selectors and drivers**: `test/playwright/selectors.ts` is generated from the installed `@c8y/ngx-components` (`pnpm run e2e:selectors`, committed, marked generated in `.gitattributes`): `selectors.dataGrid.header('Name')`, `selectors.alertOutlet.message`, … Never hard-code a Web SDK `data-cy` value in a spec; a plugin's own `data-cy` hooks stay literal. The shell's components are driven through `shell(page)` from `test/playwright/support/dashboard.ts` (`drivers(page, selectors)` of the ui-sdk): `dashboard`, `widgetConfig`, `dataGrid`, `confirmModal`, `alerts`. After a Web SDK bump: regenerate the file, then `pnpm -C test exec tsc -p tsconfig.json` shows every spec that used a removed selector (`pnpm -C test exec c8y-ui migrate report --to <version>` lists them beforehand); CI fails when the file is stale (`c8y-ui selectors --check`).
+- **Review screenshots**: every spec photographs the views it shows (`reviewScreenshot('<plugin>/<view>')`). `pnpm run e2e:mock <plugin> --frozen` freezes the mock's clock and the browser's `Date`, so two runs render the same; `e2e-test.yml` compares the change with `main` and lists the views that differ (nothing is committed). Specs import `test` from `test/playwright/support/fixtures.ts` (`visitApp` settles the frozen clock); after an in-app click or typing that arms a debounce, `await settleClock(page)`, or the frozen run never continues.
+- **Only the tenant mock, never a real tenant.** `pnpm run e2e:mock <plugin>` runs the suite against the `@cumulocity-iot/ui-sdk` mock — windy-dev world (pulled at runtime into the git-ignored `test/mock/windy-dev.json` via go-c8y-cli) plus the cockpit release of the workspace's current Web SDK version, picked up from the root `package.json` automatically. CI (`e2e-test.yml`) runs this. `shell-compat.yml` runs it daily for every plugin inside the latest cockpit CD release (`E2E_SHELL_VERSION`) and opens a `shell-compat` issue when it fails. Details in `test/AGENTS.md` → Running Tests.
+- Failures leave a trace and a screenshot in `test/playwright-results/` (`pnpm -C test exec playwright show-trace <zip>`); CI uploads that folder and the HTML report. The run's summary page lists the requests the mock could not answer (`E2E_MOCK_GAPS`) and the views that look different from `main`.
+
+---
+
+## Static Analysis (ui-sdk review tools)
+
+`pull-request.yml` → `review` runs on every pull request, from `@cumulocity-iot/ui-sdk`:
+
+| Step | Command | What it does |
+|---|---|---|
+| Risk and size | `c8y-ui review risk --base origin/main` | A level (high, medium, low) with the reasons (CI settings, `cumulocity.config.ts`, hooks, platform calls, writes, …) and the size without lockfile and world, on the run's summary page. Informational. |
+| Generated selectors | `c8y-ui selectors --check` (in `test/`) | Fails when `test/playwright/selectors.ts` does not match the installed Web SDK (regenerate with `pnpm run e2e:selectors`). |
+| Lint of the change | `c8y-ui review lint --base origin/main` | Fails on what `pnpm lint` fails on; lists the warnings on the lines the change adds and the suppressions it adds, as annotations in "Files changed". |
+| Dependency exceptions | `c8y-ui audit --base origin/main --allow shared` | Release-age excludes in `pnpm-workspace.yaml` that are due and ignored advisories with an installable fix, for the packages the change touches. Fails on an exception to remove. |
+| fallow | `c8y-ui fallow review --brief` (summary) then `c8y-ui fallow audit --base origin/main` (gate) | Dead code, complexity and duplication; the gate fails only on findings the change introduces, what `main` already has is reported. `c8y-ui` tells fallow what the platform loads (exported modules, `cumulocity.config.ts`, hook factories' `get()`, Karma specs) through plugins it writes into the git-ignored `.fallow/`. Repository exclusions live in `.fallowrc.json` (the Web SDK runtime packages the devkit bundles, ESLint plugins named as strings, `shared` imported through the path aliases, `tools/` run by hand). |
+
+Locally: `pnpm exec c8y-ui fallow` for everything (164 inherited dead-code findings and 8 import cycles at the time of writing: not gated, worth a cleanup PR), `pnpm exec c8y-ui fallow audit --base origin/main` before opening a PR. One finding: `// fallow-ignore-next-line <rule> -- reason`.
+
+ESLint carries the SDK's `c8y/no-unmanaged-subscribe` rule (`@cumulocity-iot/ui-sdk/eslint`, a warning: a `subscribe()` in a component without `takeUntilDestroyed` / `takeUntil` / `take` / `first`) and blocks the deprecated `HOOK_*` tokens of `@c8y/ngx-components` (`hookTab`, `hookRoute`, … instead).
 
 ---
 
@@ -195,37 +216,31 @@ CI runs `pnpm audit --audit-level high` before every build and test job, ahead o
 
 - **A patched release exists** → force it with an entry in `pnpm.overrides` (`package.json`), scoped to the major (e.g. `"undici@7": "^7.30.1"`). Never ignore a fixable advisory.
 - **No patched release** → add the GHSA id to `pnpm.auditConfig.ignoreGhsas` (`package.json`) **and** a row to the table below. pnpm 10.6 reads `auditConfig` only from `package.json`, which cannot hold comments, so this table is the justification.
-- Re-check every row when the Web SDK or Cypress is bumped, and remove entries that have become fixable.
+- Re-check every row when the Web SDK, the ui-sdk or Playwright is bumped, and remove entries that have become fixable (`pnpm exec c8y-ui audit --allow shared` reports them; CI runs it for the packages a PR touches).
 
 | GHSA | Package | Why it is accepted |
 |---|---|---|
 | GHSA-4w4v-5hc9-xrr2 | `angular@1.8.3` (AngularJS) | End of life, no fix (ReDoS). Shipped by `@c8y/ng1-modules`, the Web SDK's AngularJS layer; goes away only when Cumulocity drops AngularJS. |
 | GHSA-7x27-g8rg-x87w | `angular@1.8.3` (AngularJS) | End of life, no fix (XSS). Same source as above. |
-| GHSA-jmr9-qjv8-65gv | `extract-zip@2.0.1` | No fix (symlink path traversal). Cypress only, unpacks its own binary; dev/test, not shipped. |
-| GHSA-7pqw-9j4j-h8q3 | `extract-zip@2.0.1` | No fix (arbitrary file write via symlinks). Same source as above. |
 | GHSA-ch52-4w7c-c8xp | `http-cache-semantics@4.2.0` | No fix (cross-user cache disclosure). Via `make-fetch-happen` in the npm/Angular CLI tooling; build only, not bundled. |
+
+**Licenses**: `.pnpmfile.cjs` (from the ui-sdk) runs before an install and stops `pnpm add` or an update when a new direct production dependency declares a license outside the allowed list (permissive ones and MPL-2.0; `test/c8y-ui.json` → `licenses.allow` / `licenses.accept` extend it); pnpm records the file's checksum in the lockfile, so a change to it needs `pnpm install` and the committed lockfile. The after-install check (`c8y-ui licenses`) cannot run in this repository: `pnpm licenses list` fails on `angular-file-upload`, a git tarball dependency of `@c8y/ng1-modules`, with `ERR_PNPM_MISSING_PACKAGE_INDEX_FILE` (a pnpm limitation, not a license problem). Re-try after a pnpm or Web SDK bump and add it to CI once it passes.
 
 Overrides that are not security fixes (same reason: `package.json` cannot hold comments):
 
 | Override | Why |
 |---|---|
 | `"@angular-devkit/build-angular@21": "21.2.27"` | 21.2.28 pulls webpack 5.112, which breaks `license-webpack-plugin` in every plugin build (`@c8y/devkit:build`). Drop it once a build-angular or webpack release fixes that; the Karma test builder (`@angular/build`) is unaffected and stays on the latest 21.2. |
+| `"cypress": "-"` | `@cumulocity-iot/ui-sdk` declares Cypress as an optional peer and pnpm installs it anyway; the e2e suite is Playwright, and Cypress brings `extract-zip` advisories. `-` removes the dependency. |
+| `"globals": "14.0.0"` | ESLint's `globals` pinned (moved here from `pnpm-workspace.yaml`: pnpm 10 ignores the workspace file's overrides when `package.json` has any). |
 
-Security overrides pinned to an exact version instead of `^`, so a freshly published release is not pulled in before it had time to be vetted (supply-chain risk). Each pin is temporary: once the date in the last column has passed, switch it back to the `^` range and run `pnpm install`.
-
-| Override | Why exact | Back to `^` after |
-|---|---|---|
-| `"systeminformation@5": "5.33.16"` | GHSA-3f7j-7jwc-fxfj (high, via Cypress). `^5.33.16` resolved to 5.33.19, published 2026-10-30, the day of the fix; 5.33.16 is the first patched release. | 2026-11-13 → `"^5.33.16"` |
-| `"joi@18": "18.3.1"` | GHSA-4528-x5fx-h6hg (high, via `wait-on`). `^18.3.1` resolved to 18.3.2, published 2026-11-04; 18.3.1 is the first patched release. | 2026-11-18 → `"^18.3.1"` |
+Security overrides pinned to an exact version instead of `^`, so a freshly published release is not pulled in before it had time to be vetted (supply-chain risk), are temporary: once their noted date has passed, switch them back to the `^` range and run `pnpm install`. None at the moment (the Cypress-only pins went with Cypress).
 
 Peer ranges relaxed in `pnpm.peerDependencyRules.allowedVersions` (`strict-peer-dependencies=true` fails any non-frozen install otherwise):
 
 | Rule | Why |
 |---|---|
 | `"@module-federation/vite>vite": "8"` | The Vite dev server (`pnpm run dev`) runs on Vite 8; `@module-federation/vite` declares a narrower range. |
-| `"@cumulocity-iot/ui-sdk>cypress": "15"` | The ui-sdk declares Cypress `^14.5.4`; the suite runs on Cypress 15 and passes. Drop it once the ui-sdk accepts 15. |
-| `"cumulocity-cypress>cypress": "15"` | `cumulocity-cypress` declares Cypress `<15.0.0`; same as above. |
-| `"schema-utils>webpack": "5.105"` | `schema-utils` 4.8 declares webpack `^5.112.0`, which the `@angular-devkit/build-angular` pin above keeps out. Drop it with that pin. |
 
 ---
 
@@ -303,7 +318,8 @@ Agents should consult these authoritative references when writing or reviewing c
 
 ## What to Avoid
 
-- Do **not** add Jest, `jest-preset-angular`, or any `jest.*` / `setup-jest.*` files. The test stack is Karma + Jasmine exclusively.
+- Do **not** add Jest, `jest-preset-angular`, or any `jest.*` / `setup-jest.*` files. The unit test stack is Karma + Jasmine exclusively; e2e is Playwright on the tenant mock (no Cypress, no real tenant).
+- Do **not** silence fallow or the `c8y/*` ESLint rules for a whole folder to get a PR green: fix the finding, or mark the one line with its reason (`// fallow-ignore-next-line <rule> -- reason`, `// eslint-disable-next-line … -- reason`).
 - Do **not** manually add `serve:*`, `build:*`, `test:*`, or `test:watch:*` scripts to the root `package.json` — use `generate:scripts`.
 - Do **not** edit `dist/` — it is ephemeral build output.
 - Do **not** open a PR with user-facing changes but no changelog entry — see [Changelogs](#changelogs).

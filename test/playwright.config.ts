@@ -1,16 +1,13 @@
 import { defineConfig } from '@playwright/test';
+import { pluginRemotes } from './playwright/support/remotes';
 
-// Playwright suite on the tenant mock: `node scripts/e2e-mock.mts <plugin> --runner=playwright` starts the mock and
-// the plugin's dev server and passes E2E_PLUGIN, C8Y_BASEURL and the mock's login in the environment.
-// The plugin's `?remotes=` value comes from its cumulocity.config.ts, as in the Cypress configs.
+// Playwright suite on the tenant mock: `pnpm run e2e:mock <plugin>` (scripts/e2e-mock.mts) starts the mock and the
+// plugin's dev server and passes E2E_PLUGIN, C8Y_BASEURL and the mock's login in the environment. The plugin's
+// `?remotes=` value comes from its cumulocity.config.ts.
 const plugin = process.env.E2E_PLUGIN;
 
 if (plugin && !process.env.C8Y_REMOTES) {
-  type PluginConfig = { default: { runTime: { remotes: Record<string, string[]> } } };
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const config = (require(`../packages/${plugin}/cumulocity.config`) as PluginConfig).default;
-
-  process.env.C8Y_REMOTES = JSON.stringify(config.runTime.remotes);
+  process.env.C8Y_REMOTES = JSON.stringify(pluginRemotes(plugin));
 }
 
 export default defineConfig({
@@ -22,8 +19,11 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   timeout: 180_000,
   expect: { timeout: 15_000 },
-  reporter: [['list']],
-  outputDir: 'playwright-results',
+  reporter: process.env.CI
+    ? [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]]
+    : [['list']],
+  // Per plugin: Playwright wipes the output folder at start, so two plugins' runs do not delete each other's traces.
+  outputDir: plugin ? `playwright-results/${plugin}` : 'playwright-results',
   use: {
     baseURL: process.env.C8Y_BASEURL ?? 'http://localhost:9001',
     viewport: { width: 1920, height: 1080 },

@@ -77,7 +77,7 @@ From the repository root:
 pnpm run serve:kpi-trend-widget   # needs C8Y_BASEURL and C8Y_SHELL_TARGET
 pnpm run build:kpi-trend-widget
 pnpm run test:kpi-trend-widget    # Karma unit tests
-pnpm run e2e:mock kpi-trend-widget --browser=chrome   # Cypress against the tenant mock
+pnpm run e2e:mock kpi-trend-widget   # Playwright against the tenant mock
 ```
 
 Built on Cumulocity Web SDK 1024.21.x and Angular 21. The plugin exports
